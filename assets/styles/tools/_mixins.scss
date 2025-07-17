@@ -6,7 +6,7 @@
 }
 
 @mixin tablet {
-  @media (min-width: #{$mobileMax}) {
+  @media (min-width: #{$mobile}) {
     @content;
   }
 }

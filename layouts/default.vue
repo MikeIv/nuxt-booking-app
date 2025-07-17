@@ -1,10 +1,16 @@
 <template>
-  <div class="layout">
+  <div :class="$style.layout">
     <LayoutsHeader />
-    <NuxtLink to="/">
-      <img src="~/assets/images/test.svg" alt="My Logo" class="layout__logo" />
-    </NuxtLink>
+    <NuxtLink to="/" />
 
     <slot />
+    <LayoutsFooter />
   </div>
 </template>
+<script setup lang="ts">
+</script>
+<style module lang="scss">
+.layout {
+  display: grid;
+}
+</style>

@@ -1,11 +1,9 @@
 <template>
   <div>
-    <!-- Глобальные компоненты -->
     <NuxtLayout>
       <!-- Индикатор загрузки между страницами -->
       <NuxtLoadingIndicator :color="'#00dc82'" :height="3" />
 
-      <!-- Основное содержимое страниц -->
       <NuxtPage />
 
       <!-- Глобальное уведомление для изменения маршрута (для accessibility) -->
@@ -15,13 +13,12 @@
 </template>
 
 <script setup>
-// Глобальные мета-теги (можно переопределять в отдельных страницах)
 useHead({
-  titleTemplate: (title) => title ? `${title} | My App` : 'My App',
+  titleTemplate: (title) => title ? `${title} | Varvarka` : 'Varvarka',
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { hid: 'description', name: 'description', content: 'Мое приложение на Nuxt 3' },
+    { hid: 'description', name: 'description', content: 'Varvarka' },
     { name: 'theme-color', content: '#ffffff' },
   ],
   link: [
@@ -35,7 +32,6 @@ useHead({
 </script>
 
 <style>
-/* Глобальные стили (или подключайте через assets/css/) */
 html {
   scroll-behavior: smooth;
 }

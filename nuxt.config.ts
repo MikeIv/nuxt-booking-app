@@ -2,6 +2,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/styles/main.scss'],
+  components: [
+    { path: '~/components/core', prefix: 'Core' },
+    { path: '~/components/modules', prefix: 'Module' },
+    '~/components',
+  ],
 
   routeRules: {
     // Статические страницы (SSG)
