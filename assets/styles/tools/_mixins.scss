@@ -1,0 +1,39 @@
+@forward '../variables/resolutions';
+
+// Брейк поинты mobile-first
+@mixin mobile {
+  @content;
+}
+
+@mixin tablet {
+  @media (min-width: #{$mobileMax}) {
+    @content;
+  }
+}
+
+@mixin tabletMax {
+  @media (min-width: #{$tabletMax}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$desktopMin}) {
+    @content;
+  }
+}
+
+// Styles mixins
+@mixin flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+
