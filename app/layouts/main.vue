@@ -1,8 +1,8 @@
 <template>
   <div :class="$style.layout">
-    <LayoutsMainHeader />
+    <LayoutMainHeader />
     <slot />
-    <LayoutsFooter />
+    <LayoutFooter />
   </div>
 </template>
 <script setup lang="ts">

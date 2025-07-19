@@ -1,0 +1,22 @@
+@use "sass:map";
+
+// Базовые уровни
+$z-index: (
+  modal: (
+    overlay: 5100,
+    content: 5200,
+  ),
+  dropdown: 4000,
+  header: 3000,
+  footer: 2000,
+  default: 1,
+  behind: -1
+);
+
+// Функция для доступа к значениям
+@function z($key) {
+  @if not map.has-key($z-index, $key) {
+    @warn "Ключ `#{$key}` не найден в $z-index";
+  }
+  @return map.get($z-index, $key);
+}
