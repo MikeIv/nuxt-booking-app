@@ -26,7 +26,7 @@ const menuLinks = [
           @toggle="toggleMenu"
       />
 
-      <Logo :class="$style.logo" class="logoN" />
+      <Logo :class="$style.logo" />
 
       <div class="info">
 
