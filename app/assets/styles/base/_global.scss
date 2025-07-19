@@ -1,0 +1,33 @@
+@use "../variables/_base-font-size.scss" as size;
+
+html,
+body {
+  font-size: size.$base-font-size;
+  background-color: var(--a-white) !important;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style-type: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}

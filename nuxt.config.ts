@@ -2,10 +2,27 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/styles/main.scss'],
+  vite: {
+    css: {
+      modules: {
+        generateScopedName: '[name]__[local]___[hash:base64:5]'
+      },
+      preprocessorOptions: {
+        scss: {
+          // Импорт переменных будет доступен во всех SCSS файлах
+          additionalData: `
+            @use "sass:math";
+            @use "~/assets/styles/tools/functions" as *;
+            @use "~/assets/styles/variables" as *;
+          `
+        }
+      }
+    }
+  },
   components: [
     { path: '~/components/core', prefix: 'Core' },
     { path: '~/components/modules', prefix: 'Module' },
-    '~/components',
+    '~/components'
   ],
 
   routeRules: {
@@ -22,6 +39,6 @@ export default defineNuxtConfig({
     '/news': { swr: 3600 },                // Кешировать на 1 час, затем обновить
 
     // Редиректы и прокси
-    '/old-page': { redirect: '/new-page' },
-  },
-})
+    '/old-page': { redirect: '/new-page' }
+  }
+});

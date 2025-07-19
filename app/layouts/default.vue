@@ -1,8 +1,6 @@
 <template>
   <div :class="$style.layout">
     <LayoutsHeader />
-    <NuxtLink to="/" />
-
     <slot />
     <LayoutsFooter />
   </div>

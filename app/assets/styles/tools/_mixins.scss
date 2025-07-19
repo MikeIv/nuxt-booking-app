@@ -1,4 +1,4 @@
-@forward '../variables/resolutions';
+@use "../variables/resolutions" as size;
 
 // Брейк поинты mobile-first
 @mixin mobile {
@@ -6,19 +6,19 @@
 }
 
 @mixin tablet {
-  @media (min-width: #{$mobile}) {
+  @media (min-width: #{size.$mobile}) {
     @content;
   }
 }
 
 @mixin tabletMax {
-  @media (min-width: #{$tabletMax}) {
+  @media (min-width: #{size.$tabletMax}) {
     @content;
   }
 }
 
 @mixin desktop {
-  @media (min-width: #{$desktopMin}) {
+  @media (min-width: #{size.$desktopMin}) {
     @content;
   }
 }
