@@ -1,20 +1,19 @@
 import svgLoader from 'vite-svg-loader'
+// import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/styles/main.scss'],
+
   vite: {
-    plugins: [
-      svgLoader(),
-    ],
+    plugins: [svgLoader()],
     css: {
       modules: {
         generateScopedName: '[name]__[local]___[hash:base64:5]'
       },
       preprocessorOptions: {
         scss: {
-          // Импорт переменных будет доступен во всех SCSS файлах
           additionalData: `
             @use "sass:math";
             @use "~/assets/styles/tools/functions" as *;
@@ -24,8 +23,9 @@ export default defineNuxtConfig({
           `
         }
       }
-    },
+    }
   },
+
   components: [
     { path: '~/components/core', prefix: 'Core' },
     { path: '~/components/modules', prefix: 'Module' },
@@ -34,29 +34,46 @@ export default defineNuxtConfig({
 
   imports: {
     dirs: [
-      // Scan top-level modules
       'composables',
-      // ... or scan modules nested one level deep with a specific name and file extension
       'composables/*/index.{ts,js,mjs,mts}',
-      // ... or scan all modules within given directory
-      'composables/**',
-    ],
+      'composables/**'
+    ]
   },
 
   routeRules: {
-    // Статические страницы (SSG)
-    '/': { static: true },                 // Главная (генерируется при билде)
-    '/about': { static: true },            // Страница "О нас"
-    '/blog/**': { static: true },          // Все посты блога (если URL известны заранее)
-
-    // Динамические страницы (SSR)
-    '/user/**': { ssr: true },             // Профили пользователей (рендер на сервере)
-    '/products/**': { ssr: true },         // Товары с актуальными данными
-
-    // SWR (Stale-While-Revalidate) - кеширование с фоновым обновлением
-    '/news': { swr: 3600 },                // Кешировать на 1 час, затем обновить
-
-    // Редиректы и прокси
+    '/': { static: true },
+    '/about': { static: true },
+    '/blog/**': { static: true },
+    '/user/**': { ssr: true },
+    '/products/**': { ssr: true },
+    '/news': { swr: 3600 },
     '/old-page': { redirect: '/new-page' }
+  },
+
+  modules: [
+    '@nuxtjs/i18n',
+  ],
+  i18n: {
+    langDir: 'locales',
+    strategy: 'no_prefix',
+    defaultLocale: 'ru',
+    locales: [
+      {
+        code: 'en',
+        iso: 'en-US',
+        file: 'en.json',
+        name: 'English'
+      },
+      {
+        code: 'ru',
+        iso: 'ru-RU',
+        file: 'ru.json',
+        name: 'Русский'
+      }
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected'
+    },
   }
-});
+})

@@ -1,6 +1,8 @@
-<!-- components/ui/SlideMenu.vue -->
 <script setup lang="ts">
 import { gsap } from 'gsap'
+import { useI18n } from 'vue-i18n'
+
+const { t, te } = useI18n()
 
 const props = defineProps({
   isOpen: {
@@ -8,11 +10,11 @@ const props = defineProps({
     required: true
   },
   links: {
-    type: Array as () => Array<{url: string, text: string}>,
+    type: Array as () => Array<{url: string, textKey: string}>,
     default: () => [
-      { url: '/', text: 'Главная' },
-      { url: '/about', text: 'О нас' },
-      { url: '/contacts', text: 'Контакты' }
+      { url: '/', textKey: 'home' },
+      { url: '/about', textKey: 'about' },
+      { url: '/contacts', textKey: 'contacts' }
     ]
   },
   topOffset: {
@@ -58,6 +60,10 @@ const leaveAnimation = (el: HTMLElement, done: () => void) => {
   )
 }
 
+const safeTranslate = (key: string) => {
+  return te(key) ? t(key) : key
+}
+
 const handleLinkClick = () => {
   emit('close')
 }
@@ -83,7 +89,7 @@ const handleLinkClick = () => {
             :class="$style.menuLink"
             @click="handleLinkClick"
         >
-          {{ link.text }}
+          {{ safeTranslate(link.textKey) }}
         </a>
       </div>
     </div>
@@ -99,10 +105,11 @@ const handleLinkClick = () => {
   bottom: 0;
   background-color: var(--bg-color);
   z-index: 999;
-  overflow-y: auto;
+  overflow-y: hidden;
   transform: translateY(-100%);
   will-change: transform;
 }
+
 .menuContent {
   padding: rem(32);
   display: flex;

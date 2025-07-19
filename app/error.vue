@@ -55,7 +55,7 @@ if (props.error.statusCode === 404) {
 }
 
 .title {
-  font-size: rem(48);
+  font-size: rem(64);
   margin: 0;
   color: var(--a-accentDarkBg);
   font-weight: 900;
@@ -68,7 +68,7 @@ if (props.error.statusCode === 404) {
 }
 
 .message {
-  font-size: rem(18);
+  font-size: rem(24);
   margin: rem(16) 0 rem(32);
   color: #2f3542;
 
@@ -78,15 +78,15 @@ if (props.error.statusCode === 404) {
 }
 
 .illustration {
-  width: rem(100);
-  height: rem(100);
+  width: rem(80);
+  height: rem(80);
   margin: 0 auto rem(32);
   color: var(--a-accentDarkBg);
   animation: pulse 2s ease infinite;
 
   @media (max-width: 640px) {
-    width: rem(80);
-    height: rem(80);
+    width: rem(60);
+    height: rem(60);
   }
 }
 
