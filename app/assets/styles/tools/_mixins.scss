@@ -23,17 +23,4 @@
   }
 }
 
-// Styles mixins
-@mixin flex {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-@mixin flex-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
 

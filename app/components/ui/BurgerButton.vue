@@ -27,10 +27,12 @@ const handleClick = () => {
 </template>
 
 <style module lang="scss">
+@use "~/assets/styles/variables/resolutions" as size;
+
 .burger {
   position: relative;
-  width: rem(24);
-  height: rem(24);
+  width: 18px;
+  aspect-ratio: 1 / 1;
   background: none;
   border: none;
   cursor: pointer;
@@ -40,6 +42,10 @@ const handleClick = () => {
   justify-content: space-between;
   z-index: 1001;
   transition: transform 0.3s ease;
+
+  @media (min-width: #{size.$tablet}) {
+    width: 24px;
+  }
 
   &:active {
     transform: scale(0.9);
@@ -55,7 +61,10 @@ const handleClick = () => {
 }
 
 .burgerActive .burgerLine:nth-child(1) {
-  transform: translateY(rem(11)) rotate(45deg);
+  transform: translateY(rem(8)) rotate(45deg);
+  @media (min-width: #{size.$tablet}) {
+    transform: translateY(rem(11)) rotate(45deg);
+  }
 }
 
 .burgerActive .burgerLine:nth-child(2) {
@@ -63,6 +72,9 @@ const handleClick = () => {
 }
 
 .burgerActive .burgerLine:nth-child(3) {
-  transform: translateY(rem(-11)) rotate(-45deg);
+  transform: translateY(rem(-8)) rotate(-45deg);
+  @media (min-width: #{size.$tablet}) {
+    transform: translateY(rem(-11)) rotate(-45deg);
+  }
 }
 </style>

@@ -10,16 +10,12 @@ const props = defineProps({
     required: true
   },
   links: {
-    type: Array as () => Array<{url: string, textKey: string}>,
-    default: () => [
-      { url: '/', textKey: 'home' },
-      { url: '/about', textKey: 'about' },
-      { url: '/contacts', textKey: 'contacts' }
-    ]
+    type: Array as () => Array<{url: string, text: string}>,
+    default: () => []
   },
   topOffset: {
-    type: String,
-    default: 'rem(70)'
+    type: Number,
+    default: 95
   },
   backgroundColor: {
     type: String,
@@ -89,7 +85,7 @@ const handleLinkClick = () => {
             :class="$style.menuLink"
             @click="handleLinkClick"
         >
-          {{ safeTranslate(link.textKey) }}
+          {{ safeTranslate(link.text) }}
         </a>
       </div>
     </div>
@@ -97,6 +93,8 @@ const handleLinkClick = () => {
 </template>
 
 <style module lang="scss">
+@use "~/assets/styles/variables/z-index" as z;
+
 .menuOverlay {
   position: fixed;
   top: var(--top-offset);
@@ -104,7 +102,7 @@ const handleLinkClick = () => {
   right: 0;
   bottom: 0;
   background-color: var(--bg-color);
-  z-index: 999;
+  z-index: z.z("modal", "nav-menu");
   overflow-y: hidden;
   transform: translateY(-100%);
   will-change: transform;

@@ -1,10 +1,10 @@
 @use "sass:map";
 
-// Базовые уровни
 $z-index: (
   modal: (
     overlay: 5100,
     content: 5200,
+    nav-menu: 1000,
   ),
   dropdown: 4000,
   header: 3000,
@@ -13,10 +13,17 @@ $z-index: (
   behind: -1
 );
 
-// Функция для доступа к значениям
-@function z($key) {
-  @if not map.has-key($z-index, $key) {
-    @warn "Ключ `#{$key}` не найден в $z-index";
+@function z($keys...) {
+  $value: $z-index;
+
+  @each $key in $keys {
+    $value: map.get($value, $key);
+
+    @if $value == null {
+      @warn "Ключ `#{$key}` не найден в $z-index";
+      @return null;
+    }
   }
-  @return map.get($z-index, $key);
+
+  @return $value;
 }

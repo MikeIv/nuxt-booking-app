@@ -1,10 +1,12 @@
 import svgLoader from 'vite-svg-loader'
-// import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  css: ['~/assets/styles/main.scss'],
+  css: [
+    '~/assets/styles/main.scss',
+    '~/assets/styles/variables/_z-index.scss'
+  ],
 
   vite: {
     plugins: [svgLoader()],
@@ -18,8 +20,6 @@ export default defineNuxtConfig({
             @use "sass:math";
             @use "~/assets/styles/tools/functions" as *;
             @use "~/assets/styles/variables" as *;
-            @use "~/assets/styles/tools/mixins" as mix;
-            @use "~/assets/styles/variables/z-index" as *;
           `
         }
       }
@@ -59,17 +59,17 @@ export default defineNuxtConfig({
     defaultLocale: 'ru',
     locales: [
       {
+        code: 'ru',
+        iso: 'ru-RU',
+        file: 'ru.json',
+        name: 'Русский'
+      },
+      {
         code: 'en',
         iso: 'en-US',
         file: 'en.json',
         name: 'English'
       },
-      {
-        code: 'ru',
-        iso: 'ru-RU',
-        file: 'ru.json',
-        name: 'Русский'
-      }
     ],
     detectBrowserLanguage: {
       useCookie: true,
