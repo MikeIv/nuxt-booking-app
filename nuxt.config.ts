@@ -3,25 +3,46 @@ import svgLoader from 'vite-svg-loader'
 export default defineNuxtConfig({
   ssr: false,
   nitro: {
-    static: true
+    static: true,
+    routeRules: {
+      '/**': {
+        headers: {
+          'X-Frame-Options': 'DENY',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Permissions-Policy': 'geolocation=(), microphone=()'
+        }
+      }
+    }
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  experimental: {
+    payloadExtraction: true, // Извлечение критического CSS
+  },
   css: [
     '~/assets/styles/main.scss',
-    '~/assets/styles/variables/_z-index.scss'
+    '~/assets/styles/variables/_z-index.scss',
   ],
 
   vite: {
     build: {
-      target: 'esnext'
+      target: 'esnext',
+      minify: 'esbuild',
+      terserOptions: {
+        compress: {
+          drop_console: process.env.NODE_ENV === 'production'
+        }
+      },
+      chunkSizeWarningLimit: 1600,
     },
     define: {
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-      'global': 'globalThis'  // Добавляем поддержку global
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
     },
-    optimizeDeps: {
-      include: ['crypto-js']  // Принудительно включаем криптографические пакеты
+    server: {
+      fs: {
+        strict: true // Запрещает доступ к файлам вне корня проекта
+      }
     },
     plugins: [svgLoader()],
     css: {
@@ -61,12 +82,37 @@ export default defineNuxtConfig({
     '/user/**': { ssr: true },
     '/products/**': { ssr: true },
     '/news': { swr: 3600 },
-    '/old-page': { redirect: '/new-page' }
+    '/old-page': { redirect: '/new-page' },
+    '/assets/**': { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } },
+    '/_nuxt/**': { headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } }
   },
 
   modules: [
     '@nuxtjs/i18n',
+    '@nuxt/image'
   ],
+  image: {
+    domains: ['https://varvarka-v2.grandfs-develop.ru/'],
+    presets: {
+      cover: {
+        modifiers: {
+          fit: 'cover',
+          format: 'webp',
+          quality: 80
+        }
+      }
+    },
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280
+    },
+    format: ['webp', 'avif'],
+    provider: 'ipx'
+  },
+
   i18n: {
     langDir: 'locales',
     strategy: 'no_prefix',
@@ -89,5 +135,15 @@ export default defineNuxtConfig({
       useCookie: true,
       cookieKey: 'i18n_redirected'
     },
+  },
+
+
+  devServer: {
+    https: false // Ускоряет запуск в development
+  },
+
+// Отключение ненужных функций
+  features: {
+    devLogs: false // В production
   }
 })
