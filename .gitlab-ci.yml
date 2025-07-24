@@ -12,7 +12,7 @@ build frontend:
     - npm run build
   artifacts:
     paths:
-      - public
+      - .output
   rules:
     - if: $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == 'true'
   tags:
@@ -25,7 +25,7 @@ deploy develop:
     name: dev
     url: https://varvarka-v2.grandfs-develop.ru/
   script:
-    - cp -rf public /var/www/varvarka/${CI_COMMIT_BRANCH}
+    - cp -rf .output /var/www/varvarka/${CI_COMMIT_BRANCH}
     - cd /var/www/varvarka/${CI_COMMIT_BRANCH}
     - git pull ${CI_REPOSITORY_URL} ${CI_COMMIT_BRANCH}
     - |
