@@ -2,6 +2,9 @@ import svgLoader from 'vite-svg-loader'
 
 export default defineNuxtConfig({
   ssr: false,
+  nitro: {
+    static: true
+  },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: [
