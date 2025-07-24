@@ -13,6 +13,9 @@ export default defineNuxtConfig({
   ],
 
   vite: {
+    build: {
+      target: 'esnext'
+    },
     plugins: [svgLoader()],
     css: {
       modules: {
