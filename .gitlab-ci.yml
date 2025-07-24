@@ -4,7 +4,7 @@ stages:
 
 build frontend:
   stage: build
-  image: node:20.10-alpine
+  image: node:20.19-alpine
   variables:
     VITE_BASE_API_URL: https://varvarka-api.grandfs-develop.ru/api/v1/
   script:
