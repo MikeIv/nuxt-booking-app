@@ -16,6 +16,13 @@ export default defineNuxtConfig({
     build: {
       target: 'esnext'
     },
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+      'global': 'globalThis'  // Добавляем поддержку global
+    },
+    optimizeDeps: {
+      include: ['crypto-js']  // Принудительно включаем криптографические пакеты
+    },
     plugins: [svgLoader()],
     css: {
       modules: {
