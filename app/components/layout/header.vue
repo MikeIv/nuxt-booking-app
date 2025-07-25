@@ -3,7 +3,7 @@
 </script>
 
 <template>
-<h1>Заголовок</h1>
+  <h1>Заголовок</h1>
 </template>
 
 <style scoped>

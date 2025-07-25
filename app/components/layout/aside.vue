@@ -1,106 +1,107 @@
 <script setup lang="ts">
-import Logo from '~/assets/images/logo.svg';
-import Phone from '~/assets/images/phone.svg';
-import BurgerButton from '~/components/ui/BurgerButton.vue';
-import SlideMenu from '~/components/ui/SlideMenu.vue';
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
+import Logo from '~/assets/images/logo.svg'
+import Phone from '~/assets/images/phone.svg'
+import BurgerButton from '~/components/ui/BurgerButton.vue'
+import SlideMenu from '~/components/ui/SlideMenu.vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-const { locale, availableLocales, t, setLocale } = useI18n();
-const router = useRouter();
-const isMenuOpen = ref(false);
+const { locale, availableLocales, t, setLocale } = useI18n()
+const router = useRouter()
+const isMenuOpen = ref(false)
 
 const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-};
+  isMenuOpen.value = !isMenuOpen.value
+}
 
 const goToHome = () => {
-  router.push('/');
-};
-
+  router.push('/')
+}
 
 const toggleLanguage = () => {
   const localeCodes = Array.isArray(availableLocales)
-      ? availableLocales
-      : Object.values(availableLocales);
+    ? availableLocales
+    : Object.values(availableLocales)
 
-  if (localeCodes.length < 2) return;
+  if (localeCodes.length < 2) return
 
-  const currentIndex = localeCodes.indexOf(locale.value);
-  const nextIndex = (currentIndex + 1) % localeCodes.length;
-  setLocale(localeCodes[nextIndex]);
-};
+  const currentIndex = localeCodes.indexOf(locale.value)
+  const nextIndex = (currentIndex + 1) % localeCodes.length
+  setLocale(localeCodes[nextIndex])
+}
 
 const goToContacts = () => {
-  router.push('/contacts');
-};
-
+  router.push('/contacts')
+}
 
 const menuLinks = computed(() => [
   { url: '/', text: t('home') },
   { url: '/about', text: t('about') },
-  { url: '/contacts', text: t('contacts') }
-]);
+  { url: '/contacts', text: t('contacts') },
+])
 
-const asideRef = ref<HTMLElement | null>(null);
-const asideHeight = ref(95);
+const asideRef = ref<HTMLElement | null>(null)
+const asideHeight = ref(95)
 
 const updateHeight = () => {
   if (asideRef.value) {
-    asideHeight.value = asideRef.value.offsetHeight;
-    console.log('Updated asideHeight:', asideHeight.value);
+    asideHeight.value = asideRef.value.offsetHeight
+    console.log('Updated asideHeight:', asideHeight.value)
   }
-};
+}
 
 onMounted(() => {
-  updateHeight();
-  const observer = new ResizeObserver(updateHeight);
-  if (asideRef.value) observer.observe(asideRef.value);
+  updateHeight()
+  const observer = new ResizeObserver(updateHeight)
+  if (asideRef.value) observer.observe(asideRef.value)
 
-  onUnmounted(() => observer.disconnect());
-});
+  onUnmounted(() => observer.disconnect())
+})
 </script>
 
 <template>
-    <aside ref="asideRef" :class="$style.aside">
-      <div :class="$style.leftGroup">
-        <BurgerButton
-            :isActive="isMenuOpen"
-            @click="toggleMenu"
-        />
-      </div>
+  <aside
+    ref="asideRef"
+    :class="$style.aside"
+  >
+    <div :class="$style.leftGroup">
+      <BurgerButton
+        :is-active="isMenuOpen"
+        @click="toggleMenu"
+      />
+    </div>
 
+    <button
+      :class="$style.logoButton"
+      @click="goToHome"
+    >
+      <Logo :class="$style.logo" />
+    </button>
+
+    <div :class="$style.rightGroup">
       <button
-          :class="$style.logoButton"
-          @click="goToHome"
+        :class="$style.langButton"
+        @click="toggleLanguage"
       >
-        <Logo :class="$style.logo" />
+        {{ locale === 'ru' ? 'ENG' : 'RU' }}
       </button>
+      <button
+        :class="$style.phoneButton"
+        @click="goToContacts"
+      >
+        <Phone :class="$style.phoneIcon" />
+      </button>
+    </div>
+  </aside>
 
-      <div :class="$style.rightGroup">
-        <button
-            :class="$style.langButton"
-            @click="toggleLanguage"
-        >
-          {{ locale === 'ru' ? 'ENG' : 'RU' }}
-        </button>
-        <button
-            :class="$style.phoneButton"
-            @click="goToContacts"
-        >
-          <Phone :class="$style.phoneIcon" />
-        </button>
-      </div>
-    </aside>
-
-    <SlideMenu
-        :isOpen="isMenuOpen"
-        :links="menuLinks"
-        :topOffset="asideHeight"
-        backgroundColor="--a-mainBg"
-        @close="toggleMenu"
-    />
+  <SlideMenu
+    :is-open="isMenuOpen"
+    :links="menuLinks"
+    :top-offset="asideHeight"
+    background-color="--a-mainBg"
+    @close="toggleMenu"
+  />
 </template>
 
 <!-- Стили остаются без изменений -->
@@ -121,7 +122,6 @@ onMounted(() => {
   background-color: var(--a-whiteBg);
   z-index: z.z("header");
 }
-
 
 .leftGroup {
   width: clamp(60px, 8vw, 120px);

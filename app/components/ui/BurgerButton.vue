@@ -2,8 +2,8 @@
 defineProps({
   isActive: {
     type: Boolean,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const emit = defineEmits(['toggle'])
@@ -15,14 +15,14 @@ const handleClick = () => {
 
 <template>
   <button
-      :class="[$style.burger, { [$style.burgerActive]: isActive }]"
-      @click="handleClick"
-      aria-label="Toggle menu"
-      aria-expanded="isActive"
+    :class="[$style.burger, { [$style.burgerActive]: isActive }]"
+    aria-label="Toggle menu"
+    aria-expanded="isActive"
+    @click="handleClick"
   >
-    <span :class="$style.burgerLine"></span>
-    <span :class="$style.burgerLine"></span>
-    <span :class="$style.burgerLine"></span>
+    <span :class="$style.burgerLine" />
+    <span :class="$style.burgerLine" />
+    <span :class="$style.burgerLine" />
   </button>
 </template>
 

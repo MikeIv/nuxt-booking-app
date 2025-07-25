@@ -1,12 +1,11 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'main'
+  layout: 'main',
 })
-
 </script>
 
 <template>
-Контакты
+  <h1>Контакты</h1>
 </template>
 
 <style scoped lang="scss">

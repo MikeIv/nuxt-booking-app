@@ -3,9 +3,9 @@
 </script>
 
 <template>
-    <section :class="$style.introNav">
-      Навигация на главной
-    </section>
+  <section :class="$style.introNav">
+    Навигация на главной
+  </section>
 </template>
 
 <style module lang="scss">

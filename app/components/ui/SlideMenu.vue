@@ -7,52 +7,52 @@ const { t, te } = useI18n()
 const props = defineProps({
   isOpen: {
     type: Boolean,
-    required: true
+    required: true,
   },
   links: {
-    type: Array as () => Array<{url: string, text: string}>,
-    default: () => []
+    type: Array as () => Array<{ url: string, text: string }>,
+    default: () => [],
   },
   topOffset: {
     type: Number,
-    default: 95
+    default: 95,
   },
   backgroundColor: {
     type: String,
-    default: '--a-mainBg'
-  }
+    default: '--a-mainBg',
+  },
 })
 
 const menuStyles = computed(() => ({
   '--top-offset': `${props.topOffset}px`,
-  '--bg-color': `var(${props.backgroundColor})`
+  '--bg-color': `var(${props.backgroundColor})`,
 }))
 
 const emit = defineEmits(['close'])
 
 const enterAnimation = (el: HTMLElement, done: () => void) => {
   gsap.fromTo(el,
-      { y: '-100%', opacity: 0 },
-      {
-        y: '0%',
-        opacity: 1,
-        duration: 0.5,
-        ease: 'power2.out',
-        onComplete: done
-      }
+    { y: '-100%', opacity: 0 },
+    {
+      y: '0%',
+      opacity: 1,
+      duration: 0.5,
+      ease: 'power2.out',
+      onComplete: done,
+    },
   )
 }
 
 const leaveAnimation = (el: HTMLElement, done: () => void) => {
   gsap.fromTo(el,
-      { y: '0%', opacity: 1 },
-      {
-        y: '-100%',
-        opacity: 0,
-        duration: 0.4,
-        ease: 'power2.in',
-        onComplete: done
-      }
+    { y: '0%', opacity: 1 },
+    {
+      y: '-100%',
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power2.in',
+      onComplete: done,
+    },
   )
 }
 
@@ -67,23 +67,23 @@ const handleLinkClick = () => {
 
 <template>
   <Transition
-      name="slide"
-      @enter="enterAnimation"
-      @leave="leaveAnimation"
-      :css="false"
+    name="slide"
+    :css="false"
+    @enter="enterAnimation"
+    @leave="leaveAnimation"
   >
     <div
-        v-if="isOpen"
-        :class="$style.menuOverlay"
-        :style="menuStyles"
+      v-if="isOpen"
+      :class="$style.menuOverlay"
+      :style="menuStyles"
     >
       <div :class="$style.menuContent">
         <a
-            v-for="link in links"
-            :key="link.url"
-            :href="link.url"
-            :class="$style.menuLink"
-            @click="handleLinkClick"
+          v-for="link in links"
+          :key="link.url"
+          :href="link.url"
+          :class="$style.menuLink"
+          @click="handleLinkClick"
         >
           {{ safeTranslate(link.text) }}
         </a>

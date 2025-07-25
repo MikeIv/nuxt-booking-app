@@ -1,12 +1,13 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'main'
+  layout: 'main',
 })
-
 </script>
 
 <template>
-  <h1 :class="$style.header">Стартовая страница</h1>
+  <h1 :class="$style.header">
+    Стартовая страница
+  </h1>
 </template>
 
 <style module lang="scss">

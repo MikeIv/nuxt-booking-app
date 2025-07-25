@@ -1,9 +1,9 @@
 module.exports = {
   extends: [
     '@nuxtjs/eslint-config-typescript',
-    'plugin:prettier/recommended'
+    'plugin:prettier/recommended',
   ],
   rules: {
-    'prettier/prettier': 'warn'
-  }
+    'prettier/prettier': 'warn',
+  },
 }

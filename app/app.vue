@@ -2,7 +2,10 @@
   <div>
     <NuxtLayout>
       <!-- Индикатор загрузки между страницами -->
-      <NuxtLoadingIndicator :color="'#00dc82'" :height="3" />
+      <NuxtLoadingIndicator
+        :color="'#00dc82'"
+        :height="3"
+      />
 
       <NuxtPage />
 
@@ -14,7 +17,7 @@
 
 <script setup>
 useHead({
-  titleTemplate: (title) => title ? `${title} | Varvarka` : 'Varvarka',
+  titleTemplate: title => title ? `${title} | Varvarka` : 'Varvarka',
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -28,7 +31,7 @@ useHead({
   bodyAttrs: {
     class: 'min-h-screen bg-gray-50',
   },
-});
+})
 </script>
 
 <style>
