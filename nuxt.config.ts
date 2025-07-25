@@ -104,13 +104,11 @@ export default defineNuxtConfig({
 
   eslint: {
     config: {
-      // Явно указываем используемые плагины
       plugins: ['vue'],
 
-      // Наследуем рекомендованные конфиги
       extends: [
         'plugin:vue/vue3-recommended',
-        '@nuxt/eslint-config', // Используем базовый конфиг от Nuxt
+        '@nuxt/eslint-config',
       ],
 
       // Настройки стиля
@@ -120,27 +118,22 @@ export default defineNuxtConfig({
         semi: false,
       },
 
-      // Кастомные правила
       rules: {
-        // Vue правила
-        'vue/no-multiple-template-root': 'off', // Отключаем для Vue 3
+        'vue/no-multiple-template-root': 'off',
         'vue/multi-word-component-names': 'warn',
         'vue/attribute-hyphenation': 'warn',
         'vue/v-on-event-hyphenation': 'warn',
 
-        // Основные правила
         'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
         'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
       },
     },
 
-    // Настройки проверки
     checker: {
       lintOnStart: true,
       formatter: 'stylish',
     },
 
-    // Дополнительные опции
     fix: process.env.NODE_ENV === 'development',
     cache: true,
   },
