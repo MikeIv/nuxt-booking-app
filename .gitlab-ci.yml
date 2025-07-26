@@ -4,11 +4,13 @@ stages:
 
 build frontend:
   stage: build
-  image: node:20.19-alpine
+  image: node:20.19-alpine  # Можно попробовать `node:20-alpine` если ошибка останется
   variables:
     VITE_BASE_API_URL: https://varvarka-api.grandfs-develop.ru/api/v1/
+  before_script:  # Добавляем очистку перед установкой
+    - rm -rf node_modules package-lock.json
   script:
-    - npm install
+    - npm install --no-optional  # Игнорируем опциональные зависимости (если проблема с oxc-parser)
     - npm run build
   artifacts:
     paths:
