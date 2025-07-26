@@ -1,3 +1,6 @@
 @use "base/global";
 @use "base/fonts";
 @use "variables/colors";
+
+@use "tailwindcss" as *;
+@use "@nuxt/ui" as *;

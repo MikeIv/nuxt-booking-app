@@ -1,15 +1,15 @@
 <template>
-  <div>
+  <UApp>
     <NuxtLayout>
       <!-- Индикатор загрузки между страницами -->
       <NuxtLoadingIndicator :color="'#00dc82'" :height="3" />
 
       <NuxtPage />
 
-      <!-- Глобальное уведомление для изменения маршрута (для accessibility) -->
+      <!-- Глобальное уведомление для изменения маршрута -->
       <NuxtRouteAnnouncer />
     </NuxtLayout>
-  </div>
+  </UApp>
 </template>
 
 <script setup>

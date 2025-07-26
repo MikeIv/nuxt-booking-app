@@ -1,7 +1,24 @@
 import svgLoader from "vite-svg-loader";
 
 export default defineNuxtConfig({
-  modules: ["@nuxtjs/i18n", "@nuxt/image", "@nuxt/eslint"],
+  modules: [
+    "@nuxt/ui",
+    "@nuxt/image",
+    "@nuxtjs/i18n",
+    "@nuxt/eslint",
+    "@vueuse/nuxt",
+  ],
+
+  ui: {
+    global: true,
+    icons: ["mdi", "simple-icons"],
+    safelistColors: ["primary", "green", "red", "blue"],
+    fonts: {
+      sans: false,
+      mono: false,
+    },
+  },
+
   ssr: false,
 
   components: [
@@ -17,15 +34,20 @@ export default defineNuxtConfig({
       "composables/**",
     ],
   },
-  devtools: { enabled: true },
+  devtools: {
+    enabled: true,
+    timeline: {
+      enabled: true,
+    },
+  },
   css: ["~/assets/styles/main.scss", "~/assets/styles/variables/_z-index.scss"],
 
   routeRules: {
-    "/": { static: true },
-    "/about": { static: true },
-    "/blog/**": { static: true },
-    "/user/**": { ssr: true },
-    "/products/**": { ssr: true },
+    "/": { prerender: true, static: true },
+    "/about": { prerender: true, static: true },
+    "/blog/**": { prerender: true, static: true },
+    "/user/**": { ssr: false, swr: 3600 },
+    "/products/**": { ssr: false, swr: 3600 },
     "/news": { swr: 3600 },
     "/old-page": { redirect: "/new-page" },
     "/assets/**": {
@@ -37,19 +59,24 @@ export default defineNuxtConfig({
   },
 
   devServer: {
-    https: false, // Ускоряет запуск в development
+    https: false,
   },
 
-  // Отключение ненужных функций
   features: {
-    devLogs: false, // В production
+    devLogs: false,
   },
   experimental: {
-    payloadExtraction: true, // Извлечение критического CSS
+    payloadExtraction: true,
+    componentIslands: true,
+    viewTransition: true,
   },
   compatibilityDate: "2025-07-15",
   nitro: {
     static: true,
+    compressPublicAssets: {
+      gzip: true,
+      brotli: true,
+    },
     routeRules: {
       "/**": {
         headers: {
@@ -66,25 +93,26 @@ export default defineNuxtConfig({
     build: {
       target: "esnext",
       minify: "esbuild",
+      cssMinify: true,
       terserOptions: {
         compress: {
           drop_console: process.env.NODE_ENV === "production",
+          drop_debugger: true,
         },
       },
       chunkSizeWarningLimit: 1600,
-    },
-    define: {
-      "process.env.NODE_ENV": JSON.stringify(
-        process.env.NODE_ENV || "production",
-      ),
-    },
-    server: {
-      fs: {
-        strict: true, // Запрещает доступ к файлам вне корня проекта
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vue: ["vue", "pinia", "vue-router"],
+            ui: ["@nuxt/ui", "@headlessui/vue"],
+          },
+        },
       },
     },
-    plugins: [svgLoader()],
+    plugins: [svgLoader({ svgo: false })],
     css: {
+      devSourcemap: true,
       modules: {
         generateScopedName: "[name]__[local]___[hash:base64:5]",
       },
@@ -168,15 +196,24 @@ export default defineNuxtConfig({
           quality: 80,
         },
       },
+      avatar: {
+        modifiers: {
+          fit: "cover",
+          width: 50,
+          height: 50,
+          format: "webp",
+        },
+      },
     },
+    format: ["webp"],
+    provider: "ipx",
     screens: {
       xs: 320,
       sm: 640,
       md: 768,
       lg: 1024,
       xl: 1280,
+      xxl: 1536,
     },
-    format: ["webp", "avif"],
-    provider: "ipx",
   },
 });
