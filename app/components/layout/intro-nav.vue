@@ -1,20 +1,38 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  const { desktopImages, mobileImages, loadImages } = useBackgroundSlider();
+
+  await loadImages();
+</script>
 
 <template>
-  <section :class="$style.introNav">Навигация на главной</section>
+  <section :class="$style.introNav">
+    <CoreBackgroundSlider
+      :images="desktopImages"
+      :mobile-images="mobileImages"
+    />
+
+    <div :class="$style.content">
+      <HeaderIntroBlock />
+    </div>
+  </section>
 </template>
 
 <style module lang="scss">
+  @use "~/assets/styles/variables/z-index" as z;
+
   .introNav {
-    position: absolute;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    margin-top: clamp(60px, 8vw, 95px);
+    overflow: hidden;
+  }
+
+  .content {
+    position: relative;
+    z-index: z.z("intro");
+    height: 100%;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: calc(100vh - 95px);
-    margin-top: clamp(60px, 8vw, 95px);
-    background-size: cover;
-    background-color: var(--a-btnAccentBg);
-    -webkit-animation: opacity 3s ease-out forwards;
-    animation: opacity 3s ease-out forwards;
   }
 </style>

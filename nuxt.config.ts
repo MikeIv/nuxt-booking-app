@@ -10,13 +10,25 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
   ],
 
+  googleFonts: {
+    families: {
+      "Playfair+Display": [400, 500, 600, 700],
+      // Можно добавить другие шрифты
+    },
+    display: "swap",
+  },
+
   ui: {
     global: true,
     icons: ["mdi", "simple-icons"],
-    safelistColors: ["primary", "green", "red", "blue"],
+    safelistColors: ["primary"],
     fonts: {
-      sans: false,
+      sans: "var(--system-font)",
       mono: false,
+    },
+    colors: {
+      primary: "primary",
+      secondary: "secondary",
     },
   },
 
