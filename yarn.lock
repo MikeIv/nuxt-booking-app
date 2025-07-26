@@ -6673,7 +6673,7 @@ nuxt-define@^1.0.0:
 
 nuxt@^4.0.1:
   version "4.0.1"
-  resolved "https://registry.npmjs.org/nuxt/-/nuxt-4.0.1.tgz"
+  resolved "https://registry.yarnpkg.com/nuxt/-/nuxt-4.0.1.tgz#2673f1fa16b41d7b83063fc0581452db803a9656"
   integrity sha512-1WbtiX127640PXUJ2Mb32ck0A0/hzBk6+oPQ0YvJnS/HZK3A/oJEW7sYCRPYyEBwUyIQk12QRCBHxmr6LLeXZQ==
   dependencies:
     "@nuxt/cli" "^3.26.4"

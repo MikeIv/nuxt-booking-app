@@ -90,6 +90,10 @@ export default defineNuxtConfig({
     },
   },
 
+  build: {
+    transpile: ["@nuxt/ui", "truncate-html"],
+  },
+
   vite: {
     build: {
       target: "esnext",
@@ -106,10 +110,13 @@ export default defineNuxtConfig({
         output: {
           manualChunks: {
             vue: ["vue", "pinia", "vue-router"],
-            ui: ["@nuxt/ui", "@headlessui/vue"],
+            ui: ["@headlessui/vue", "heroicons/vue"],
           },
         },
       },
+    },
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
     },
     plugins: [svgLoader({ svgo: false })],
     css: {
@@ -216,5 +223,10 @@ export default defineNuxtConfig({
       xl: 1280,
       xxl: 1536,
     },
+  },
+
+  optimizeDeps: {
+    include: ["@headlessui/vue", "truncate-html"],
+    exclude: ["@nuxt/ui"],
   },
 });
