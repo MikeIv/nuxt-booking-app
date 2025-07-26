@@ -19,7 +19,7 @@
     <h1 v-if="error.statusCode === 404">Page not found</h1>
     <h1 v-else>An error occurred</h1>
     <p>{{ error.message }}</p>
-    <button @click="handleError">Go back home</button>
+    <button :class="$style.button" @click="handleError">Go back home</button>
   </div>
 </template>
 
@@ -30,5 +30,12 @@
     justify-content: center;
     text-align: center;
     padding: rem(32);
+  }
+  .button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    padding: rem(16);
   }
 </style>
