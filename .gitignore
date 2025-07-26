@@ -17,8 +17,8 @@ logs
 .DS_Store
 .fleet
 .idea
-.yarn.lock
-.package-lock.json
+yarn.lock
+package-lock.json
 
 # Local env files
 .env
