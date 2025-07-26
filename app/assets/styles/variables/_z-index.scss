@@ -10,7 +10,7 @@ $z-index: (
   header: 3000,
   footer: 2000,
   default: 1,
-  behind: -1
+  behind: -1,
 );
 
 @function z($keys...) {

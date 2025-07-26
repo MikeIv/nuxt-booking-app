@@ -1,16 +1,34 @@
 <script setup lang="ts">
-import type { NuxtError } from '#app'
+  import type { NuxtError } from "#app";
 
-const props = defineProps({
-  error: Object as () => NuxtError,
-})
+  const props = defineProps({
+    error: {
+      type: Object as () => NuxtError,
+      required: false,
+      default: undefined,
+    },
+  });
 
-console.log('Error', props.error)
+  const handleError = () => clearError({ redirect: "/" });
+
+  console.log("Error", props.error);
 </script>
 
 <template>
-  <div>
-    <h1>{{ error.statusCode }}</h1>
-    <NuxtLink to="/">Go back home</NuxtLink>
+  <div :class="$style.container">
+    <h1 v-if="error.statusCode === 404">Page not found</h1>
+    <h1 v-else>An error occurred</h1>
+    <p>{{ error.message }}</p>
+    <button @click="handleError">Go back home</button>
   </div>
 </template>
+
+<style module lang="scss">
+  .container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: rem(32);
+  }
+</style>
