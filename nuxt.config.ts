@@ -41,7 +41,11 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
-  css: ["~/assets/styles/main.scss", "~/assets/styles/variables/_z-index.scss"],
+  css: [
+    "~/assets/styles/main.scss",
+    "~/assets/styles/variables/_z-index.scss",
+    "~/assets/styles/variables/_colors.scss",
+  ],
 
   routeRules: {
     "/": { prerender: true, static: true },
@@ -110,7 +114,7 @@ export default defineNuxtConfig({
         output: {
           manualChunks: {
             vue: ["vue", "pinia", "vue-router"],
-            ui: ["@headlessui/vue", "heroicons/vue"],
+            ui: ["@headlessui/vue"],
           },
         },
       },
