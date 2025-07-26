@@ -8,13 +8,11 @@ build frontend:
   variables:
     VITE_BASE_API_URL: https://varvarka-api.grandfs-develop.ru/api/v1/
   before_script:
-    - rm -rf node_modules package-lock.json .npmrc
+    - rm -rf node_modules package-lock.json
     - npm cache clean --force
-    - npm install -g yarn
-    - yarn config set ignore-engines true
   script:
-    - yarn install
-    - yarn build
+    - npm install
+    - npm run build
   artifacts:
     paths:
       - public
