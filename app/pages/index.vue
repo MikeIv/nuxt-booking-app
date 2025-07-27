@@ -5,11 +5,23 @@
 </script>
 
 <template>
-  <h1 :class="$style.header">Стартовая страница</h1>
+  <div :class="$style.main">
+    <PagesMainIntro />
+    <!-- Блоки с якорями -->
+    <PagesMainAccommodation anchor-id="accommodation" />
+    <PagesMainRestaurants anchor-id="restaurants" />
+    <PagesMainEvents anchor-id="events" />
+    <PagesMainSpa anchor-id="spa" />
+    <PagesMainEntertainment anchor-id="entertainment" />
+    <PagesMainConstruction anchor-id="construction" />
+  </div>
 </template>
 
 <style module lang="scss">
-  .header {
-    color: red;
+  .main {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
   }
 </style>

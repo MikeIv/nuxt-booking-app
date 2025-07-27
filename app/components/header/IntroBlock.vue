@@ -1,19 +1,28 @@
 <script setup lang="ts">
-  const knocker = new URL("~/assets/images/knocker.png", import.meta.url).href;
+  const { isVisible } = useVisibility(500);
 </script>
 
 <template>
   <section :class="$style.content">
     <h1 :class="$style.title">
-      Многофункциональный гостиничный <br />комплекс «РОССИЯ»
+      Многофункциональный гостиничный
+      <br />
+      комплекс «РОССИЯ»
     </h1>
     <p :class="$style.subtitle">coming soon</p>
-    <NuxtImg :src="knocker" alt="узор" :class="$style.image" />
-    <div :class="$style.textBlock">
+    <img
+      src="/images/knocker.png"
+      srcset="/images/knocker.png 1x, /images/knocker.png 2x"
+      alt="узор"
+      :class="$style.image"
+    />
+    <div :class="[$style.textBlock, { [$style.visible]: isVisible }]">
       <p :class="$style.text">гостиница класса люкс</p>
       <p :class="$style.text">премиальный СПА</p>
       <p :class="$style.text">
-        апартаменты класса люкс <br />с видом на Кремль
+        апартаменты класса люкс
+        <br />
+        с видом на Кремль
       </p>
     </div>
   </section>
@@ -21,6 +30,7 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/z-index" as z;
+  @use "~/assets/styles/variables/resolutions" as size;
 
   .content {
     position: relative;
@@ -40,6 +50,7 @@
     font-size: clamp(30px, 4vw, 60px);
     color: var(--a-white);
     text-align: center;
+    user-select: none;
   }
   .subtitle {
     font-family: "Futura PT", sans-serif;
@@ -48,6 +59,7 @@
     text-align: center;
     letter-spacing: rem(7);
     text-transform: uppercase;
+    user-select: none;
   }
 
   .image {
@@ -61,11 +73,25 @@
   }
 
   .textBlock {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: grid;
+    gap: rem(20);
     align-items: center;
-    row-gap: rem(20);
+    justify-items: center;
+    grid-auto-flow: row;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 0.8s ease-out,
+      transform 0.6s ease-out;
+  }
+
+  @media (min-width: #{size.$tabletMax}) {
+    .textBlock {
+      grid-auto-flow: column;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      margin-top: rem(80);
+    }
   }
 
   .text {
@@ -75,5 +101,11 @@
     text-align: center;
     text-transform: uppercase;
     letter-spacing: rem(4);
+    user-select: none;
+  }
+
+  .visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>

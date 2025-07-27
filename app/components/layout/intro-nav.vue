@@ -12,6 +12,7 @@
     />
 
     <div :class="$style.content">
+      <HeaderNavBlock />
       <HeaderIntroBlock />
     </div>
   </section>
@@ -19,12 +20,14 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/z-index" as z;
+  @use "~/assets/styles/variables/resolutions" as size;
 
   .introNav {
     position: relative;
     width: 100%;
     height: 100vh;
     margin-top: clamp(60px, 8vw, 95px);
+    padding: clamp(12px, 4vw, 30px);
     overflow: hidden;
   }
 
