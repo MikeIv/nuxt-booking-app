@@ -61,6 +61,7 @@
   .layout {
     width: 100%;
     margin: 0 auto;
+    margin-bottom: clamp(50px, 10vw, 100px);
   }
 
   .content {
@@ -78,7 +79,7 @@
   @media (min-width: #{size.$tabletMax}) {
     .contentTwoColumns {
       flex-direction: row;
-      align-items: center;
+      width: 100%;
     }
   }
 </style>

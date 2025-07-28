@@ -16,20 +16,39 @@
 
   const currentIndex = ref(0);
   const isMounted = ref(false);
+  const timer = ref<NodeJS.Timeout | null>(null);
 
   const startSlider = () => {
-    const timer = setInterval(() => {
-      currentIndex.value =
-        (currentIndex.value + 1) % Math.max(1, props.images.length);
-    }, props.interval);
+    // Очищаем предыдущий таймер, если он есть
+    if (timer.value) {
+      clearInterval(timer.value);
+    }
 
-    onBeforeUnmount(() => clearInterval(timer));
+    // Запускаем новый таймер только если есть изображения
+    if (props.images.length > 0) {
+      timer.value = setInterval(() => {
+        currentIndex.value = (currentIndex.value + 1) % props.images.length;
+      }, props.interval);
+    }
   };
+
+  // Автоматически перезапускаем слайдер при изменении пропсов
+  watch(
+    () => [props.images, props.interval],
+    () => {
+      startSlider();
+    },
+    { immediate: true },
+  );
 
   onMounted(() => {
     isMounted.value = true;
-    if (props.images.length > 0) {
-      startSlider();
+    startSlider();
+  });
+
+  onBeforeUnmount(() => {
+    if (timer.value) {
+      clearInterval(timer.value);
     }
   });
 </script>
@@ -43,20 +62,8 @@
         :src="image"
         :class="[$style.slideImage, $style.desktopImage]"
         :style="{
-          opacity:
-            currentIndex === index
-              ? 1
-              : currentIndex - 1 === index ||
-                  (currentIndex === 0 && index === props.images.length - 1)
-                ? 0.5
-                : 0,
-          zIndex:
-            currentIndex === index
-              ? 2
-              : currentIndex - 1 === index ||
-                  (currentIndex === 0 && index === props.images.length - 1)
-                ? 1
-                : 0,
+          opacity: currentIndex === index ? 1 : 0,
+          zIndex: currentIndex === index ? 2 : 0,
           transition: 'opacity 1.5s ease-in-out',
         }"
         :alt="`Slide ${index + 1}`"
@@ -74,22 +81,8 @@
         :src="image"
         :class="[$style.slideImage, $style.mobileImage]"
         :style="{
-          opacity:
-            currentIndex === index
-              ? 1
-              : currentIndex - 1 === index ||
-                  (currentIndex === 0 &&
-                    index === props.mobileImages.length - 1)
-                ? 0.5
-                : 0,
-          zIndex:
-            currentIndex === index
-              ? 2
-              : currentIndex - 1 === index ||
-                  (currentIndex === 0 &&
-                    index === props.mobileImages.length - 1)
-                ? 1
-                : 0,
+          opacity: currentIndex === index ? 1 : 0,
+          zIndex: currentIndex === index ? 2 : 0,
           transition: 'opacity 1.5s ease-in-out',
         }"
         :alt="`Slide ${index + 1}`"
@@ -106,6 +99,7 @@
     left: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
   }
 
   .slideImage {
@@ -116,6 +110,7 @@
     height: 100%;
     object-fit: cover;
     opacity: 0;
+    transition: opacity 1.5s ease-in-out;
 
     &.desktopImage {
       display: block;

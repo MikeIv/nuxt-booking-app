@@ -19,6 +19,7 @@ export default defineNuxtConfig({
   },
 
   ui: {
+    tailwind: false,
     global: true,
     icons: ["mdi", "simple-icons"],
     safelistColors: ["primary"],
@@ -27,8 +28,9 @@ export default defineNuxtConfig({
       mono: false,
     },
     colors: {
-      primary: "primary",
-      secondary: "secondary",
+      primary: "#bf9d7c",
+      secondary: "#686062",
+      success: "#7dbf8a",
     },
   },
 
@@ -58,6 +60,12 @@ export default defineNuxtConfig({
     "~/assets/styles/variables/_z-index.scss",
     "~/assets/styles/variables/_colors.scss",
   ],
+  postcss: {
+    plugins: {
+      "@tailwindcss/postcss": {},
+      autoprefixer: {},
+    },
+  },
 
   routeRules: {
     "/": { prerender: true, static: true },

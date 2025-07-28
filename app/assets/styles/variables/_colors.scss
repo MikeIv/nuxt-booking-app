@@ -1,6 +1,43 @@
 :root {
-  --primary: #c2a283;
-  --secondary: #bf9d7c;
+  --primary: #bf9d7c;
+  --secondary: #686062;
+  --success: #7dbf8a;
+
+  --ui-color-primary-50: #f9f6f3;
+  --ui-color-primary-100: #f2ece2;
+  --ui-color-primary-200: #e3d6c5;
+  --ui-color-primary-300: #d1bba0;
+  --ui-color-primary-400: #bf9d7c;
+  --ui-color-primary-500: #b0835f;
+  --ui-color-primary-600: #a37153;
+  --ui-color-primary-700: #885c46;
+  --ui-color-primary-800: #6e4c3e;
+  --ui-color-primary-900: #5a4034;
+  --ui-color-primary-950: #30201a;
+
+  --ui-color-secondary-50: #f3f3f3;
+  --ui-color-secondary-100: #e2dfdf;
+  --ui-color-secondary-200: #c6c2c2;
+  --ui-color-secondary-300: #a69e9e;
+  --ui-color-secondary-400: #8c8384;
+  --ui-color-secondary-500: #7e7476;
+  --ui-color-secondary-600: #686062;
+  --ui-color-secondary-700: #575153;
+  --ui-color-secondary-800: #4c4749;
+  --ui-color-secondary-900: #434042;
+  --ui-color-secondary-950: #252324;
+
+  --ui-color-success-50: #f0f9f1;
+  --ui-color-success-100: #dcefdd;
+  --ui-color-success-200: #bbdfbf;
+  --ui-color-success-300: #7dbf8a;
+  --ui-color-success-400: #5ea970;
+  --ui-color-success-500: #3c8d51;
+  --ui-color-success-600: #2b703f;
+  --ui-color-success-700: #225a33;
+  --ui-color-success-800: #1d482b;
+  --ui-color-success-900: #193b24;
+  --ui-color-success-950: #0d2114;
 
   // Base
   --a-white: #fff;
@@ -8,7 +45,8 @@
   --a-base: #bf9d7c;
 
   // Typography
-  --a-mainText: #1c1c1b;
+  --ui-text: #bf9d7c;
+  --ui-color-primary-600: #bf9d7c;
 
   // Background
   --a-whiteBg: #fff;

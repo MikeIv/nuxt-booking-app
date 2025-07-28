@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  const { desktopImages, mobileImages, loadImages } = useBackgroundSlider();
-
-  await loadImages();
+  const { useImages } = useImageLoader();
+  const desktopImages = useImages("images/intro/bg-slider");
+  const mobileImages = useImages("images/intro/bg-slider/mob");
+  console.log("desktopImages", desktopImages);
 </script>
 
 <template>
