@@ -1,8 +1,7 @@
 <script setup lang="ts">
   import { gsap } from "gsap";
-  import { useI18n } from "vue-i18n";
-
-  const { t, te } = useI18n();
+  import Telegram from "~/assets/images/telegram.svg";
+  import Vk from "~/assets/images/vk.svg";
 
   const props = defineProps({
     isOpen: {
@@ -58,13 +57,22 @@
     );
   };
 
-  const safeTranslate = (key: string) => {
-    return te(key) ? t(key) : key;
-  };
-
   const handleLinkClick = () => {
     emit("close");
   };
+
+  const socialLinks = [
+    {
+      url: "https://t.me/ithumor",
+      icon: Telegram,
+      // text: "Telegram",
+    },
+    {
+      url: "https://vk.com/feed",
+      icon: Vk,
+      // text: "ВКонтакте",
+    },
+  ];
 </script>
 
 <template>
@@ -76,15 +84,8 @@
   >
     <div v-if="isOpen" :class="$style.menuOverlay" :style="menuStyles">
       <div :class="$style.menuContent">
-        <a
-          v-for="link in links"
-          :key="link.url"
-          :href="link.url"
-          :class="$style.menuLink"
-          @click="handleLinkClick"
-        >
-          {{ safeTranslate(link.text) }}
-        </a>
+        <HeaderNavLinks :links="links" @link-click="handleLinkClick" />
+        <CoreSocialLinks :links="socialLinks" direction="horizontal" />
       </div>
     </div>
   </Transition>
@@ -99,7 +100,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--bg-color);
+    background-color: var(--a-whiteBg);
     z-index: z.z("modal", "nav-menu");
     overflow-y: hidden;
     transform: translateY(-100%);
@@ -107,29 +108,12 @@
   }
 
   .menuContent {
-    padding: rem(32);
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     gap: rem(24);
     min-height: calc(100vh - #{rem(70)});
-  }
-
-  .menuLink {
-    font-size: rem(24);
-    color: var(--a-base);
-    text-decoration: none;
-    transition:
-      color 0.3s ease,
-      transform 0.2s ease;
-    display: inline-block;
-
-    &:hover {
-      color: var(--a-accent);
-      transform: translateX(rem(5));
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
+    padding: rem(32);
   }
 </style>

@@ -1,7 +1,17 @@
 <script setup lang="ts"></script>
 
 <template>
-  <h1>Заголовок</h1>
+  <section :class="$style.section">
+    <LayoutAside />
+  </section>
 </template>
 
-<style scoped></style>
+<style module lang="scss">
+  .section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: 1920px;
+    overflow: hidden;
+  }
+</style>

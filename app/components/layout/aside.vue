@@ -38,6 +38,10 @@
   const menuLinks = computed(() => [
     { url: "/", text: t("home") },
     { url: "/about", text: t("about") },
+    { url: "/hotel", text: t("hotel") },
+    { url: "/services", text: t("services") },
+    { url: "/gallery", text: t("gallery") },
+    { url: "/construction", text: t("construction") },
     { url: "/contacts", text: t("contacts") },
   ]);
 

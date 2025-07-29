@@ -1,5 +1,9 @@
 {
   "home": "Home",
   "about": "About",
+  "hotel": "Hotel",
+  "services": "Services",
+  "gallery": "Gallery",
+  "construction": "Construction",
   "contacts": "Contacts"
 }

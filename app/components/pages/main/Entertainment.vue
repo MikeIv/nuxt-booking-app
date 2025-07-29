@@ -35,7 +35,6 @@
         />
       </div>
     </template>
-    <template #right-column />
   </LayoutContentBlock>
 </template>
 
