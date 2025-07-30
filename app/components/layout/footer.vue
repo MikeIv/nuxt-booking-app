@@ -23,14 +23,27 @@
               <NuxtLink to="/" :class="$style.navLink">Главная</NuxtLink>
             </li>
             <li :class="$style.navItem">
-              <NuxtLink to="/about" :class="$style.navLink">О проекте</NuxtLink>
+              <a
+                href="http://varvarkan.grandfs.ru/about.php"
+                :class="$style.navLink"
+                target="_blank"
+                >О проекте</a
+              >
             </li>
             <li :class="$style.navItem">
-              <NuxtLink to="/hotel" :class="$style.navLink">Отель</NuxtLink>
+              <a
+                href="http://varvarkan.grandfs.ru/hotel.php"
+                :class="$style.navLink"
+                target="_blank"
+                >Отель</a
+              >
             </li>
             <li :class="$style.navItem">
-              <NuxtLink to="/services" :class="$style.navLink"
-                >Сервисы</NuxtLink
+              <a
+                href="http://varvarkan.grandfs.ru/service.php"
+                :class="$style.navLink"
+                target="_blank"
+                >Сервисы</a
               >
             </li>
           </ul>
@@ -38,17 +51,28 @@
         <nav :class="$style.cell2">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
-              <NuxtLink to="/gallery" :class="$style.navLink">Галерея</NuxtLink>
-            </li>
-            <li :class="$style.navItem">
-              <NuxtLink to="/construction" :class="$style.navLink"
-                >Этапы строительства</NuxtLink
+              <a
+                href="http://varvarkan.grandfs.ru/gallery.php"
+                :class="$style.navLink"
+                target="_blank"
+                >Галерея</a
               >
             </li>
             <li :class="$style.navItem">
-              <NuxtLink to="/contacts" :class="$style.navLink"
-                >Контакты
-              </NuxtLink>
+              <a
+                href="http://varvarkan.grandfs.ru/construction-progress.php"
+                :class="$style.navLink"
+                target="_blank"
+                >Этапы строительства</a
+              >
+            </li>
+            <li :class="$style.navItem">
+              <a
+                href="http://varvarkan.grandfs.ru/contacts.php"
+                :class="$style.navLink"
+                target="_blank"
+                >Контакты</a
+              >
             </li>
           </ul>
         </nav>

@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     "@nuxt/eslint",
     "@vueuse/nuxt",
     "@pinia/nuxt",
+    "@nuxt/icon",
   ],
 
   googleFonts: {
@@ -19,19 +20,40 @@ export default defineNuxtConfig({
   },
 
   ui: {
-    tailwind: false,
+    // tailwind: false,
     global: true,
     icons: ["mdi", "simple-icons"],
-    safelistColors: ["primary"],
     fonts: {
       sans: "var(--system-font)",
       mono: false,
     },
-    colors: {
-      primary: "#bf9d7c",
-      secondary: "#686062",
-      success: "#7dbf8a",
+    theme: {
+      colors: [
+        "primary",
+        "secondary",
+        "info",
+        "success",
+        "warning",
+        "error",
+        "bgAccent",
+        "bgDark",
+      ],
     },
+    button: {
+      padding: {
+        xs: "px-3 py-1.5",
+        sm: "px-3 py-1.5",
+        md: "px-4 py-2",
+      },
+    },
+  },
+  icon: {
+    customCollections: [
+      {
+        prefix: "uil",
+        dir: "./app/assets/icons",
+      },
+    ],
   },
 
   ssr: false,

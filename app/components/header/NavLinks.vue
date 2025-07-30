@@ -54,6 +54,7 @@
         :key="link.url"
         :href="link.url"
         :class="$style.menuLink"
+        target="_blank"
         @click="handleLinkClick"
       >
         {{ safeTranslate(link.text) }}

@@ -37,12 +37,15 @@
 
   const menuLinks = computed(() => [
     { url: "/", text: t("home") },
-    { url: "/about", text: t("about") },
-    { url: "/hotel", text: t("hotel") },
-    { url: "/services", text: t("services") },
-    { url: "/gallery", text: t("gallery") },
-    { url: "/construction", text: t("construction") },
-    { url: "/contacts", text: t("contacts") },
+    { url: "http://varvarkan.grandfs.ru/about.php", text: t("about") },
+    { url: "http://varvarkan.grandfs.ru/hotel.php", text: t("hotel") },
+    { url: "http://varvarkan.grandfs.ru/service.php", text: t("services") },
+    { url: "http://varvarkan.grandfs.ru/gallery.php", text: t("gallery") },
+    {
+      url: "http://varvarkan.grandfs.ru/construction-progress.php",
+      text: t("construction"),
+    },
+    { url: "http://varvarkan.grandfs.ru/contacts.php", text: t("contacts") },
   ]);
 
   const asideRef = ref<HTMLElement | null>(null);
@@ -75,6 +78,12 @@
     </button>
 
     <div :class="$style.rightGroup">
+      <UButton color="bgAccent" class="text-white px-4 py-2" size="sm">
+        Забронировать
+      </UButton>
+      <UButton color="bgDark" class="text-white px-4 py-2" size="sm">
+        Войти
+      </UButton>
       <button :class="$style.langButton" @click="toggleLanguage">
         {{ locale === "ru" ? "ENG" : "RU" }}
       </button>

@@ -6,14 +6,16 @@
 
 <template>
   <div :class="$style.main">
-    <PagesMainIntro />
+    <MainIntro />
+    <!-- Блоки бронирования -->
+    <Booking />
     <!-- Блоки с якорями -->
-    <PagesMainAccommodation anchor-id="accommodation" />
-    <PagesMainRestaurants anchor-id="restaurants" />
-    <PagesMainEvents anchor-id="events" />
-    <PagesMainSpa anchor-id="spa" />
-    <PagesMainEntertainment anchor-id="entertainment" />
-    <PagesMainConstruction anchor-id="construction" />
+    <MainAccommodation anchor-id="accommodation" />
+    <MainRestaurants anchor-id="restaurants" />
+    <MainEvents anchor-id="events" />
+    <MainSpa anchor-id="spa" />
+    <MainEntertainment anchor-id="entertainment" />
+    <MainConstruction anchor-id="construction" />
   </div>
 </template>
 

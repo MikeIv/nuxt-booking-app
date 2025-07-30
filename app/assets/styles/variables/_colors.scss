@@ -2,6 +2,11 @@
   --primary: #bf9d7c;
   --secondary: #686062;
   --success: #7dbf8a;
+  --info: #a02525;
+
+  --ui-bgAccent: #a02525;
+  --ui-bgDark: var(--a-black);
+  --ui-bg: var(--a-white);
 
   --ui-color-primary-50: #f9f6f3;
   --ui-color-primary-100: #f2ece2;
@@ -45,8 +50,8 @@
   --a-base: #bf9d7c;
 
   // Typography
-  --ui-text: #bf9d7c;
-  --ui-color-primary-600: #bf9d7c;
+  --ui-text: var(--a-white);
+  --ui-icon: #a9a9a9;
 
   // Background
   --a-whiteBg: #fff;
