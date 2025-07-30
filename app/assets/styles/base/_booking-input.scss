@@ -1,0 +1,49 @@
+@use "~/assets/styles/tools/functions" as *;
+
+.inputWrapper {
+  position: relative;
+  width: 200px;
+}
+
+.customInput {
+  width: 100%;
+  height: rem(44);
+  padding: 12px 30px 0 12px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #111827;
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+}
+
+.placeholder {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  font-size: 11px;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.calendarIcon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  width: 18px;
+  height: 18px;
+}
+
+.clearButton {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}

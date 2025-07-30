@@ -1,6 +1,5 @@
 <script setup lang="ts">
   const date = ref<string>();
-  const popover = ref(false);
   const guestsPopover = ref(false);
   const guests = ref({
     rooms: 1,
@@ -13,49 +12,7 @@
 <template>
   <section :class="$style.wrapper">
     <div :class="$style.form">
-      <UPopover
-        v-model:open="popover"
-        :dismissible="false"
-        :ui="{
-          content: 'w-[var(--calendar-width)] p-4',
-          width: 'w-[var(--calendar-width)]',
-        }"
-      >
-        <div :class="$style.inputWrapper">
-          <input
-            v-model="date"
-            readonly
-            :class="$style.customInput"
-            placeholder=" "
-            @click="popover = true"
-          />
-          <span :class="$style.placeholder">Заезд — выезд</span>
-          <UIcon name="uil:calendar-alt" :class="$style.calendarIcon" />
-          <template v-if="date">
-            <UButton
-              color="gray"
-              variant="link"
-              size="xs"
-              icon="i-lucide-circle-x"
-              aria-label="Clear input"
-              :class="$style.clearButton"
-              @click.stop="date = ''"
-            />
-          </template>
-        </div>
-
-        <template #content>
-          <UCalendar
-            v-model="date"
-            size="xl"
-            :ui="{
-              wrapper: 'w-[var(--calendar-width)]',
-              base: 'w-full',
-            }"
-            @update:model-value="popover = false"
-          />
-        </template>
-      </UPopover>
+      <CoreDatePicker v-model="date" />
 
       <UPopover v-model:open="guestsPopover">
         <div :class="$style.inputWrapper">
