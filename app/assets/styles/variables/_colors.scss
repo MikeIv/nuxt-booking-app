@@ -6,7 +6,7 @@
 
   --ui-bgAccent: #a02525;
   --ui-bgDark: var(--a-black);
-  --ui-bg: var(--a-white);
+  //  --ui-bg: var(--a-white);
 
   --ui-color-primary-50: #f9f6f3;
   --ui-color-primary-100: #f2ece2;
@@ -43,6 +43,8 @@
   --ui-color-success-800: #1d482b;
   --ui-color-success-900: #193b24;
   --ui-color-success-950: #0d2114;
+
+  --ui-placeholder: #0d2114;
 
   // Base
   --a-white: #fff;
