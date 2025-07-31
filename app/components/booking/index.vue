@@ -49,6 +49,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap;
     gap: rem(20);
     max-width: size.$desktop;
     min-width: rem(400);
