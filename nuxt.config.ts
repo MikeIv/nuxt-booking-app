@@ -50,7 +50,7 @@ export default defineNuxtConfig({
   icon: {
     customCollections: [
       {
-        prefix: "uil",
+        prefix: "",
         dir: "./app/assets/icons",
       },
     ],

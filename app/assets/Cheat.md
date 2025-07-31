@@ -28,3 +28,13 @@
 z-index: z.z("intro");
 ```
 </div>
+
+### UIcon
+
+<span style="color:#f56200">Пример</span>
+<div style="font-size: 1.4em;">
+
+```vue
+<UIcon v-if="hidenIcon" name="i-calendar" class="calendarIcon" />
+```
+</div>

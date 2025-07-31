@@ -159,7 +159,7 @@
     min-height: rem(50);
     padding: rem(24) rem(28);
     background-color: var(--primary);
-    border-radius: rem(8);
+    border-radius: rem(16);
   }
 
   .input {
