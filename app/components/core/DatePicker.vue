@@ -100,6 +100,7 @@
   .date-range-picker {
     position: relative;
     display: flex;
+    width: 100%;
     padding: 0;
     font-family: "Inter", sans-serif;
 
@@ -134,11 +135,11 @@
     }
 
     & .dp__input_wrap {
+      position: relative;
       display: flex;
       width: 100%;
       height: rem(67);
       color: var(--a-mainText);
-      position: relative;
     }
 
     & .dp__outer_menu_wrap {
@@ -146,15 +147,15 @@
     }
 
     & .dp__input {
+      position: relative;
       display: flex;
-      width: 100%;
+      width: rem(366);
       padding: rem(22) rem(36) rem(2) rem(12);
       font-family: "Inter", sans-serif;
       font-size: rem(16);
       border: none;
       border-radius: rem(16);
       background-color: var(--a-white);
-      position: relative;
 
       &:hover {
         border-color: var(--a-borderAccent);
