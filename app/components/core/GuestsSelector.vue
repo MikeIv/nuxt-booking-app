@@ -1,15 +1,13 @@
 <script setup lang="ts">
-  const props = defineProps({
-    modelValue: {
-      type: Object,
-      required: true,
-      default: () => ({
-        rooms: null,
-        adults: null,
-        children: null,
-      }),
-    },
-  });
+  interface GuestData {
+    rooms: number | null;
+    adults: number | null;
+    children: number | null;
+  }
+
+  const props = defineProps<{
+    modelValue: GuestData;
+  }>();
 
   const emit = defineEmits(["update:modelValue"]);
 
@@ -17,13 +15,12 @@
 
   const guests = computed({
     get: () => props.modelValue,
-    set: (value) => emit("update:modelValue", value),
+    set: (value: GuestData) => emit("update:modelValue", value),
   });
-
-  function updateGuests(key: "rooms" | "adults" | "children", delta: number) {
+  function updateGuests(key: keyof GuestData, delta: number) {
     guests.value = {
       ...guests.value,
-      [key]: Math.max(0, guests.value[key] + delta),
+      [key]: Math.max(0, (guests.value[key] ?? 0) + delta),
     };
   }
 </script>
@@ -39,31 +36,32 @@
         @click="guestsPopover = true"
       />
       <span :class="$style.label">Гости</span>
-      <UIcon
-        name="i-heroicons-chevron-down-20-solid"
-        :class="$style.calendarIcon"
-      />
+      <UIcon name="i-chevron-down" :class="$style.chevronIcon" />
     </div>
 
     <template #content>
       <div :class="$style.guestsDropdown">
         <div :class="$style.guestOption">
-          <span>Номера</span>
+          <span :class="$style.name">Номера</span>
           <div :class="$style.counter">
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               :disabled="guests.rooms <= 1"
               @click="updateGuests('rooms', -1)"
             >
               -
             </UButton>
-            <span>{{ guests.rooms }}</span>
+            <span :class="$style.count">{{ guests.rooms }}</span>
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               @click="updateGuests('rooms', 1)"
             >
               +
@@ -72,22 +70,26 @@
         </div>
 
         <div :class="$style.guestOption">
-          <span>Количество взрослых</span>
+          <span :class="$style.name">Количество взрослых</span>
           <div :class="$style.counter">
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               :disabled="guests.adults <= 0"
               @click="updateGuests('adults', -1)"
             >
               -
             </UButton>
-            <span>{{ guests.adults }}</span>
+            <span :class="$style.count">{{ guests.adults }}</span>
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               @click="updateGuests('adults', 1)"
             >
               +
@@ -96,22 +98,26 @@
         </div>
 
         <div :class="$style.guestOption">
-          <span>Дети (до 12 лет)</span>
+          <span :class="$style.name">Дети (до 12 лет)</span>
           <div :class="$style.counter">
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               :disabled="guests.children <= 0"
               @click="updateGuests('children', -1)"
             >
               -
             </UButton>
-            <span>{{ guests.children }}</span>
+            <span :class="$style.count">{{ guests.children }}</span>
             <UButton
               size="xs"
-              color="gray"
-              variant="outline"
+              color="primary"
+              variant="solid"
+              class="rounded-full"
+              :class="$style.setButton"
               @click="updateGuests('children', 1)"
             >
               +
@@ -140,7 +146,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: rem(366);
+    min-width: rem(366);
+    max-width: rem(640);
     gap: rem(4);
   }
 
@@ -151,8 +158,7 @@
     font-family: "Inter", sans-serif;
     font-size: rem(16);
     color: var(--a-black);
-    background-color: white;
-    border: 1px solid #e5e7eb;
+    background-color: var(--a-white);
     border-radius: rem(16);
 
     &:focus {
@@ -173,35 +179,75 @@
     z-index: z.z("booking-label");
   }
 
-  .calendarIcon {
+  .chevronIcon {
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6b7280;
-    width: 18px;
-    height: 18px;
+    top: 34%;
+    right: rem(12);
+    width: rem(30);
+    height: rem(30);
+    color: var(--primary);
+    cursor: pointer;
   }
 
   .guestsDropdown {
-    padding: 16px;
-    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    min-width: rem(360);
+    padding: rem(16);
+    border-radius: rem(16);
+    border: none;
+    background-color: var(--a-white);
+    box-shadow: 0 4px 23px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
   }
 
   .guestOption {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: rem(12);
+    font-family: "Inter", sans-serif;
+  }
+
+  .name {
+    font-size: rem(18);
+    color: var(--a-black);
+    text-wrap: wrap;
+  }
+
+  .setButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: rem(36);
+    height: rem(36);
+    font-size: rem(24);
+    color: var(--a-white);
+  }
+
+  .count {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: rem(40);
+    height: rem(40);
+    font-size: rem(24);
+    color: var(--a-black);
   }
 
   .counter {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: rem(124);
+    margin-left: rem(20);
   }
 
   .applyButton {
-    margin-top: 16px;
+    height: rem(56);
+    margin-top: rem(16);
+    color: var(--a-white);
+    border-radius: rem(10);
+    background-color: var(--a-black);
   }
 </style>

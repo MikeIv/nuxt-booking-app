@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@pinia/nuxt",
     "@nuxt/icon",
+    "@pinia/nuxt",
+    "pinia-plugin-persistedstate/nuxt",
   ],
 
   googleFonts: {

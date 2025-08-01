@@ -25,6 +25,7 @@
     "gsap": "^3.13.0",
     "nuxt": "^4.0.1",
     "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.4.1",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
     "vite-plugin-eslint2": "^5.0.4",

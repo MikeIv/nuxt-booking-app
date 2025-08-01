@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { gsap } from "gsap";
-  import Telegram from "~/assets/images/telegram.svg";
-  import Vk from "~/assets/images/vk.svg";
+  import Telegram from "~/assets/icons/telegram.svg";
+  import Vk from "~/assets/icons/vk.svg";
 
   const props = defineProps({
     isOpen: {

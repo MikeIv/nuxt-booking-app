@@ -1,11 +1,40 @@
 <script setup lang="ts">
-  const date = ref<[Date, Date] | null>(null);
-  const guests = ref({
-    rooms: 1,
-    adults: 0,
-    children: 0,
-  });
-  const promoCode = ref("");
+  import { useBookingStore } from "~/stores/booking";
+  import { storeToRefs } from "pinia";
+
+  const bookingStore = useBookingStore();
+  const { date, guests, promoCode } = storeToRefs(bookingStore);
+
+  const validateForm = () => {
+    if (!date.value) {
+      alert("Пожалуйста, выберите даты");
+      return false;
+    }
+
+    if (guests.value.adults === 0) {
+      alert("Пожалуйста, укажите количество взрослых");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSearch = async () => {
+    if (!validateForm()) return;
+
+    try {
+      await bookingStore.search();
+      // Перенаправление или уведомление об успехе
+    } catch (error) {
+      alert(error.message);
+    }
+
+    console.log("Поиск:", {
+      date: date.value,
+      guests: guests.value,
+      promoCode: promoCode.value,
+    });
+  };
 </script>
 
 <template>
@@ -20,6 +49,7 @@
         color="bgAccent"
         class="text-white px-4 py-2"
         size="xl"
+        @click="handleSearch"
       >
         Поиск
       </UButton>
@@ -30,9 +60,9 @@
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
 
-  :root {
-    --calendar-width: 400px; /* Ширина календаря */
-  }
+  //:root {
+  //  --calendar-width: rem(400);
+  //}
 
   .wrapper {
     position: relative;
@@ -55,6 +85,7 @@
     min-width: rem(400);
     min-height: rem(50);
     padding: rem(24) rem(28);
+    font-family: "Inter", sans-serif;
     background-color: var(--primary);
     border-radius: rem(16);
   }

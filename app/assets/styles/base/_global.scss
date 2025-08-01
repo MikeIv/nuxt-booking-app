@@ -25,3 +25,17 @@ a {
 ul {
   list-style-type: none;
 }
+
+.bg-default {
+  background-color: transparent !important;
+}
+
+.rounded-md {
+  border-radius: 16px;
+  border: none;
+}
+
+.ring {
+  border: none !important;
+  box-shadow: none !important;
+}

@@ -2,7 +2,6 @@
   const router = useRouter();
   const { isVisible } = useVisibility(1000);
 
-  // Функция для обработки клика по якорю
   const scrollToAnchor = (anchor: string) => {
     if (import.meta.client) {
       const element = document.getElementById(anchor);

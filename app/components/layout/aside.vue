@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import Logo from "~/assets/images/logo.svg";
-  import Phone from "~/assets/images/phone.svg";
   import BurgerButton from "~/components/ui/BurgerButton.vue";
   import SlideMenu from "~/components/ui/SlideMenu.vue";
   import { ref, computed } from "vue";
@@ -32,7 +31,7 @@
   };
 
   const goToContacts = () => {
-    router.push("/contacts");
+    window.open("http://varvarkan.grandfs.ru/contacts.php", "_blank");
   };
 
   const menuLinks = computed(() => [
@@ -88,7 +87,7 @@
         {{ locale === "ru" ? "ENG" : "RU" }}
       </button>
       <button :class="$style.phoneButton" @click="goToContacts">
-        <Phone :class="$style.phoneIcon" />
+        <UIcon name="i-phone" :class="$style.phoneIcon" />
       </button>
     </div>
   </aside>
@@ -139,7 +138,6 @@
   }
 
   .rightGroup {
-    width: clamp(60px, 8vw, 120px);
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -185,25 +183,22 @@
   }
 
   .phoneButton {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: rem(24);
+    height: rem(24);
+    padding: rem(8);
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: rem(8);
   }
 
   .phoneIcon {
+    position: absolute;
     width: rem(24);
     height: rem(24);
-
-    :global(path) {
-      fill: var(--a-base);
-      transition: fill 0.3s ease;
-    }
-
-    &:hover {
-      :global(path) {
-        fill: var(--a-accent);
-      }
-    }
+    color: var(--primary);
   }
 </style>

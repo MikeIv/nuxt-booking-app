@@ -63,10 +63,10 @@
           <UIcon v-if="hidenIcon" name="i-calendar" class="calendarIcon" />
         </div>
       </template>
-      <template #input-value="{ value }">
+      <template #input-value="{ value: dateValue }">
         <div class="date-display">
-          <span v-if="value?.length === 2" class="selected-dates">
-            {{ formatDisplayValue(value) }}
+          <span v-if="dateValue?.length === 2" class="selected-dates">
+            {{ formatDisplayValue(dateValue) }}
           </span>
         </div>
       </template>
