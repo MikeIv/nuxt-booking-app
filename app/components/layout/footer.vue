@@ -79,7 +79,16 @@
         <div :class="$style.cellForm">
           <p :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</p>
           <input :class="$style.inputEmail" placeholder="E-MAIL" />
-          <!-- <hr :class="$style.line"/> -->
+          <div :class="$style.agreement">
+            <UCheckbox size="lg" color="primary" />
+            <p :class="$style.agreement__text">
+              Даю согласие на обработку
+              <a href="#" :class="$style.agreement__textLink">
+                персональных данных
+              </a>
+            </p>
+          </div>
+          <UButton label="ПОДПИСАТЬСЯ" :class="$style.subscribeBtn" />
         </div>
         <div :class="$style.cell4">4 (span 2 columns)</div>
         <div :class="$style.cell5">5</div>
@@ -114,6 +123,25 @@
     }
   }
 
+  .agreement {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+
+    .agreement__text {
+      font-family: "Futura PT", sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--secondary);
+      margin-left: 0.5rem;
+
+      .agreement__textLink {
+        border-bottom: 1px solid #686062;
+        cursor: pointer;
+      }
+    }
+  }
+
   .image {
     display: flex;
     justify-content: center;
@@ -125,11 +153,12 @@
 
   .inputEmail {
     margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
     font-family: "Futura PT", sans-serif;
     font-weight: 500;
     font-size: clamp(14px, 3vw, 16px);
     color: var(--secondary);
-    width: 100%;
+    width: 70%;
     border-bottom: 1px solid #686062;
 
     &::placeholder {
@@ -147,9 +176,16 @@
     padding: 0 rem(16) rem(16) rem(24);
   }
 
-  .line {
-    color: var(--secondary);
-    max-width: 55%;
+  .subscribeBtn {
+    width: 140px;
+    padding-left: 1rem;
+    border-radius: 0%;
+    background-color: var(--primary);
+    text-align: center;
+    font-family: "Futura PT", sans-serif;
+    font-weight: 600;
+    font-size: clamp(14px, 3vw, 16px);
+    cursor: pointer;
   }
 
   .text {
