@@ -20,14 +20,14 @@
         <nav :class="$style.cell1">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
-              <NuxtLink to="/" :class="$style.navLink">Главная</NuxtLink>
+              <NuxtLink to="/" :class="$style.navLink">ГЛАВНАЯ</NuxtLink>
             </li>
             <li :class="$style.navItem">
               <a
                 href="http://varvarkan.grandfs.ru/about.php"
                 :class="$style.navLink"
                 target="_blank"
-                >О проекте</a
+                >О ПРОЕКТЕ</a
               >
             </li>
             <li :class="$style.navItem">
@@ -35,7 +35,7 @@
                 href="http://varvarkan.grandfs.ru/hotel.php"
                 :class="$style.navLink"
                 target="_blank"
-                >Отель</a
+                >ОТЕЛЬ</a
               >
             </li>
             <li :class="$style.navItem">
@@ -43,7 +43,7 @@
                 href="http://varvarkan.grandfs.ru/service.php"
                 :class="$style.navLink"
                 target="_blank"
-                >Сервисы</a
+                >СЕРВИСЫ</a
               >
             </li>
           </ul>
@@ -55,7 +55,7 @@
                 href="http://varvarkan.grandfs.ru/gallery.php"
                 :class="$style.navLink"
                 target="_blank"
-                >Галерея</a
+                >ГАЛЕРЕЯ</a
               >
             </li>
             <li :class="$style.navItem">
@@ -63,7 +63,7 @@
                 href="http://varvarkan.grandfs.ru/construction-progress.php"
                 :class="$style.navLink"
                 target="_blank"
-                >Этапы строительства</a
+                >ЭТАПЫ СТРОИТЕЛЬСТВА</a
               >
             </li>
             <li :class="$style.navItem">
@@ -71,12 +71,16 @@
                 href="http://varvarkan.grandfs.ru/contacts.php"
                 :class="$style.navLink"
                 target="_blank"
-                >Контакты</a
+                >КОНТАКТЫ</a
               >
             </li>
           </ul>
         </nav>
-        <div :class="$style.cell3">3 (span 2 columns)</div>
+        <div :class="$style.cellForm">
+          <p :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</p>
+          <input :class="$style.inputEmail" placeholder="E-MAIL" />
+          <!-- <hr :class="$style.line"/> -->
+        </div>
         <div :class="$style.cell4">4 (span 2 columns)</div>
         <div :class="$style.cell5">5</div>
         <div :class="$style.cell6">6</div>
@@ -119,21 +123,46 @@
     object-fit: contain;
   }
 
+  .inputEmail {
+    margin-top: 0.75rem;
+    font-family: "Futura PT", sans-serif;
+    font-weight: 500;
+    font-size: clamp(14px, 3vw, 16px);
+    color: var(--secondary);
+    width: 100%;
+    border-bottom: 1px solid #686062;
+
+    &::placeholder {
+      color: var(--secondary);
+    }
+    &:hover {
+      box-shadow: none;
+      outline: none;
+    }
+  }
+
   .introRight {
     align-items: stretch;
     height: 100%;
     padding: 0 rem(16) rem(16) rem(24);
   }
 
+  .line {
+    color: var(--secondary);
+    max-width: 55%;
+  }
+
   .text {
     font-family: "Futura PT", sans-serif;
-    font-size: clamp(18px, 4vw, 35px);
+    font-weight: 600;
+    font-size: clamp(14px, 3vw, 16px);
     color: var(--secondary);
   }
 
   .footerInfo {
     display: grid;
     gap: 8px;
+    padding: 0 rem(16) rem(16) rem(16);
 
     // Мобильная версия (до 670px)
     grid-template-columns: 1fr 1fr;
@@ -143,8 +172,8 @@
     .cell1 {
       grid-column: 1;
       grid-row: 1;
-      background-color: rgba(255, 200, 200, 0.5);
       padding: 10px;
+      background-color: rgba(255, 200, 200, 0.5);
     }
 
     .cell2 {
@@ -154,11 +183,15 @@
       padding: 10px;
     }
 
-    .cell3 {
+    .cellForm {
       grid-column: 1 / span 2;
       grid-row: 2;
-      background-color: rgba(200, 200, 255, 0.5);
+      width: 90%;
+      // background-color: rgba(200, 200, 255, 0.5);
+      background-color: rgb(249, 245, 242);
       padding: 10px;
+      display: flex;
+      flex-direction: column;
     }
 
     .cell4 {
@@ -205,7 +238,7 @@
         grid-row: 1;
       }
 
-      .cell3 {
+      .cellForm {
         grid-column: 1;
         grid-row: 2;
       }
@@ -239,7 +272,7 @@
   }
 
   .navItem {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 
     &:last-child {
       margin-bottom: 0;
@@ -247,19 +280,19 @@
   }
 
   .navLink {
-    color: var(--primary);
     text-decoration: none;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     transition: color 0.3s ease;
+    font-family: "Futura PT", sans-serif;
+    font-weight: 600;
+    color: var(--secondary);
 
     &:hover {
-      color: var(--accent);
       text-decoration: underline;
     }
 
     &.router-link-active {
       font-weight: bold;
-      color: var(--accent);
     }
   }
 </style>
