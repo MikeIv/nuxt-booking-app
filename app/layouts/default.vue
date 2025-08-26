@@ -2,6 +2,7 @@
   <div :class="$style.layout">
     <LayoutHeader />
     <div :class="$style.wrapper">
+      <CoreBreadcrumbs />
       <slot />
     </div>
     <LayoutFooter />

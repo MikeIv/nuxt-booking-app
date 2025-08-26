@@ -1,2 +1,72 @@
 #!/bin/sh
-npx lint-staged
+
+# Цвета для вывода
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}           🚀 HUSKY PRE-COMMIT HOOK              ${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+
+# Проверяем, есть ли изменения для коммита
+if git diff --cached --quiet && git diff --staged --quiet; then
+    echo -e "${YELLOW}⚠️ Нет изменений для коммита${NC}"
+    exit 0
+fi
+
+# Сохраняем текущие изменения в stash
+echo -e "${YELLOW}💾 Сохраняем изменения в stash...${NC}"
+STASH_OUTPUT=$(git stash push --keep-index --include-untracked --message "pre-commit auto stash $(date '+%Y-%m-%d %H:%M:%S')")
+STASH_EXIT_CODE=$?
+
+if [ $STASH_EXIT_CODE -ne 0 ]; then
+    echo -e "${RED}❌ Ошибка при сохранении изменений в stash${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Изменения сохранены в stash${NC}"
+
+# Функция для очистки и восстановления
+cleanup() {
+    echo -e "${YELLOW}🧹 Восстанавливаем изменения из stash...${NC}"
+
+    # Пытаемся применить stash
+    if git stash pop --quiet; then
+        echo -e "${GREEN}✅ Изменения восстановлены${NC}"
+    else
+        echo -e "${RED}❌ Ошибка при восстановлении изменений${NC}"
+        echo -e "${YELLOW}Проверьте stash вручную: git stash list${NC}"
+    fi
+}
+
+# Запускаем lint-staged
+echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
+npx lint-staged --verbose
+
+LINT_EXIT_CODE=$?
+
+if [ $LINT_EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}✅ Линтинг пройден успешно!${NC}"
+    cleanup
+    echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}🎉 Все проверки пройдены! Можете коммитить.${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+    exit 0
+else
+    echo -e "${RED}❌ Обнаружены ошибки линтинга!${NC}"
+    echo -e "${YELLOW}📝 Изменения сохранены в stash.${NC}"
+    echo -e "${YELLOW}Исправьте ошибки и выполните:${NC}"
+    echo -e "   git add ."
+    echo -e "   git commit -m 'ваше сообщение'"
+    echo -e ""
+    echo -e "${YELLOW}Для просмотра stashed изменений:${NC}"
+    echo -e "   git stash list"
+    echo -e ""
+    echo -e "${YELLOW}Для применения изменений:${NC}"
+    echo -e "   git stash pop"
+    echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
+    exit 1
+fi

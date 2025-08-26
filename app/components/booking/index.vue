@@ -24,7 +24,6 @@
 
     try {
       await bookingStore.search();
-      // Перенаправление или уведомление об успехе
     } catch (error) {
       alert(error.message);
     }
