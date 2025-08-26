@@ -209,14 +209,6 @@ export default defineNuxtConfig({
             ignores: [],
           },
         ],
-
-        // "vue/html-self-closing": [
-        //   "warn",
-        //   {
-        //     html: { normal: "never", void: "always" },
-        //     ignores: ["template"],
-        //   },
-        // ],
       },
     },
     checker: {

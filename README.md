@@ -1,75 +1,64 @@
-# Nuxt Minimal Starter
+# Запуск и работа с проектом
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
-## Setup
+## Установка
 
-Make sure to install dependencies:
+Установите зависимости:
 
 ```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
 # yarn
 yarn install
 
-# bun
-bun install
+# npm
+npm install
+
 ```
 
-## Development Server
+## Запуск сервера
 
 Start the development server on `http://localhost:3000`:
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
 yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+## Репозиторий
 
-Build the application for production:
+Создать ветку для работы (если не была создана).
+Предпочтительное название должно начинаться с VR-название модуля разработки. 
+Например VR_main-page:
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+git checkout -b название ветки
 ```
 
-Locally preview production build:
+После изменений в файлах выполнить:
 
 ```bash
-# npm
-npm run preview
+yarn lint:fix
+```
 
-# pnpm
-pnpm preview
+Если есть ошибки, исправить. Еще раз проверить:
 
-# yarn
-yarn preview
+```bash
+yarn lint:fix
+```
 
-# bun
-bun run preview
+Если ошибок нет:
+
+```bash
+yarn add .
+
+git commit -m"feat: описание изменения"
+
+git commit -m"fix описание исправления"
+```
+
+Отправить изменения в свою ветку:
+
+```bash
+git push "название своей ветки"
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
