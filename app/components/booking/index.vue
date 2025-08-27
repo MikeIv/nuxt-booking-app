@@ -4,6 +4,7 @@
 
   const bookingStore = useBookingStore();
   const { date, guests, promoCode } = storeToRefs(bookingStore);
+  const router = useRouter();
 
   const validateForm = () => {
     if (!date.value) {
@@ -24,6 +25,9 @@
 
     try {
       await bookingStore.search();
+      if (useRoute().path === "/") {
+        await router.push("/rooms");
+      }
     } catch (error) {
       alert(error.message);
     }

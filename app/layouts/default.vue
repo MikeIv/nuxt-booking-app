@@ -20,5 +20,6 @@
     flex-direction: column;
     width: 100%;
     margin-top: clamp(60px, 8vw, 95px);
+    background-color: var(--a-whiteBg);
   }
 </style>

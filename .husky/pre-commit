@@ -11,61 +11,13 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}           🚀 HUSKY PRE-COMMIT HOOK              ${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 
-# Игнорируем .eslintcache
-git update-index --assume-unchanged .eslintcache 2>/dev/null || true
-
-# Проверяем, есть ли изменения для коммита
-if git diff --cached --quiet && git diff --staged --quiet; then
-    echo -e "${YELLOW}⚠️ Нет изменений для коммита${NC}"
-    exit 0
-fi
-
-# Сохраняем текущие изменения в stash, игнорируя .eslintcache
-echo -e "${YELLOW}💾 Сохраняем изменения в stash...${NC}"
-STASH_OUTPUT=$(git stash push --keep-index --include-untracked --message "pre-commit auto stash $(date '+%Y-%m-%d %H:%M:%S')" -- . ":!.eslintcache")
-STASH_EXIT_CODE=$?
-
-if [ $STASH_EXIT_CODE -ne 0 ]; then
-    echo -e "${RED}❌ Ошибка при сохранении изменений в stash${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✅ Изменения сохранены в stash${NC}"
-
-# Запускаем lint-staged
-echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
-npx lint-staged --verbose
-
-LINT_EXIT_CODE=$?
-
-# Восстанавливаем изменения, игнорируя конфликты с .eslintcache
-echo -e "${YELLOW}🧹 Восстанавливаем изменения из stash...${NC}"
-
-# Пытаемся применить stash, игнорируя .eslintcache
-if git stash pop --index --quiet 2>/dev/null; then
-    echo -e "${GREEN}✅ Изменения восстановлены${NC}"
-else
-    # Если есть конфликты, применяем вручную
-    echo -e "${YELLOW}⚠️  Обнаружены конфликты, восстанавливаем вручную...${NC}"
-
-    # Игнорируем конфликтующие файлы
-    git checkout --theirs -- .eslintcache 2>/dev/null || true
-    git checkout --ours -- .eslintcache 2>/dev/null || true
-
-    # Пробуем снова
-    git stash pop --index --quiet 2>/dev/null || {
-        echo -e "${YELLOW}⚠️  Используем альтернативный метод восстановления...${NC}"
-        # Создаем временную ветку для восстановления
-        git stash show -p | git apply --allow-empty --index 2>/dev/null || true
-        git stash drop --quiet 2>/dev/null || true
-    }
-
-    echo -e "${GREEN}✅ Изменения восстановлены (с игнорированием конфликтов)${NC}"
-fi
-
 # Убеждаемся, что .eslintcache не в индексе
 git reset HEAD .eslintcache 2>/dev/null || true
-git rm --cached .eslintcache 2>/dev/null || true
+
+# Просто запускаем lint-staged без сложных манипуляций с stash
+echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
+npx lint-staged --verbose
+LINT_EXIT_CODE=$?
 
 if [ $LINT_EXIT_CODE -eq 0 ]; then
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"

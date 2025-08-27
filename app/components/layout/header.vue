@@ -7,11 +7,15 @@
 </template>
 
 <style module lang="scss">
+  @use "~/assets/styles/variables/resolutions" as size;
+
   .section {
     position: relative;
     display: flex;
     flex-direction: column;
-    max-width: 1920px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
     overflow: hidden;
   }
 </style>

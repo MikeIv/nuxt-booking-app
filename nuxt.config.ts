@@ -16,6 +16,7 @@ export default defineNuxtConfig({
   googleFonts: {
     families: {
       "Playfair+Display": [400, 500, 600, 700],
+      Lora: [400, 500, 600, 700],
       // Можно добавить другие шрифты
     },
     display: "swap",
