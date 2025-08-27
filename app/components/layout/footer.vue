@@ -81,23 +81,61 @@
           <input :class="$style.inputEmail" placeholder="E-MAIL" />
           <div :class="$style.agreement">
             <UCheckbox size="lg" color="primary" />
-            <p :class="$style.agreement__text">
+            <p :class="$style.agreementText">
               Даю согласие на обработку
-              <a href="#" :class="$style.agreement__textLink">
+              <a href="#" :class="$style.agreementTextLink">
                 персональных данных
               </a>
             </p>
           </div>
           <UButton label="ПОДПИСАТЬСЯ" :class="$style.subscribeBtn" />
         </div>
-        <div :class="$style.cell4">4 (span 2 columns)</div>
-        <div :class="$style.cell5">5</div>
-        <div :class="$style.cell6">6</div>
-        <div :class="$style.cell7">
-          7 (span 2 columns)
-          <p>
-            lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam
-          </p>
+        <div :class="$style.adress">
+          <p>109012, РОССИЯ, Г. МОСКВА УЛ. ВАРВАРКА, Д.14, СТР. 1, 2</p>
+          <a href="tel:+74952749999">+7 (495) 274-99-99</a>
+          <a href="mailto:">mail@mail.ru</a>
+        </div>
+        <div :class="$style.socialMedia">
+          <div :class="$style.socialMediaItem">
+            <a
+              :class="$style.socialMediaItemLink"
+              href="https://t.me/"
+              target="_blank"
+            >
+              <UIcon name="i-telegram" :class="$style.telegramIcon" />
+              <span :class="$style.socialMediaText"> Russia_Hotel </span>
+            </a>
+          </div>
+          <div :class="$style.socialMediaItem">
+            <a
+              :class="$style.socialMediaItemLink"
+              href="https://vk.com/"
+              target="_blank"
+            >
+              <UIcon name="i-vk" :class="$style.vkIcon" />
+              <span :class="$style.socialMediaText"> Russia_Hotel </span>
+            </a>
+          </div>
+        </div>
+        <div :class="$style.qr">
+          <div :class="$style.qrImg">qr</div>
+          <div :class="$style.qrText">
+            QR-код
+            <br />
+            для перехода
+            <br />
+            на сайт
+          </div>
+        </div>
+        <div :class="$style.copyright">
+          <UButton
+            icon="i-pdf"
+            size="xl"
+            label="ПРАВИЛА ПАРКОВКИ"
+            :class="$style.copyrightBtn"
+          />
+          <a href="#" target="_blank"> Политика конфиденциальности </a>
+          <p>© 2022 ООО «МФК», Москва</p>
         </div>
       </section>
     </template>
@@ -117,7 +155,6 @@
 
   .content {
     flex-direction: column-reverse;
-
     @media (min-width: #{size.$tabletMax}) {
       flex-direction: row;
     }
@@ -128,14 +165,12 @@
     flex-direction: row;
     margin-bottom: 10px;
 
-    .agreement__text {
-      font-family: "Futura PT", sans-serif;
+    .agreementText {
       font-weight: 600;
       font-size: 11px;
-      color: var(--secondary);
       margin-left: 0.5rem;
 
-      .agreement__textLink {
+      .agreementTextLink {
         border-bottom: 1px solid #686062;
         cursor: pointer;
       }
@@ -154,10 +189,8 @@
   .inputEmail {
     margin-top: 0.75rem;
     margin-bottom: 0.5rem;
-    font-family: "Futura PT", sans-serif;
     font-weight: 500;
     font-size: clamp(14px, 3vw, 16px);
-    color: var(--secondary);
     width: 70%;
     border-bottom: 1px solid #686062;
 
@@ -182,23 +215,42 @@
     border-radius: 0%;
     background-color: var(--primary);
     text-align: center;
-    font-family: "Futura PT", sans-serif;
     font-weight: 600;
     font-size: clamp(14px, 3vw, 16px);
     cursor: pointer;
   }
 
   .text {
-    font-family: "Futura PT", sans-serif;
     font-weight: 600;
     font-size: clamp(14px, 3vw, 16px);
-    color: var(--secondary);
+  }
+
+  .telegramIcon {
+    margin-right: 21px;
+    width: 28px;
+    height: 28px;
+    color: rgb(104, 96, 98);
+  }
+
+  .vkIcon {
+    margin-right: 15px;
+    width: 34px;
+    height: 34px;
+    color: rgb(104, 96, 98);
+  }
+
+  .socialMediaText {
+    font-weight: 500;
+    font-size: 13px;
+    margin-top: 0.5rem;
   }
 
   .footerInfo {
     display: grid;
     gap: 8px;
     padding: 0 rem(16) rem(16) rem(16);
+    font-family: "Futura PT", sans-serif;
+    color: var(--secondary);
 
     // Мобильная версия (до 670px)
     grid-template-columns: 1fr 1fr;
@@ -209,13 +261,11 @@
       grid-column: 1;
       grid-row: 1;
       padding: 10px;
-      background-color: rgba(255, 200, 200, 0.5);
     }
 
     .cell2 {
       grid-column: 2;
       grid-row: 1;
-      background-color: rgba(200, 255, 200, 0.5);
       padding: 10px;
     }
 
@@ -223,39 +273,64 @@
       grid-column: 1 / span 2;
       grid-row: 2;
       width: 90%;
-      // background-color: rgba(200, 200, 255, 0.5);
-      background-color: rgb(249, 245, 242);
       padding: 10px;
       display: flex;
       flex-direction: column;
     }
 
-    .cell4 {
+    .adress {
       grid-column: 1 / span 2;
       grid-row: 3;
-      background-color: rgba(255, 255, 200, 0.5);
       padding: 10px;
+      font-weight: 600;
+      font-size: clamp(14px, 3vw, 16px);
+      display: grid;
+      align-self: end;
+      grid-template-columns: 1fr;
+      gap: 5px;
     }
 
-    .cell5 {
+    .socialMedia {
       grid-column: 1;
       grid-row: 4;
-      background-color: rgba(255, 200, 255, 0.5);
       padding: 10px;
+      display: flex;
+      flex-direction: column;
+
+      .socialMediaItemLink {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 10px;
+      }
     }
 
-    .cell6 {
+    .qr {
       grid-column: 2;
       grid-row: 4;
-      background-color: rgba(200, 255, 255, 0.5);
       padding: 10px;
+      display: flex;
+      flex-direction: row;
+
+      .qrText {
+        padding-left: 20px;
+        align-self: flex-end;
+        line-height: 1.1rem;
+        font-size: 13px;
+      }
     }
 
-    .cell7 {
+    .copyright {
       grid-column: 1 / span 2;
       grid-row: 5;
-      background-color: rgba(220, 220, 220, 0.5);
       padding: 10px;
+
+      .copyrightBtn {
+        border-radius: 0;
+        background-color: var(--primary);
+        font-weight: 600;
+        padding: 5px 15px;
+        cursor: pointer;
+      }
     }
 
     // Десктопная версия (от 670px)
@@ -279,22 +354,22 @@
         grid-row: 2;
       }
 
-      .cell4 {
+      .adress {
         grid-column: 2;
         grid-row: 2;
       }
 
-      .cell5 {
+      .socialMedia {
         grid-column: 1;
         grid-row: 3;
       }
 
-      .cell6 {
+      .qr {
         grid-column: 2;
         grid-row: 3;
       }
 
-      .cell7 {
+      .socialMedia {
         grid-column: 1;
         grid-row: 4;
       }
@@ -319,9 +394,7 @@
     text-decoration: none;
     font-size: clamp(14px, 3vw, 16px);
     transition: color 0.3s ease;
-    font-family: "Futura PT", sans-serif;
     font-weight: 600;
-    color: var(--secondary);
 
     &:hover {
       text-decoration: underline;
