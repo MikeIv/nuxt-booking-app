@@ -24,7 +24,8 @@
     if (!validateForm()) return;
 
     try {
-      await bookingStore.search();
+      // Временно отключен запрос на бекенд
+      // await bookingStore.search();
       if (useRoute().path === "/") {
         await router.push("/rooms");
       }
