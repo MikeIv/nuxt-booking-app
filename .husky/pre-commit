@@ -14,59 +14,26 @@ echo -e "${BLUE}═════════════════════�
 # Убеждаемся, что .eslintcache не в индексе
 git reset HEAD .eslintcache 2>/dev/null || true
 
-# Получаем список измененных файлов
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-STAGED_FILES_COUNT=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|vue|css|scss)$' | wc -l)
-
-if [ "$STAGED_FILES_COUNT" -eq 0 ]; then
-    echo -e "${YELLOW}📝 Нет файлов для проверки (js/ts/vue/css/scss)${NC}"
-    echo -e "${GREEN}✅ Пропускаем линтинг${NC}"
-    exit 0
-fi
-
-echo -e "${YELLOW}📋 Файлов для проверки: $STAGED_FILES_COUNT${NC}"
-
-# Показываем только релевантные файлы
-RELEVANT_FILES=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|vue|css|scss)$')
-if [ $(echo "$RELEVANT_FILES" | wc -l) -gt 5 ]; then
-    echo "$RELEVANT_FILES" | head -5 | sed 's/^/   /'
-    echo -e "   ... и ещё $((STAGED_FILES_COUNT - 5)) файлов"
-else
-    echo "$RELEVANT_FILES" | sed 's/^/   /'
-fi
-
-echo -e "${YELLOW}🔍 Запуск линтинга для измененных файлов...${NC}"
-
-# Запускаем lint-staged
+echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
 LINT_OUTPUT=$(npx lint-staged --verbose 2>&1)
 LINT_EXIT_CODE=$?
 
 if [ $LINT_EXIT_CODE -eq 0 ]; then
     echo -e "${GREEN}✅ Линтинг пройден успешно${NC}"
-
-    # Проверяем, есть ли автоматически исправленные файлы
-    FIXED_FILES=$(git diff --name-only --cached 2>/dev/null || true)
-    if [ -n "$FIXED_FILES" ]; then
-        echo -e "${YELLOW}📦 Автоматически исправленные файлы:${NC}"
-        echo "$FIXED_FILES" | sed 's/^/   /'
-    fi
-
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     echo -e "${GREEN}🎉 Все проверки пройдены! Можете отправлять коммит.${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     exit 0
 else
     echo -e "${RED}❌ Обнаружены ошибки линтинга!${NC}"
-
-    # Выводим понятные ошибки
+    
     if echo "$LINT_OUTPUT" | grep -q "error"; then
         echo -e "${YELLOW}Ошибки:${NC}"
         echo "$LINT_OUTPUT" | grep -i "error" | head -3 | sed 's/^/   /'
     fi
-
+    
     echo -e "${YELLOW}💡 Советы:${NC}"
     echo -e "   • Запустите: npm run lint:fix"
-    echo -e "   • Или: npx eslint --fix [файл]"
     echo -e "${YELLOW}После исправлений:${NC}"
     echo -e "   git add ."
     echo -e "   git commit -m 'ваше сообщение'"
