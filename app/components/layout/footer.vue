@@ -134,8 +134,10 @@
             label="ПРАВИЛА ПАРКОВКИ"
             :class="$style.copyrightBtn"
           />
-          <a href="#" target="_blank"> Политика конфиденциальности </a>
-          <p>© 2022 ООО «МФК», Москва</p>
+          <a href="#" target="_blank" :class="$style.copyrightText"
+            >Политика конфиденциальности</a
+          >
+          <p :class="$style.copyrightText">© 2022 ООО «МФК», Москва</p>
         </div>
       </section>
     </template>
@@ -184,6 +186,7 @@
     width: clamp(100%, 3vw, 50%);
     height: auto;
     object-fit: contain;
+    border: 1px solid #c4c4c4;
   }
 
   .inputEmail {
@@ -323,13 +326,23 @@
       grid-column: 1 / span 2;
       grid-row: 5;
       padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
 
       .copyrightBtn {
         border-radius: 0;
+        max-width: 200px;
         background-color: var(--primary);
         font-weight: 600;
+        font-size: 14px;
         padding: 5px 15px;
         cursor: pointer;
+      }
+
+      .copyrightText {
+        font-size: 13px;
       }
     }
 
