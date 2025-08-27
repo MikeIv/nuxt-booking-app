@@ -11,72 +11,31 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}           🚀 HUSKY PRE-COMMIT HOOK              ${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 
-# Игнорируем .eslintcache
-git update-index --assume-unchanged .eslintcache 2>/dev/null || true
-
-# Проверяем, есть ли изменения для коммита
-if git diff --cached --quiet && git diff --staged --quiet; then
-    echo -e "${YELLOW}⚠️ Нет изменений для коммита${NC}"
-    exit 0
+# Безопасное удаление .eslintcache из индекса (только если он там есть)
+if git ls-files --cached --error-unmatch .eslintcache >/dev/null 2>&1; then
+    echo -e "${YELLOW}🗑️  Удаляем .eslintcache из индекса...${NC}"
+    git reset -q HEAD .eslintcache
 fi
 
-# Сохраняем текущие изменения в stash, игнорируя .eslintcache
-echo -e "${YELLOW}💾 Сохраняем изменения в stash...${NC}"
-STASH_OUTPUT=$(git stash push --keep-index --include-untracked --message "pre-commit auto stash $(date '+%Y-%m-%d %H:%M:%S')" -- . ":!.eslintcache")
-STASH_EXIT_CODE=$?
+# Удаляем сам файл .eslintcache если он существует
+[ -f .eslintcache ] && rm -f .eslintcache
 
-if [ $STASH_EXIT_CODE -ne 0 ]; then
-    echo -e "${RED}❌ Ошибка при сохранении изменений в stash${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✅ Изменения сохранены в stash${NC}"
-
-# Запускаем lint-staged
 echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
-npx lint-staged --verbose
-
-LINT_EXIT_CODE=$?
-
-# Восстанавливаем изменения, игнорируя конфликты с .eslintcache
-echo -e "${YELLOW}🧹 Восстанавливаем изменения из stash...${NC}"
-
-# Пытаемся применить stash, игнорируя .eslintcache
-if git stash pop --index --quiet 2>/dev/null; then
-    echo -e "${GREEN}✅ Изменения восстановлены${NC}"
-else
-    # Если есть конфликты, применяем вручную
-    echo -e "${YELLOW}⚠️  Обнаружены конфликты, восстанавливаем вручную...${NC}"
-
-    # Игнорируем конфликтующие файлы
-    git checkout --theirs -- .eslintcache 2>/dev/null || true
-    git checkout --ours -- .eslintcache 2>/dev/null || true
-
-    # Пробуем снова
-    git stash pop --index --quiet 2>/dev/null || {
-        echo -e "${YELLOW}⚠️  Используем альтернативный метод восстановления...${NC}"
-        # Создаем временную ветку для восстановления
-        git stash show -p | git apply --allow-empty --index 2>/dev/null || true
-        git stash drop --quiet 2>/dev/null || true
-    }
-
-    echo -e "${GREEN}✅ Изменения восстановлены (с игнорированием конфликтов)${NC}"
-fi
-
-# Убеждаемся, что .eslintcache не в индексе
-git reset HEAD .eslintcache 2>/dev/null || true
-git rm --cached .eslintcache 2>/dev/null || true
-
-if [ $LINT_EXIT_CODE -eq 0 ]; then
+if npx lint-staged --verbose; then
+    echo -e "${GREEN}✅ Линтинг пройден успешно${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     echo -e "${GREEN}🎉 Все проверки пройдены! Можете отправлять коммит.${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     exit 0
 else
+    LINT_EXIT_CODE=$?
     echo -e "${RED}❌ Обнаружены ошибки линтинга!${NC}"
-    echo -e "${YELLOW}Исправьте ошибки и выполните:${NC}"
+
+    echo -e "${YELLOW}💡 Советы:${NC}"
+    echo -e "   • Запустите: npm run lint:fix"
+    echo -e "${YELLOW}После исправлений:${NC}"
     echo -e "   git add ."
     echo -e "   git commit -m 'ваше сообщение'"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
-    exit 1
+    exit $LINT_EXIT_CODE
 fi

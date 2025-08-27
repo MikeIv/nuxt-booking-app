@@ -21,7 +21,7 @@
 
     if (route.path !== "/") {
       crumbs.push({
-        name: "Главная",
+        name: "Главная / Бронирование",
         path: "/",
         isCurrent: false,
       });
@@ -69,27 +69,24 @@
 </script>
 
 <template>
-  <nav v-if="breadcrumbs.length > 0" class="breadcrumbs">
-    <div class="breadcrumbs__container">
+  <nav v-if="breadcrumbs.length > 0" :class="$style.breadcrumbs">
+    <div :class="$style.container">
       <div
         v-for="(crumb, index) in breadcrumbs"
         :key="index"
-        class="breadcrumbs__item"
+        :class="$style.item"
       >
         <span
           v-if="!crumb.isCurrent"
-          class="breadcrumbs__link"
+          :class="$style.link"
           @click="navigateTo(crumb.path)"
         >
           {{ crumb.name }}
         </span>
-        <span v-else class="breadcrumbs__current">
+        <span v-else :class="$style.current">
           {{ crumb.name }}
         </span>
-        <span
-          v-if="index < breadcrumbs.length - 1"
-          class="breadcrumbs__separator"
-        >
+        <span v-if="index < breadcrumbs.length - 1" :class="$style.separator">
           /
         </span>
       </div>
@@ -97,63 +94,49 @@
   </nav>
 </template>
 
-<style scoped lang="scss">
+<style module lang="scss">
   .breadcrumbs {
-    padding: 12px 0;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+    padding: rem(12) 0;
+    background-color: var(--a-white);
+  }
 
-    &__container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    &__item {
-      display: flex;
-      align-items: center;
-    }
+  .item {
+    display: flex;
+    align-items: center;
+    font-family: "Inter", sans-serif;
+  }
 
-    &__link {
-      color: #007bff;
-      text-decoration: none;
-      cursor: pointer;
-      font-size: 14px;
-      transition: color 0.2s ease;
+  .link {
+    color: var(--a-black);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: rem(16);
+    transition: color 0.2s ease;
 
-      &:hover {
-        color: #0056b3;
-        text-decoration: underline;
-      }
-    }
-
-    &__current {
-      color: #6c757d;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    &__separator {
-      color: #6c757d;
-      margin: 0 8px;
-      font-size: 14px;
+    &:hover {
+      color: #0056b3;
+      text-decoration: underline;
     }
   }
 
-  @media (max-width: 768px) {
-    .breadcrumbs {
-      &__container {
-        padding: 0 16px;
-      }
+  .current {
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-black);
+  }
 
-      &__link,
-      &__current,
-      &__separator {
-        font-size: 12px;
-      }
-    }
+  .separator {
+    color: #6c757d;
+    margin: 0 8px;
+    font-size: 14px;
   }
 </style>

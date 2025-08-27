@@ -48,7 +48,7 @@ yarn lint:fix
 Если ошибок нет:
 
 ```bash
-yarn add .
+git add .
 
 git commit -m"feat: описание изменения"
 

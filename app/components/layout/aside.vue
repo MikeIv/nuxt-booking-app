@@ -77,10 +77,20 @@
     </button>
 
     <div :class="$style.rightGroup">
-      <UButton color="bgAccent" class="text-white px-4 py-2" size="sm">
+      <UButton
+        color="bgAccent"
+        class="text-white px-4 py-2"
+        size="sm"
+        :class="$style.show"
+      >
         Забронировать
       </UButton>
-      <UButton color="bgDark" class="text-white px-4 py-2" size="sm">
+      <UButton
+        color="bgDark"
+        class="text-white px-4 py-2"
+        size="sm"
+        :class="$style.show"
+      >
         Войти
       </UButton>
       <button :class="$style.langButton" @click="toggleLanguage">
@@ -104,16 +114,20 @@
 <!-- Стили остаются без изменений -->
 
 <style module lang="scss">
+  @use "~/assets/styles/variables/resolutions" as size;
   @use "~/assets/styles/variables/z-index" as z;
 
   .aside {
     position: fixed;
     top: 0;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    max-width: #{size.$desktopMax};
     height: clamp(60px, 8vw, 95px);
     padding: rem(16);
     background-color: var(--a-whiteBg);
@@ -200,5 +214,12 @@
     width: rem(24);
     height: rem(24);
     color: var(--primary);
+  }
+
+  .show {
+    display: none;
+    @media (min-width: #{size.$tabletMax}) {
+      display: block;
+    }
   }
 </style>

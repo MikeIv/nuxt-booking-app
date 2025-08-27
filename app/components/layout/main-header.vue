@@ -12,7 +12,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    max-width: 1920px;
+    width: 100%;
     height: 100vh;
     overflow: hidden;
   }
