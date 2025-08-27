@@ -11,32 +11,31 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}           🚀 HUSKY PRE-COMMIT HOOK              ${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 
-# Убеждаемся, что .eslintcache не в индексе
-git reset HEAD .eslintcache 2>/dev/null || true
+# Безопасное удаление .eslintcache из индекса (только если он там есть)
+if git ls-files --cached --error-unmatch .eslintcache >/dev/null 2>&1; then
+    echo -e "${YELLOW}🗑️  Удаляем .eslintcache из индекса...${NC}"
+    git reset -q HEAD .eslintcache
+fi
+
+# Удаляем сам файл .eslintcache если он существует
+[ -f .eslintcache ] && rm -f .eslintcache
 
 echo -e "${YELLOW}🔍 Запуск линтинга...${NC}"
-LINT_OUTPUT=$(npx lint-staged --verbose 2>&1)
-LINT_EXIT_CODE=$?
-
-if [ $LINT_EXIT_CODE -eq 0 ]; then
+if npx lint-staged --verbose; then
     echo -e "${GREEN}✅ Линтинг пройден успешно${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     echo -e "${GREEN}🎉 Все проверки пройдены! Можете отправлять коммит.${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
     exit 0
 else
+    LINT_EXIT_CODE=$?
     echo -e "${RED}❌ Обнаружены ошибки линтинга!${NC}"
-    
-    if echo "$LINT_OUTPUT" | grep -q "error"; then
-        echo -e "${YELLOW}Ошибки:${NC}"
-        echo "$LINT_OUTPUT" | grep -i "error" | head -3 | sed 's/^/   /'
-    fi
-    
+
     echo -e "${YELLOW}💡 Советы:${NC}"
     echo -e "   • Запустите: npm run lint:fix"
     echo -e "${YELLOW}После исправлений:${NC}"
     echo -e "   git add ."
     echo -e "   git commit -m 'ваше сообщение'"
     echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
-    exit 1
+    exit $LINT_EXIT_CODE
 fi
