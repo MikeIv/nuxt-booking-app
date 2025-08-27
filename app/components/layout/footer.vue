@@ -16,8 +16,7 @@
   >
     <template #left-column>
       <section :class="$style.footerInfo">
-        <!-- Для демонстрации сетки добавлены дополнительные элементы -->
-        <nav :class="$style.cell1">
+        <nav :class="$style.mainLinks1">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
               <NuxtLink to="/" :class="$style.navLink">ГЛАВНАЯ</NuxtLink>
@@ -48,7 +47,7 @@
             </li>
           </ul>
         </nav>
-        <nav :class="$style.cell2">
+        <nav :class="$style.mainLinks2">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
               <a
@@ -92,8 +91,10 @@
         </div>
         <div :class="$style.adress">
           <p>109012, РОССИЯ, Г. МОСКВА УЛ. ВАРВАРКА, Д.14, СТР. 1, 2</p>
-          <a href="tel:+74952749999">+7 (495) 274-99-99</a>
-          <a href="mailto:">mail@mail.ru</a>
+          <div :class="$style.adressBox">
+            <a href="tel:+74952749999">+7 (495) 274-99-99</a>
+            <a href="mailto:">mail@mail.ru</a>
+          </div>
         </div>
         <div :class="$style.socialMedia">
           <div :class="$style.socialMediaItem">
@@ -159,6 +160,10 @@
     flex-direction: column-reverse;
     @media (min-width: #{size.$tabletMax}) {
       flex-direction: row;
+
+      .footerInfo {
+        padding: 90px 0 50px;
+      }
     }
   }
 
@@ -187,6 +192,7 @@
     height: auto;
     object-fit: contain;
     border: 1px solid #c4c4c4;
+    max-width: 800px;
   }
 
   .inputEmail {
@@ -260,13 +266,13 @@
     grid-template-rows: auto auto auto auto auto;
 
     // Расположение элементов для мобильной версии
-    .cell1 {
+    .mainLinks1 {
       grid-column: 1;
       grid-row: 1;
       padding: 10px;
     }
 
-    .cell2 {
+    .mainLinks2 {
       grid-column: 2;
       grid-row: 1;
       padding: 10px;
@@ -291,6 +297,11 @@
       align-self: end;
       grid-template-columns: 1fr;
       gap: 5px;
+
+      .adressBox {
+        display: flex;
+        flex-direction: column;
+      }
     }
 
     .socialMedia {
@@ -347,45 +358,130 @@
     }
 
     // Десктопная версия (от 670px)
-    @media (min-width: 670px) {
-      grid-template-columns: 1fr 1fr;
+    @media (min-width: #{size.$tabletMin}) {
+      grid-template-columns: 1fr 1.5fr 1fr;
       grid-template-rows: auto auto auto;
 
       // Переопределяем расположение для десктопной версии
-      .cell1 {
+      .mainLinks1 {
         grid-column: 1;
         grid-row: 1;
+        padding-bottom: 0;
       }
 
-      .cell2 {
-        grid-column: 2;
-        grid-row: 1;
+      .mainLinks2 {
+        padding-top: 0;
+        grid-column: 1;
+        grid-row: 2;
       }
 
       .cellForm {
-        grid-column: 1;
-        grid-row: 2;
+        grid-column: 2;
+        grid-row: 1 / span 2;
+
+        .inputEmail {
+          width: 100%;
+        }
       }
 
       .adress {
-        grid-column: 2;
-        grid-row: 2;
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        font-size: 14px;
+
+        .adressBox {
+          display: flex;
+          flex-direction: row;
+        }
+
+        .adressBox a {
+          margin-right: 10px;
+        }
       }
 
       .socialMedia {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      .qr {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .copyright {
+        grid-column: 3;
+        grid-row: 3;
+
+        .copyrightBtn {
+          font-size: 11px;
+        }
+      }
+    }
+
+    // Десктопная версия (от 768px)
+    @media (min-width: #{size.$tablet}) {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto auto;
+
+      .mainLinks1 {
         grid-column: 1;
+        grid-row: 1;
+      }
+
+      .mainLinks2 {
+        padding-top: 0;
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .cellForm {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+
+        .inputEmail {
+          margin-top: 30px;
+        }
+      }
+
+      .adress {
+        grid-column: 1;
+        grid-row: 3;
+        font-size: 14px;
+        max-width: 210px;
+
+        .adressBox {
+          display: flex;
+          flex-direction: column;
+        }
+      }
+
+      .socialMedia {
+        grid-column: 2;
         grid-row: 3;
       }
 
       .qr {
         grid-column: 2;
-        grid-row: 3;
+        grid-row: 4;
       }
 
-      .socialMedia {
+      .copyright {
         grid-column: 1;
         grid-row: 4;
       }
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      gap: 16px;
+    }
+
+    @media (min-width: #{size.$desktop}) {
+      gap: 30px;
+    }
+
+    @media (min-width: #{size.$desktopMax}) {
+      gap: 40px;
     }
   }
 
