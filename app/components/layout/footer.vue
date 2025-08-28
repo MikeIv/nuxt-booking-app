@@ -206,12 +206,17 @@
     height: auto;
     object-fit: contain;
     border: rem(1) solid #c4c4c4;
-    max-width: rem(800);
+
+    @media (min-width: #{size.$tabletMax}) {
+      max-width: rem(900);
+      min-width: rem(550);
+      height: auto;
+    }
   }
 
   .email {
     height: rem(40);
-    max-width: rem(270);
+    max-width: rem(290);
   }
 
   .emailInput {
@@ -237,11 +242,11 @@
   }
 
   .subscribeBtn {
-    width: rem(135);
+    width: rem(140);
     height: rem(30);
     padding-left: rem(17);
-    padding-bottom: rem(9);
-    margin-bottom: 10px;
+    padding-bottom: rem(7);
+    margin-bottom: rem(10);
     border-radius: 0%;
     background-color: var(--primary);
     color: var(--a-white);
@@ -366,6 +371,7 @@
       grid-row: 4;
       display: flex;
       flex-direction: row;
+      margin-left: rem(20);
 
       .qrImgItem {
         width: rem(92);
@@ -391,7 +397,7 @@
 
       .copyrightBtn {
         border-radius: 0;
-        width: rem(155);
+        width: rem(160);
         background-color: var(--primary);
         color: var(--a-white);
         font-weight: 600;
@@ -411,28 +417,35 @@
 
     // Десктопная версия (от 670px)
     @media (min-width: #{size.$tabletMin}) {
-      grid-template-columns: 1fr 1.5fr 1fr;
+      grid-template-columns: 1fr 1.4fr 0.8fr;
       grid-template-rows: auto auto auto;
+      gap: 0;
 
       // Переопределяем расположение для десктопной версии
       .mainLinks1 {
         grid-column: 1;
         grid-row: 1;
-        padding-bottom: 0;
       }
 
       .mainLinks2 {
-        padding-top: 0;
         grid-column: 1;
         grid-row: 2;
       }
 
       .cellForm {
+        width: 250px;
         grid-column: 2;
         grid-row: 1 / span 2;
 
-        .inputEmail {
+        .text,
+        .email,
+        .emailInput {
           width: 100%;
+        }
+
+        .agreement {
+          width: 90%;
+          margin-bottom: rem(25);
         }
       }
 
@@ -459,6 +472,8 @@
       .qr {
         grid-column: 3;
         grid-row: 2;
+        margin-left: 0;
+        margin-bottom: rem(30);
       }
 
       .copyright {
@@ -475,6 +490,7 @@
     @media (min-width: #{size.$tablet}) {
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto auto auto auto;
+      padding: rem(60) 0 rem(50);
 
       .mainLinks1 {
         grid-column: 1;
@@ -488,11 +504,25 @@
       }
 
       .cellForm {
+        width: 300px;
         grid-column: 2;
         grid-row: 1 / span 2;
 
-        .inputEmail {
-          margin-top: rem(30);
+        .emailInput {
+          height: rem(45);
+        }
+
+        .agreement {
+          margin-top: rem(15);
+          margin-bottom: rem(10);
+        }
+
+        .subscribeBtn {
+          width: rem(155);
+          height: rem(36);
+          padding-left: rem(17);
+          padding-bottom: rem(6);
+          font-size: 16px;
         }
       }
 
@@ -501,10 +531,15 @@
         grid-row: 3;
         font-size: rem(14);
         max-width: rem(210);
+        margin-top: rem(30);
+        margin-bottom: rem(30);
+        line-height: 1.4;
+        font-size: rem(13);
 
         .adressBox {
           display: flex;
           flex-direction: column;
+          line-height: 1.9;
         }
       }
 
@@ -524,8 +559,37 @@
       }
     }
 
+    @media (min-width: #{size.$tabletMax}) {
+      grid-template-columns: 0.7fr 0.7fr;
+      gap: 0;
+
+      .cellForm {
+        width: rem(206);
+
+        .text,
+        .email {
+          width: 100%;
+        }
+
+        .copyright,
+        .qr {
+          margin-bottom: 0;
+        }
+
+        .agreement,
+        .emailInput {
+          width: 90%;
+          margin-bottom: rem(25);
+        }
+      }
+
+      .adress {
+        margin-top: rem(15);
+        margin-bottom: rem(15);
+      }
+    }
+
     @media (min-width: #{size.$desktopMin}) {
-      gap: rem(16);
     }
 
     @media (min-width: #{size.$desktop}) {
