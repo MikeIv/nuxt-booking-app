@@ -77,7 +77,9 @@
         </nav>
         <div :class="$style.cellForm">
           <p :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</p>
-          <input :class="$style.inputEmail" placeholder="E-MAIL" />
+          <div :class="$style.email">
+            <input :class="$style.emailInput" placeholder="E-MAIL" />
+          </div>
           <div :class="$style.agreement">
             <UCheckbox size="lg" color="primary" />
             <p :class="$style.agreementText">
@@ -103,7 +105,9 @@
               href="https://t.me/"
               target="_blank"
             >
-              <UIcon name="i-telegram" :class="$style.telegramIcon" />
+              <div :class="$style.iconBox">
+                <UIcon name="i-telegram" :class="$style.telegramIcon" />
+              </div>
               <span :class="$style.socialMediaText"> Russia_Hotel </span>
             </a>
           </div>
@@ -113,13 +117,22 @@
               href="https://vk.com/"
               target="_blank"
             >
-              <UIcon name="i-vk" :class="$style.vkIcon" />
+              <div :class="$style.iconBox">
+                <UIcon name="i-vk" :class="$style.vkIcon" />
+              </div>
               <span :class="$style.socialMediaText"> Russia_Hotel </span>
             </a>
           </div>
         </div>
         <div :class="$style.qr">
-          <div :class="$style.qrImg">qr</div>
+          <div :class="$style.qrImg">
+            <img
+              src="/images/footer/qr.svg"
+              srcset="/images/footer/qr.svg 1x, /images/footer/qr.svg 2x"
+              alt="карта"
+              :class="$style.qrImgItem"
+            />
+          </div>
           <div :class="$style.qrText">
             QR-код
             <br />
@@ -147,7 +160,7 @@
         src="/images/footer/map.svg"
         srcset="/images/footer/map.svg 1x, /images/footer/map.svg 2x"
         alt="карта"
-        :class="$style.image"
+        :class="$style.imagePic"
       />
     </template>
   </LayoutContentBlock>
@@ -160,51 +173,57 @@
     flex-direction: column-reverse;
     @media (min-width: #{size.$tabletMax}) {
       flex-direction: row;
-
-      .footerInfo {
-        padding: 90px 0 50px;
-      }
     }
   }
 
   .agreement {
     display: flex;
     flex-direction: row;
-    margin-bottom: 10px;
+    margin-bottom: rem(10);
+    width: rem(270);
+    height: rem(17);
 
     .agreementText {
       font-weight: 600;
-      font-size: 11px;
+      font-size: rem(10);
       margin-left: 0.5rem;
+      letter-spacing: rem(0.3);
+      line-height: 1.5;
+      opacity: 80%;
 
       .agreementTextLink {
-        border-bottom: 1px solid #686062;
+        border-bottom: rem(1) solid #686062;
         cursor: pointer;
       }
     }
   }
 
-  .image {
+  .imagePic {
     display: flex;
     justify-content: center;
     align-items: center;
     width: clamp(100%, 3vw, 50%);
     height: auto;
     object-fit: contain;
-    border: 1px solid #c4c4c4;
-    max-width: 800px;
+    border: rem(1) solid #c4c4c4;
+    max-width: rem(800);
   }
 
-  .inputEmail {
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    font-size: clamp(14px, 3vw, 16px);
-    width: 70%;
-    border-bottom: 1px solid #686062;
+  .email {
+    height: rem(40);
+    max-width: rem(270);
+  }
+
+  .emailInput {
+    height: rem(30);
+    width: 100%;
+    padding: rem(6) rem(12) rem(6) 0;
+    border-bottom: rem(1) solid #686062;
+    line-height: 1.5;
 
     &::placeholder {
       color: var(--secondary);
+      opacity: 75%;
     }
     &:hover {
       box-shadow: none;
@@ -215,74 +234,62 @@
   .introRight {
     align-items: stretch;
     height: 100%;
-    padding: 0 rem(16) rem(16) rem(24);
   }
 
   .subscribeBtn {
-    width: 140px;
-    padding-left: 1rem;
+    width: rem(135);
+    height: rem(30);
+    padding-left: rem(17);
+    padding-bottom: rem(9);
+    margin-bottom: 10px;
     border-radius: 0%;
     background-color: var(--primary);
+    color: var(--a-white);
     text-align: center;
     font-weight: 600;
-    font-size: clamp(14px, 3vw, 16px);
+    font-size: 14px;
     cursor: pointer;
   }
 
   .text {
+    width: rem(270);
     font-weight: 600;
-    font-size: clamp(14px, 3vw, 16px);
-  }
-
-  .telegramIcon {
-    margin-right: 21px;
-    width: 28px;
-    height: 28px;
-    color: rgb(104, 96, 98);
-  }
-
-  .vkIcon {
-    margin-right: 15px;
-    width: 34px;
-    height: 34px;
-    color: rgb(104, 96, 98);
-  }
-
-  .socialMediaText {
-    font-weight: 500;
-    font-size: 13px;
-    margin-top: 0.5rem;
+    opacity: 75%;
+    margin-bottom: rem(10);
   }
 
   .footerInfo {
+    width: 100%;
     display: grid;
-    gap: 8px;
-    padding: 0 rem(16) rem(16) rem(16);
+    gap: rem(25) rem(30);
+    padding: rem(30) 0;
+    font-size: rem(14);
+    transition: color 0.4s ease;
+    font-weight: 600;
     font-family: "Futura PT", sans-serif;
+    line-height: 2.1;
+    letter-spacing: rem(1);
     color: var(--secondary);
 
     // Мобильная версия (до 670px)
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1.09fr;
     grid-template-rows: auto auto auto auto auto;
 
     // Расположение элементов для мобильной версии
     .mainLinks1 {
       grid-column: 1;
       grid-row: 1;
-      padding: 10px;
     }
 
     .mainLinks2 {
       grid-column: 2;
       grid-row: 1;
-      padding: 10px;
     }
 
     .cellForm {
       grid-column: 1 / span 2;
       grid-row: 2;
-      width: 90%;
-      padding: 10px;
+      width: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -290,13 +297,14 @@
     .adress {
       grid-column: 1 / span 2;
       grid-row: 3;
-      padding: 10px;
       font-weight: 600;
-      font-size: clamp(14px, 3vw, 16px);
+      font-size: 13px;
       display: grid;
       align-self: end;
       grid-template-columns: 1fr;
-      gap: 5px;
+      opacity: 75%;
+      line-height: 1.7;
+      letter-spacing: rem(0);
 
       .adressBox {
         display: flex;
@@ -307,53 +315,97 @@
     .socialMedia {
       grid-column: 1;
       grid-row: 4;
-      padding: 10px;
       display: flex;
       flex-direction: column;
+      width: rem(166);
+      height: rem(92);
+
+      .socialMediaItem {
+        height: rem(34);
+        margin-bottom: rem(10);
+      }
 
       .socialMediaItemLink {
         display: flex;
         flex-direction: row;
-        margin-bottom: 10px;
+        margin-bottom: rem(10);
+      }
+
+      .iconBox {
+        width: rem(37);
+        height: rem(37);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .telegramIcon {
+        width: rem(30);
+        height: rem(30);
+        color: rgb(104, 96, 98);
+      }
+
+      .vkIcon {
+        width: rem(37);
+        height: rem(37);
+        color: rgb(104, 96, 98);
+      }
+
+      .socialMediaText {
+        padding-left: rem(15);
+        font-size: rem(10);
+        color: #686062;
+        letter-spacing: 0;
+        line-height: 4;
+        opacity: 70%;
       }
     }
 
     .qr {
       grid-column: 2;
       grid-row: 4;
-      padding: 10px;
       display: flex;
       flex-direction: row;
 
+      .qrImgItem {
+        width: rem(92);
+        height: rem(92);
+      }
+
       .qrText {
-        padding-left: 20px;
+        padding-left: rem(20);
         align-self: flex-end;
         line-height: 1.1rem;
-        font-size: 13px;
+        font-size: rem(10);
+        line-height: rem(13);
+        letter-spacing: 0;
+        opacity: 70%;
       }
     }
 
     .copyright {
       grid-column: 1 / span 2;
       grid-row: 5;
-      padding: 10px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
 
       .copyrightBtn {
         border-radius: 0;
-        max-width: 200px;
+        width: rem(155);
         background-color: var(--primary);
+        color: var(--a-white);
         font-weight: 600;
-        font-size: 14px;
-        padding: 5px 15px;
+        font-size: rem(11);
+        padding: rem(5) rem(10);
+        letter-spacing: 0;
+        margin-bottom: rem(16);
         cursor: pointer;
       }
 
       .copyrightText {
-        font-size: 13px;
+        font-size: rem(10);
+        letter-spacing: 0;
+        opacity: 75%;
       }
     }
 
@@ -387,7 +439,7 @@
       .adress {
         grid-column: 1 / span 2;
         grid-row: 3;
-        font-size: 14px;
+        font-size: rem(14);
 
         .adressBox {
           display: flex;
@@ -395,7 +447,7 @@
         }
 
         .adressBox a {
-          margin-right: 10px;
+          margin-right: rem(10);
         }
       }
 
@@ -414,7 +466,7 @@
         grid-row: 3;
 
         .copyrightBtn {
-          font-size: 11px;
+          font-size: rem(11);
         }
       }
     }
@@ -440,15 +492,15 @@
         grid-row: 1 / span 2;
 
         .inputEmail {
-          margin-top: 30px;
+          margin-top: rem(30);
         }
       }
 
       .adress {
         grid-column: 1;
         grid-row: 3;
-        font-size: 14px;
-        max-width: 210px;
+        font-size: rem(14);
+        max-width: rem(210);
 
         .adressBox {
           display: flex;
@@ -473,15 +525,15 @@
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      gap: 16px;
+      gap: rem(16);
     }
 
     @media (min-width: #{size.$desktop}) {
-      gap: 30px;
+      gap: rem(30);
     }
 
     @media (min-width: #{size.$desktopMax}) {
-      gap: 40px;
+      gap: rem(40);
     }
   }
 
@@ -492,18 +544,13 @@
   }
 
   .navItem {
-    margin-bottom: 10px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+    margin-bottom: rem(2);
+    line-height: rem(30);
   }
 
   .navLink {
     text-decoration: none;
-    font-size: clamp(14px, 3vw, 16px);
-    transition: color 0.3s ease;
-    font-weight: 600;
+    opacity: 75%;
 
     &:hover {
       text-decoration: underline;

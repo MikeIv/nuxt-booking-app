@@ -61,6 +61,7 @@
   .layout {
     width: 100%;
     margin: 0 auto;
+    padding: 0 rem(15);
     margin-bottom: clamp(50px, 10vw, 100px);
     background-color: var(--ui-color-primary-50);
   }
