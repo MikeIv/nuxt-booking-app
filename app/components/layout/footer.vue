@@ -170,6 +170,8 @@
   @use "~/assets/styles/variables/resolutions" as size;
 
   .content {
+    max-width: rem(1540);
+    margin: auto;
     flex-direction: column-reverse;
     @media (min-width: #{size.$tabletMax}) {
       flex-direction: row;
@@ -208,7 +210,7 @@
     border: rem(1) solid #c4c4c4;
 
     @media (min-width: #{size.$tabletMax}) {
-      max-width: rem(900);
+      max-width: rem(755);
       min-width: rem(550);
       height: auto;
     }
@@ -535,6 +537,7 @@
         margin-bottom: rem(30);
         line-height: 1.4;
         font-size: rem(13);
+        width: rem(170);
 
         .adressBox {
           display: flex;
@@ -562,11 +565,11 @@
     @media (min-width: #{size.$tabletMax}) {
       grid-template-columns: 0.7fr 0.7fr;
       gap: 0;
+      max-height: rem(515);
 
       .cellForm {
         width: rem(206);
 
-        .text,
         .email {
           width: 100%;
         }
@@ -576,10 +579,15 @@
           margin-bottom: 0;
         }
 
-        .agreement,
         .emailInput {
           width: 90%;
           margin-bottom: rem(25);
+          margin-top: rem(8);
+        }
+
+        .agreement {
+          margin-bottom: rem(25);
+          margin-top: rem(20);
         }
       }
 
@@ -590,14 +598,26 @@
     }
 
     @media (min-width: #{size.$desktopMin}) {
+      max-height: rem(760);
+      .cellForm {
+        width: rem(300);
+
+        .email {
+          width: 100%;
+        }
+      }
+
+      .adress,
+      .socialMedia {
+        margin-top: rem(100);
+        margin-bottom: rem(100);
+      }
     }
 
     @media (min-width: #{size.$desktop}) {
-      gap: rem(30);
     }
 
     @media (min-width: #{size.$desktopMax}) {
-      gap: rem(40);
     }
   }
 
