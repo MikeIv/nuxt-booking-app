@@ -20,12 +20,30 @@
     return true;
   };
 
+  // const testProxy = async () => {
+  //   try {
+  //     const response = await $fetch("/api/v1/search", {
+  //       method: "POST",
+  //       body: { test: "data" },
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+  //     console.log("Proxy works:", response);
+  //   } catch (error) {
+  //     console.error("Proxy error:", error);
+  //   }
+  // };
+
   const handleSearch = async () => {
     if (!validateForm()) return;
 
     try {
-      // Временно отключен запрос на бекенд
-      // await bookingStore.search();
+      console.log("Making search request...");
+
+      // await testProxy({});
+
+      await bookingStore.search();
       if (useRoute().path === "/") {
         await router.push("/rooms");
       }

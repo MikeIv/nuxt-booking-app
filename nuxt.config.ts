@@ -1,5 +1,10 @@
 import svgLoader from "vite-svg-loader";
 
+const API_BASE_URL =
+  process.env.NUXT_PUBLIC_API_BASE ||
+  "https://varvarka-api.grandfs-develop.ru/api/v1";
+const IS_DEV = process.env.NODE_ENV === "development";
+
 export default defineNuxtConfig({
   modules: [
     "@nuxt/ui",
@@ -9,7 +14,6 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@pinia/nuxt",
     "@nuxt/icon",
-    "@pinia/nuxt",
     "pinia-plugin-persistedstate/nuxt",
   ],
 
@@ -72,12 +76,13 @@ export default defineNuxtConfig({
       "composables",
       "composables/*/index.{ts,js,mjs,mts}",
       "composables/**",
+      "server/utils",
     ],
   },
   devtools: {
-    enabled: true,
+    enabled: IS_DEV,
     timeline: {
-      enabled: true,
+      enabled: IS_DEV,
     },
   },
   css: [
@@ -89,22 +94,6 @@ export default defineNuxtConfig({
     plugins: {
       "@tailwindcss/postcss": {},
       autoprefixer: {},
-    },
-  },
-
-  routeRules: {
-    "/": { prerender: true, static: true },
-    "/about": { prerender: true, static: true },
-    "/blog/**": { prerender: true, static: true },
-    "/user/**": { ssr: false, swr: 3600 },
-    "/products/**": { ssr: false, swr: 3600 },
-    "/news": { swr: 3600 },
-    "/old-page": { redirect: "/new-page" },
-    "/assets/**": {
-      headers: { "Cache-Control": "public, max-age=31536000, immutable" },
-    },
-    "/_nuxt/**": {
-      headers: { "Cache-Control": "public, max-age=31536000, immutable" },
     },
   },
 
@@ -121,26 +110,58 @@ export default defineNuxtConfig({
     viewTransition: true,
   },
   compatibilityDate: "2025-07-15",
-  nitro: {
-    static: true,
-    compressPublicAssets: {
-      gzip: true,
-      brotli: true,
+  runtimeConfig: {
+    apiBase: API_BASE_URL,
+    public: {
+      apiBase:
+        process.env.NUXT_PUBLIC_API_BASE ||
+        "https://varvarka-api.grandfs-develop.ru/api/v1",
+      isDev: IS_DEV,
     },
-    routeRules: {
-      "/**": {
+  },
+  nitro: {
+    devProxy: {
+      "/api/v1": {
+        target: "https://varvarka-api.grandfs-develop.ru/api/v1", // ← Полный URL до API
+        changeOrigin: true,
+        // prependPath: false, // ← Уберите или установите false
+        rewrite: (path) => path.replace(/^\/api\/v1/, ""), // ← Убираем префикс
         headers: {
-          "X-Frame-Options": "DENY",
-          "X-Content-Type-Options": "nosniff",
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-          "Permissions-Policy": "geolocation=(), microphone=()",
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
       },
     },
   },
 
+  routeRules: {
+    "/api/**": {
+      cors: true,
+      headers: {
+        "Access-Control-Allow-Origin": "http://localhost:3000",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, Origin",
+        "Access-Control-Allow-Credentials": "true",
+      },
+    },
+  },
+
   build: {
-    transpile: ["@nuxt/ui", "truncate-html"],
+    transpile: [
+      "@nuxt/ui",
+      "@nuxt/icon",
+      "@nuxt/image",
+      "@nuxt/eslint",
+      "@vueuse/nuxt",
+      "@pinia/nuxt",
+      "truncate-html",
+    ],
+    ...(!IS_DEV && {
+      analyze: {
+        analyzerMode: "static",
+        openAnalyzer: false,
+      },
+    }),
   },
 
   vite: {
