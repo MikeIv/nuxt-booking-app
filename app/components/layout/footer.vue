@@ -81,7 +81,13 @@
             <input :class="$style.emailInput" placeholder="E-MAIL" />
           </div>
           <div :class="$style.agreement">
-            <UCheckbox size="lg" color="primary" />
+            <UCheckbox
+              size="lg"
+              :ui="{
+                indicator: $style.checkboxIndicator,
+                icon: $style.checkboxIcon,
+              }"
+            />
             <p :class="$style.agreementText">
               Даю согласие на обработку
               <a href="#" :class="$style.agreementTextLink">
@@ -176,6 +182,32 @@
     @media (min-width: #{size.$tabletMax}) {
       flex-direction: row;
     }
+  }
+
+  .checkboxIndicator {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #fff;
+    border: 1px solid #686062;
+    border-radius: none;
+
+    &[data-state="checked"] {
+      background-color: #fff;
+      border: 1px solid #686062;
+    }
+
+    &[data-state="unchecked"] {
+      background-color: #fff;
+      border: 1px solid #686062;
+    }
+  }
+
+  .checkboxIcon {
+    color: #686062;
   }
 
   .agreement {
