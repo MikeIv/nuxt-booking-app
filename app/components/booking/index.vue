@@ -3,8 +3,9 @@
   import { storeToRefs } from "pinia";
 
   const bookingStore = useBookingStore();
-  const { date, guests, promoCode } = storeToRefs(bookingStore);
+  const { date, guests, promoCode, searchResults } = storeToRefs(bookingStore);
   const router = useRouter();
+  const isSearching = ref(false);
 
   const validateForm = () => {
     if (!date.value) {
@@ -20,28 +21,13 @@
     return true;
   };
 
-  // const testProxy = async () => {
-  //   try {
-  //     const response = await $fetch("/api/v1/search", {
-  //       method: "POST",
-  //       body: { test: "data" },
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-  //     console.log("Proxy works:", response);
-  //   } catch (error) {
-  //     console.error("Proxy error:", error);
-  //   }
-  // };
-
   const handleSearch = async () => {
     if (!validateForm()) return;
 
+    isSearching.value = true;
+
     try {
       console.log("Making search request...");
-
-      // await testProxy({});
 
       await bookingStore.search();
       if (useRoute().path === "/") {
@@ -49,6 +35,8 @@
       }
     } catch (error) {
       alert(error.message);
+    } finally {
+      isSearching.value = false;
     }
 
     console.log("Поиск:", {
@@ -57,6 +45,12 @@
       promoCode: promoCode.value,
     });
   };
+
+  onMounted(async () => {
+    if (date.value && guests.value.adults > 0 && !searchResults.value) {
+      await handleSearch();
+    }
+  });
 </script>
 
 <template>
@@ -71,9 +65,11 @@
         color="bgAccent"
         class="text-white px-4 py-2"
         size="xl"
+        :loading="isSearching"
+        :disabled="isSearching"
         @click="handleSearch"
       >
-        Поиск
+        {{ isSearching ? "Поиск..." : "Поиск" }}
       </UButton>
     </div>
   </section>
@@ -81,10 +77,6 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
-
-  //:root {
-  //  --calendar-width: rem(400);
-  //}
 
   .wrapper {
     position: relative;

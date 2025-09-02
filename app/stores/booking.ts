@@ -42,7 +42,6 @@ export const useBookingStore = defineStore(
       // Если это уже строка, возвращаем как есть
       if (typeof date === "string") return date;
 
-      // Если это Date объект, форматируем
       if (date instanceof Date) {
         return date.toISOString().split("T")[0];
       }
@@ -70,6 +69,16 @@ export const useBookingStore = defineStore(
       if (guests.value.adults === 0)
         throw new Error("Укажите количество гостей");
 
+      // Проверяем, не устарели ли даты
+      const [startDate] = date.value;
+      if (startDate < new Date()) {
+        // Сбрасываем результаты, если даты устарели
+        searchResults.value = null;
+        throw new Error(
+          "Выбранные даты устарели. Пожалуйста, выберите новые даты.",
+        );
+      }
+
       loading.value = true;
       error.value = null;
 
@@ -80,7 +89,6 @@ export const useBookingStore = defineStore(
 
         // Подготавливаем массив возрастов детей
         const childs = childrenAges.value.slice(0, guests.value.children);
-        // Если возрасты не указаны, заполняем нулями
         while (childs.length < guests.value.children) {
           childs.push(0);
         }
@@ -205,7 +213,7 @@ export const useBookingStore = defineStore(
   {
     persist: {
       key: "booking-store",
-      paths: ["date", "guests", "promoCode", "childrenAges"],
+      paths: ["date", "guests", "promoCode", "childrenAges", "searchResults"],
       // Добавляем сериализацию/десериализацию для дат
       serializer: {
         serialize: (state) => {
