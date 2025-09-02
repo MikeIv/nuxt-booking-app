@@ -34,7 +34,6 @@
       />
     </div>
 
-    <!-- Добавим состояние загрузки -->
     <div v-if="bookingStore.loading" :class="$style.loading">
       Загрузка номеров...
     </div>

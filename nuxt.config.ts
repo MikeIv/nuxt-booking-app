@@ -14,6 +14,7 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@pinia/nuxt",
     "@nuxt/icon",
+    "@nuxt/fonts",
     "pinia-plugin-persistedstate/nuxt",
   ],
 
@@ -21,13 +22,11 @@ export default defineNuxtConfig({
     families: {
       "Playfair+Display": [400, 500, 600, 700],
       Lora: [400, 500, 600, 700],
-      // Можно добавить другие шрифты
     },
     display: "swap",
   },
 
   ui: {
-    // tailwind: false,
     global: true,
     icons: ["mdi", "simple-icons"],
     fonts: {
@@ -54,6 +53,7 @@ export default defineNuxtConfig({
       },
     },
   },
+
   icon: {
     customCollections: [
       {
@@ -79,17 +79,20 @@ export default defineNuxtConfig({
       "server/utils",
     ],
   },
+
   devtools: {
     enabled: IS_DEV,
     timeline: {
       enabled: IS_DEV,
     },
   },
+
   css: [
     "~/assets/styles/main.scss",
     "~/assets/styles/variables/_z-index.scss",
     "~/assets/styles/variables/_colors.scss",
   ],
+
   postcss: {
     plugins: {
       "@tailwindcss/postcss": {},
@@ -104,12 +107,13 @@ export default defineNuxtConfig({
   features: {
     devLogs: false,
   },
+
   experimental: {
-    payloadExtraction: true,
-    componentIslands: true,
     viewTransition: true,
   },
+
   compatibilityDate: "2025-07-15",
+
   runtimeConfig: {
     apiBase: API_BASE_URL,
     public: {
@@ -119,30 +123,22 @@ export default defineNuxtConfig({
       isDev: IS_DEV,
     },
   },
+
   nitro: {
+    static: true,
     devProxy: {
       "/api/v1": {
-        target: "https://varvarka-api.grandfs-develop.ru/api/v1", // ← Полный URL до API
+        target: "https://varvarka-api.grandfs-develop.ru/api/v1",
         changeOrigin: true,
-        // prependPath: false, // ← Уберите или установите false
-        rewrite: (path) => path.replace(/^\/api\/v1/, ""), // ← Убираем префикс
+        rewrite: (path) => path.replace(/^\/api\/v1/, ""),
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
       },
     },
-  },
-
-  routeRules: {
-    "/api/**": {
-      cors: true,
-      headers: {
-        "Access-Control-Allow-Origin": "http://localhost:3000",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, Origin",
-        "Access-Control-Allow-Credentials": "true",
-      },
+    prerender: {
+      routes: ["/"],
     },
   },
 
@@ -222,7 +218,6 @@ export default defineNuxtConfig({
         "vue/v-on-event-hyphenation": "warn",
         "no-console": process.env.NODE_ENV === "production" ? "error" : "warn",
         "no-debugger": process.env.NODE_ENV === "production" ? "error" : "warn",
-
         "vue/html-indent": [
           "error",
           2,
@@ -264,6 +259,7 @@ export default defineNuxtConfig({
       cookieKey: "i18n_redirected",
     },
   },
+
   image: {
     domains: ["https://varvarka-v2.grandfs-develop.ru/"],
     presets: {
