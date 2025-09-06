@@ -19,7 +19,7 @@ export const useBookingStore = defineStore(
     const date = ref<[Date, Date] | null>(null);
     const guests = ref<GuestInfo>({
       rooms: 1,
-      adults: 2,
+      adults: 1,
       children: 0,
     });
     const promoCode = ref("");

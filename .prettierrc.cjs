@@ -1,26 +1,20 @@
 module.exports = {
-  // Основные настройки
-  printWidth: 120, // Максимальная длина строки
-  tabWidth: 2, // Размер отступа (2 пробела)
-  useTabs: false, // Использовать пробелы вместо табов
+  printWidth: 120,
+  tabWidth: 2,
+  useTabs: false,
 
-  // Кавычки
-  singleQuote: true, // Одинарные кавычки
-  quoteProps: "consistent", // Стиль кавычек в объектах
+  singleQuote: true,
+  quoteProps: "consistent",
 
-  // Запятые
-  trailingComma: "all", // Висячие запятые везде
+  trailingComma: "all",
 
-  // Скобки
-  bracketSpacing: true, // Пробелы между скобками { foo: bar }
-  bracketSameLine: false, // Тег > переносится на новую строку
-  arrowParens: "always", // Скобки вокруг аргументов стрелочных функций
+  bracketSpacing: true,
+  bracketSameLine: false,
+  arrowParens: "always",
 
-  // Vue-specific
-  vueIndentScriptAndStyle: true, // Отступы в <script> и <style>
+  vueIndentScriptAndStyle: true,
 
-  // Дополнительно
-  semi: false, // Без точек с запятой
-  endOfLine: "lf", // Линукс-стиль переноса строк
-  htmlWhitespaceSensitivity: "css", // Поведение пробелов в HTML
+  semi: false,
+  endOfLine: "lf",
+  htmlWhitespaceSensitivity: "css",
 };

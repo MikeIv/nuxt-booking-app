@@ -1,13 +1,15 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { storeToRefs } from "pinia";
+
+  definePageMeta({
+    layout: "steps",
+  });
 
   const items = ref(["Backlog", "Todo", "In Progress", "Done"]);
 
   const bookingStore = useBookingStore();
   const { searchResults, date, guests } = storeToRefs(bookingStore);
 
-  // Загружаем данные при монтировании компонента, если есть сохраненные параметры поиска
   onMounted(async () => {
     if (date.value && guests.value.adults > 0 && !searchResults.value) {
       try {
@@ -40,7 +42,7 @@
 
     <section v-else-if="searchResults" :class="$style.roomsList">
       <BookingCard
-        v-for="item in searchResults?.roomTypes"
+        v-for="item in searchResults?.rooms"
         :key="item.id"
         :room="item"
       />

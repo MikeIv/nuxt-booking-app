@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted, onBeforeUnmount } from "vue";
+  import { formatCount } from "~/utils/declension";
 
   defineProps({
     room: {
@@ -8,132 +8,92 @@
     },
   });
 
+  const bookingStore = useBookingStore();
+  const { date, guests } = storeToRefs(bookingStore);
+  console.log("date", date.value);
+
+  const nightsCount = computed(() => {
+    if (
+      !date.value ||
+      date.value.length < 2 ||
+      !date.value[0] ||
+      !date.value[1]
+    ) {
+      return 0;
+    }
+
+    const checkIn = new Date(date.value[0]);
+    const checkOut = new Date(date.value[1]);
+
+    const diffTime = checkOut.getTime() - checkIn.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays > 0 ? diffDays : 0;
+  });
+
   const isPopupOpen = ref(false);
 
   const openPopup = (event: MouseEvent) => {
-    event.stopPropagation(); // Предотвращаем всплытие события
+    event.stopPropagation();
     isPopupOpen.value = true;
   };
 
   const closePopup = () => {
     isPopupOpen.value = false;
   };
-
-  // Закрытие попапа при клике вне его
-  const handleClickOutside = (event: MouseEvent) => {
-    const popup = document.querySelector("[data-popup]");
-    const button = document.querySelector("[data-popup-button]");
-
-    if (
-      popup &&
-      !popup.contains(event.target as Node) &&
-      !button?.contains(event.target as Node)
-    ) {
-      closePopup();
-    }
-  };
-
-  // Добавляем обработчик клика вне попапа
-  onMounted(() => {
-    document.addEventListener("click", handleClickOutside);
-  });
-
-  onBeforeUnmount(() => {
-    document.removeEventListener("click", handleClickOutside);
-  });
 </script>
 
 <template>
   <section :class="$style.card">
-    <div :class="$style.slider">
+    <header :class="$style.slider">
       <img src="/images/room/room-01.jpg" alt="номер" />
-    </div>
-    <div :class="$style.roomInfo">
-      <span :class="$style.title">{{ room?.title }}</span>
+    </header>
+    <main :class="$style.cardDetails">
+      <div :class="$style.roomInfo">
+        <span :class="$style.title">{{ room?.title }}</span>
 
-      <!-- Простая кнопка вместо UButton -->
-      <button
-        :class="$style.infoButton"
-        data-popup-button
-        @click="openPopup($event)"
-      >
-        <UIcon
-          name="i-heroicons-chevron-down-20-solid"
-          :class="$style.chevronIcon"
-        />
-      </button>
-    </div>
-
-    <!-- Попап с дополнительной информацией -->
-    <div v-if="isPopupOpen" :class="$style.popupOverlay">
-      <div :class="$style.popup" data-popup>
-        <div :class="$style.popupHeader">
-          <h3 :class="$style.popupTitle">Подробная информация</h3>
-          <button :class="$style.closeButton" @click="closePopup">
-            <UIcon name="i-heroicons-x-mark-20-solid" />
-          </button>
+        <button
+          :class="$style.infoButton"
+          data-popup-button
+          @click="openPopup($event)"
+        >
+          <UIcon
+            name="i-heroicons-chevron-down-20-solid"
+            :class="$style.chevronIcon"
+          />
+        </button>
+      </div>
+      <div :class="$style.description">
+        <div :class="$style.item">
+          <UIcon name="i-persons" :class="$style.icon" />
+          <span :class="$style.itemTitle">
+            До {{ formatCount(room?.max_occupancy, "guest") }}
+          </span>
         </div>
-
-        <div :class="$style.popupContent">
-          <!-- Основная информация -->
-          <div :class="$style.infoSection">
-            <h4 :class="$style.sectionTitle">Описание номера</h4>
-            <p :class="$style.description">
-              {{ room?.description || "Описание отсутствует" }}
-            </p>
-          </div>
-
-          <!-- Характеристики -->
-          <div :class="$style.infoSection">
-            <h4 :class="$style.sectionTitle">Характеристики</h4>
-            <div :class="$style.features">
-              <div v-if="room?.area" :class="$style.featureItem">
-                <UIcon name="i-heroicons-arrows-pointing-out-20-solid" />
-                <span>Площадь: {{ room.area }} м²</span>
-              </div>
-              <div v-if="room?.capacity" :class="$style.featureItem">
-                <UIcon name="i-heroicons-user-group-20-solid" />
-                <span>Вместимость: {{ room.capacity }} чел.</span>
-              </div>
-              <div v-if="room?.bedType" :class="$style.featureItem">
-                <UIcon name="i-heroicons-bed-20-solid" />
-                <span>Тип кровати: {{ room.bedType }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Удобства -->
-          <div v-if="room?.amenities" :class="$style.infoSection">
-            <h4 :class="$style.sectionTitle">Удобства</h4>
-            <div :class="$style.amenities">
-              <div
-                v-for="(amenity, index) in room.amenities"
-                :key="index"
-                :class="$style.amenityItem"
-              >
-                <UIcon name="i-heroicons-check-circle-20-solid" />
-                <span>{{ amenity }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Цена -->
-          <div v-if="room?.price" :class="$style.infoSection">
-            <h4 :class="$style.sectionTitle">Стоимость</h4>
-            <div :class="$style.price">
-              <span :class="$style.priceValue">{{ room.price }} ₽</span>
-              <span :class="$style.pricePeriod">за ночь</span>
-            </div>
-          </div>
+        <div :class="$style.item">
+          <UIcon name="i-square" :class="$style.icon" />
+          <span :class="$style.itemTitle">{{ room?.square }} м2</span>
         </div>
-
-        <div :class="$style.popupFooter">
-          <button :class="$style.closePopupButton" @click="closePopup">
-            Закрыть
-          </button>
+        <div :class="$style.item">
+          <UIcon name="i-dash-square" :class="$style.icon" />
+          <span :class="$style.itemTitle">
+            {{ formatCount(room?.rooms, "chamber") }}</span
+          >
         </div>
       </div>
-    </div>
+      <div :class="$style.footer">
+        <div :class="$style.priceBlock">
+          <span :class="$style.guestInfo"
+            >{{ formatCount(guests?.adults, "guest") }} /
+            {{ formatCount(nightsCount, "night") }}</span
+          >
+          <span :class="$style.price">От {{ room?.min_price }} руб.</span>
+        </div>
+        <button :class="$style.bookingButton">Забронировать</button>
+      </div>
+    </main>
+
+    <BookingRoomPopup :room="room" :is-open="isPopupOpen" @close="closePopup" />
   </section>
 </template>
 
@@ -147,46 +107,6 @@
     border-radius: var(--a-borderR--card);
     overflow: hidden;
     position: relative;
-  }
-
-  .roomInfo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: rem(12);
-  }
-
-  .title {
-    font-family: "Lora", serif;
-    font-size: rem(24);
-    font-weight: bold;
-    color: var(--a-text-dark);
-    flex: 1;
-  }
-
-  .infoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: rem(32);
-    height: rem(32);
-    min-width: auto;
-    padding: 0;
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: var(--a-gray-100);
-    }
-  }
-
-  .chevronIcon {
-    width: rem(20);
-    height: rem(20);
-    color: var(--a-black);
   }
 
   .slider {
@@ -203,218 +123,116 @@
     }
   }
 
-  /* Стили для попапа */
-  .popupOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+  .cardDetails {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: rem(20);
-  }
-
-  .popup {
-    background: white;
-    border-radius: rem(12);
-    padding: rem(24);
-    max-width: rem(500);
+    flex-direction: column;
     width: 100%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 rem(10) rem(25) rgba(0, 0, 0, 0.2);
-    position: relative;
   }
 
-  .popupHeader {
+  .roomInfo {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: rem(24);
-    padding-bottom: rem(16);
-    border-bottom: 1px solid var(--a-gray-200);
+    gap: rem(12);
+    margin-bottom: rem(16);
   }
 
-  .popupTitle {
+  .title {
     font-family: "Lora", serif;
-    font-size: rem(20);
-    font-weight: 600;
+    font-size: rem(24);
+    font-weight: bold;
     color: var(--a-text-dark);
-    margin: 0;
   }
 
-  .closeButton {
+  .infoButton {
     display: flex;
     align-items: center;
     justify-content: center;
     width: rem(32);
     height: rem(32);
+    min-width: auto;
+    margin-right: auto;
     padding: 0;
-    border: none;
+    border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
     background: transparent;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: var(--a-gray-100);
+      background-color: var(--a-primaryBg);
+      border: none;
+
+      .chevronIcon {
+        color: var(--a-white);
+      }
     }
   }
 
-  .popupContent {
-    margin-bottom: rem(24);
-  }
-
-  .infoSection {
-    margin-bottom: rem(20);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .sectionTitle {
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    font-weight: 600;
-    color: var(--a-text-dark);
-    margin-bottom: rem(12);
+  .chevronIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-black);
   }
 
   .description {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-700);
-    line-height: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: rem(60);
   }
 
-  .features {
+  .item {
+    display: flex;
+    gap: rem(8);
+    align-items: center;
+    width: 50%;
+    margin-bottom: rem(8);
+  }
+
+  .icon {
+    width: rem(18);
+    height: rem(18);
+    color: var(--a-text-light);
+  }
+
+  .itemTitle {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
+    color: var(--a-text-light);
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .priceBlock {
     display: flex;
     flex-direction: column;
-    gap: rem(8);
   }
 
-  .featureItem {
-    display: flex;
-    align-items: center;
-    gap: rem(8);
+  .guestInfo {
+    margin-bottom: rem(4);
     font-family: "Inter", sans-serif;
     font-size: rem(14);
-    color: var(--a-gray-700);
-
-    svg {
-      color: var(--a-primary);
-      width: rem(16);
-      height: rem(16);
-    }
+    font-weight: 500;
+    color: var(--a-text-light);
   }
-
-  .amenities {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: rem(8);
-  }
-
-  .amenityItem {
-    display: flex;
-    align-items: center;
-    gap: rem(8);
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-700);
-
-    svg {
-      color: var(--a-success);
-      width: rem(16);
-      height: rem(16);
-    }
-  }
-
   .price {
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 700;
+    color: var(--a-text-dark);
+  }
+
+  .bookingButton {
     display: flex;
-    align-items: baseline;
-    gap: rem(8);
-  }
-
-  .priceValue {
-    font-family: "Inter", sans-serif;
-    font-size: rem(20);
-    font-weight: 600;
-    color: var(--a-primary);
-  }
-
-  .pricePeriod {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-600);
-  }
-
-  .popupFooter {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: rem(16);
-    border-top: 1px solid var(--a-gray-200);
-  }
-
-  .closePopupButton {
-    padding: rem(8) rem(16);
-    border: 1px solid var(--a-primary);
-    border-radius: rem(8);
-    background: var(--a-primary);
-    color: white;
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background: var(--a-primary-dark);
-    }
-  }
-
-  /* Анимация для попапа */
-  .popup {
-    animation: popupFadeIn 0.3s ease-out;
-  }
-
-  @keyframes popupFadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.9) translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  /* Адаптивность */
-  @media (max-width: 768px) {
-    .popupOverlay {
-      padding: rem(10);
-    }
-
-    .popup {
-      margin: 0;
-      padding: rem(16);
-      max-width: calc(100vw - 20px);
-    }
-
-    .amenities {
-      grid-template-columns: 1fr;
-    }
-
-    .popupHeader {
-      flex-direction: row;
-      gap: rem(12);
-    }
-
-    .closeButton {
-      position: static;
-    }
+    justify-content: center;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: auto;
+    height: fit-content;
+    padding: rem(12) rem(14);
+    border-radius: var(--a-borderR--btn);
+    background-color: var(--a-blackBg);
   }
 </style>
