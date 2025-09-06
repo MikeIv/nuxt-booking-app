@@ -6,6 +6,7 @@ export interface DeclensionRules {
 
 export interface WordDeclensions {
   guest: DeclensionRules;
+  capacity: DeclensionRules;
   room: DeclensionRules;
   chamber: DeclensionRules;
   night: DeclensionRules;
@@ -15,6 +16,11 @@ export interface WordDeclensions {
 
 export const PREDEFINED_WORDS: WordDeclensions = {
   guest: {
+    one: "гость",
+    few: "гостей",
+    many: "гостей",
+  },
+  capacity: {
     one: "гостя",
     few: "гостей",
     many: "гостей",

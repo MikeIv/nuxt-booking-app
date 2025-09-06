@@ -67,7 +67,7 @@
         <div :class="$style.item">
           <UIcon name="i-persons" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            До {{ formatCount(room?.max_occupancy, "guest") }}
+            До {{ formatCount(room?.max_occupancy, "capacity") }}
           </span>
         </div>
         <div :class="$style.item">
@@ -231,7 +231,7 @@
     align-self: flex-start;
     margin-top: auto;
     height: fit-content;
-    padding: rem(12) rem(14);
+    padding: rem(6) rem(14);
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
   }
