@@ -1,186 +1,140 @@
 <script setup lang="ts">
-  const props = defineProps({
-    room: {
-      type: Object,
-      required: true,
-    },
-    isOpen: {
-      type: Boolean,
-      required: true,
-    },
-  });
+  import UIPopup from "~/components/ui/Popup.vue";
+  interface Room {
+    id: number;
+    title: string;
+    max_occupancy: number;
+    square: number;
+    rooms: number;
+    min_price: number;
+    // другие свойства
+  }
 
+  interface Props {
+    room: Room;
+    isOpen: boolean;
+  }
+
+  defineProps<Props>();
   const emit = defineEmits(["close"]);
 
   const closePopup = () => {
     emit("close");
   };
-
-  // Закрытие попапа при клике вне его
-  const handleClickOutside = (event: MouseEvent) => {
-    const popup = document.querySelector("[data-popup]");
-    if (popup && !popup.contains(event.target as Node)) {
-      closePopup();
-    }
-  };
-
-  // Добавляем/удаляем обработчик при изменении isOpen
-  watch(
-    () => props.isOpen,
-    (newValue) => {
-      if (newValue) {
-        document.addEventListener("click", handleClickOutside);
-      } else {
-        document.removeEventListener("click", handleClickOutside);
-      }
-    },
-  );
 </script>
 
 <template>
-  <div v-if="isOpen" :class="$style.popupOverlay">
-    <div :class="$style.popup" data-popup>
-      <div :class="$style.popupHeader">
-        <h3 :class="$style.popupTitle">Подробная информация</h3>
-        <button :class="$style.closeButton" @click="closePopup">
-          <UIcon name="i-heroicons-x-mark-20-solid" />
-        </button>
-      </div>
-
-      <div :class="$style.popupContent">
+  <UIPopup
+    :is-open="isOpen"
+    title="Подробная информация о номере"
+    max-width="1000px"
+    @close="closePopup"
+  >
+    <template #content>
+      <section :class="$style.roomContent">
         <!-- Основная информация -->
-        <div :class="$style.infoSection">
-          <h4 :class="$style.sectionTitle">Описание номера</h4>
-          <p :class="$style.description">
-            {{ room?.description || "Описание отсутствует" }}
+        <div :class="$style.roomInfo">
+          <h4 :class="$style.roomTitle">{{ room.title }}</h4>
+          <ul :class="$style.infoList">
+            <li :class="$style.infoItem">
+              <UIcon name="i-persons" :class="$style.infoIcon" />
+              <span>До {{ room.max_occupancy }} гостей</span>
+            </li>
+            <li :class="$style.infoItem">
+              <UIcon name="i-square" :class="$style.infoIcon" />
+              <span>{{ room.square }} м²</span>
+            </li>
+            <li :class="$style.infoItem">
+              <UIcon name="i-dash-square" :class="$style.infoIcon" />
+              <span>{{ room.rooms }} комнаты</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Описание -->
+        <div :class="$style.description">
+          <h5 :class="$style.sectionTitle">Описание</h5>
+          <p>
+            Просторный номер с современным дизайном и всеми удобствами для
+            комфортного проживания.
           </p>
         </div>
 
-        <!-- Характеристики -->
-        <div :class="$style.infoSection">
-          <h4 :class="$style.sectionTitle">Характеристики</h4>
-          <div :class="$style.features">
-            <div v-if="room?.area" :class="$style.featureItem">
-              <UIcon name="i-heroicons-arrows-pointing-out-20-solid" />
-              <span>Площадь: {{ room.area }} м²</span>
-            </div>
-            <div v-if="room?.capacity" :class="$style.featureItem">
-              <UIcon name="i-heroicons-user-group-20-solid" />
-              <span>Вместимость: {{ room.capacity }} чел.</span>
-            </div>
-            <div v-if="room?.bedType" :class="$style.featureItem">
-              <UIcon name="i-heroicons-bed-20-solid" />
-              <span>Тип кровати: {{ room.bedType }}</span>
-            </div>
-          </div>
-        </div>
-
         <!-- Удобства -->
-        <div v-if="room?.amenities" :class="$style.infoSection">
-          <h4 :class="$style.sectionTitle">Удобства</h4>
-          <div :class="$style.amenities">
-            <div
-              v-for="(amenity, index) in room.amenities"
-              :key="index"
-              :class="$style.amenityItem"
-            >
-              <UIcon name="i-heroicons-check-circle-20-solid" />
-              <span>{{ amenity }}</span>
+        <div :class="$style.amenities">
+          <h5 :class="$style.sectionTitle">Удобства</h5>
+          <div :class="$style.amenitiesGrid">
+            <div :class="$style.amenityItem">
+              <UIcon name="i-wifi" :class="$style.amenityIcon" />
+              <span>Wi-Fi</span>
+            </div>
+            <div :class="$style.amenityItem">
+              <UIcon name="i-tv" :class="$style.amenityIcon" />
+              <span>Телевизор</span>
+            </div>
+            <div :class="$style.amenityItem">
+              <UIcon name="i-ac" :class="$style.amenityIcon" />
+              <span>Кондиционер</span>
+            </div>
+            <div :class="$style.amenityItem">
+              <UIcon name="i-minibar" :class="$style.amenityIcon" />
+              <span>Минибар</span>
             </div>
           </div>
         </div>
 
-        <!-- Цена -->
-        <div v-if="room?.price" :class="$style.infoSection">
-          <h4 :class="$style.sectionTitle">Стоимость</h4>
-          <div :class="$style.price">
-            <span :class="$style.priceValue">{{ room.price }} ₽</span>
-            <span :class="$style.pricePeriod">за ночь</span>
+        <!-- Цены -->
+        <div :class="$style.pricing">
+          <h5 :class="$style.sectionTitle">Стоимость</h5>
+          <div :class="$style.priceItem">
+            <span>От</span>
+            <strong :class="$style.price"
+              >{{ room.min_price }} руб./ночь</strong
+            >
           </div>
         </div>
-      </div>
-
-      <div :class="$style.popupFooter">
-        <button :class="$style.closePopupButton" @click="closePopup">
-          Закрыть
-        </button>
-      </div>
-    </div>
-  </div>
+      </section>
+    </template>
+  </UIPopup>
 </template>
 
 <style module lang="scss">
-  .popupOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+  .roomContent {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: rem(20);
+    flex-direction: column;
   }
 
-  .popup {
-    background: white;
-    border-radius: rem(12);
-    padding: rem(24);
-    max-width: rem(500);
+  .roomInfo {
+    display: flex;
+    gap: rem(24);
     width: 100%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 rem(10) rem(25) rgba(0, 0, 0, 0.2);
-    position: relative;
+    padding: rem(40);
   }
 
-  .popupHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: rem(24);
-    padding-bottom: rem(16);
-    border-bottom: 1px solid var(--a-gray-200);
-  }
-
-  .popupTitle {
+  .roomTitle {
     font-family: "Lora", serif;
-    font-size: rem(20);
-    font-weight: 600;
+    font-size: rem(24);
+    font-weight: 700;
     color: var(--a-text-dark);
-    margin: 0;
   }
 
-  .closeButton {
+  .infoList {
+    display: flex;
+    gap: rem(16);
+  }
+
+  .infoItem {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: rem(32);
-    height: rem(32);
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: var(--a-gray-100);
-    }
+    gap: rem(8);
+    font-size: rem(14);
+    color: var(--a-text-light);
   }
 
-  .popupContent {
-    margin-bottom: rem(24);
-  }
-
-  .infoSection {
-    margin-bottom: rem(20);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+  .infoIcon {
+    width: rem(18);
+    height: rem(18);
+    color: var(--a-primary);
   }
 
   .sectionTitle {
@@ -188,92 +142,65 @@
     font-size: rem(16);
     font-weight: 600;
     color: var(--a-text-dark);
-    margin-bottom: rem(12);
+    margin: 0 0 rem(12) 0;
   }
 
   .description {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-700);
-    line-height: 1.5;
-  }
-
-  .features {
-    display: flex;
-    flex-direction: column;
-    gap: rem(8);
-  }
-
-  .featureItem {
-    display: flex;
-    align-items: center;
-    gap: rem(8);
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-700);
-
-    svg {
-      color: var(--a-primary);
-      width: rem(16);
-      height: rem(16);
+    p {
+      margin: 0;
+      font-size: rem(14);
+      line-height: 1.5;
+      color: var(--a-text-light);
     }
   }
 
-  .amenities {
+  .amenitiesGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: rem(8);
+    gap: rem(12);
   }
 
   .amenityItem {
     display: flex;
     align-items: center;
     gap: rem(8);
-    font-family: "Inter", sans-serif;
     font-size: rem(14);
-    color: var(--a-gray-700);
-
-    svg {
-      color: var(--a-success);
-      width: rem(16);
-      height: rem(16);
-    }
+    color: var(--a-text-light);
   }
 
-  .price {
-    display: flex;
-    align-items: baseline;
-    gap: rem(8);
-  }
-
-  .priceValue {
-    font-family: "Inter", sans-serif;
-    font-size: rem(20);
-    font-weight: 600;
+  .amenityIcon {
+    width: rem(16);
+    height: rem(16);
     color: var(--a-primary);
   }
 
-  .pricePeriod {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-gray-600);
-  }
-
-  .popupFooter {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: rem(16);
+  .pricing {
     border-top: 1px solid var(--a-gray-200);
+    padding-top: rem(16);
   }
 
-  .closePopupButton {
-    padding: rem(8) rem(16);
-    border: 1px solid var(--a-primary);
+  .priceItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: rem(16);
+  }
+
+  .price {
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    color: var(--a-primary);
+  }
+
+  .bookButton {
+    padding: rem(12) rem(24);
+    border: none;
     border-radius: rem(8);
     background: var(--a-primary);
     color: white;
     font-family: "Inter", sans-serif;
     font-size: rem(14);
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
@@ -282,45 +209,31 @@
     }
   }
 
-  /* Анимация для попапа */
-  .popup {
-    animation: popupFadeIn 0.3s ease-out;
+  .closeButton {
+    padding: rem(12) rem(24);
+    border: 1px solid var(--a-gray-300);
+    border-radius: rem(8);
+    background: transparent;
+    color: var(--a-text-light);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--a-gray-100);
+      border-color: var(--a-gray-400);
+    }
   }
 
-  @keyframes popupFadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.9) translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  /* Адаптивность */
   @media (max-width: 768px) {
-    .popupOverlay {
-      padding: rem(10);
-    }
-
-    .popup {
-      margin: 0;
-      padding: rem(16);
-      max-width: calc(100vw - 20px);
-    }
-
-    .amenities {
+    .amenitiesGrid {
       grid-template-columns: 1fr;
     }
 
-    .popupHeader {
-      flex-direction: row;
-      gap: rem(12);
-    }
-
+    .bookButton,
     .closeButton {
-      position: static;
+      width: 100%;
     }
   }
 </style>
