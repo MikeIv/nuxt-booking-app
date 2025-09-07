@@ -6,6 +6,10 @@ const API_BASE_URL =
 const IS_DEV = process.env.NODE_ENV === "development";
 
 export default defineNuxtConfig({
+  routeRules: {
+    "/": { middleware: "booking.reset" },
+  },
+
   modules: [
     "@nuxt/ui",
     "@nuxt/image",

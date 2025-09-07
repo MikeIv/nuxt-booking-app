@@ -46,7 +46,6 @@ export const useBookingStore = defineStore(
         return date.toISOString().split("T")[0];
       }
 
-      // Если это что-то еще, пытаемся преобразовать
       const dateObj = new Date(date);
       if (!isNaN(dateObj.getTime())) {
         return dateObj.toISOString().split("T")[0];
@@ -54,15 +53,6 @@ export const useBookingStore = defineStore(
 
       throw new Error(`Неверный формат даты: ${date}`);
     };
-
-    function reset() {
-      date.value = null;
-      guests.value = { rooms: 1, adults: 2, children: 0 };
-      promoCode.value = "";
-      error.value = null;
-      searchResults.value = null;
-      childrenAges.value = [];
-    }
 
     async function search(): Promise<SearchResponse> {
       if (!date.value) throw new Error("Укажите даты");
@@ -193,6 +183,25 @@ export const useBookingStore = defineStore(
       }
     }
 
+    function forceReset() {
+      date.value = null;
+      guests.value = { rooms: 1, adults: 1, children: 0 };
+      promoCode.value = "";
+      error.value = null;
+      searchResults.value = null;
+      childrenAges.value = [];
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("booking-store");
+        sessionStorage.removeItem("booking-store");
+
+        const keys = Object.keys(localStorage).filter((key) =>
+          key.startsWith("booking-store"),
+        );
+        keys.forEach((key) => localStorage.removeItem(key));
+      }
+    }
+
     return {
       date,
       guests,
@@ -202,12 +211,12 @@ export const useBookingStore = defineStore(
       searchResults,
       totalGuests,
       childrenAges,
+      forceReset,
       updateChildrenAges,
       search,
       createBooking,
       getBookingDetails,
       cancelBooking,
-      reset,
     };
   },
   {
