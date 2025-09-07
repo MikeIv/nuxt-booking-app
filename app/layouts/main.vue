@@ -6,7 +6,9 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  useBookingReset();
+</script>
 
 <style module lang="scss">
   .layout {
