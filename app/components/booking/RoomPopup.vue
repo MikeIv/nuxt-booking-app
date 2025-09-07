@@ -21,6 +21,9 @@
   const closePopup = () => {
     emit("close");
   };
+
+  const { useImages } = useImageLoader();
+  const desktopImages = useImages("images/card-detail");
 </script>
 
 <template>
@@ -51,47 +54,66 @@
           </ul>
         </div>
 
-        <!-- Описание -->
-        <div :class="$style.description">
-          <h5 :class="$style.sectionTitle">Описание</h5>
-          <p>
-            Просторный номер с современным дизайном и всеми удобствами для
-            комфортного проживания.
-          </p>
+        <div :class="$style.sliderWrapper">
+          <UCarousel
+            v-slot="{ item }"
+            loop
+            arrows
+            :autoplay="{ delay: 2000 }"
+            :items="desktopImages"
+            :ui="{ item: 'basis-1/3' }"
+          >
+            <img :src="item" width="500" height="600" class="rounded-lg" />
+          </UCarousel>
         </div>
+
+        <!-- Описание -->
 
         <!-- Удобства -->
         <div :class="$style.amenities">
-          <h5 :class="$style.sectionTitle">Удобства</h5>
-          <div :class="$style.amenitiesGrid">
-            <div :class="$style.amenityItem">
-              <UIcon name="i-wifi" :class="$style.amenityIcon" />
-              <span>Wi-Fi</span>
+          <template v-if="room?.amenities">
+            <div
+              v-for="item in room?.amenities"
+              :key="item.title"
+              :class="$style.amenityItem"
+            >
+              <span :class="$style.amenityItem">{{ item.title }}</span>
             </div>
-            <div :class="$style.amenityItem">
-              <UIcon name="i-tv" :class="$style.amenityIcon" />
-              <span>Телевизор</span>
-            </div>
-            <div :class="$style.amenityItem">
-              <UIcon name="i-ac" :class="$style.amenityIcon" />
-              <span>Кондиционер</span>
-            </div>
-            <div :class="$style.amenityItem">
-              <UIcon name="i-minibar" :class="$style.amenityIcon" />
-              <span>Минибар</span>
-            </div>
+          </template>
+          <div :class="$style.amenityItem">
+            <span>WI-FI</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Кондиционер</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Сейф</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Ванная комната</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Телевидение</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Система “умный дом”</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Теплый пол</span>
+          </div>
+          <div :class="$style.amenityItem">
+            <span>Кровать «King size»</span>
           </div>
         </div>
 
-        <!-- Цены -->
-        <div :class="$style.pricing">
-          <h5 :class="$style.sectionTitle">Стоимость</h5>
-          <div :class="$style.priceItem">
-            <span>От</span>
-            <strong :class="$style.price"
-              >{{ room.min_price }} руб./ночь</strong
-            >
-          </div>
+        <div :class="$style.description">
+          <p>
+            One bed Suite — это идеальное сочетание элегантности и уюта.
+            Необыкновенная высота потолков от трех, а в некоторых номерах и до
+            пяти метров, и большие окна придают номеру особый шарм, создавая
+            гармонию пространства и дизайна. В ванной комнате предусмотрены как
+            ванна, так и душевая кабина, для вашего максимального комфорта.
+          </p>
         </div>
       </section>
     </template>
@@ -146,26 +168,40 @@
   }
 
   .description {
+    display: flex;
+    width: 100%;
+    padding: 0 rem(40) rem(40) rem(40);
     p {
       margin: 0;
       font-size: rem(14);
       line-height: 1.5;
-      color: var(--a-text-light);
+      color: var(--a-text-dark);
     }
   }
 
-  .amenitiesGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: rem(12);
+  .amenities {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    min-height: rem(40);
+    padding: rem(20) rem(40) 0 rem(40);
   }
 
   .amenityItem {
     display: flex;
     align-items: center;
-    gap: rem(8);
+    justify-content: center;
+    margin-right: rem(16);
+    margin-bottom: rem(16);
+    padding: rem(2) rem(16);
     font-size: rem(14);
-    color: var(--a-text-light);
+    color: var(--a-text-dark);
+    border: 1px solid var(--primary);
+    border-radius: rem(8);
+
+    & span {
+      margin-bottom: rem(2);
+    }
   }
 
   .amenityIcon {
@@ -235,5 +271,10 @@
     .closeButton {
       width: 100%;
     }
+  }
+
+  .sliderWrapper {
+    display: flex;
+    overflow: hidden;
   }
 </style>
