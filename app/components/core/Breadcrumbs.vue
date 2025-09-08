@@ -6,36 +6,19 @@
     Array<{ name: string; path: string; isCurrent: boolean }>
   >([]);
 
-  const getPageTitle = (path: string, isLast: boolean = false): string => {
-    if (typeof window !== "undefined") {
-      if (isLast) {
-        const h1 = document.querySelector("h1");
-        return h1?.textContent?.trim() || "Страница";
-      }
-
-      const tempLink = document.createElement("a");
-      tempLink.href = path;
-
-      if (document.querySelector("h1")) {
-        const h1 = document.querySelector("h1");
-        return h1?.textContent?.trim() || getDefaultTitle(path);
-      }
-
-      return getDefaultTitle(path);
-    }
-    return getDefaultTitle(path);
-  };
-
   const getDefaultTitle = (path: string): string => {
     const pathSegments = path.split("/").filter((segment) => segment);
 
-    if (path.includes("/rooms") && !path.includes("/tariff")) {
+    if (path === "/rooms") {
+      return "Выбор номера";
+    } else if (path === "/rooms/tariff") {
+      return "Выбор тарифа";
+    } else if (path.includes("/rooms") && !path.includes("/tariff")) {
       return "Выбор номера";
     } else if (path.includes("/tariff")) {
       return "Выбор тарифа";
     }
 
-    // Преобразуем последний сегмент пути в читаемое название
     const lastSegment = pathSegments[pathSegments.length - 1];
     if (lastSegment) {
       return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
@@ -44,7 +27,7 @@
     return "Страница";
   };
 
-  const generateBreadcrumbs = async () => {
+  const generateBreadcrumbs = () => {
     const paths = route.path.split("/").filter((path) => path);
     const crumbs: Array<{ name: string; path: string; isCurrent: boolean }> =
       [];
@@ -63,7 +46,18 @@
 
       const isLast = i === paths.length - 1;
 
-      const name = await getPageTitle(currentPath, isLast);
+      let name: string;
+
+      if (isLast) {
+        if (typeof window !== "undefined") {
+          const h1 = document.querySelector("h1");
+          name = h1?.textContent?.trim() || getDefaultTitle(currentPath);
+        } else {
+          name = getDefaultTitle(currentPath);
+        }
+      } else {
+        name = getDefaultTitle(currentPath);
+      }
 
       crumbs.push({
         name,
