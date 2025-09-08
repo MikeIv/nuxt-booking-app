@@ -8,9 +8,9 @@
     },
   });
 
+  const router = useRouter();
   const bookingStore = useBookingStore();
   const { date, guests } = storeToRefs(bookingStore);
-  console.log("date", date.value);
 
   const nightsCount = computed(() => {
     if (
@@ -40,6 +40,10 @@
 
   const closePopup = () => {
     isPopupOpen.value = false;
+  };
+
+  const handleTariff = async () => {
+    await router.push("/rooms/tariff");
   };
 </script>
 
@@ -89,7 +93,9 @@
           >
           <span :class="$style.price">От {{ room?.min_price }} руб.</span>
         </div>
-        <button :class="$style.bookingButton">Забронировать</button>
+        <button :class="$style.bookingButton" @click="handleTariff">
+          Забронировать
+        </button>
       </div>
     </main>
 
@@ -234,5 +240,6 @@
     padding: rem(6) rem(14);
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
+    cursor: pointer;
   }
 </style>
