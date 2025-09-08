@@ -85,7 +85,11 @@
     align-items: center;
     width: 100%;
     margin: 0 auto;
-    margin-bottom: rem(100);
+    margin-bottom: rem(40);
+
+    @media (min-width: #{size.$tabletMax}) {
+      margin-bottom: rem(90);
+    }
   }
 
   .form {
