@@ -85,10 +85,6 @@
     width: 100%;
     gap: rem(4);
 
-    & div:first-child {
-      width: 100%;
-    }
-
     @media (min-width: #{size.$desktopMin}) {
       width: calc(50% - rem(12));
     }
@@ -114,13 +110,10 @@
   .date-range-picker {
     position: relative;
     display: flex;
+    flex-direction: column;
     width: 100%;
     padding: 0;
     font-family: "Inter", sans-serif;
-
-    & .dp__main {
-      width: 100%;
-    }
 
     & .dp__calendar_item .dp--future {
       font-weight: 500;
@@ -158,6 +151,11 @@
       width: 100%;
       height: rem(67);
       color: var(--a-mainText);
+
+      @media (min-width: #{size.$desktopMedium}) {
+        width: auto;
+        min-width: rem(400);
+      }
     }
 
     & .dp__outer_menu_wrap {
