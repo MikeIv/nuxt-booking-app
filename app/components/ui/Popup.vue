@@ -102,20 +102,20 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: z.z("modal", "content");
+    width: 100vw;
+    height: 100vh;
     padding: rem(20);
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: z.z("modal", "content");
   }
 
   .popup {
     position: relative;
     width: 100%;
-    max-height: 80vh;
+    max-height: 90vh;
     background: white;
     border-radius: rem(12);
     box-shadow: 0 rem(10) rem(25) rgba(0, 0, 0, 0.2);

@@ -6,37 +6,48 @@
   });
 
   const bookingStore = useBookingStore();
-  const { searchResults } = storeToRefs(bookingStore);
+  const { searchResults, selectedRoomType, roomTariffs } =
+    storeToRefs(bookingStore);
 
-  console.log("searchResults-TARIF", searchResults);
+  console.log("searchResults-TARIF", searchResults.value);
+  console.log("selectedRoomType", selectedRoomType.value);
+  console.log("roomTariffs", roomTariffs.value);
 </script>
 
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.header">Выбор тарифа для номера 1</h1>
-    <Booking />
+    <h1 :class="$style.header">
+      Выбор тарифа для номера {{ selectedRoomType }}
+    </h1>
 
-    <section :class="$style.advantages">
-      <div :class="$style.leftCol">
-        <div :class="$style.infoBlock">
-          <h2 :class="$style.advantagesTitle">
-            Получите дополнительные преимущества
-          </h2>
-          <p :class="$style.description">
-            Участники программы лояльности Russia Club могут пользоваться
-            эксклюзивными предложениями в наших отелях, ресторанах, спа и
-            заведениях-партнерах по всему миру.
+    <Booking />
+    <BookingAdvantages />
+
+    <section :class="$style.tariffBlock">
+      <NuxtLink to="/rooms" :class="$style.return"
+        >Назад к выбору номеров</NuxtLink
+      >
+      <h2 :class="$style.tariffTitle">Выберите тариф</h2>
+      <div v-if="roomTariffs && roomTariffs.length > 0" :class="$style.tariffs">
+        <div
+          v-for="(tariff, index) in roomTariffs"
+          :key="index"
+          :class="$style.tariffCard"
+        >
+          <h3>Тариф #{{ index + 1 }}</h3>
+          <p>Цена: {{ tariff.price }} руб.</p>
+          <p>
+            Доступность: {{ tariff.available ? "Доступен" : "Не доступен" }}
           </p>
-        </div>
-        <div :class="$style.btnBlock">
-          <button :class="[$style.btn, $style.btnGhost]">Войти</button>
-          <button :class="[$style.btn, $style.btnAccent]">
-            Зарегистрироваться
-          </button>
+          <!-- Дополнительная информация о тарифе -->
         </div>
       </div>
-      <div :class="$style.imgBlock">
-        <img src="/images/tariff/auth.jpg" alt="номер" />
+
+      <div
+        v-else-if="searchResults && !searchResults.available"
+        :class="$style.noResults"
+      >
+        <p>К сожалению, на выбранные даты нет доступных номеров.</p>
       </div>
     </section>
   </div>
@@ -62,106 +73,55 @@
     color: var(--a-black);
   }
 
-  .advantages {
+  .tariffBlock {
     display: flex;
     flex-direction: column;
     width: 100%;
-    border-bottom: 1px solid var(--a-border-dark);
+    padding: rem(40) 0;
+  }
 
-    @media (min-width: #{size.$desktopMedium}) {
-      flex-direction: row;
-      justify-content: space-between;
-    }
-    @media (min-width: #{size.$desktopMedium}) {
-      max-width: rem(1538);
-      margin: 0 auto;
-    }
-  }
-  .leftCol {
-    display: flex;
-    flex-direction: column;
-
-    @media (min-width: #{size.$desktopMedium}) {
-      max-width: 60%;
-    }
-    @media (min-width: #{size.$desktopMax}) {
-      max-width: 40%;
-    }
-  }
-  .infoBlock {
-    display: flex;
-    flex-direction: column;
-  }
-  .advantagesTitle {
+  .return {
+    position: relative;
     margin-bottom: rem(40);
+    padding-left: rem(30);
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    color: var(--a-text-dark);
+
+    &:before {
+      content: "<";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 10px;
+    }
+  }
+  .tariffTitle {
+    text-align: center;
     font-family: "Lora", serif;
     font-size: rem(28);
     font-weight: 600;
     color: var(--a-text-dark);
+    text-transform: uppercase;
   }
-  .description {
-    margin-bottom: rem(30);
-    font-family: "Lora", serif;
-    font-size: rem(24);
-    color: var(--a-text-dark);
-  }
-  .btnBlock {
-    display: flex;
-    flex-direction: column;
+
+  .tariffs {
     margin-bottom: rem(40);
-
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      align-items: center;
-      gap: rem(20);
-    }
-  }
-  .btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: rem(44);
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    border-radius: var(--a-borderR--btn);
-    cursor: pointer;
-  }
-  .btnGhost {
-    margin-bottom: rem(20);
-    color: var(--a-text-dark);
-    border: 1px solid var(--a-border-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      max-width: rem(200);
-      margin-bottom: 0;
-    }
-  }
-  .btnAccent {
-    color: var(--a-text-white);
-    background-color: var(--a-blackBg);
-    border: 1px solid var(--a-border-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      max-width: rem(365);
-    }
+    padding: rem(20);
   }
 
-  .imgBlock {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .tariffCard {
+    padding: rem(16);
+    margin-bottom: rem(16);
+  }
+
+  .noResults {
+    padding: rem(20);
+    text-align: center;
+    color: var(--a-text-error);
+    background-color: var(--a-bg-light);
+    border-radius: var(--a-borderR--card);
     margin-bottom: rem(40);
-
-    img {
-      width: 100%;
-      height: rem(300);
-      object-fit: cover;
-
-      @media (min-width: #{size.$desktopMin}) {
-        height: rem(400);
-      }
-    }
   }
 </style>
