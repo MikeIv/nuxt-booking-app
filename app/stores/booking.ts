@@ -13,6 +13,14 @@ interface SearchResponse {
   message?: string;
 }
 
+interface RoomTariff {
+  room_type_code: string;
+  price: number;
+  available: boolean;
+  tariff_details?: unknown;
+  // другие поля ответа
+}
+
 export const useBookingStore = defineStore(
   "booking",
   () => {
@@ -27,6 +35,8 @@ export const useBookingStore = defineStore(
     const error = ref<string | null>(null);
     const searchResults = ref<unknown>(null);
     const childrenAges = ref<number[]>([]);
+    const selectedRoomType = ref<string | null>(null);
+    const roomTariffs = ref<RoomTariff[]>([]);
 
     const totalGuests = computed(() => {
       return guests.value.adults + guests.value.children;
@@ -166,20 +176,59 @@ export const useBookingStore = defineStore(
       }
     }
 
-    async function cancelBooking(bookingId: string) {
-      const { del } = useApi();
+    async function searchWithRoomType(
+      roomTypeCode: string,
+    ): Promise<SearchResponse> {
+      if (!date.value) throw new Error("Укажите даты");
+      if (guests.value.adults === 0)
+        throw new Error("Укажите количество гостей");
+
+      loading.value = true;
+      error.value = null;
+      selectedRoomType.value = roomTypeCode;
 
       try {
-        const response = await del<{ message: string }>(`/${bookingId}/cancel`);
+        const { post } = useApi();
+
+        console.log("roomTypeCode", roomTypeCode);
+
+        const [startDate, endDate] = date.value;
+
+        const childs = childrenAges.value.slice(0, guests.value.children);
+        while (childs.length < guests.value.children) {
+          childs.push(0);
+        }
+
+        const searchData = {
+          start_at: formatDate(startDate),
+          end_at: formatDate(endDate),
+          adults: guests.value.adults,
+          promocode: promoCode.value,
+          childs: childs,
+          room_type_code: roomTypeCode,
+        };
+
+        console.log("Search with room type data:", searchData);
+
+        const response = await post<SearchResponse>("/search", searchData);
 
         if (response.success) {
-          return response.payload.message;
+          searchResults.value = response.payload;
+
+          // Сохраняем тарифы для выбранной комнаты
+          if (response.payload.rooms) {
+            roomTariffs.value = response.payload.rooms;
+          }
+
+          return response.payload;
         } else {
-          throw new Error(response.message || "Ошибка при отмене брони");
+          throw new Error(response.message || "Ошибка при поиске номеров");
         }
       } catch (err: unknown) {
-        error.value = err.message || "Произошла ошибка при отмене брони";
+        error.value = err.message || "Произошла ошибка при поиске";
         throw err;
+      } finally {
+        loading.value = false;
       }
     }
 
@@ -216,18 +265,26 @@ export const useBookingStore = defineStore(
       search,
       createBooking,
       getBookingDetails,
-      cancelBooking,
+      selectedRoomType,
+      roomTariffs,
+      searchWithRoomType,
     };
   },
   {
     persist: {
       key: "booking-store",
-      paths: ["date", "guests", "promoCode", "childrenAges", "searchResults"],
-      // Добавляем сериализацию/десериализацию для дат
+      paths: [
+        "date",
+        "guests",
+        "promoCode",
+        "childrenAges",
+        "searchResults",
+        "selectedRoomType",
+        "roomTariffs",
+      ],
       serializer: {
         serialize: (state) => {
           const serialized = { ...state };
-          // Преобразуем Date в строки для сериализации
           if (serialized.date && Array.isArray(serialized.date)) {
             serialized.date = serialized.date.map((d) =>
               d instanceof Date ? d.toISOString() : d,
@@ -237,7 +294,6 @@ export const useBookingStore = defineStore(
         },
         deserialize: (str) => {
           const state = JSON.parse(str);
-          // Восстанавливаем Date из строк
           if (state.date && Array.isArray(state.date)) {
             state.date = state.date.map((d: string | Date) =>
               typeof d === "string" ? new Date(d) : d,

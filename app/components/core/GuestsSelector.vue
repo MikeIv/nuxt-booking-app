@@ -139,6 +139,7 @@
 </template>
 
 <style module lang="scss">
+  @use "~/assets/styles/variables/resolutions" as size;
   @use "~/assets/styles/variables/z-index" as z;
 
   .inputWrapper {
@@ -146,9 +147,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: rem(366);
-    max-width: rem(640);
+    width: 100%;
     gap: rem(4);
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(50% - rem(12));
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: auto;
+      min-width: rem(400);
+    }
   }
 
   .customInput {

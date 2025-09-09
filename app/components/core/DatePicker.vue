@@ -75,14 +75,24 @@
 </template>
 
 <style lang="scss">
+  @use "~/assets/styles/variables/resolutions" as size;
   @use "~/assets/styles/variables/z-index" as z;
 
   .datepicker-container {
     position: relative;
     display: flex;
     flex-direction: column;
-    width: rem(366);
+    width: 100%;
     gap: rem(4);
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(50% - rem(12));
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: auto;
+      min-width: rem(400);
+    }
 
     .period-label {
       position: absolute;
@@ -100,6 +110,7 @@
   .date-range-picker {
     position: relative;
     display: flex;
+    flex-direction: column;
     width: 100%;
     padding: 0;
     font-family: "Inter", sans-serif;
@@ -140,6 +151,11 @@
       width: 100%;
       height: rem(67);
       color: var(--a-mainText);
+
+      @media (min-width: #{size.$desktopMedium}) {
+        width: auto;
+        min-width: rem(400);
+      }
     }
 
     & .dp__outer_menu_wrap {
@@ -149,7 +165,8 @@
     & .dp__input {
       position: relative;
       display: flex;
-      width: rem(366);
+      flex-grow: 1;
+      width: 100%;
       padding: rem(22) rem(36) rem(2) rem(12);
       font-family: "Inter", sans-serif;
       font-size: rem(16);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { formatCount } from "~/utils/declension";
 
-  defineProps({
+  const props = defineProps({
     room: {
       type: Object,
       required: true,
@@ -11,6 +11,7 @@
   const router = useRouter();
   const bookingStore = useBookingStore();
   const { date, guests } = storeToRefs(bookingStore);
+  const loading = ref(false);
 
   const nightsCount = computed(() => {
     if (
@@ -43,7 +44,21 @@
   };
 
   const handleTariff = async () => {
-    await router.push("/rooms/tariff");
+    if (!date.value || date.value.length < 2) {
+      console.error("Не выбраны даты бронирования");
+      return;
+    }
+
+    loading.value = true;
+    try {
+      await bookingStore.searchWithRoomType(props.room?.room_type_code);
+
+      await router.push("/rooms/tariff");
+    } catch (error) {
+      console.error("Ошибка при поиске тарифов:", error);
+    } finally {
+      loading.value = false;
+    }
   };
 </script>
 
@@ -93,8 +108,14 @@
           >
           <span :class="$style.price">От {{ room?.min_price }} руб.</span>
         </div>
-        <button :class="$style.bookingButton" @click="handleTariff">
-          Забронировать
+
+        <button
+          :class="[$style.bookingButton, { [$style.loading]: loading }]"
+          :disabled="loading || !date || date.length < 2"
+          @click="handleTariff"
+        >
+          <span v-if="loading">Загрузка...</span>
+          <span v-else>Забронировать</span>
         </button>
       </div>
     </main>
@@ -237,9 +258,23 @@
     align-self: flex-start;
     margin-top: auto;
     height: fit-content;
-    padding: rem(6) rem(14);
+    padding: rem(4) rem(14) rem(6) rem(14);
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
     cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--a-btnAccentBg);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &.loading {
+      background-color: var(--a-btnAccentBg);
+    }
   }
 </style>
