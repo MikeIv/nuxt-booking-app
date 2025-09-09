@@ -86,6 +86,7 @@
     width: 100%;
     margin: 0 auto;
     margin-bottom: rem(40);
+    padding: 0 rem(16);
 
     @media (min-width: #{size.$tabletMax}) {
       margin-bottom: rem(90);
@@ -102,21 +103,39 @@
     max-width: size.$desktop;
     min-width: rem(400);
     min-height: rem(50);
-    padding: rem(24) rem(28);
+    padding: rem(14) rem(12);
     font-family: "Inter", sans-serif;
     background-color: var(--primary);
     border-radius: rem(16);
+
+    @media (min-width: #{size.$desktopMin}) {
+      padding: rem(40) rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: 100%;
+      padding: rem(40) rem(24);
+    }
   }
 
   .button {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: rem(258);
+    width: 100%;
     height: rem(67);
     font-family: "Inter", sans-serif;
     font-weight: 400;
     border-radius: rem(16);
     cursor: pointer;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(50% - rem(12));
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      flex-grow: 1;
+      width: auto;
+    }
   }
 </style>

@@ -75,14 +75,28 @@
 </template>
 
 <style lang="scss">
+  @use "~/assets/styles/variables/resolutions" as size;
   @use "~/assets/styles/variables/z-index" as z;
 
   .datepicker-container {
     position: relative;
     display: flex;
     flex-direction: column;
-    width: rem(366);
+    width: 100%;
     gap: rem(4);
+
+    & div:first-child {
+      width: 100%;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(50% - rem(12));
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: auto;
+      min-width: rem(400);
+    }
 
     .period-label {
       position: absolute;
@@ -103,6 +117,10 @@
     width: 100%;
     padding: 0;
     font-family: "Inter", sans-serif;
+
+    & .dp__main {
+      width: 100%;
+    }
 
     & .dp__calendar_item .dp--future {
       font-weight: 500;
@@ -149,7 +167,8 @@
     & .dp__input {
       position: relative;
       display: flex;
-      width: rem(366);
+      flex-grow: 1;
+      width: 100%;
       padding: rem(22) rem(36) rem(2) rem(12);
       font-family: "Inter", sans-serif;
       font-size: rem(16);
