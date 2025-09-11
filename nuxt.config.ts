@@ -20,6 +20,8 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/fonts",
     "pinia-plugin-persistedstate/nuxt",
+    "@primevue/nuxt-module",
+    "@primevue/nuxt-module",
   ],
 
   googleFonts: {

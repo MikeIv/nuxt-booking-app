@@ -14,11 +14,11 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.23",
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^3.3.0",
     "@nuxtjs/i18n": "10.0.0",
     "@pinia/nuxt": "^0.11.2",
+    "@primevue/nuxt-module": "4.3.9",
     "@vuepic/vue-datepicker": "^11.0.2",
     "@vueuse/core": "^13.5.0",
     "@vueuse/nuxt": "^13.5.0",

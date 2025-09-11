@@ -1,4 +1,5 @@
 @use "../variables/_base-font-size.scss" as size;
+@use "../tools/functions" as *;
 
 html,
 body {
@@ -38,4 +39,27 @@ ul {
 .ring {
   border: none !important;
   box-shadow: none !important;
+}
+
+// основная кнопка
+.btn__bs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: rem(44);
+  padding: rem(12) rem(20);
+  font-family: "Inter", sans-serif;
+  font-size: rem(18);
+  font-weight: 400;
+  line-height: 1;
+  background-color: var(--a-primaryBg);
+  border-radius: var(--a-borderR--btn);
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &.ghost {
+    color: var(--a-text-primary);
+    background-color: var(--a-whiteBg);
+    border: rem(1) solid var(--a-border-primary);
+  }
 }

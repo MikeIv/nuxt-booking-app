@@ -27,6 +27,11 @@
       <h2 :class="$style.personalTitle">Введите свои данные</h2>
       <div :class="$style.wrapper">
         <h3 :class="$style.sectionHeader">Я бронирую</h3>
+
+        <div :class="$style.btnBlock">
+          <Button label="Для себя" class="btn__bs" unstyled />
+          <Button label="Для другого" class="btn__bs ghost" unstyled />
+        </div>
       </div>
     </section>
   </div>
@@ -39,7 +44,6 @@
     display: flex;
     flex-direction: column;
     margin-bottom: rem(40);
-    padding: 0 rem(20);
   }
   .header {
     display: flex;
@@ -56,7 +60,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: rem(40) 0;
+    padding: rem(40) rem(20);
   }
 
   .return {
@@ -97,5 +101,10 @@
     font-size: rem(24);
     font-weight: 400;
     color: var(--a-text-dark);
+  }
+  .btnBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
   }
 </style>
