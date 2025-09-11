@@ -182,7 +182,6 @@ export default defineNuxtConfig({
         output: {
           manualChunks: {
             vue: ["vue", "pinia", "vue-router"],
-            ui: ["@headlessui/vue"],
           },
         },
       },
@@ -298,7 +297,7 @@ export default defineNuxtConfig({
   },
 
   optimizeDeps: {
-    include: ["@headlessui/vue", "truncate-html"],
+    include: ["truncate-html"],
     exclude: ["@nuxt/ui"],
   },
 });
