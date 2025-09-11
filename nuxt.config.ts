@@ -130,17 +130,17 @@ export default defineNuxtConfig({
 
   nitro: {
     static: true,
-    devProxy: {
-      "/api/v1": {
-        target: "https://varvarka-api.grandfs-develop.ru/api/v1",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/v1/, ""),
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      },
-    },
+    // devProxy: {
+    //   "/api/v1": {
+    //     target: "https://varvarka-api.grandfs-develop.ru/api/v1",
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/api\/v1/, ""),
+    //     headers: {
+    //       Accept: "application/json",
+    //       "Content-Type": "application/json",
+    //     },
+    //   },
+    // },
     prerender: {
       routes: ["/"],
     },
