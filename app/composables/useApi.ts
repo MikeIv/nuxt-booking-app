@@ -19,8 +19,8 @@ export interface ApiError {
 export const useApi = () => {
   const config = useRuntimeConfig();
 
-  // Используем прокси в development, прямой URL в production
-  const baseURL = import.meta.dev ? "/api/v1" : config.public.apiBase;
+  // Всегда используем прямой URL, проксирование убрано
+  const baseURL = config.public.apiBase;
 
   const defaultOptions: FetchOptions = {
     baseURL,
@@ -64,19 +64,14 @@ export const useApi = () => {
           ...options.headers,
         },
       };
+
       console.log("🔄 API Request:", {
         fullUrl: baseURL + request,
         baseURL,
         request,
-        isDev: import.meta.dev,
       });
 
-      console.log("Making request to:", request);
-      console.log("Full URL:", baseURL + request);
-      console.log("Options:", mergedOptions);
-
       const response = await $fetch<ApiResponse<T>>(request, mergedOptions);
-
       return response;
     } catch (error: unknown) {
       const apiError: ApiError = {
@@ -160,6 +155,7 @@ export const useApi = () => {
     put,
     patch,
     delete: del,
+    baseURL, // экспортируем baseURL для отладки
   };
 };
 
