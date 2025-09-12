@@ -1,5 +1,7 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import { useToast } from "primevue/usetoast";
+  import { reactive } from "vue";
 
   definePageMeta({
     layout: "steps",
@@ -12,6 +14,51 @@
   console.log("searchResults-TARIF", searchResults.value);
   console.log("selectedRoomType", selectedRoomType.value);
   console.log("roomTariffs", roomTariffs.value);
+
+  const toast = useToast();
+
+  // Данные формы
+  const formData = reactive({
+    username: "",
+  });
+
+  // Ошибки валидации
+  const errors = reactive({
+    username: "",
+  });
+
+  // Валидация формы
+  const validateForm = () => {
+    let isValid = true;
+
+    // Сброс ошибок
+    errors.username = "";
+
+    // Валидация username
+    if (!formData.username.trim()) {
+      errors.username = "Username is required.";
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  const onFormSubmit = () => {
+    if (validateForm()) {
+      toast.add({
+        severity: "success",
+        summary: "Form is submitted.",
+        life: 3000,
+      });
+      console.log("Form data:", formData);
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Please fix validation errors.",
+        life: 3000,
+      });
+    }
+  };
 </script>
 
 <template>
@@ -32,7 +79,36 @@
           <Button label="Для себя" class="btn__bs" unstyled />
           <Button label="Для другого" class="btn__bs ghost" unstyled />
         </div>
+        <p :class="$style.personalNote">
+          Укажите данные основного гостя. Остальных гостей — при заселении
+        </p>
       </div>
+    </section>
+
+    <section :class="$style.personalBlock">
+      <h3 :class="$style.sectionHeader">Данные гостей</h3>
+      <form
+        class="flex flex-col gap-4 w-full sm:w-56"
+        @submit.prevent="onFormSubmit"
+      >
+        <div class="flex flex-col gap-1">
+          <InputText
+            v-model="formData.username"
+            type="text"
+            placeholder="Username"
+            :class="{ 'p-invalid': errors.username }"
+          />
+          <Message
+            v-if="errors.username"
+            severity="error"
+            size="small"
+            variant="simple"
+          >
+            {{ errors.username }}
+          </Message>
+        </div>
+        <Button type="submit" severity="secondary" label="Submit" />
+      </form>
     </section>
   </div>
 </template>
@@ -94,6 +170,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    padding: 0 0 rem(25) 0;
+    border-bottom: rem(1) solid var(--a-border-dark);
   }
   .sectionHeader {
     margin-bottom: rem(25);
@@ -106,5 +184,12 @@
     display: flex;
     flex-direction: column;
     gap: rem(24);
+    margin-bottom: rem(25);
+  }
+  .personalNote {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    color: var(--a-text-light);
   }
 </style>

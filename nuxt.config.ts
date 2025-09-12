@@ -21,7 +21,6 @@ export default defineNuxtConfig({
     "@nuxt/fonts",
     "pinia-plugin-persistedstate/nuxt",
     "@primevue/nuxt-module",
-    "@primevue/nuxt-module",
   ],
 
   googleFonts: {
@@ -90,6 +89,15 @@ export default defineNuxtConfig({
     enabled: IS_DEV,
     timeline: {
       enabled: IS_DEV,
+    },
+  },
+
+  primevue: {
+    options: {
+      ripple: true,
+    },
+    components: {
+      include: ["Button", "InputText", "Message", "Toast", "Select"],
     },
   },
 

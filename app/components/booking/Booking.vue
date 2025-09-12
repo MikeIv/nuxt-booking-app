@@ -86,7 +86,7 @@
     width: 100%;
     margin: 0 auto;
     margin-bottom: rem(40);
-    padding: 0 rem(16);
+    padding: 0;
 
     @media (min-width: #{size.$tabletMax}) {
       margin-bottom: rem(90);
