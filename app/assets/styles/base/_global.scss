@@ -63,3 +63,24 @@ ul {
     border: rem(1) solid var(--a-border-primary);
   }
 }
+
+// Select dropdown menu
+.p-select-list-container {
+  align-items: center;
+  width: 100%;
+  min-height: rem(54);
+  padding: rem(12) rem(24);
+  font-family: "Inter", sans-serif;
+  font-size: rem(18);
+  color: var(--a-black);
+  background: var(--a-text-white);
+  border: rem(1) solid var(--a-border-primary);
+  border-radius: var(--a-borderR--input);
+}
+.p-select-option {
+  padding: rem(8) 0 !important;
+
+  &.p-focus {
+    color: var(--a-text-accent) !important;
+  }
+}

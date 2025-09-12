@@ -131,6 +131,11 @@
 
   .filterSelect {
     color: var(--a-black);
+
+    @media (min-width: #{size.$mobile}) {
+      max-width: rem(368);
+    }
+
     &:global(.p-select) {
       display: flex;
       align-items: center;
@@ -163,16 +168,4 @@
   }
 </style>
 
-<style lang="scss">
-  .p-select-overlay {
-    align-items: center;
-    width: 100%;
-    min-height: rem(54);
-    padding: rem(12) rem(24);
-    font-family: "Inter", sans-serif;
-    font-size: rem(26);
-    background: var(--a-btnAccentBg) !important;
-    border: rem(1) solid var(--a-border-primary);
-    border-radius: var(--a-borderR--input);
-  }
-</style>
+<style lang="scss"></style>
