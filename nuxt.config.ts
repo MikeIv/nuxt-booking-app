@@ -224,6 +224,7 @@ export default defineNuxtConfig({
         "plugin:prettier/recommended",
       ],
       rules: {
+        "vue/no-v-html": "off",
         "vue/no-multiple-template-root": "off",
         "vue/require-default-prop": "off",
         "vue/multi-word-component-names": "warn",

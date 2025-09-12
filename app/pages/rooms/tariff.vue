@@ -67,7 +67,9 @@
               <img src="/images/tariff/room.jpg" alt="номер" />
             </div>
             <p :class="$style.title">{{ tariff?.title }}</p>
+            <!-- eslint-disable-line vue/no-v-html -->
             <p :class="$style.description" v-html="tariff?.description" />
+            <!-- eslint-enable vue/no-v-html -->
             <div :class="$style.amenitiesSection">
               <div
                 v-for="(amenity, ind) in visibleAmenities"
