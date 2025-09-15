@@ -9,6 +9,7 @@
       <!-- Глобальное уведомление для изменения маршрута -->
       <NuxtRouteAnnouncer />
     </NuxtLayout>
+    <Toast />
   </UApp>
 </template>
 

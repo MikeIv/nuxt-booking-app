@@ -5,10 +5,19 @@
     layout: "steps",
   });
 
-  const items = ref(["Backlog", "Todo", "In Progress", "Done"]);
-
   const bookingStore = useBookingStore();
   const { searchResults, date, guests } = storeToRefs(bookingStore);
+
+  const selectedBedType = ref();
+  const bedOptions = computed(() => {
+    if (!searchResults.value?.filters?.beds) return [];
+    return searchResults.value.filters.beds.map((bed) => ({
+      id: bed.id,
+      title: bed.title,
+    }));
+  });
+
+  console.log("Bed options:", bedOptions.value);
 
   onMounted(async () => {
     if (date.value && guests.value.adults > 0 && !searchResults.value) {
@@ -28,11 +37,13 @@
     <h1 :class="$style.header">Выбор номера</h1>
     <Booking />
     <div>
-      <UInputMenu
-        :items="items"
+      <Select
+        v-model="selectedBedType"
+        :options="bedOptions"
+        show-clear
+        option-label="title"
         placeholder="Тип кровати"
-        :class="$style.input"
-        class="rooms-filter"
+        :class="$style.filterSelect"
       />
     </div>
 
@@ -117,13 +128,44 @@
     color: var(--a-gray);
     text-align: center;
   }
-</style>
 
-<style lang="scss">
-  .rooms-filter input {
-    background-color: var(--a-btnAccentBg);
-    & .bg-default {
-      background: var(--a-accentBg);
+  .filterSelect {
+    color: var(--a-black);
+
+    @media (min-width: #{size.$mobile}) {
+      max-width: rem(368);
+    }
+
+    &:global(.p-select) {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: rem(54);
+      padding: rem(12) rem(24);
+      font-family: "Inter", sans-serif;
+      font-size: rem(26);
+      background: var(--a-text-white);
+      border: rem(1) solid var(--a-border-primary);
+      border-radius: var(--a-borderR--input);
+    }
+
+    :global {
+      .p-select-clear-icon {
+        top: 48%;
+        right: rem(54);
+        width: rem(20);
+        color: var(--a-text-accent);
+      }
+      .p-select-dropdown {
+        width: rem(22);
+        color: var(--a-text-light);
+
+        svg {
+          width: rem(22);
+        }
+      }
     }
   }
 </style>
+
+<style lang="scss"></style>

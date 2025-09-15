@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/fonts",
     "pinia-plugin-persistedstate/nuxt",
+    "@primevue/nuxt-module",
   ],
 
   googleFonts: {
@@ -88,6 +89,15 @@ export default defineNuxtConfig({
     enabled: IS_DEV,
     timeline: {
       enabled: IS_DEV,
+    },
+  },
+
+  primevue: {
+    options: {
+      ripple: true,
+    },
+    components: {
+      include: ["Button", "InputText", "Message", "Toast", "Select"],
     },
   },
 
@@ -180,7 +190,6 @@ export default defineNuxtConfig({
         output: {
           manualChunks: {
             vue: ["vue", "pinia", "vue-router"],
-            ui: ["@headlessui/vue"],
           },
         },
       },
@@ -215,6 +224,7 @@ export default defineNuxtConfig({
         "plugin:prettier/recommended",
       ],
       rules: {
+        "vue/no-v-html": "off",
         "vue/no-multiple-template-root": "off",
         "vue/require-default-prop": "off",
         "vue/multi-word-component-names": "warn",
@@ -296,7 +306,7 @@ export default defineNuxtConfig({
   },
 
   optimizeDeps: {
-    include: ["@headlessui/vue", "truncate-html"],
+    include: ["truncate-html"],
     exclude: ["@nuxt/ui"],
   },
 });
