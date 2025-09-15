@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { formatCount } from "~/utils/declension";
+  import Carousel from "primevue/carousel";
 
   const props = defineProps({
     room: {
@@ -12,6 +13,30 @@
   const bookingStore = useBookingStore();
   const { date, guests } = storeToRefs(bookingStore);
   const loading = ref(false);
+  const isPopupOpen = ref(false);
+
+  const responsiveOptions = ref([
+    {
+      breakpoint: "1400px",
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: "1199px",
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: "767px",
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: "575px",
+      numVisible: 1,
+      numScroll: 1,
+    },
+  ]);
 
   const nightsCount = computed(() => {
     if (
@@ -25,14 +50,11 @@
 
     const checkIn = new Date(date.value[0]);
     const checkOut = new Date(date.value[1]);
-
     const diffTime = checkOut.getTime() - checkIn.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays > 0 ? diffDays : 0;
   });
-
-  const isPopupOpen = ref(false);
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
@@ -52,7 +74,6 @@
     loading.value = true;
     try {
       await bookingStore.searchWithRoomType(props.room?.room_type_code);
-
       await router.push("/rooms/tariff");
     } catch (error) {
       console.error("Ошибка при поиске тарифов:", error);
@@ -65,8 +86,38 @@
 <template>
   <section :class="$style.card">
     <header :class="$style.slider">
-      <img src="/images/room/room-01.jpg" alt="номер" />
+      <Carousel
+        :value="room?.photos || []"
+        :num-visible="1"
+        :num-scroll="1"
+        :responsive-options="responsiveOptions"
+        circular
+        :autoplay-interval="4000"
+        :show-indicators="true"
+        :show-navigators="room?.photos?.length > 1"
+      >
+        <template #item="slotProps">
+          <div :class="$style.carouselItem">
+            <img
+              :src="slotProps.data"
+              :alt="`Фото номера ${room?.title}`"
+              :class="$style.carouselImage"
+            />
+          </div>
+        </template>
+
+        <template #empty>
+          <div :class="$style.emptyCarousel">
+            <img
+              src="/images/room/room-01.jpg"
+              alt="Номер"
+              :class="$style.carouselImage"
+            />
+          </div>
+        </template>
+      </Carousel>
     </header>
+
     <main :class="$style.cardDetails">
       <div :class="$style.roomInfo">
         <span :class="$style.title">{{ room?.title }}</span>
@@ -82,6 +133,7 @@
           />
         </button>
       </div>
+
       <div :class="$style.description">
         <div :class="$style.item">
           <UIcon name="i-persons" :class="$style.icon" />
@@ -91,21 +143,22 @@
         </div>
         <div :class="$style.item">
           <UIcon name="i-square" :class="$style.icon" />
-          <span :class="$style.itemTitle">{{ room?.square }} м2</span>
+          <span :class="$style.itemTitle">{{ room?.square }} м²</span>
         </div>
         <div :class="$style.item">
           <UIcon name="i-dash-square" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            {{ formatCount(room?.rooms, "chamber") }}</span
-          >
+            {{ formatCount(room?.rooms, "chamber") }}
+          </span>
         </div>
       </div>
+
       <div :class="$style.footer">
         <div :class="$style.priceBlock">
-          <span :class="$style.guestInfo"
-            >{{ formatCount(guests?.adults, "guest") }} /
-            {{ formatCount(nightsCount, "night") }}</span
-          >
+          <span :class="$style.guestInfo">
+            {{ formatCount(guests?.adults, "guest") }} /
+            {{ formatCount(nightsCount, "night") }}
+          </span>
           <span :class="$style.price">От {{ room?.min_price }} руб.</span>
         </div>
 
@@ -139,15 +192,27 @@
   .slider {
     display: flex;
     width: 100%;
+    height: rem(200);
     margin-bottom: rem(20);
+    border-radius: rem(8);
+    overflow: hidden;
+  }
 
-    img {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: cover;
-      border-radius: rem(8);
-    }
+  .carouselItem {
+    width: 100%;
+    height: 100%;
+  }
+
+  .carouselImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: rem(8);
+  }
+
+  .emptyCarousel {
+    width: 100%;
+    height: 100%;
   }
 
   .cardDetails {
@@ -158,6 +223,7 @@
 
   .roomInfo {
     display: flex;
+    align-items: center;
     gap: rem(12);
     margin-bottom: rem(16);
   }
@@ -167,6 +233,7 @@
     font-size: rem(24);
     font-weight: bold;
     color: var(--a-text-dark);
+    flex: 1;
   }
 
   .infoButton {
@@ -176,7 +243,6 @@
     width: rem(32);
     height: rem(32);
     min-width: auto;
-    margin-right: auto;
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
@@ -230,6 +296,7 @@
   .footer {
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
   }
 
   .priceBlock {
@@ -244,6 +311,7 @@
     font-weight: 500;
     color: var(--a-text-light);
   }
+
   .price {
     font-family: "Lora", serif;
     font-size: rem(24);
@@ -255,12 +323,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    align-self: flex-start;
-    margin-top: auto;
     height: fit-content;
-    padding: rem(4) rem(14) rem(6) rem(14);
+    padding: rem(8) rem(16);
+    border: none;
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
+    color: var(--a-white);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
@@ -276,5 +347,23 @@
     &.loading {
       background-color: var(--a-btnAccentBg);
     }
+  }
+
+  // Стили для карусели PrimeVue
+  :global(.p-carousel .p-carousel-indicators) {
+    padding: rem(8) 0;
+  }
+
+  :global(.p-carousel .p-carousel-indicator button) {
+    width: rem(8);
+    height: rem(8);
+    border-radius: 50%;
+    background-color: var(--a-text-light);
+    opacity: 0.5;
+  }
+
+  :global(.p-carousel .p-carousel-indicator.p-highlight button) {
+    background-color: var(--a-primary);
+    opacity: 1;
   }
 </style>

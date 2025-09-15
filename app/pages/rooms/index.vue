@@ -1,23 +1,45 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import type { Room } from "~/types/booking";
 
   definePageMeta({
     layout: "steps",
   });
 
   const bookingStore = useBookingStore();
-  const { searchResults, date, guests } = storeToRefs(bookingStore);
+  const { searchResults, date, guests, loading } = storeToRefs(bookingStore);
 
-  const selectedBedType = ref();
+  const selectedBedType = ref<string | null>(null);
+
+  // Ждем пока данные загрузятся перед вычислением опций
   const bedOptions = computed(() => {
-    if (!searchResults.value?.filters?.beds) return [];
+    if (
+      !searchResults.value?.filters?.beds ||
+      searchResults.value.filters.beds.length === 0
+    )
+      return [];
     return searchResults.value.filters.beds.map((bed) => ({
       id: bed.id,
       title: bed.title,
     }));
   });
 
-  console.log("Bed options:", bedOptions.value);
+  const filteredRooms = computed(() => {
+    console.log("selectedBedType", selectedBedType.value);
+    if (!searchResults.value?.rooms) return [];
+
+    if (!selectedBedType.value) {
+      return searchResults.value.rooms;
+    }
+
+    return searchResults.value.rooms.filter(
+      (room: Room) => room.bed?.title === selectedBedType.value?.title,
+    );
+  });
+
+  console.log("bedOptions", bedOptions.value);
+  console.log("searchResults", searchResults.value);
+  console.log("BED", searchResults.value.rooms[0].bed?.title);
 
   onMounted(async () => {
     if (date.value && guests.value.adults > 0 && !searchResults.value) {
@@ -28,39 +50,34 @@
       }
     }
   });
-
-  console.log("searchResults", searchResults);
 </script>
 
 <template>
   <div :class="$style.container">
     <h1 :class="$style.header">Выбор номера</h1>
     <Booking />
-    <div>
+
+    <div v-if="bedOptions.length > 0">
       <Select
         v-model="selectedBedType"
         :options="bedOptions"
-        show-clear
         option-label="title"
         placeholder="Тип кровати"
         :class="$style.filterSelect"
       />
     </div>
 
-    <div v-if="bookingStore.loading" :class="$style.loading">
-      Загрузка номеров...
-    </div>
+    <div v-if="loading" :class="$style.loading">Загрузка номеров...</div>
 
     <section v-else-if="searchResults" :class="$style.roomsList">
-      <BookingCard
-        v-for="item in searchResults?.rooms"
-        :key="item.id"
-        :room="item"
-      />
+      <BookingCard v-for="item in filteredRooms" :key="item.id" :room="item" />
+
+      <div v-if="filteredRooms.length === 0" :class="$style.noFilterResults">
+        Нет номеров с выбранным типом кровати
+      </div>
     </section>
 
-    <!-- Сообщение, если нет результатов -->
-    <div v-else-if="!bookingStore.loading" :class="$style.noResults">
+    <div v-else-if="!loading" :class="$style.noResults">
       Нет доступных номеров. Выполните поиск.
     </div>
   </div>
@@ -125,8 +142,19 @@
     align-items: center;
     padding: rem(40);
     font-size: rem(18);
-    color: var(--a-gray);
+    color: var(--a-text-accent);
     text-align: center;
+  }
+
+  .noFilterResults {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: rem(40);
+    font-size: rem(18);
+    color: var(--a-text-accent);
+    text-align: center;
+    grid-column: 1 / -1;
   }
 
   .filterSelect {
@@ -167,5 +195,3 @@
     }
   }
 </style>
-
-<style lang="scss"></style>
