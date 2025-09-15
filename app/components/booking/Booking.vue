@@ -91,6 +91,9 @@
     @media (min-width: #{size.$tabletMax}) {
       margin-bottom: rem(90);
     }
+    @media (min-width: #{size.$desktopMedium}) {
+      padding: 0 rem(24);
+    }
   }
 
   .form {
@@ -136,6 +139,12 @@
     @media (min-width: #{size.$desktopMedium}) {
       flex-grow: 1;
       width: auto;
+      max-width: rem(280);
+    }
+
+    @media (min-width: #{size.$desktop}) {
+      flex-grow: 1;
+      max-width: rem(280);
     }
   }
 </style>

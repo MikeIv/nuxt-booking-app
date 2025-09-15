@@ -156,6 +156,9 @@
         width: auto;
         min-width: rem(400);
       }
+      @media (min-width: #{size.$desktop}) {
+        min-width: rem(500);
+      }
     }
 
     & .dp__outer_menu_wrap {
