@@ -86,14 +86,13 @@
 
 <template>
   <section :class="$style.card">
-    <header :class="$style.slider">
+    <header :class="$style.carouselWrapper">
       <Carousel
         :value="room.photos || []"
         :num-visible="1"
         :num-scroll="1"
         :responsive-options="responsiveOptions"
         circular
-        :autoplay-interval="4000"
         :show-indicators="true"
         :show-navigators="room.photos?.length > 1"
       >
@@ -191,12 +190,70 @@
   }
 
   .slider {
+    position: relative;
     display: flex;
     width: 100%;
-    height: rem(200);
+    height: rem(326);
     margin-bottom: rem(20);
     border-radius: rem(8);
-    overflow: hidden;
+  }
+
+  .carouselWrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    margin-bottom: rem(20);
+
+    // Стили для карусели PrimeVue
+    :global {
+      .p-carousel {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .p-carousel-content {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+
+        .p-button-text.p-button-secondary {
+          color: var(--a-text-primary);
+
+          &:hover {
+            color: var(--a-text-dark);
+          }
+        }
+      }
+
+      // Индикаторы
+      .p-carousel-indicator-list {
+        display: flex;
+        justify-content: center;
+        gap: rem(8);
+        width: 90%;
+        margin: 0 auto;
+        padding: rem(8) 0;
+
+        .p-carousel-indicator {
+          display: flex;
+          flex-grow: 1;
+
+          .p-carousel-indicator-button {
+            width: 100%;
+            border-radius: rem(8);
+          }
+        }
+
+        .p-carousel-indicator-active {
+          .p-carousel-indicator-button {
+            background-color: var(--a-text-primary);
+          }
+        }
+      }
+    }
   }
 
   .carouselItem {
