@@ -14,8 +14,6 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
-  console.log("ROOM", props.room);
-
   const responsiveOptions = ref([
     {
       breakpoint: "1400px",
