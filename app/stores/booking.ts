@@ -205,6 +205,7 @@ export const useBookingStore = defineStore(
           adults: guests.value.adults,
           promocode: promoCode.value,
           childs: childs,
+          with_packages: true,
           room_type_code: roomTypeCode,
         };
 

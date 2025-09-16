@@ -11,7 +11,6 @@
 
   const selectedBedType = ref<string | null>(null);
 
-  // Ждем пока данные загрузятся перед вычислением опций
   const bedOptions = computed(() => {
     if (
       !searchResults.value?.filters?.beds ||
