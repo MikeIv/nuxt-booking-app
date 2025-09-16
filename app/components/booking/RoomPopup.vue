@@ -1,14 +1,6 @@
 <script setup lang="ts">
   import UIPopup from "~/components/ui/Popup.vue";
-  interface Room {
-    id: number;
-    title: string;
-    max_occupancy: number;
-    square: number;
-    rooms: number;
-    min_price: number;
-    // другие свойства
-  }
+  import type { Room, PackageResource } from "~/types/room";
 
   interface Props {
     room: Room;
@@ -24,12 +16,20 @@
 
   const { useImages } = useImageLoader();
   const desktopImages = useImages("images/card-detail");
+
+  // Функция для отображения пакетов
+  const formatPackages = (packages: PackageResource[]) => {
+    return packages.map((pkg) => ({
+      ...pkg,
+      formattedPrice: `+${pkg.price} ₽`,
+    }));
+  };
 </script>
 
 <template>
   <UIPopup
     :is-open="isOpen"
-    title="Подробная информация о номере"
+    :title="room.title"
     max-width="1000px"
     @close="closePopup"
   >
@@ -67,53 +67,67 @@
           </UCarousel>
         </div>
 
-        <!-- Описание -->
-
         <!-- Удобства -->
-        <div :class="$style.amenities">
-          <template v-if="room?.amenities">
+        <div :class="$style.amenitiesSection">
+          <h5 :class="$style.sectionTitle">Удобства</h5>
+          <div :class="$style.amenities">
             <div
-              v-for="item in room?.amenities"
-              :key="item.title"
+              v-for="(item, index) in room.amenities"
+              :key="index"
               :class="$style.amenityItem"
             >
-              <span :class="$style.amenityItem">{{ item.title }}</span>
+              <span>{{ item.title }}</span>
             </div>
-          </template>
-          <div :class="$style.amenityItem">
-            <span>WI-FI</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Кондиционер</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Сейф</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Ванная комната</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Телевидение</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Система “умный дом”</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Теплый пол</span>
-          </div>
-          <div :class="$style.amenityItem">
-            <span>Кровать «King size»</span>
           </div>
         </div>
 
+        <!-- Описание -->
         <div :class="$style.description">
-          <p>
-            One bed Suite — это идеальное сочетание элегантности и уюта.
-            Необыкновенная высота потолков от трех, а в некоторых номерах и до
-            пяти метров, и большие окна придают номеру особый шарм, создавая
-            гармонию пространства и дизайна. В ванной комнате предусмотрены как
-            ванна, так и душевая кабина, для вашего максимального комфорта.
-          </p>
+          <h5 :class="$style.sectionTitle">Описание</h5>
+          <div v-html="room.description" />
+        </div>
+
+        <!-- Тарифы -->
+        <div v-if="room.tariffs && room.tariffs.length" :class="$style.pricing">
+          <h5 :class="$style.sectionTitle">Тарифы</h5>
+          <div :class="$style.tariffs">
+            <div
+              v-for="tariff in room.tariffs"
+              :key="tariff.rate_plan_code"
+              :class="$style.tariffItem"
+            >
+              <div :class="$style.tariffHeader">
+                <span :class="$style.tariffTitle">{{ tariff.title }}</span>
+                <span :class="$style.tariffPrice">{{ tariff.price }} ₽</span>
+              </div>
+
+              <!-- Пакеты тарифа -->
+              <div
+                v-if="tariff.packages && tariff.packages.length"
+                :class="$style.packagesSection"
+              >
+                <h6 :class="$style.packagesTitle">Дополнительные пакеты:</h6>
+                <div :class="$style.packages">
+                  <div
+                    v-for="pkg in formatPackages(tariff.packages)"
+                    :key="pkg.package_code"
+                    :class="$style.packageItem"
+                  >
+                    <div :class="$style.packageInfo">
+                      <strong>{{ pkg.title }}</strong>
+                      <span v-if="pkg.description">{{ pkg.description }}</span>
+                      <small
+                        >Темп расчёта: {{ pkg.calculation_rate_title }}</small
+                      >
+                    </div>
+                    <span :class="$style.packagePrice">{{
+                      pkg.formattedPrice
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </template>
@@ -128,9 +142,10 @@
 
   .roomInfo {
     display: flex;
-    gap: rem(24);
+    flex-direction: column;
+    gap: rem(16);
     width: 100%;
-    padding: rem(40);
+    padding: rem(40) rem(40) rem(20) rem(40);
   }
 
   .roomTitle {
@@ -138,11 +153,15 @@
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
+    margin: 0;
   }
 
   .infoList {
     display: flex;
     gap: rem(16);
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   .infoItem {
@@ -161,17 +180,17 @@
 
   .sectionTitle {
     font-family: "Inter", sans-serif;
-    font-size: rem(16);
+    font-size: rem(18);
     font-weight: 600;
     color: var(--a-text-dark);
-    margin: 0 0 rem(12) 0;
+    margin: 0 0 rem(16) 0;
   }
 
   .description {
-    display: flex;
     width: 100%;
-    padding: 0 rem(40) rem(40) rem(40);
-    p {
+    padding: rem(20) rem(40);
+
+    :deep(p) {
       margin: 0;
       font-size: rem(14);
       line-height: 1.5;
@@ -179,102 +198,156 @@
     }
   }
 
+  .amenitiesSection {
+    padding: rem(20) rem(40);
+  }
+
   .amenities {
     display: flex;
     flex-wrap: wrap;
-    width: 100%;
-    min-height: rem(40);
-    padding: rem(20) rem(40) 0 rem(40);
+    gap: rem(12);
   }
 
   .amenityItem {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-right: rem(16);
-    margin-bottom: rem(16);
-    padding: rem(2) rem(16);
+    padding: rem(8) rem(16);
     font-size: rem(14);
     color: var(--a-text-dark);
     border: 1px solid var(--primary);
     border-radius: rem(8);
-
-    & span {
-      margin-bottom: rem(2);
-    }
-  }
-
-  .amenityIcon {
-    width: rem(16);
-    height: rem(16);
-    color: var(--a-primary);
+    background: var(--a-gray-50);
   }
 
   .pricing {
+    padding: rem(20) rem(40);
+  }
+
+  .tariffs {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+  }
+
+  .tariffItem {
+    border: 1px solid var(--a-gray-200);
+    border-radius: rem(12);
+    padding: rem(20);
+    background: var(--a-gray-50);
+  }
+
+  .tariffHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: rem(16);
+  }
+
+  .tariffTitle {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .tariffPrice {
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    font-weight: 700;
+    color: var(--a-primary);
+  }
+
+  .packagesSection {
     border-top: 1px solid var(--a-gray-200);
     padding-top: rem(16);
   }
 
-  .priceItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: rem(16);
-  }
-
-  .price {
-    font-family: "Lora", serif;
-    font-size: rem(20);
-    color: var(--a-primary);
-  }
-
-  .bookButton {
-    padding: rem(12) rem(24);
-    border: none;
-    border-radius: rem(8);
-    background: var(--a-primary);
-    color: white;
+  .packagesTitle {
     font-family: "Inter", sans-serif;
     font-size: rem(14);
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background: var(--a-primary-dark);
-    }
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin-bottom: rem(12);
   }
 
-  .closeButton {
-    padding: rem(12) rem(24);
+  .packages {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+  }
+
+  .packageItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: rem(12);
     border: 1px solid var(--a-gray-300);
     border-radius: rem(8);
-    background: transparent;
-    color: var(--a-text-light);
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    background: white;
+  }
 
-    &:hover {
-      background: var(--a-gray-100);
-      border-color: var(--a-gray-400);
+  .packageInfo {
+    display: flex;
+    flex-direction: column;
+    gap: rem(4);
+
+    strong {
+      font-size: rem(14);
+      color: var(--a-text-dark);
+    }
+
+    span {
+      font-size: rem(13);
+      color: var(--a-text-light);
+    }
+
+    small {
+      font-size: rem(12);
+      color: var(--a-gray-500);
     }
   }
 
-  @media (max-width: 768px) {
-    .amenitiesGrid {
-      grid-template-columns: 1fr;
-    }
-
-    .bookButton,
-    .closeButton {
-      width: 100%;
-    }
+  .packagePrice {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 600;
+    color: var(--a-success);
+    white-space: nowrap;
   }
 
   .sliderWrapper {
     display: flex;
     overflow: hidden;
+    padding: 0 rem(40) rem(20) rem(40);
+  }
+
+  @media (max-width: 768px) {
+    .roomInfo,
+    .description,
+    .amenitiesSection,
+    .pricing,
+    .sliderWrapper {
+      padding: rem(20);
+    }
+
+    .infoList {
+      flex-direction: column;
+      gap: rem(8);
+    }
+
+    .tariffHeader {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: rem(8);
+    }
+
+    .packageItem {
+      flex-direction: column;
+      gap: rem(8);
+    }
+
+    .packagePrice {
+      align-self: flex-end;
+    }
   }
 </style>

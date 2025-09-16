@@ -1,19 +1,20 @@
 <script setup lang="ts">
   import { formatCount } from "~/utils/declension";
   import Carousel from "primevue/carousel";
+  import type { Room } from "~/types/room";
 
-  const props = defineProps({
-    room: {
-      type: Object,
-      required: true,
-    },
-  });
+  interface Props {
+    room: Room;
+  }
 
+  const props = defineProps<Props>();
   const router = useRouter();
   const bookingStore = useBookingStore();
   const { date, guests } = storeToRefs(bookingStore);
   const loading = ref(false);
   const isPopupOpen = ref(false);
+
+  console.log("ROOM", props.room);
 
   const responsiveOptions = ref([
     {
@@ -73,7 +74,7 @@
 
     loading.value = true;
     try {
-      await bookingStore.searchWithRoomType(props.room?.room_type_code);
+      await bookingStore.searchWithRoomType(props.room.room_type_code);
       await router.push("/rooms/tariff");
     } catch (error) {
       console.error("Ошибка при поиске тарифов:", error);
@@ -87,20 +88,20 @@
   <section :class="$style.card">
     <header :class="$style.slider">
       <Carousel
-        :value="room?.photos || []"
+        :value="room.photos || []"
         :num-visible="1"
         :num-scroll="1"
         :responsive-options="responsiveOptions"
         circular
         :autoplay-interval="4000"
         :show-indicators="true"
-        :show-navigators="room?.photos?.length > 1"
+        :show-navigators="room.photos?.length > 1"
       >
         <template #item="slotProps">
           <div :class="$style.carouselItem">
             <img
               :src="slotProps.data"
-              :alt="`Фото номера ${room?.title}`"
+              :alt="`Фото номера ${room.title}`"
               :class="$style.carouselImage"
             />
           </div>
@@ -120,7 +121,7 @@
 
     <main :class="$style.cardDetails">
       <div :class="$style.roomInfo">
-        <span :class="$style.title">{{ room?.title }}</span>
+        <span :class="$style.title">{{ room.title }}</span>
 
         <button
           :class="$style.infoButton"
@@ -138,17 +139,17 @@
         <div :class="$style.item">
           <UIcon name="i-persons" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            До {{ formatCount(room?.max_occupancy, "capacity") }}
+            До {{ formatCount(room.max_occupancy, "capacity") }}
           </span>
         </div>
         <div :class="$style.item">
           <UIcon name="i-square" :class="$style.icon" />
-          <span :class="$style.itemTitle">{{ room?.square }} м²</span>
+          <span :class="$style.itemTitle">{{ room.square }} м²</span>
         </div>
         <div :class="$style.item">
           <UIcon name="i-dash-square" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            {{ formatCount(room?.rooms, "chamber") }}
+            {{ formatCount(room.rooms, "chamber") }}
           </span>
         </div>
       </div>
@@ -159,7 +160,7 @@
             {{ formatCount(guests?.adults, "guest") }} /
             {{ formatCount(nightsCount, "night") }}
           </span>
-          <span :class="$style.price">От {{ room?.min_price }} руб.</span>
+          <span :class="$style.price">От {{ room.min_price }} руб.</span>
         </div>
 
         <button
