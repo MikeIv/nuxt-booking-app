@@ -221,7 +221,6 @@ export const useBookingStore = defineStore(
         if (response.success) {
           searchResults.value = response.payload;
 
-          // Сохраняем тарифы для выбранной комнаты
           if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
             roomTariffs.value = response.payload.rooms as RoomTariff[];
           }

@@ -62,7 +62,113 @@
           v-if="roomTariffs && roomTariffs.length > 0"
           :class="$style.tariffs"
         >
-          <!-- ... отображение тарифов ... -->
+          <div
+            v-for="(room, roomIndex) in roomTariffs"
+            :key="roomIndex"
+            :class="$style.tariffCard"
+          >
+            <!-- Информация о номере -->
+            <div :class="$style.roomInfo">
+              <div :class="$style.roomHeader">
+                <h3 :class="$style.roomTitle">{{ room.title }}</h3>
+                <div :class="$style.roomPrice">
+                  от {{ room.min_price }} руб.
+                </div>
+              </div>
+
+              <div :class="$style.roomDetails">
+                <div :class="$style.detailItem">
+                  <UIcon name="i-persons" :class="$style.detailIcon" />
+                  <span>До {{ room.max_occupancy }} гостей</span>
+                </div>
+                <div :class="$style.detailItem">
+                  <UIcon name="i-square" :class="$style.detailIcon" />
+                  <span>{{ room.square }} м²</span>
+                </div>
+                <div :class="$style.detailItem">
+                  <UIcon name="i-dash-square" :class="$style.detailIcon" />
+                  <span>{{ room.rooms }} комната</span>
+                </div>
+              </div>
+
+              <!-- Описание номера -->
+              <div
+                v-if="room.description"
+                :class="$style.roomDescription"
+                v-html="room.description"
+              />
+
+              <!-- Удобства номера -->
+              <div :class="$style.amenitiesSection">
+                <h4 :class="$style.amenitiesTitle">Удобства номера:</h4>
+                <div :class="$style.amenitiesList">
+                  <div
+                    v-for="(amenity, amenityIndex) in room.amenities"
+                    :key="amenityIndex"
+                    :class="$style.amenityItem"
+                  >
+                    <span>{{ amenity.title }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Фотографии номера -->
+              <div
+                v-if="room.photos && room.photos.length > 0"
+                :class="$style.roomPhotos"
+              >
+                <h4 :class="$style.photosTitle">Фотографии номера:</h4>
+                <div :class="$style.photosGrid">
+                  <img
+                    v-for="(photo, photoIndex) in room.photos"
+                    :key="photoIndex"
+                    :src="photo"
+                    :alt="`Фото номера ${room.title}`"
+                    :class="$style.photo"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Тарифы номера -->
+            <div :class="$style.tariffsSection">
+              <h4 :class="$style.tariffsTitle">Доступные тарифы:</h4>
+              <div :class="$style.tariffsList">
+                <div
+                  v-for="(tariff, tariffIndex) in room.tariffs"
+                  :key="tariffIndex"
+                  :class="$style.tariffItem"
+                >
+                  <div :class="$style.tariffHeader">
+                    <h5 :class="$style.tariffName">{{ tariff.title }}</h5>
+                    <div :class="$style.tariffPrice">
+                      {{ tariff.price }} руб.
+                    </div>
+                  </div>
+                  <div :class="$style.tariffCode">
+                    Код тарифа: {{ tariff.rate_plan_code }}
+                  </div>
+
+                  <!-- Пакеты тарифа -->
+                  <div
+                    v-if="tariff.packages && tariff.packages.length > 0"
+                    :class="$style.tariffPackages"
+                  >
+                    <h6 :class="$style.packagesTitle">Включенные пакеты:</h6>
+                    <div :class="$style.packagesList">
+                      <span
+                        v-for="(pkg, pkgIndex) in tariff.packages"
+                        :key="pkgIndex"
+                        :class="$style.packageItem"
+                      >
+                        {{ pkg }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -131,11 +237,221 @@
   }
 
   .tariffs {
+    display: flex;
+    flex-direction: column;
+    gap: rem(32);
     margin-bottom: rem(40);
   }
 
   .tariffCard {
+    padding: rem(24);
+    border-radius: var(--a-borderR--card);
+    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
+    background: var(--a-white);
+  }
+
+  .roomInfo {
+    margin-bottom: rem(32);
+  }
+
+  .roomHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: rem(20);
+    gap: rem(16);
+  }
+
+  .roomTitle {
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 700;
+    color: var(--a-text-dark);
+    margin: 0;
+    flex: 1;
+  }
+
+  .roomPrice {
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 700;
+    color: var(--a-primary);
+    white-space: nowrap;
+  }
+
+  .roomDetails {
+    display: flex;
+    gap: rem(24);
+    margin-bottom: rem(20);
+    flex-wrap: wrap;
+  }
+
+  .detailItem {
+    display: flex;
+    align-items: center;
+    gap: rem(8);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-light);
+  }
+
+  .detailIcon {
+    width: rem(18);
+    height: rem(18);
+    color: var(--a-text-light);
+  }
+
+  .roomDescription {
+    margin-bottom: rem(24);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    line-height: 1.6;
+    color: var(--a-text-dark);
+
+    :global(p) {
+      margin-bottom: rem(12);
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .amenitiesSection {
+    margin-bottom: rem(24);
+  }
+
+  .amenitiesTitle {
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
     margin-bottom: rem(16);
+  }
+
+  .amenitiesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(12);
+  }
+
+  .amenityItem {
+    padding: rem(8) rem(16);
+    background: var(--a-bg-light);
+    border-radius: rem(8);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-dark);
+  }
+
+  .roomPhotos {
+    margin-bottom: rem(24);
+  }
+
+  .photosTitle {
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin-bottom: rem(16);
+  }
+
+  .photosGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: rem(16);
+  }
+
+  .photo {
+    width: 100%;
+    height: rem(150);
+    object-fit: cover;
+    border-radius: rem(8);
+  }
+
+  .tariffsSection {
+    border-top: rem(1) solid var(--a-border-light);
+    padding-top: rem(24);
+  }
+
+  .tariffsTitle {
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin-bottom: rem(20);
+  }
+
+  .tariffsList {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+  }
+
+  .tariffItem {
+    padding: rem(20);
+    border: rem(1) solid var(--a-border-light);
+    border-radius: rem(8);
+    background: var(--a-bg-light);
+  }
+
+  .tariffHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: rem(12);
+    gap: rem(16);
+  }
+
+  .tariffName {
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin: 0;
+    flex: 1;
+  }
+
+  .tariffPrice {
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    font-weight: 700;
+    color: var(--a-primary);
+    white-space: nowrap;
+  }
+
+  .tariffCode {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-light);
+    margin-bottom: rem(16);
+  }
+
+  .tariffPackages {
+    margin-top: rem(16);
+  }
+
+  .packagesTitle {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin-bottom: rem(8);
+  }
+
+  .packagesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(8);
+  }
+
+  .packageItem {
+    padding: rem(4) rem(12);
+    background: var(--a-white);
+    border: rem(1) solid var(--a-border-light);
+    border-radius: rem(6);
+    font-family: "Inter", sans-serif;
+    font-size: rem(12);
+    color: var(--a-text-dark);
   }
 
   .noResults {
@@ -145,113 +461,6 @@
     background-color: var(--a-bg-light);
     border-radius: var(--a-borderR--card);
     margin-bottom: rem(40);
-  }
-
-  .roomInfoBlock {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: rem(20) rem(10);
-    border-radius: var(--a-borderR--card);
-    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
-
-    @media (min-width: #{size.$tabletMin}) {
-      padding: rem(22) rem(14);
-    }
-  }
-
-  .roomImg {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    margin-bottom: rem(16);
-    border-radius: var(--a-borderR--card);
-    overflow: hidden;
-
-    img {
-      width: 100%;
-      height: rem(180);
-      object-fit: cover;
-
-      @media (min-width: #{size.$desktopMin}) {
-        height: rem(400);
-      }
-    }
-  }
-
-  .title {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: bold;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(34);
-    }
-  }
-  .description {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(20);
-    font-weight: 400;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
-    }
-  }
-  .amenitiesSection {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    gap: rem(16);
-  }
-  .amenityItem {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: rem(2) rem(16);
-    font-size: rem(14);
-    color: var(--a-text-dark);
-    border: 1px solid var(--primary);
-    border-radius: rem(8);
-
-    & span {
-      margin-bottom: rem(2);
-    }
-  }
-
-  .showMoreButton {
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    color: var(--a-text-light);
-    cursor: pointer;
-  }
-
-  .additionallyBlock {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .additionallyTitle {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: bold;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(34);
-    }
   }
 
   .loadingContainer {
@@ -288,5 +497,21 @@
     background-color: var(--a-bg-light);
     border-radius: var(--a-borderR--card);
     margin-bottom: rem(40);
+  }
+
+  @media (max-width: #{size.$tabletMin}) {
+    .roomHeader {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .tariffHeader {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .photosGrid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
