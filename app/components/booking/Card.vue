@@ -70,15 +70,10 @@
       return;
     }
 
-    loading.value = true;
-    try {
-      await bookingStore.searchWithRoomType(props.room.room_type_code);
-      await router.push("/rooms/tariff");
-    } catch (error) {
-      console.error("Ошибка при поиске тарифов:", error);
-    } finally {
-      loading.value = false;
-    }
+    bookingStore.setSelectedRoomType(props.room.room_type_code);
+
+    // Немедленный переход
+    await router.push("/rooms/tariff");
   };
 </script>
 

@@ -7,10 +7,8 @@
     isOpen: boolean;
   }
 
-  const props = defineProps<Props>();
+  defineProps<Props>();
   const emit = defineEmits(["close"]);
-
-  console.log("ROOM", props.room);
 
   const closePopup = () => {
     emit("close");

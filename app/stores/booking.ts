@@ -49,12 +49,9 @@ export const useBookingStore = defineStore(
 
     // Улучшенная функция для форматирования даты
     const formatDate = (date: Date | string): string => {
-      // Если это уже строка, возвращаем как есть
       if (typeof date === "string") return date;
 
-      if (date instanceof Date) {
-        return date.toISOString().split("T")[0];
-      }
+      return date.toISOString().split("T")[0];
 
       const dateObj = new Date(date);
       if (!isNaN(dateObj.getTime())) {
@@ -64,6 +61,12 @@ export const useBookingStore = defineStore(
       throw new Error(`Неверный формат даты: ${date}`);
     };
 
+    // Новый метод для установки типа комнаты без поиска
+    function setSelectedRoomType(roomTypeCode: string) {
+      selectedRoomType.value = roomTypeCode;
+      roomTariffs.value = [];
+    }
+
     async function search(): Promise<SearchResponse> {
       if (!date.value) throw new Error("Укажите даты");
       if (guests.value.adults === 0)
@@ -72,7 +75,6 @@ export const useBookingStore = defineStore(
       // Проверяем, не устарели ли даты
       const [startDate] = date.value;
       if (startDate < new Date()) {
-        // Сбрасываем результаты, если даты устарели
         searchResults.value = null;
         throw new Error(
           "Выбранные даты устарели. Пожалуйста, выберите новые даты.",
@@ -112,30 +114,31 @@ export const useBookingStore = defineStore(
           throw new Error(response.message || "Ошибка при поиске номеров");
         }
       } catch (err: unknown) {
-        error.value = err.message || "Произошла ошибка при поиске";
+        error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
       } finally {
         loading.value = false;
       }
     }
 
-    // Дополнительные методы для работы с бронированием
     async function createBooking(bookingData: unknown) {
       const { post } = useApi();
 
       try {
-        // Преобразуем даты в bookingData если они есть
         if (bookingData && typeof bookingData === "object") {
-          const processedData = { ...(bookingData as unknown) };
+          const processedData = { ...(bookingData as Record<string, unknown>) };
 
-          // Обрабатываем start_at
           if (processedData.start_at) {
-            processedData.start_at = formatDate(processedData.start_at);
+            processedData.start_at = formatDate(
+              processedData.start_at as string | Date,
+            );
           }
 
           // Обрабатываем end_at
           if (processedData.end_at) {
-            processedData.end_at = formatDate(processedData.end_at);
+            processedData.end_at = formatDate(
+              processedData.end_at as string | Date,
+            );
           }
 
           bookingData = processedData;
@@ -152,7 +155,8 @@ export const useBookingStore = defineStore(
           throw new Error(response.message || "Ошибка при создании брони");
         }
       } catch (err: unknown) {
-        error.value = err.message || "Произошла ошибка при бронировании";
+        error.value =
+          (err as Error).message || "Произошла ошибка при бронировании";
         throw err;
       }
     }
@@ -171,7 +175,8 @@ export const useBookingStore = defineStore(
           );
         }
       } catch (err: unknown) {
-        error.value = err.message || "Произошла ошибка при загрузке данных";
+        error.value =
+          (err as Error).message || "Произошла ошибка при загрузке данных";
         throw err;
       }
     }
@@ -217,8 +222,8 @@ export const useBookingStore = defineStore(
           searchResults.value = response.payload;
 
           // Сохраняем тарифы для выбранной комнаты
-          if (response.payload.rooms) {
-            roomTariffs.value = response.payload.rooms;
+          if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
+            roomTariffs.value = response.payload.rooms as RoomTariff[];
           }
 
           return response.payload;
@@ -226,7 +231,7 @@ export const useBookingStore = defineStore(
           throw new Error(response.message || "Ошибка при поиске номеров");
         }
       } catch (err: unknown) {
-        error.value = err.message || "Произошла ошибка при поиске";
+        error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
       } finally {
         loading.value = false;
@@ -240,6 +245,8 @@ export const useBookingStore = defineStore(
       error.value = null;
       searchResults.value = null;
       childrenAges.value = [];
+      selectedRoomType.value = null;
+      roomTariffs.value = [];
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("booking-store");
@@ -261,13 +268,14 @@ export const useBookingStore = defineStore(
       searchResults,
       totalGuests,
       childrenAges,
+      selectedRoomType,
+      roomTariffs,
       forceReset,
       updateChildrenAges,
+      setSelectedRoomType,
       search,
       createBooking,
       getBookingDetails,
-      selectedRoomType,
-      roomTariffs,
       searchWithRoomType,
     };
   },
