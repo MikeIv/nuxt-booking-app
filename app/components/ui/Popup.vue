@@ -140,8 +140,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     padding: rem(20);
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
@@ -152,6 +152,7 @@
   .popup {
     position: relative;
     width: 100%;
+    max-width: rem(1700);
     max-height: 90vh;
     background: white;
     border-radius: rem(16);
