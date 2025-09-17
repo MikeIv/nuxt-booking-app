@@ -279,17 +279,19 @@
 
   .roomInfo {
     display: flex;
+    justify-content: flex-start;
     align-items: center;
     gap: rem(12);
     margin-bottom: rem(16);
   }
 
   .title {
+    display: inline-flex;
+    flex-shrink: 1;
     font-family: "Lora", serif;
     font-size: rem(24);
     font-weight: bold;
     color: var(--a-text-dark);
-    flex: 1;
   }
 
   .infoButton {
