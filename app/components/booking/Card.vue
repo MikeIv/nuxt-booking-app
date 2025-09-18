@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { formatCount } from "~/utils/declension";
-  import Carousel from "primevue/carousel";
   import type { Room } from "~/types/room";
 
   interface Props {
@@ -13,29 +12,6 @@
   const { date, guests } = storeToRefs(bookingStore);
   const loading = ref(false);
   const isPopupOpen = ref(false);
-
-  const responsiveOptions = ref([
-    {
-      breakpoint: "1400px",
-      numVisible: 1,
-      numScroll: 1,
-    },
-    {
-      breakpoint: "1199px",
-      numVisible: 1,
-      numScroll: 1,
-    },
-    {
-      breakpoint: "767px",
-      numVisible: 1,
-      numScroll: 1,
-    },
-    {
-      breakpoint: "575px",
-      numVisible: 1,
-      numScroll: 1,
-    },
-  ]);
 
   const nightsCount = computed(() => {
     if (
@@ -55,23 +31,6 @@
     return diffDays > 0 ? diffDays : 0;
   });
 
-  const imageLoading = ref(true);
-
-  const imageLoaded = () => {
-    imageLoading.value = false;
-  };
-
-  const imageError = () => {
-    imageLoading.value = false;
-  };
-
-  watch(
-    () => props.room.photos,
-    () => {
-      imageLoading.value = true;
-    },
-  );
-
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
     isPopupOpen.value = true;
@@ -89,7 +48,6 @@
 
     bookingStore.setSelectedRoomType(props.room.room_type_code);
 
-    // Немедленный переход
     await router.push("/rooms/tariff");
   };
 </script>
@@ -97,41 +55,12 @@
 <template>
   <section :class="$style.card">
     <header :class="$style.carouselWrapper">
-      <Carousel
-        :value="room.photos || []"
-        :num-visible="1"
-        :num-scroll="1"
-        :responsive-options="responsiveOptions"
-        circular
-        :show-indicators="true"
-        :show-navigators="room.photos?.length > 1"
-      >
-        <template #item="slotProps">
-          <div :class="$style.carouselItem">
-            <img
-              :src="slotProps.data"
-              :alt="`Фото номера ${room.title}`"
-              :class="[
-                $style.carouselImage,
-                { [$style.loaded]: !imageLoading },
-              ]"
-              @load="imageLoaded"
-              @error="imageError"
-            />
-            <div v-if="imageLoading" :class="$style.skeletonLoader" />
-          </div>
-        </template>
-
-        <template #empty>
-          <div :class="$style.emptyCarousel">
-            <img
-              src="/images/room/room-01.jpg"
-              alt="Номер"
-              :class="$style.carouselImage"
-            />
-          </div>
-        </template>
-      </Carousel>
+      <BookingCarousel
+        :images="room.photos || []"
+        :alt-prefix="'Фото номера'"
+        :alt-text="room.title"
+        height="326px"
+      />
     </header>
 
     <main :class="$style.cardDetails">
@@ -211,116 +140,6 @@
     height: 100%;
     margin-bottom: rem(20);
     min-height: rem(326);
-
-    // Стили для карусели PrimeVue
-    :global {
-      .p-carousel {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .p-carousel-content {
-        display: flex;
-        flex: 1;
-        width: 100%;
-        height: 100%;
-
-        .p-button-text.p-button-secondary {
-          color: var(--a-text-primary);
-
-          &:hover {
-            color: var(--a-text-dark);
-          }
-        }
-      }
-
-      // Индикаторы
-      .p-carousel-indicator-list {
-        display: flex;
-        justify-content: center;
-        gap: rem(8);
-        width: 90%;
-        margin: 0 auto;
-        padding: rem(8) 0;
-
-        .p-carousel-indicator {
-          display: flex;
-          flex-grow: 1;
-
-          .p-carousel-indicator-button {
-            width: 100%;
-            border-radius: rem(8);
-          }
-        }
-
-        .p-carousel-indicator-active {
-          .p-carousel-indicator-button {
-            background-color: var(--a-text-primary);
-          }
-        }
-      }
-    }
-  }
-
-  .carouselItem {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: rem(326);
-  }
-
-  .carouselImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: rem(8);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-
-    &.loaded {
-      opacity: 1;
-    }
-  }
-
-  .emptyCarousel {
-    width: 100%;
-    height: rem(326);
-    min-height: rem(326);
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: rem(8);
-    }
-  }
-
-  .skeletonLoader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      45deg,
-      var(--a-lightBg) 25%,
-      var(--ui-color-secondary-50) 50%,
-      var(--ui-color-secondary-200) 75%
-    );
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: rem(8);
-  }
-
-  @keyframes loading {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
   }
 
   .cardDetails {
@@ -457,23 +276,5 @@
     &.loading {
       background-color: var(--a-btnAccentBg);
     }
-  }
-
-  // Стили для карусели PrimeVue
-  :global(.p-carousel .p-carousel-indicators) {
-    padding: rem(8) 0;
-  }
-
-  :global(.p-carousel .p-carousel-indicator button) {
-    width: rem(8);
-    height: rem(8);
-    border-radius: 50%;
-    background-color: var(--a-text-light);
-    opacity: 0.5;
-  }
-
-  :global(.p-carousel .p-carousel-indicator.p-highlight button) {
-    background-color: var(--a-primary);
-    opacity: 1;
   }
 </style>

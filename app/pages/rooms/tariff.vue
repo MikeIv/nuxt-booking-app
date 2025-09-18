@@ -15,6 +15,15 @@
   console.log("selectedRoomType", selectedRoomType.value);
   console.log("roomTariffs", roomTariffs.value);
 
+  const getCarouselHeight = computed(() => {
+    if (typeof window === "undefined") return "auto";
+
+    const width = window.innerWidth;
+    if (width < 768) return "180px";
+    if (width < 1024) return "362px";
+    return "454px";
+  });
+
   onMounted(async () => {
     try {
       loading.value = true;
@@ -67,6 +76,12 @@
             :key="roomIndex"
             :class="$style.tariffCard"
           >
+            <BookingCarousel
+              :images="room.photos || []"
+              :alt-prefix="'Фото номера'"
+              :alt-text="room.title"
+              :height="getCarouselHeight"
+            />
             <!-- Информация о номере -->
             <div :class="$style.roomInfo">
               <div :class="$style.roomHeader">
@@ -109,23 +124,6 @@
                   >
                     <span>{{ amenity.title }}</span>
                   </div>
-                </div>
-              </div>
-
-              <!-- Фотографии номера -->
-              <div
-                v-if="room.photos && room.photos.length > 0"
-                :class="$style.roomPhotos"
-              >
-                <h4 :class="$style.photosTitle">Фотографии номера:</h4>
-                <div :class="$style.photosGrid">
-                  <img
-                    v-for="(photo, photoIndex) in room.photos"
-                    :key="photoIndex"
-                    :src="photo"
-                    :alt="`Фото номера ${room.title}`"
-                    :class="$style.photo"
-                  />
                 </div>
               </div>
             </div>
