@@ -10,6 +10,7 @@
     storeToRefs(bookingStore);
   const loading = ref(true);
   const error = ref(null);
+  const isPopupOpen = ref(false);
 
   console.log("searchResults-TARIF", searchResults.value);
   console.log("selectedRoomType", selectedRoomType.value);
@@ -23,6 +24,15 @@
     if (width < 1024) return "362px";
     return "454px";
   });
+
+  const openPopup = (event: MouseEvent) => {
+    event.stopPropagation();
+    isPopupOpen.value = true;
+  };
+
+  const closePopup = () => {
+    isPopupOpen.value = false;
+  };
 
   onMounted(async () => {
     try {
@@ -82,28 +92,20 @@
               :alt-text="room.title"
               :height="getCarouselHeight"
             />
-            <!-- Информация о номере -->
             <div :class="$style.roomInfo">
               <div :class="$style.roomHeader">
-                <h3 :class="$style.roomTitle">{{ room.title }}</h3>
-                <div :class="$style.roomPrice">
-                  от {{ room.min_price }} руб.
-                </div>
-              </div>
+                <span :class="$style.title">{{ room.title }}</span>
 
-              <div :class="$style.roomDetails">
-                <div :class="$style.detailItem">
-                  <UIcon name="i-persons" :class="$style.detailIcon" />
-                  <span>До {{ room.max_occupancy }} гостей</span>
-                </div>
-                <div :class="$style.detailItem">
-                  <UIcon name="i-square" :class="$style.detailIcon" />
-                  <span>{{ room.square }} м²</span>
-                </div>
-                <div :class="$style.detailItem">
-                  <UIcon name="i-dash-square" :class="$style.detailIcon" />
-                  <span>{{ room.rooms }} комната</span>
-                </div>
+                <button
+                  :class="$style.infoButton"
+                  data-popup-button
+                  @click="openPopup($event)"
+                >
+                  <UIcon
+                    name="i-heroicons-chevron-down-20-solid"
+                    :class="$style.chevronIcon"
+                  />
+                </button>
               </div>
 
               <!-- Описание номера -->
@@ -115,7 +117,6 @@
 
               <!-- Удобства номера -->
               <div :class="$style.amenitiesSection">
-                <h4 :class="$style.amenitiesTitle">Удобства номера:</h4>
                 <div :class="$style.amenitiesList">
                   <div
                     v-for="(amenity, amenityIndex) in room.amenities"
@@ -166,6 +167,12 @@
                 </div>
               </div>
             </div>
+
+            <BookingRoomPopup
+              :room="room"
+              :is-open="isPopupOpen"
+              @close="closePopup"
+            />
           </div>
         </div>
 
@@ -249,24 +256,54 @@
   }
 
   .roomInfo {
-    margin-bottom: rem(32);
+    margin: rem(16) 0 rem(32) 0;
   }
 
   .roomHeader {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: rem(20);
-    gap: rem(16);
+    justify-content: flex-start;
+    align-items: center;
+    gap: rem(12);
+    margin-bottom: rem(16);
   }
 
-  .roomTitle {
+  .title {
+    display: inline-flex;
+    flex-shrink: 1;
     font-family: "Lora", serif;
     font-size: rem(24);
-    font-weight: 700;
+    font-weight: bold;
     color: var(--a-text-dark);
-    margin: 0;
-    flex: 1;
+  }
+
+  .infoButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(32);
+    height: rem(32);
+    min-width: auto;
+    padding: 0;
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--a-primaryBg);
+      border: none;
+
+      .chevronIcon {
+        color: var(--a-white);
+      }
+    }
+  }
+
+  .chevronIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-black);
   }
 
   .roomPrice {
@@ -333,12 +370,16 @@
   }
 
   .amenityItem {
-    padding: rem(8) rem(16);
-    background: var(--a-bg-light);
-    border-radius: rem(8);
+    display: flex;
+    align-items: center;
+    padding: rem(2) rem(14);
     font-family: "Inter", sans-serif;
-    font-size: rem(14);
+    font-size: rem(16);
     color: var(--a-text-dark);
+    border: rem(1) solid var(--a-border-primary);
+    border-radius: rem(8);
+    background: var(--a-whiteBg);
+    transition: all 0.2s ease;
   }
 
   .roomPhotos {
@@ -495,21 +536,5 @@
     background-color: var(--a-bg-light);
     border-radius: var(--a-borderR--card);
     margin-bottom: rem(40);
-  }
-
-  @media (max-width: #{size.$tabletMin}) {
-    .roomHeader {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .tariffHeader {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .photosGrid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>
