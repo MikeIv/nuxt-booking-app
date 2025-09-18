@@ -1,1 +1,1 @@
-export * from "./useBackgroundSlider";
+export * from "./useImageLoader";

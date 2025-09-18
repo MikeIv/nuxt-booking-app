@@ -11,6 +11,7 @@
   const loading = ref(true);
   const error = ref(null);
   const isPopupOpen = ref(false);
+  const isServicePopupOpen = ref(false);
 
   console.log("searchResults-TARIF", searchResults.value);
   console.log("selectedRoomType", selectedRoomType.value);
@@ -34,11 +35,34 @@
     isPopupOpen.value = false;
   };
 
+  const openServicePopup = (event: MouseEvent) => {
+    event.stopPropagation();
+    isServicePopupOpen.value = true;
+  };
+
+  const closeServicePopup = () => {
+    isServicePopupOpen.value = false;
+  };
+
+  const expandedRooms = ref<Record<string, boolean>>({});
+
+  const toggleExpand = (roomTitle: string) => {
+    expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
+  };
+
+  const visibleAmenities = (room: unknown) => {
+    if (expandedRooms.value[room.title]) {
+      return room.amenities;
+    }
+    return room.amenities.slice(0, 4);
+  };
+
   onMounted(async () => {
     try {
       loading.value = true;
       if (selectedRoomType.value) {
         await bookingStore.searchWithRoomType(selectedRoomType.value);
+        console.log("TARIF-data", searchResults.value);
       }
     } catch (err) {
       error.value = err;
@@ -86,51 +110,95 @@
             :key="roomIndex"
             :class="$style.tariffCard"
           >
-            <BookingCarousel
-              :images="room.photos || []"
-              :alt-prefix="'Фото номера'"
-              :alt-text="room.title"
-              :height="getCarouselHeight"
-            />
-            <div :class="$style.roomInfo">
-              <div :class="$style.roomHeader">
-                <span :class="$style.title">{{ room.title }}</span>
-
-                <button
-                  :class="$style.infoButton"
-                  data-popup-button
-                  @click="openPopup($event)"
-                >
-                  <UIcon
-                    name="i-heroicons-chevron-down-20-solid"
-                    :class="$style.chevronIcon"
-                  />
-                </button>
-              </div>
-
-              <!-- Описание номера -->
-              <div
-                v-if="room.description"
-                :class="$style.roomDescription"
-                v-html="room.description"
+            <section :class="$style.roomInfoWrapper">
+              <BookingCarousel
+                :images="room.photos || []"
+                :alt-prefix="'Фото номера'"
+                :alt-text="room.title"
+                :height="getCarouselHeight"
               />
+              <div :class="$style.roomInfo">
+                <div :class="$style.roomHeader">
+                  <span :class="$style.title">{{ room.title }}</span>
 
-              <!-- Удобства номера -->
-              <div :class="$style.amenitiesSection">
-                <div :class="$style.amenitiesList">
-                  <div
-                    v-for="(amenity, amenityIndex) in room.amenities"
-                    :key="amenityIndex"
-                    :class="$style.amenityItem"
+                  <button
+                    :class="$style.infoButton"
+                    data-popup-button
+                    @click="openPopup($event)"
                   >
-                    <span>{{ amenity.title }}</span>
-                  </div>
+                    <UIcon
+                      name="i-heroicons-chevron-down-20-solid"
+                      :class="$style.chevronIcon"
+                    />
+                  </button>
+                </div>
+
+                <!-- Описание номера -->
+                <div
+                  v-if="room.description"
+                  :class="$style.roomDescription"
+                  v-html="room.description"
+                />
+
+                <!-- Удобства номера -->
+                <div :class="$style.amenitiesSection">
+                  <ul :class="$style.amenitiesList">
+                    <li
+                      v-for="(amenity, amenityIndex) in visibleAmenities(room)"
+                      :key="amenityIndex"
+                      :class="$style.amenityItem"
+                    >
+                      <span>{{ amenity.title }}</span>
+                    </li>
+
+                    <button
+                      v-if="
+                        !expandedRooms[room.title] && room.amenities.length > 4
+                      "
+                      :class="$style.amenitiesListShow"
+                      @click="toggleExpand(room.title)"
+                    >
+                      + ещё {{ room.amenities.length - 4 }}
+                    </button>
+                  </ul>
                 </div>
               </div>
-            </div>
+            </section>
+
+            <section :class="$style.servicesWrapper">
+              <h3 :class="$style.servicesTitle">Включить дополнительно:</h3>
+              <ul :class="$style.servicesList">
+                <li
+                  v-for="(service, servicasIndex) in searchResults.packages"
+                  :key="servicasIndex"
+                  :class="$style.serviceItem"
+                >
+                  <span :class="$style.serviceText">{{ service.title }}</span>
+
+                  <button
+                    :class="$style.serviceButton"
+                    data-popup-button
+                    @click="openServicePopup($event, service)"
+                  >
+                    <UIcon
+                      name="i-heroicons-chevron-down-20-solid"
+                      :class="$style.chevronIcon"
+                    />
+                  </button>
+
+                  <template>
+                    <BookingServicePopup
+                      :service="service"
+                      :is-open="isServicePopupOpen"
+                      @close="closeServicePopup"
+                    />
+                  </template>
+                </li>
+              </ul>
+            </section>
 
             <!-- Тарифы номера -->
-            <div :class="$style.tariffsSection">
+            <section :class="$style.tariffsSection">
               <h4 :class="$style.tariffsTitle">Доступные тарифы:</h4>
               <div :class="$style.tariffsList">
                 <div
@@ -166,7 +234,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
             <BookingRoomPopup
               :room="room"
@@ -249,9 +317,15 @@
   }
 
   .tariffCard {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .roomInfoWrapper {
+    margin-bottom: rem(40);
     padding: rem(24);
     border-radius: var(--a-borderR--card);
-    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.2);
     background: var(--a-white);
   }
 
@@ -369,6 +443,18 @@
     gap: rem(12);
   }
 
+  .amenitiesListShow {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 500;
+    color: var(--a-text-light);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--a-text-primary);
+    }
+  }
+
   .amenityItem {
     display: flex;
     align-items: center;
@@ -405,6 +491,72 @@
     height: rem(150);
     object-fit: cover;
     border-radius: rem(8);
+  }
+
+  .servicesWrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .servicesTitle {
+    margin-bottom: rem(40);
+    font-family: "Lora", serif;
+    font-size: rem(28);
+    font-weight: 500;
+    color: var(--a-text-dark);
+  }
+
+  .servicesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(12);
+  }
+
+  .serviceItem {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: rem(290);
+    min-height: rem(50);
+    border-radius: rem(24);
+    border: rem(1) solid var(--a-border-primary);
+    cursor: pointer;
+  }
+
+  .serviceText {
+    font-family: "Inter", sans-serif;
+    font-size: rem(20);
+    color: var(--a-text-dark);
+  }
+
+  .serviceButton {
+    position: absolute;
+    right: rem(12);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(32);
+    height: rem(32);
+    min-width: auto;
+    padding: 0;
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    z-index: 2;
+
+    &:hover {
+      background-color: var(--a-primaryBg);
+      border: none;
+
+      .chevronIcon {
+        color: var(--a-white);
+      }
+    }
   }
 
   .tariffsSection {

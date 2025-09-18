@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { useToast } from "primevue/usetoast";
+  import { useToast as usePrimeToast } from "primevue/usetoast";
   import { reactive } from "vue";
 
   definePageMeta({
@@ -15,7 +15,7 @@
   console.log("selectedRoomType", selectedRoomType.value);
   console.log("roomTariffs", roomTariffs.value);
 
-  const toast = useToast();
+  const toast = usePrimeToast();
 
   // Данные формы
   const formData = reactive({
