@@ -5,6 +5,7 @@
     layout: "steps",
   });
 
+  const router = useRouter();
   const bookingStore = useBookingStore();
   const { searchResults, selectedRoomType, roomTariffs } =
     storeToRefs(bookingStore);
@@ -55,6 +56,10 @@
       return room.amenities;
     }
     return room.amenities.slice(0, 4);
+  };
+
+  const handleTariff = () => {
+    router.push("/personal");
   };
 
   onMounted(async () => {
@@ -199,23 +204,13 @@
 
             <!-- Тарифы номера -->
             <section :class="$style.tariffsSection">
-              <h4 :class="$style.tariffsTitle">Доступные тарифы:</h4>
               <div :class="$style.tariffsList">
                 <div
                   v-for="(tariff, tariffIndex) in room.tariffs"
                   :key="tariffIndex"
                   :class="$style.tariffItem"
                 >
-                  <div :class="$style.tariffHeader">
-                    <h5 :class="$style.tariffName">{{ tariff.title }}</h5>
-                    <div :class="$style.tariffPrice">
-                      {{ tariff.price }} руб.
-                    </div>
-                  </div>
-                  <div :class="$style.tariffCode">
-                    Код тарифа: {{ tariff.rate_plan_code }}
-                  </div>
-
+                  <h4 :class="$style.tariffName">{{ tariff.title }}</h4>
                   <!-- Пакеты тарифа -->
                   <div
                     v-if="tariff.packages && tariff.packages.length > 0"
@@ -231,6 +226,21 @@
                         {{ pkg }}
                       </span>
                     </div>
+                  </div>
+
+                  <div :class="$style.tariffBookingSection">
+                    <span :class="$style.tariffPriceLabel">
+                      Стоимость за 1 ночь
+                    </span>
+                    <div :class="$style.tariffPrice">
+                      {{ tariff.price }} руб.
+                    </div>
+                    <Button
+                      label="Забронировать"
+                      :class="$style.tariffBookingButton"
+                      unstyled
+                      @click="handleTariff"
+                    />
                   </div>
                 </div>
               </div>
@@ -496,6 +506,7 @@
   .servicesWrapper {
     display: flex;
     flex-direction: column;
+    margin-bottom: rem(40);
   }
 
   .servicesTitle {
@@ -522,6 +533,21 @@
     border-radius: rem(24);
     border: rem(1) solid var(--a-border-primary);
     cursor: pointer;
+
+    &:hover {
+      background-color: var(--a-blackBg);
+
+      .serviceText {
+        color: var(--a-text-white);
+      }
+
+      .serviceButton {
+        border: rem(1) solid var(--a-border-white);
+        .chevronIcon {
+          color: var(--a-white);
+        }
+      }
+    }
   }
 
   .serviceText {
@@ -579,46 +605,63 @@
   }
 
   .tariffItem {
-    padding: rem(20);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: rem(8);
-    background: var(--a-bg-light);
-  }
-
-  .tariffHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: rem(12);
-    gap: rem(16);
+    margin-bottom: rem(40);
+    padding: rem(24);
+    border-radius: var(--a-borderR--card);
+    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.2);
+    background: var(--a-white);
   }
 
   .tariffName {
     font-family: "Lora", serif;
-    font-size: rem(18);
+    font-size: rem(28);
     font-weight: 600;
     color: var(--a-text-dark);
     margin: 0;
     flex: 1;
   }
 
+  .tariffBookingSection {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tariffPriceLabel {
+    margin-left: auto;
+    font-family: "Inter", sans-serif;
+    font-size: rem(12);
+    font-weight: 500;
+    color: var(--a-text-light);
+  }
+
   .tariffPrice {
+    margin-left: auto;
+    margin-bottom: rem(10);
     font-family: "Lora", serif;
-    font-size: rem(20);
+    font-size: rem(34);
     font-weight: 700;
-    color: var(--a-primary);
+    color: var(--a-text-dark);
     white-space: nowrap;
   }
 
-  .tariffCode {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-light);
-    margin-bottom: rem(16);
-  }
+  .tariffBookingButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    margin-left: auto;
+    width: rem(290);
+    height: rem(44);
+    font-size: rem(18);
+    color: var(--a-text-white);
+    background-color: var(--a-blackBg);
+    border-radius: var(--a-borderR--btn);
+    cursor: pointer;
 
-  .tariffPackages {
-    margin-top: rem(16);
+    &:hover {
+      background-color: var(--a-btnAccentBg);
+    }
   }
 
   .packagesTitle {
