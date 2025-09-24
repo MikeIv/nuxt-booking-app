@@ -1,16 +1,12 @@
 @use "../variables/_base-font-size.scss" as size;
 @use "../tools/functions" as *;
+@use "../variables/resolutions" as with;
 
 html,
 body {
   font-size: size.$base-font-size;
   background-color: var(--a-white) !important;
 }
-
-/** {
-  margin: 0;
-  padding: 0;
-}*/
 
 *,
 *::before,
@@ -82,5 +78,23 @@ ul {
 
   &.p-focus {
     color: var(--a-text-accent) !important;
+  }
+}
+
+// Shadow section
+.section-shadow {
+  padding: rem(22) rem(10);
+  border-radius: var(--a-borderR--card);
+  box-shadow: rem(4) rem(4) rem(30) rem(-10) rgba(0, 0, 0, 0.1);
+  background: var(--a-white);
+
+  @media (min-width: #{with.$tablet}) {
+    padding: rem(22) rem(14);
+  }
+  @media (min-width: #{with.$desktopMin}) {
+    padding: rem(22) rem(16);
+  }
+  @media (min-width: #{with.$desktop}) {
+    padding: rem(22) rem(22);
   }
 }
