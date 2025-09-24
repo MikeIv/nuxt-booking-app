@@ -67,11 +67,17 @@
     color: var(--a-text-dark);
   }
   .description {
+    width: 100%;
     margin-bottom: rem(30);
     font-family: "Lora", serif;
     font-size: rem(24);
     color: var(--a-text-dark);
+
+    @media (min-width: #{size.$desktopMin}) {
+      max-width: 72%;
+    }
   }
+
   .btnBlock {
     display: flex;
     flex-direction: column;
@@ -103,6 +109,12 @@
       max-width: rem(200);
       margin-bottom: 0;
     }
+
+    &:hover {
+      color: var(--a-text-white);
+      border: none;
+      background-color: var(--a-primaryBg);
+    }
   }
   .btnAccent {
     color: var(--a-text-white);
@@ -111,6 +123,11 @@
 
     @media (min-width: #{size.$tablet}) {
       max-width: rem(365);
+    }
+
+    &:hover {
+      border: none;
+      background-color: var(--a-btnAccentBg);
     }
   }
 

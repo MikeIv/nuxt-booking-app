@@ -191,13 +191,11 @@
                     />
                   </button>
 
-                  <template>
-                    <BookingServicePopup
-                      :service="service"
-                      :is-open="isServicePopupOpen"
-                      @close="closeServicePopup"
-                    />
-                  </template>
+                  <BookingServicePopup
+                    :service="service"
+                    :is-open="isServicePopupOpen"
+                    @close="closeServicePopup"
+                  />
                 </li>
               </ul>
             </section>
@@ -273,6 +271,10 @@
     flex-direction: column;
     margin-bottom: rem(40);
     padding: 0 rem(20);
+
+    @media (min-width: #{size.$desktopMin}) {
+      padding: 0 rem(60);
+    }
   }
   .header {
     display: flex;
