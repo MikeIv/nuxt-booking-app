@@ -53,10 +53,18 @@ ul {
   box-sizing: border-box;
   cursor: pointer;
 
+  &:hover {
+    background-color: var(--a-blackBg);
+  }
+
   &.ghost {
     color: var(--a-text-primary);
     background-color: var(--a-whiteBg);
     border: rem(1) solid var(--a-border-primary);
+
+    &:hover {
+      background-color: var(--a-primaryBg);
+    }
   }
 }
 
