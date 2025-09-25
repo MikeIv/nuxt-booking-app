@@ -3,7 +3,7 @@
   import type { Room } from "~/types/room";
 
   interface Props {
-    room: Room;
+    service: Room;
     isOpen: boolean;
   }
 
@@ -18,26 +18,26 @@
 <template>
   <UIPopup
     :is-open="isOpen"
-    :title="room.title"
+    :title="service.title"
     max-width="1400px"
     @close="closePopup"
   >
     <template #content>
       <div :class="$style.roomContent">
         <div id="info" :class="$style.roomInfo">
-          <h4 :class="$style.roomTitle">{{ room.title }}</h4>
+          <h4 :class="$style.roomTitle">{{ service.title }}</h4>
           <ul :class="$style.infoList">
             <li :class="$style.infoItem">
               <UIcon name="i-persons" :class="$style.infoIcon" />
-              <span>До {{ room.max_occupancy }} гостей</span>
+              <span>До {{ service.max_occupancy }} гостей</span>
             </li>
             <li :class="$style.infoItem">
               <UIcon name="i-square" :class="$style.infoIcon" />
-              <span>{{ room.square }} м²</span>
+              <span>{{ service.square }} м²</span>
             </li>
             <li :class="$style.infoItem">
               <UIcon name="i-dash-square" :class="$style.infoIcon" />
-              <span>{{ room.rooms }} комнаты</span>
+              <span>{{ service.rooms }} комнаты</span>
             </li>
           </ul>
         </div>
@@ -47,7 +47,7 @@
             v-slot="{ item }"
             loop
             arrows
-            :items="room.photos"
+            :items="service.photos"
             :slides-per-view="1"
           >
             <div :class="$style.slideContainer">
@@ -65,7 +65,7 @@
         <div id="amenities" :class="$style.amenitiesSection">
           <div :class="$style.amenities">
             <div
-              v-for="(item, index) in room.amenities"
+              v-for="(item, index) in service.amenities"
               :key="index"
               :class="$style.amenityItem"
             >
@@ -74,7 +74,7 @@
           </div>
         </div>
 
-        <p :class="$style.description" v-html="room.description" />
+        <p :class="$style.description" v-html="service.description" />
       </div>
     </template>
   </UIPopup>

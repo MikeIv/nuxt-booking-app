@@ -1,17 +1,17 @@
 <script setup lang="ts">
   import { formatCount } from "~/utils/declension";
+  import type { Room } from "~/types/room";
 
-  const props = defineProps({
-    room: {
-      type: Object,
-      required: true,
-    },
-  });
+  interface Props {
+    room: Room;
+  }
 
+  const props = defineProps<Props>();
   const router = useRouter();
   const bookingStore = useBookingStore();
   const { date, guests } = storeToRefs(bookingStore);
   const loading = ref(false);
+  const isPopupOpen = ref(false);
 
   const nightsCount = computed(() => {
     if (
@@ -25,14 +25,11 @@
 
     const checkIn = new Date(date.value[0]);
     const checkOut = new Date(date.value[1]);
-
     const diffTime = checkOut.getTime() - checkIn.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays > 0 ? diffDays : 0;
   });
-
-  const isPopupOpen = ref(false);
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
@@ -49,27 +46,26 @@
       return;
     }
 
-    loading.value = true;
-    try {
-      await bookingStore.searchWithRoomType(props.room?.room_type_code);
+    bookingStore.setSelectedRoomType(props.room.room_type_code);
 
-      await router.push("/rooms/tariff");
-    } catch (error) {
-      console.error("Ошибка при поиске тарифов:", error);
-    } finally {
-      loading.value = false;
-    }
+    await router.push("/rooms/tariff");
   };
 </script>
 
 <template>
   <section :class="$style.card">
-    <header :class="$style.slider">
-      <img src="/images/room/room-01.jpg" alt="номер" />
+    <header :class="$style.carouselWrapper">
+      <BookingCarousel
+        :images="room.photos || []"
+        :alt-prefix="'Фото номера'"
+        :alt-text="room.title"
+        height="326px"
+      />
     </header>
+
     <main :class="$style.cardDetails">
       <div :class="$style.roomInfo">
-        <span :class="$style.title">{{ room?.title }}</span>
+        <span :class="$style.title">{{ room.title }}</span>
 
         <button
           :class="$style.infoButton"
@@ -82,31 +78,33 @@
           />
         </button>
       </div>
+
       <div :class="$style.description">
         <div :class="$style.item">
           <UIcon name="i-persons" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            До {{ formatCount(room?.max_occupancy, "capacity") }}
+            До {{ formatCount(room.max_occupancy, "capacity") }}
           </span>
         </div>
         <div :class="$style.item">
           <UIcon name="i-square" :class="$style.icon" />
-          <span :class="$style.itemTitle">{{ room?.square }} м2</span>
+          <span :class="$style.itemTitle">{{ room.square }} м²</span>
         </div>
         <div :class="$style.item">
           <UIcon name="i-dash-square" :class="$style.icon" />
           <span :class="$style.itemTitle">
-            {{ formatCount(room?.rooms, "chamber") }}</span
-          >
+            {{ formatCount(room.rooms, "chamber") }}
+          </span>
         </div>
       </div>
+
       <div :class="$style.footer">
         <div :class="$style.priceBlock">
-          <span :class="$style.guestInfo"
-            >{{ formatCount(guests?.adults, "guest") }} /
-            {{ formatCount(nightsCount, "night") }}</span
-          >
-          <span :class="$style.price">От {{ room?.min_price }} руб.</span>
+          <span :class="$style.guestInfo">
+            {{ formatCount(guests?.adults, "guest") }} /
+            {{ formatCount(nightsCount, "night") }}
+          </span>
+          <span :class="$style.price">От {{ room.min_price }} руб.</span>
         </div>
 
         <button
@@ -136,18 +134,12 @@
     position: relative;
   }
 
-  .slider {
+  .carouselWrapper {
     display: flex;
     width: 100%;
+    height: 100%;
     margin-bottom: rem(20);
-
-    img {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: cover;
-      border-radius: rem(8);
-    }
+    min-height: rem(326);
   }
 
   .cardDetails {
@@ -158,11 +150,15 @@
 
   .roomInfo {
     display: flex;
+    justify-content: flex-start;
+    align-items: center;
     gap: rem(12);
     margin-bottom: rem(16);
   }
 
   .title {
+    display: inline-flex;
+    flex-shrink: 1;
     font-family: "Lora", serif;
     font-size: rem(24);
     font-weight: bold;
@@ -176,7 +172,6 @@
     width: rem(32);
     height: rem(32);
     min-width: auto;
-    margin-right: auto;
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
@@ -230,6 +225,7 @@
   .footer {
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
   }
 
   .priceBlock {
@@ -244,6 +240,7 @@
     font-weight: 500;
     color: var(--a-text-light);
   }
+
   .price {
     font-family: "Lora", serif;
     font-size: rem(24);
@@ -255,12 +252,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    align-self: flex-start;
-    margin-top: auto;
     height: fit-content;
-    padding: rem(4) rem(14) rem(6) rem(14);
+    padding: rem(8) rem(16);
+    border: none;
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
+    color: var(--a-white);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
 

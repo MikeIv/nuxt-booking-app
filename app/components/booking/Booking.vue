@@ -91,8 +91,8 @@
     @media (min-width: #{size.$tabletMax}) {
       margin-bottom: rem(90);
     }
-    @media (min-width: #{size.$desktopMedium}) {
-      padding: 0 rem(24);
+    @media (min-width: #{size.$desktopMin}) {
+      padding: 0;
     }
   }
 

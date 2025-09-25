@@ -1,23 +1,51 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import type { Room } from "~/types/room";
 
   definePageMeta({
     layout: "steps",
   });
 
   const bookingStore = useBookingStore();
-  const { searchResults, date, guests } = storeToRefs(bookingStore);
+  const { searchResults, date, guests, loading } = storeToRefs(bookingStore);
 
-  const selectedBedType = ref();
+  // Используем undefined для отображения плейсхолдера
+  const selectedBedType = ref<number | undefined>(undefined);
+
   const bedOptions = computed(() => {
-    if (!searchResults.value?.filters?.beds) return [];
+    if (
+      !searchResults.value?.filters?.beds ||
+      searchResults.value.filters.beds.length === 0
+    )
+      return [];
+
     return searchResults.value.filters.beds.map((bed) => ({
       id: bed.id,
       title: bed.title,
     }));
   });
 
-  console.log("Bed options:", bedOptions.value);
+  const filteredRooms = computed(() => {
+    if (!searchResults.value?.rooms) return [];
+
+    // Если ничего не выбрано (плейсхолдер) или выбраны "Все типы кроватей" (id = 0)
+    if (selectedBedType.value === undefined || selectedBedType.value === 0) {
+      return searchResults.value.rooms; // Возвращаем все комнаты
+    }
+
+    // Фильтруем по id кровати
+    return searchResults.value.rooms.filter(
+      (room: Room) => room.bed?.id === selectedBedType.value,
+    );
+  });
+
+  const hasSearchResults = computed(() => {
+    return (
+      searchResults.value &&
+      searchResults.value.rooms &&
+      searchResults.value.rooms.length > 0
+    );
+  });
 
   onMounted(async () => {
     if (date.value && guests.value.adults > 0 && !searchResults.value) {
@@ -28,39 +56,41 @@
       }
     }
   });
-
-  console.log("searchResults", searchResults);
 </script>
 
 <template>
   <div :class="$style.container">
     <h1 :class="$style.header">Выбор номера</h1>
     <Booking />
-    <div>
+
+    <div v-if="bedOptions.length > 0">
       <Select
         v-model="selectedBedType"
         :options="bedOptions"
-        show-clear
         option-label="title"
+        option-value="id"
         placeholder="Тип кровати"
         :class="$style.filterSelect"
       />
     </div>
 
-    <div v-if="bookingStore.loading" :class="$style.loading">
-      Загрузка номеров...
-    </div>
+    <div v-if="loading" :class="$style.loading">Загрузка номеров...</div>
 
-    <section v-else-if="searchResults" :class="$style.roomsList">
-      <BookingCard
-        v-for="item in searchResults?.rooms"
-        :key="item.id"
-        :room="item"
-      />
-    </section>
+    <template v-else-if="hasSearchResults">
+      <section :class="$style.roomsList">
+        <BookingCard
+          v-for="item in filteredRooms"
+          :key="item.id"
+          :room="item"
+        />
 
-    <!-- Сообщение, если нет результатов -->
-    <div v-else-if="!bookingStore.loading" :class="$style.noResults">
+        <div v-if="filteredRooms.length === 0" :class="$style.noFilterResults">
+          Нет номеров с выбранным типом кровати
+        </div>
+      </section>
+    </template>
+
+    <div v-else :class="$style.noResults">
       Нет доступных номеров. Выполните поиск.
     </div>
   </div>
@@ -84,14 +114,6 @@
     font-size: rem(34);
     font-weight: 600;
     color: var(--a-black);
-  }
-  .input {
-    border: 1px solid var(--a-accentBg);
-    border-radius: rem(8);
-
-    & input .bg-default {
-      background: var(--a-accentBg);
-    }
   }
 
   .roomsList {
@@ -125,8 +147,19 @@
     align-items: center;
     padding: rem(40);
     font-size: rem(18);
-    color: var(--a-gray);
+    color: var(--a-text-accent);
     text-align: center;
+  }
+
+  .noFilterResults {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: rem(40);
+    font-size: rem(18);
+    color: var(--a-text-accent);
+    text-align: center;
+    grid-column: 1 / -1;
   }
 
   .filterSelect {
@@ -167,5 +200,3 @@
     }
   }
 </style>
-
-<style lang="scss"></style>

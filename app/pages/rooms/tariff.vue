@@ -5,40 +5,64 @@
     layout: "steps",
   });
 
+  const router = useRouter();
   const bookingStore = useBookingStore();
   const { searchResults, selectedRoomType, roomTariffs } =
     storeToRefs(bookingStore);
-
-  const showAllAmenities = ref(false);
-
-  const allAmenities = [
-    "WI-FI",
-    "Кондиционер",
-    "Сейф",
-    "Ванная комната",
-    "Телевидение",
-    'Система "умный дом"',
-    "Теплый пол",
-    "Кровать «King size»",
-  ];
-
-  const initialVisibleCount = 5;
-
-  const visibleAmenities = computed(() => {
-    return showAllAmenities.value
-      ? allAmenities
-      : allAmenities.slice(0, initialVisibleCount);
-  });
-
-  const hiddenAmenitiesCount = computed(() => {
-    return showAllAmenities.value
-      ? 0
-      : allAmenities.length - initialVisibleCount;
-  });
+  const loading = ref(true);
+  const error = ref(null);
+  const isPopupOpen = ref(false);
+  const isServicePopupOpen = ref(false);
+  const selectedService = ref(null);
 
   console.log("searchResults-TARIF", searchResults.value);
   console.log("selectedRoomType", selectedRoomType.value);
   console.log("roomTariffs", roomTariffs.value);
+
+  const openPopup = (event: MouseEvent) => {
+    event.stopPropagation();
+    isPopupOpen.value = true;
+  };
+
+  const closePopup = () => {
+    isPopupOpen.value = false;
+  };
+
+  const openServicePopup = (event: MouseEvent, service: unknown) => {
+    event.stopPropagation();
+    selectedService.value = service;
+    isServicePopupOpen.value = true;
+  };
+
+  const closeServicePopup = () => {
+    isServicePopupOpen.value = false;
+    selectedService.value = null;
+  };
+
+  const expandedRooms = ref<Record<string, boolean>>({});
+
+  const toggleExpand = (roomTitle: string) => {
+    expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
+  };
+
+  const handleTariff = () => {
+    router.push("/personal");
+  };
+
+  onMounted(async () => {
+    try {
+      loading.value = true;
+      if (selectedRoomType.value) {
+        await bookingStore.searchWithRoomType(selectedRoomType.value);
+        console.log("TARIF-data", searchResults.value);
+      }
+    } catch (err) {
+      error.value = err;
+      console.error("Ошибка при загрузке тарифов:", err);
+    } finally {
+      loading.value = false;
+    }
+  });
 </script>
 
 <template>
@@ -54,54 +78,69 @@
       <NuxtLink to="/rooms" :class="$style.return"
         >Назад к выбору номеров</NuxtLink
       >
-      <h2 :class="$style.tariffTitle">Выберите тариф</h2>
 
-      <div v-if="roomTariffs && roomTariffs.length > 0" :class="$style.tariffs">
+      <!-- Индикатор загрузки -->
+      <div v-if="loading" :class="$style.loadingContainer">
+        <div :class="$style.spinner" />
+        <p>Загрузка тарифов...</p>
+      </div>
+
+      <div v-else-if="error" :class="$style.errorContainer">
+        <p>Произошла ошибка при загрузке тарифов. Попробуйте позже.</p>
+      </div>
+
+      <template v-else>
+        <h2 :class="$style.tariffTitle">Выберите тариф</h2>
+
         <div
-          v-for="(tariff, index) in roomTariffs"
-          :key="index"
-          :class="$style.tariffCard"
+          v-if="roomTariffs && roomTariffs.length > 0"
+          :class="$style.tariffs"
         >
-          <div :class="$style.roomInfoBlock">
-            <div :class="$style.roomImg">
-              <img src="/images/tariff/room.jpg" alt="номер" />
-            </div>
-            <p :class="$style.title">{{ tariff?.title }}</p>
-            <!-- eslint-disable-line vue/no-v-html -->
-            <p :class="$style.description" v-html="tariff?.description" />
-            <!-- eslint-enable vue/no-v-html -->
-            <div :class="$style.amenitiesSection">
-              <div
-                v-for="(amenity, ind) in visibleAmenities"
-                :key="ind"
-                :class="$style.amenityItem"
-              >
-                <span>{{ amenity }}</span>
-              </div>
+          <div
+            v-for="(room, roomIndex) in roomTariffs"
+            :key="roomIndex"
+            :class="$style.tariffCard"
+          >
+            <BookingRoomInfoCard
+              :room="room"
+              :is-open="isPopupOpen"
+              @open-popup="openPopup"
+              @toggle-expand="toggleExpand"
+            />
 
-              <button
-                v-if="hiddenAmenitiesCount > 0"
-                :class="$style.showMoreButton"
-                @click="showAllAmenities = true"
-              >
-                + ещё {{ hiddenAmenitiesCount }}
-              </button>
-            </div>
-          </div>
+            <BookingServicesList
+              :services="searchResults.packages"
+              :is-service-popup-open="isServicePopupOpen"
+              @open-service-popup="openServicePopup"
+            />
 
-          <div :class="$style.additionallyBlock">
-            <h2 :class="$style.additionallyTitle">Включить дополнительно:</h2>
+            <BookingTariffsList
+              :tariffs="room.tariffs"
+              @book-tariff="handleTariff"
+            />
+
+            <BookingRoomPopup
+              :room="room"
+              :is-open="isPopupOpen"
+              @close="closePopup"
+            />
+
+            <BookingServicePopup
+              v-if="selectedService"
+              :service="selectedService"
+              :is-open="isServicePopupOpen"
+              @close="closeServicePopup"
+            />
           </div>
-          <!-- Дополнительная информация о тарифе -->
         </div>
-      </div>
 
-      <div
-        v-else-if="searchResults && !searchResults.available"
-        :class="$style.noResults"
-      >
-        <p>К сожалению, на выбранные даты нет доступных номеров.</p>
-      </div>
+        <div
+          v-else-if="searchResults && !searchResults.available"
+          :class="$style.noResults"
+        >
+          <p>К сожалению, на выбранные даты нет доступных номеров.</p>
+        </div>
+      </template>
     </section>
   </div>
 </template>
@@ -114,7 +153,12 @@
     flex-direction: column;
     margin-bottom: rem(40);
     padding: 0 rem(20);
+
+    @media (min-width: #{size.$desktopMin}) {
+      padding: 0 rem(60);
+    }
   }
+
   .header {
     display: flex;
     justify-content: center;
@@ -131,6 +175,11 @@
     flex-direction: column;
     width: 100%;
     padding: rem(40) 0;
+
+    @media (min-width: #{size.$desktopMedium}) {
+      max-width: #{size.$desktop};
+      margin: 0 auto;
+    }
   }
 
   .return {
@@ -150,6 +199,7 @@
       width: 10px;
     }
   }
+
   .tariffTitle {
     margin-bottom: rem(40);
     text-align: center;
@@ -161,11 +211,15 @@
   }
 
   .tariffs {
+    display: flex;
+    flex-direction: column;
+    gap: rem(32);
     margin-bottom: rem(40);
   }
 
   .tariffCard {
-    margin-bottom: rem(16);
+    display: flex;
+    flex-direction: column;
   }
 
   .noResults {
@@ -177,110 +231,39 @@
     margin-bottom: rem(40);
   }
 
-  .roomInfoBlock {
+  .loadingContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: rem(20) rem(10);
-    border-radius: var(--a-borderR--card);
-    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
-
-    @media (min-width: #{size.$tabletMin}) {
-      padding: rem(22) rem(14);
-    }
-  }
-
-  .roomImg {
-    position: relative;
-    display: flex;
     justify-content: center;
-    align-items: center;
-    width: 100%;
+    padding: rem(40) 0;
+  }
+
+  .spinner {
+    width: rem(40);
+    height: rem(40);
+    border: rem(3) solid var(--a-border-light);
+    border-top: rem(3) solid var(--a-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
     margin-bottom: rem(16);
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .errorContainer {
+    padding: rem(20);
+    text-align: center;
+    color: var(--a-text-error);
+    background-color: var(--a-bg-light);
     border-radius: var(--a-borderR--card);
-    overflow: hidden;
-
-    img {
-      width: 100%;
-      height: rem(180);
-      object-fit: cover;
-
-      @media (min-width: #{size.$desktopMin}) {
-        height: rem(400);
-      }
-    }
-  }
-
-  .title {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: bold;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(34);
-    }
-  }
-  .description {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(20);
-    font-weight: 400;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
-    }
-  }
-  .amenitiesSection {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    gap: rem(16);
-  }
-  .amenityItem {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: rem(2) rem(16);
-    font-size: rem(14);
-    color: var(--a-text-dark);
-    border: 1px solid var(--primary);
-    border-radius: rem(8);
-
-    & span {
-      margin-bottom: rem(2);
-    }
-  }
-
-  .showMoreButton {
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    color: var(--a-text-light);
-    cursor: pointer;
-  }
-
-  .additionallyBlock {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .additionallyTitle {
-    width: 100%;
-    margin-bottom: rem(16);
-    text-align: left;
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: bold;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(34);
-    }
+    margin-bottom: rem(40);
   }
 </style>
