@@ -17,37 +17,66 @@
 
   const toast = usePrimeToast();
 
-  // Интерфейс для формы
-  interface FormData {
+  // Интерфейс для данных гостя
+  interface GuestData {
     lastName: string;
     firstName: string;
     middleName: string;
     phone: string;
     email: string;
     citizenship: string;
+  }
+
+  // Интерфейс для формы
+  interface FormData {
+    mainGuest: GuestData;
+    additionalGuests: GuestData[];
     smsConfirmation: boolean;
     specialOffers: boolean;
+    checkInTime: string;
+    checkOutTime: string;
+    comment: string;
+    paymentMethod: string;
+    agreement: boolean;
   }
 
   // Данные формы
   const formData = reactive<FormData>({
-    lastName: "",
-    firstName: "",
-    middleName: "",
-    phone: "",
-    email: "",
-    citizenship: "",
+    mainGuest: {
+      lastName: "",
+      firstName: "",
+      middleName: "",
+      phone: "",
+      email: "",
+      citizenship: "",
+    },
+    additionalGuests: [],
     smsConfirmation: false,
     specialOffers: false,
+    checkInTime: "",
+    checkOutTime: "",
+    comment: "",
+    paymentMethod: "",
+    agreement: false,
   });
 
   // Ошибки валидации
-  const errors = reactive({
-    lastName: "",
-    firstName: "",
-    phone: "",
-    email: "",
+  const errors = reactive<{
+    mainGuest: Partial<GuestData>;
+    additionalGuests: Array<Partial<GuestData>>;
+    agreement: string;
+  }>({
+    mainGuest: {},
+    additionalGuests: [],
+    agreement: "",
   });
+
+  // Способы оплаты
+  const paymentMethods = [
+    { label: "Банковской картой", value: "card" },
+    { label: "Наличными при заселении", value: "cash" },
+    { label: "Банковским переводом", value: "transfer" },
+  ];
 
   // Валидация email
   const validateEmail = (email: string): boolean => {
@@ -60,39 +89,61 @@
     return phone.replace(/\D/g, "").length >= 10;
   };
 
+  // Валидация данных гостя
+  const validateGuest = (guest: GuestData): Partial<GuestData> => {
+    const guestErrors: Partial<GuestData> = {};
+
+    if (!guest.lastName.trim()) {
+      guestErrors.lastName = "Фамилия обязательна для заполнения.";
+    }
+
+    if (!guest.firstName.trim()) {
+      guestErrors.firstName = "Имя обязательно для заполнения.";
+    }
+
+    if (!guest.phone.trim()) {
+      guestErrors.phone = "Номер телефона обязателен для заполнения.";
+    } else if (!validatePhone(guest.phone)) {
+      guestErrors.phone = "Введите корректный номер телефона.";
+    }
+
+    if (!guest.email.trim()) {
+      guestErrors.email = "Email обязателен для заполнения.";
+    } else if (!validateEmail(guest.email)) {
+      guestErrors.email = "Введите корректный email адрес.";
+    }
+
+    return guestErrors;
+  };
+
   // Валидация формы
   const validateForm = (): boolean => {
     let isValid = true;
 
     // Сброс ошибок
-    Object.keys(errors).forEach((key) => {
-      errors[key as keyof typeof errors] = "";
+    errors.mainGuest = {};
+    errors.additionalGuests = [];
+    errors.agreement = "";
+
+    // Валидация основного гостя
+    const mainGuestErrors = validateGuest(formData.mainGuest);
+    if (Object.keys(mainGuestErrors).length > 0) {
+      errors.mainGuest = mainGuestErrors;
+      isValid = false;
+    }
+
+    // Валидация дополнительных гостей
+    formData.additionalGuests.forEach((guest, index) => {
+      const guestErrors = validateGuest(guest, index + 1);
+      if (Object.keys(guestErrors).length > 0) {
+        errors.additionalGuests[index] = guestErrors;
+        isValid = false;
+      }
     });
 
-    // Валидация обязательных полей
-    if (!formData.lastName.trim()) {
-      errors.lastName = "Фамилия обязательна для заполнения.";
-      isValid = false;
-    }
-
-    if (!formData.firstName.trim()) {
-      errors.firstName = "Имя обязательно для заполнения.";
-      isValid = false;
-    }
-
-    if (!formData.phone.trim()) {
-      errors.phone = "Номер телефона обязателен для заполнения.";
-      isValid = false;
-    } else if (!validatePhone(formData.phone)) {
-      errors.phone = "Введите корректный номер телефона.";
-      isValid = false;
-    }
-
-    if (!formData.email.trim()) {
-      errors.email = "Email обязателен для заполнения.";
-      isValid = false;
-    } else if (!validateEmail(formData.email)) {
-      errors.email = "Введите корректный email адрес.";
+    // Валидация соглашения
+    if (!formData.agreement) {
+      errors.agreement = "Необходимо согласие с правилами бронирования.";
       isValid = false;
     }
 
@@ -107,9 +158,6 @@
         life: 3000,
       });
       console.log("Form data:", formData);
-
-      // Здесь можно добавить логику навигации или отправки данных
-      // navigateTo('/next-step');
     } else {
       toast.add({
         severity: "error",
@@ -117,6 +165,25 @@
         life: 3000,
       });
     }
+  };
+
+  // Добавление нового гостя
+  const addAdditionalGuest = () => {
+    formData.additionalGuests.push({
+      lastName: "",
+      firstName: "",
+      middleName: "",
+      phone: "",
+      email: "",
+      citizenship: "",
+    });
+    errors.additionalGuests.push({});
+  };
+
+  // Удаление гостя
+  const removeAdditionalGuest = (index: number) => {
+    formData.additionalGuests.splice(index, 1);
+    errors.additionalGuests.splice(index, 1);
   };
 
   // Массив полей формы для оптимизации рендеринга
@@ -171,6 +238,25 @@
       label: "Я хочу узнавать о специальных предложениях и новостях",
     },
   ];
+
+  // Поля для блока "Дополнительно"
+  const additionalFields = [
+    {
+      key: "checkInTime" as const,
+      placeholder: "Время заезда",
+      type: "text",
+    },
+    {
+      key: "checkOutTime" as const,
+      placeholder: "Время выезда",
+      type: "text",
+    },
+    {
+      key: "comment" as const,
+      placeholder: "Комментарий",
+      type: "text",
+    },
+  ];
 </script>
 
 <template>
@@ -198,49 +284,191 @@
     </section>
 
     <section :class="$style.personalBlock">
-      <h3 :class="$style.sectionHeader">Данные гостей</h3>
       <form :class="$style.formSection" @submit.prevent="onFormSubmit">
-        <!-- Оптимизированный рендеринг полей формы -->
-        <div
-          v-for="field in formFields"
-          :key="field.key"
-          :class="$style.inputItem"
-        >
-          <InputText
-            v-model="formData[field.key]"
-            :type="field.type"
-            :placeholder="field.placeholder"
-            :class="[$style.input, errors[field.key] && $style.inputError]"
-            unstyled
-          />
-          <Message
-            v-if="errors[field.key]"
-            severity="error"
-            size="small"
-            variant="simple"
-            unstyled
-            :class="$style.errorMessage"
+        <div :class="$style.formItem">
+          <h3 :class="$style.sectionHeader">Данные гостей</h3>
+          <!-- Основной гость -->
+          <div :class="$style.guestBlock">
+            <h4 :class="$style.guestTitle">Основной гость</h4>
+            <div
+              v-for="field in formFields"
+              :key="field.key"
+              :class="$style.inputItem"
+            >
+              <InputText
+                v-model="formData.mainGuest[field.key]"
+                :type="field.type"
+                :placeholder="field.placeholder"
+                :class="[
+                  $style.input,
+                  errors.mainGuest[field.key] && $style.inputError,
+                ]"
+                unstyled
+              />
+              <Message
+                v-if="errors.mainGuest[field.key]"
+                severity="error"
+                size="small"
+                variant="simple"
+                unstyled
+                :class="$style.errorMessage"
+              >
+                {{ errors.mainGuest[field.key] }}
+              </Message>
+            </div>
+          </div>
+
+          <!-- Дополнительные гости -->
+          <div
+            v-for="(guest, index) in formData.additionalGuests"
+            :key="index"
+            :class="$style.guestBlock"
           >
-            {{ errors[field.key] }}
-          </Message>
+            <div :class="$style.guestHeader">
+              <h4 :class="$style.guestTitle">Гость {{ index + 2 }}</h4>
+              <Button
+                type="button"
+                unstyled
+                :class="$style.removeButton"
+                @click="removeAdditionalGuest(index)"
+              >
+                <UIcon name="i-close" :class="$style.icon" />
+              </Button>
+            </div>
+            <div
+              v-for="field in formFields"
+              :key="field.key"
+              :class="$style.inputItem"
+            >
+              <InputText
+                v-model="guest[field.key]"
+                :type="field.type"
+                :placeholder="field.placeholder"
+                :class="[
+                  $style.input,
+                  errors.additionalGuests[index]?.[field.key] &&
+                    $style.inputError,
+                ]"
+                unstyled
+              />
+              <Message
+                v-if="errors.additionalGuests[index]?.[field.key]"
+                severity="error"
+                size="small"
+                variant="simple"
+                unstyled
+                :class="$style.errorMessage"
+              >
+                {{ errors.additionalGuests[index]?.[field.key] }}
+              </Message>
+            </div>
+          </div>
+
+          <!-- Кнопка добавления гостя -->
+          <Button
+            type="button"
+            label="+ Добавить гостя"
+            :class="$style.addGuestButton"
+            unstyled
+            @click="addAdditionalGuest"
+          />
+
+          <div :class="$style.checkInformBlock">
+            <div
+              v-for="checkbox in checkboxOptions"
+              :key="checkbox.id"
+              :class="$style.checkItem"
+            >
+              <Checkbox
+                v-model="formData[checkbox.key]"
+                :input-id="checkbox.id"
+                :binary="true"
+                :class="$style.checkbox"
+              />
+              <label :for="checkbox.id" :class="$style.checkboxLabel">
+                {{ checkbox.label }}
+              </label>
+            </div>
+          </div>
         </div>
 
-        <!-- Чекбоксы с исправленной стилизацией -->
-        <div :class="$style.checkInformBlock">
-          <div
-            v-for="checkbox in checkboxOptions"
-            :key="checkbox.id"
-            :class="$style.checkItem"
-          >
-            <Checkbox
-              v-model="formData[checkbox.key]"
-              :input-id="checkbox.id"
-              :binary="true"
-              :class="$style.checkbox"
-            />
-            <label :for="checkbox.id" :class="$style.checkboxLabel">
-              {{ checkbox.label }}
-            </label>
+        <!-- Блок "Дополнительно" -->
+        <div :class="$style.formItem">
+          <h3 :class="$style.sectionHeader">Дополнительно</h3>
+          <div :class="$style.additionalBlock">
+            <div
+              v-for="field in additionalFields"
+              :key="field.key"
+              :class="$style.inputItem"
+            >
+              <InputText
+                v-model="formData[field.key]"
+                :type="field.type"
+                :placeholder="field.placeholder"
+                :class="$style.input"
+                unstyled
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Блок "Способ оплаты" -->
+        <div :class="$style.formItem">
+          <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
+          <div :class="$style.paymentBlock">
+            <div :class="$style.inputItem">
+              <Dropdown
+                v-model="formData.paymentMethod"
+                :options="paymentMethods"
+                option-label="label"
+                option-value="value"
+                placeholder="Банковской картой"
+                :class="$style.dropdown"
+                unstyled
+              />
+            </div>
+
+            <div :class="$style.agreementBlock">
+              <div :class="$style.checkItem">
+                <Checkbox
+                  v-model="formData.agreement"
+                  input-id="agreement"
+                  :binary="true"
+                  :class="$style.checkbox"
+                />
+                <label for="agreement" :class="$style.checkboxLabel">
+                  Фактом бронирования вы соглашаетесь с правилами
+                  онлайн-бронирования, обработкой персональных данных и
+                  политикой конфиденциальности
+                </label>
+              </div>
+              <Message
+                v-if="errors.agreement"
+                severity="error"
+                size="small"
+                variant="simple"
+                unstyled
+                :class="$style.errorMessage"
+              >
+                {{ errors.agreement }}
+              </Message>
+            </div>
+
+            <div :class="$style.securityText">
+              <h5 :class="$style.securityTitle">Гарантии безопасности</h5>
+              <p :class="$style.securityDescription">
+                Ввод данных и обработка платежа банковской картой проходит на
+                защищённой странице процессинговой системы, которая прошла
+                международную сертификацию. Ваши конфиденциальные данные
+                полностью защищены. Никто, в том числе система бронирования, не
+                может их получить. При работе с конфиденциальными данными
+                применяется стандарт защиты информации, созданный платёжными
+                системами Visa и MasterCard — PCI DSS. Технология передачи
+                данных гарантирует безопасность за счёт использования протоколов
+                шифрования и технологии 3-D Secure. Возврат денег производится
+                на карту, с которой был произведён платёж.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -325,11 +553,11 @@
   }
 
   .sectionHeader {
-    margin-bottom: rem(24);
     font-family: "Inter", sans-serif;
     font-size: rem(24);
     font-weight: 400;
     color: var(--a-text-dark);
+    margin-bottom: rem(16);
   }
 
   .btnBlock {
@@ -349,8 +577,55 @@
   .formSection {
     display: flex;
     flex-direction: column;
-    gap: rem(24);
+    gap: rem(32);
     width: 100%;
+  }
+
+  .guestBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+    padding: rem(24);
+    border: rem(1) solid var(--a-border-light);
+    border-radius: var(--a-borderR--input);
+    background: var(--a-whiteBg);
+  }
+
+  .guestHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: rem(16);
+  }
+
+  .guestTitle {
+    font-family: "Inter", sans-serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin: 0;
+  }
+
+  .removeButton {
+    width: rem(24);
+    height: rem(24);
+    min-width: rem(24);
+    border-radius: 50%;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--a-btnAccentBg);
+
+      .icon {
+        color: var(--a-text-white);
+      }
+    }
+  }
+
+  .icon {
+    width: rem(24);
+    height: rem(24);
+    color: var(--a-text-accent);
   }
 
   .inputItem {
@@ -400,6 +675,37 @@
     font-family: "Inter", sans-serif;
     font-size: rem(14);
     color: var(--a-text-accent);
+  }
+
+  .addGuestButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: rem(54);
+    padding: 0 rem(16);
+    border: rem(1) dashed var(--a-border-dark);
+    border-radius: var(--a-borderR--input);
+    background: transparent;
+    color: var(--a-text-dark);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--a-border-primary);
+      color: var(--a-text-primary);
+      background-color: rgba(var(--a-primaryBg), 0.05);
+    }
+
+    &:focus {
+      outline: none;
+      border-style: solid;
+      border-color: var(--a-border-primary);
+      box-shadow: 0 0 0 2px rgba(var(--a-border-primary), 0.1);
+    }
   }
 
   .checkInformBlock {
@@ -461,7 +767,6 @@
       cursor: pointer;
     }
 
-    // Иконка галочки PrimeVue - скрываем
     .p-checkbox-icon {
       display: none;
     }
@@ -485,6 +790,80 @@
     font-weight: 600;
   }
 
+  .formItem {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+    padding: rem(24) 0;
+    border-bottom: rem(1) solid var(--a-border-dark);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+
+  .additionalBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+  }
+
+  .paymentBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+  }
+
+  .dropdown {
+    width: 100%;
+    height: rem(54);
+    border: rem(1) solid var(--a-border-light);
+    border-radius: var(--a-borderR--input);
+    padding: 0 rem(16);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    color: var(--a-text-dark);
+    background: var(--a-whiteBg);
+
+    &:focus {
+      outline: none;
+      border-color: var(--a-border-primary);
+      box-shadow: 0 0 0 2px rgba(var(--a-border-primary), 0.1);
+    }
+
+    &::placeholder {
+      color: var(--a-text-light);
+    }
+  }
+
+  .agreementBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(8);
+  }
+
+  .securityText {
+    padding: rem(16);
+    background: var(--a-bg-light);
+    border-radius: var(--a-borderR--input);
+  }
+
+  .securityTitle {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin: 0 0 rem(8) 0;
+  }
+
+  .securityDescription {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    line-height: 1.5;
+    color: var(--a-text-light);
+    margin: 0;
+  }
+
   // Адаптивность
   @media (max-width: size.$tablet) {
     .personalBlock {
@@ -502,6 +881,18 @@
 
     .sectionHeader {
       font-size: rem(20);
+    }
+
+    .guestBlock {
+      padding: rem(20);
+    }
+
+    .guestTitle {
+      font-size: rem(16);
+    }
+
+    .securityText {
+      padding: rem(12);
     }
   }
 
@@ -527,7 +918,22 @@
       gap: rem(16);
     }
 
+    .guestBlock {
+      padding: rem(16);
+      gap: rem(20);
+    }
+
     .input {
+      height: rem(48);
+      font-size: rem(14);
+    }
+
+    .dropdown {
+      height: rem(48);
+      font-size: rem(14);
+    }
+
+    .addGuestButton {
       height: rem(48);
       font-size: rem(14);
     }
@@ -535,6 +941,10 @@
     .submitButton {
       height: rem(48);
       font-size: rem(16);
+    }
+
+    .securityDescription {
+      font-size: rem(13);
     }
   }
 </style>
