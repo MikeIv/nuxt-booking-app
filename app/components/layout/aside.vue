@@ -10,6 +10,10 @@
   const router = useRouter();
   const isMenuOpen = ref(false);
 
+  // Состояния для управления диалогами
+  const authDialogType = ref<"login" | "register" | "recovery" | null>(null);
+  const recoveryEmail = ref("");
+
   const toggleMenu = () => {
     isMenuOpen.value = !isMenuOpen.value;
   };
@@ -32,6 +36,31 @@
 
   const goToContacts = () => {
     window.open("http://varvarkan.grandfs.ru/contacts.php", "_blank");
+  };
+
+  const showAuthDialog = (
+    type: "login" | "register" | "recovery",
+    email?: string,
+  ) => {
+    authDialogType.value = type;
+    if (email) {
+      recoveryEmail.value = email;
+    }
+  };
+
+  const hideAuthDialog = () => {
+    authDialogType.value = null;
+    recoveryEmail.value = "";
+  };
+
+  const switchAuthDialog = (
+    to: "login" | "register" | "recovery",
+    email?: string,
+  ) => {
+    authDialogType.value = to;
+    if (email) {
+      recoveryEmail.value = email;
+    }
   };
 
   const menuLinks = computed(() => [
@@ -85,14 +114,12 @@
       >
         Забронировать
       </UButton>
-      <UButton
-        color="bgDark"
-        class="text-white px-4 py-2"
-        size="sm"
-        :class="$style.show"
-      >
-        Войти
-      </UButton>
+      <Button
+        label="Войти"
+        class="btn__bs dark"
+        unstyled
+        @click="showAuthDialog('login')"
+      />
       <button :class="$style.langButton" @click="toggleLanguage">
         {{ locale === "ru" ? "ENG" : "RU" }}
       </button>
@@ -109,9 +136,27 @@
     background-color="--a-mainBg"
     @close="toggleMenu"
   />
-</template>
 
-<!-- Стили остаются без изменений -->
+  <BookingLoginPopup
+    :visible="authDialogType === 'login'"
+    @close="hideAuthDialog"
+    @switch-to-register="switchAuthDialog('register')"
+    @switch-to-recovery="switchAuthDialog('recovery', $event)"
+  />
+
+  <BookingRegisterPopup
+    :visible="authDialogType === 'register'"
+    @close="hideAuthDialog"
+    @switch-to-login="switchAuthDialog('login')"
+  />
+
+  <BookingPasswordRecoveryPopup
+    :visible="authDialogType === 'recovery'"
+    :initial-email="recoveryEmail"
+    @close="hideAuthDialog"
+    @switch-to-login="switchAuthDialog('login')"
+  />
+</template>
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
