@@ -106,14 +106,14 @@
     </button>
 
     <div :class="$style.rightGroup">
-      <UButton
-        color="bgAccent"
-        class="text-white px-4 py-2"
-        size="sm"
-        :class="$style.show"
-      >
-        Забронировать
-      </UButton>
+      <!--      <UButton-->
+      <!--        color="bgAccent"-->
+      <!--        class="text-white px-4 py-2"-->
+      <!--        size="sm"-->
+      <!--        :class="$style.show"-->
+      <!--      >-->
+      <!--        Забронировать-->
+      <!--      </UButton>-->
       <Button
         label="Войти"
         class="btn__bs dark"
