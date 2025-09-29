@@ -13,6 +13,10 @@
 
   const authStore = useAuthStore();
 
+  // Используем композабл для валидации
+  const { validateRegisterForm, useValidationErrors } = useFormValidation();
+  const { errors, setErrors, clearErrors } = useValidationErrors();
+
   const formData = ref<RegisterData>({
     name: "",
     surname: "",
@@ -24,7 +28,6 @@
     password_confirmation: "",
   });
 
-  const errors = ref<Record<string, string>>({});
   const agreeTerms = ref(false);
   const showPassword = ref(false);
   const apiError = ref<string | null>(null);
@@ -32,68 +35,19 @@
   const loading = computed(() => authStore.loading);
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    console.log("🔄 Валидация формы...");
 
-    // Обязательные поля
-    if (!formData.value.surname.trim()) {
-      newErrors.surname = "Фамилия обязательна";
-    } else if (formData.value.surname.length > 255) {
-      newErrors.surname = "Фамилия не должна превышать 255 символов";
-    }
+    const validationErrors = validateRegisterForm(
+      formData.value,
+      agreeTerms.value,
+    );
+    setErrors(validationErrors);
 
-    if (!formData.value.name.trim()) {
-      newErrors.name = "Имя обязательно";
-    } else if (formData.value.name.length > 255) {
-      newErrors.name = "Имя не должно превышать 255 символов";
-    }
-
-    if (formData.value.middle_name && formData.value.middle_name.length > 255) {
-      newErrors.middle_name = "Отчество не должно превышать 255 символов";
-    }
-
-    if (!formData.value.phone.trim()) {
-      newErrors.phone = "Телефон обязателен";
-    } else if (formData.value.phone.length > 32) {
-      newErrors.phone = "Телефон не должен превышать 32 символа";
-    } else if (!/^[+]?[0-9\s\-()]{10,}$/.test(formData.value.phone)) {
-      newErrors.phone = "Введите корректный телефон";
-    }
-
-    if (!formData.value.email.trim()) {
-      newErrors.email = "Почта обязательна";
-    } else if (formData.value.email.length > 255) {
-      newErrors.email = "Почта не должна превышать 255 символов";
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.value.email)) {
-      newErrors.email = "Введите корректный email";
-    }
-
-    if (!formData.value.country.trim()) {
-      newErrors.country = "Страна обязательна";
-    } else if (formData.value.country.length > 255) {
-      newErrors.country = "Страна не должна превышать 255 символов";
-    }
-
-    if (!formData.value.password) {
-      newErrors.password = "Пароль обязателен";
-    } else if (formData.value.password.length < 2) {
-      newErrors.password = "Пароль должен содержать минимум 8 символов";
-    }
-
-    if (!formData.value.password_confirmation) {
-      newErrors.password_confirmation = "Подтвердите пароль";
-    } else if (
-      formData.value.password !== formData.value.password_confirmation
-    ) {
-      newErrors.password_confirmation = "Пароли не совпадают";
-    }
-
-    if (!agreeTerms.value) {
-      newErrors.agreeTerms = "Необходимо согласие с правилами";
-    }
-
-    errors.value = newErrors;
     apiError.value = null;
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(validationErrors).length === 0;
+
+    console.log(`✅ Валидация ${isValid ? "пройдена" : "не пройдена"}`);
+    return isValid;
   };
 
   const handleRegister = async () => {
@@ -165,7 +119,7 @@
       password_confirmation: "",
     };
     agreeTerms.value = false;
-    errors.value = {};
+    clearErrors();
     apiError.value = null;
     authStore.setError(null);
   };
@@ -312,9 +266,10 @@
         </div>
 
         <div :class="$style.checkboxBlock">
-          <label :class="$style.checkboxLabel">
+          <label id="agreeTerms" :class="$style.checkboxLabel">
             <input
               v-model="agreeTerms"
+              name="agreeTerms"
               type="checkbox"
               :class="$style.checkbox"
             />
@@ -452,7 +407,7 @@
   }
 
   .checkboxBlock {
-    margin-top: rem(8);
+    margin: rem(16) 0;
   }
 
   .checkboxLabel {
@@ -464,14 +419,17 @@
 
   .checkbox {
     margin-top: rem(4);
-    width: rem(18);
-    height: rem(18);
+    width: rem(40);
+    height: rem(30);
     accent-color: var(--a-accentBg);
+    background-color: var(--a-whiteBg);
   }
 
   .checkboxText {
-    font-size: rem(14);
-    line-height: 1.4;
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    line-height: 1.2;
     color: var(--a-text-dark);
   }
 

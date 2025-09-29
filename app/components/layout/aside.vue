@@ -9,8 +9,8 @@
   const { locale, availableLocales, t, setLocale } = useI18n();
   const router = useRouter();
   const isMenuOpen = ref(false);
+  const authStore = useAuthStore();
 
-  // Состояния для управления диалогами
   const authDialogType = ref<"login" | "register" | "recovery" | null>(null);
   const recoveryEmail = ref("");
 
@@ -60,6 +60,36 @@
     authDialogType.value = to;
     if (email) {
       recoveryEmail.value = email;
+    }
+  };
+
+  const handleLogout = async () => {
+    console.log("🔄 Начало выхода...");
+
+    authStore.setLoading(true);
+    authStore.setError(null);
+
+    try {
+      console.log("📡 Отправка запроса на выход...");
+
+      const { post } = useApi();
+      const response = await post("/auth/logout");
+
+      console.log("📨 Ответ сервера:", response);
+
+      if (response.success) {
+        console.log("✅ Успешный выход");
+        authStore.logout();
+      } else {
+        console.log("❌ Ошибка в ответе:", response.message);
+        authStore.logout();
+      }
+    } catch (err: unknown) {
+      console.error("💥 Ошибка при выходе:", err);
+      // Даже при ошибке очищаем локальные данные
+      authStore.logout();
+    } finally {
+      authStore.setLoading(false);
     }
   };
 
@@ -114,12 +144,24 @@
       <!--      >-->
       <!--        Забронировать-->
       <!--      </UButton>-->
+
       <Button
+        v-if="!authStore.isAuthenticated"
         label="Войти"
         class="btn__bs dark"
         unstyled
         @click="showAuthDialog('login')"
       />
+      <Button
+        v-else
+        :label="authStore.loading ? 'Выход...' : 'Выйти'"
+        class="btn__bs dark"
+        unstyled
+        :loading="authStore.loading"
+        :disabled="authStore.loading"
+        @click="handleLogout"
+      />
+
       <button :class="$style.langButton" @click="toggleLanguage">
         {{ locale === "ru" ? "ENG" : "RU" }}
       </button>
@@ -142,6 +184,7 @@
     @close="hideAuthDialog"
     @switch-to-register="switchAuthDialog('register')"
     @switch-to-recovery="switchAuthDialog('recovery', $event)"
+    @login-success="hideAuthDialog"
   />
 
   <BookingRegisterPopup
