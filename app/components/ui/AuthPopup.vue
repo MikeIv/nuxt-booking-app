@@ -58,7 +58,7 @@
       padding: rem(40) rem(30);
       background: var(--a-whiteBg);
       border-radius: rem(20);
-      box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.2);
     }
 
     .p-dialog-content {

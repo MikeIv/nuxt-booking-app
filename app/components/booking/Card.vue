@@ -124,6 +124,7 @@
 
 <style module lang="scss">
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-width: rem(200);
@@ -131,7 +132,6 @@
     box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
     border-radius: var(--a-borderR--card);
     overflow: hidden;
-    position: relative;
   }
 
   .carouselWrapper {
