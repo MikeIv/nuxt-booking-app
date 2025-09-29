@@ -1,3 +1,157 @@
+<script setup lang="ts">
+  import { ref, computed } from "vue";
+
+  const props = defineProps<{
+    visible: boolean;
+  }>();
+
+  const emit = defineEmits<{
+    close: [];
+    "switch-to-register": [];
+    "switch-to-recovery": [email: string];
+    "login-success": [];
+  }>();
+
+  const authStore = useAuthStore();
+
+  const formData = ref({
+    email: "",
+    password: "",
+  });
+
+  const emailError = ref("");
+  const passwordError = ref("");
+  const apiError = ref<string | null>(null);
+  const showPassword = ref(false);
+
+  const loading = computed(() => authStore.loading);
+
+  const validateForm = () => {
+    let isValid = true;
+    emailError.value = "";
+    passwordError.value = "";
+    apiError.value = null;
+
+    if (!formData.value.email) {
+      emailError.value = "Поле обязательно для заполнения";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.value.email)) {
+      emailError.value = "Введите корректный email";
+      isValid = false;
+    }
+
+    if (!formData.value.password) {
+      passwordError.value = "Поле обязательно для заполнения";
+      isValid = false;
+    } else if (formData.value.password.length < 6) {
+      passwordError.value = "Пароль должен содержать минимум 6 символов";
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  const handleLogin = async () => {
+    console.log("🔄 Начало входа...");
+
+    if (!validateForm()) {
+      console.log("❌ Валидация не пройдена");
+      return;
+    }
+
+    console.log("✅ Валидация пройдена, данные:", formData.value);
+
+    apiError.value = null;
+    authStore.setLoading(true);
+    authStore.setError(null);
+
+    try {
+      console.log("📡 Отправка запроса на вход...");
+
+      const { post } = useApi();
+      const response = await post("/auth/login", formData.value);
+
+      console.log("📨 Ответ сервера:", response);
+
+      if (response.success && response.payload) {
+        console.log("✅ Успешный вход");
+
+        authStore.setToken(response.payload.accessToken);
+
+        const userData = {
+          id: response.payload.user?.id || "",
+          email: formData.value.email,
+          name: response.payload.user?.name || "",
+          surname: response.payload.user?.surname || "",
+          phone: response.payload.user?.phone || "",
+          country: response.payload.user?.country || "",
+        };
+
+        authStore.setUser(userData);
+        authStore.setError(null);
+
+        emit("login-success");
+        emit("close");
+      } else {
+        console.log("❌ Ошибка в ответе:", response.message);
+
+        if (
+          response.message?.includes("неверный пароль") ||
+          response.message?.includes("invalid password") ||
+          response.message?.includes("неверные учетные данные")
+        ) {
+          // Если неверный пароль, предлагаем восстановление
+          apiError.value = "Неверный email или пароль";
+          emit("switch-to-recovery", formData.value.email);
+        } else if (
+          response.message?.includes("пользователь не найден") ||
+          response.message?.includes("user not found")
+        ) {
+          // Если пользователь не найден, предлагаем регистрацию
+          apiError.value = "Пользователь не найден";
+          emit("switch-to-register");
+        } else {
+          apiError.value = response.message || "Ошибка входа";
+          authStore.setError(apiError.value);
+        }
+      }
+    } catch (err: unknown) {
+      console.error("💥 Ошибка при входе:", err);
+      const errorMessage =
+        err.data?.message || err.message || "Произошла ошибка при входе";
+      apiError.value = errorMessage;
+      authStore.setError(errorMessage);
+    } finally {
+      authStore.setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    formData.value = {
+      email: "",
+      password: "",
+    };
+    emailError.value = "";
+    passwordError.value = "";
+    apiError.value = null;
+    showPassword.value = false;
+    authStore.setError(null);
+  };
+
+  watch(
+    () => props.visible,
+    (visible) => {
+      if (visible) {
+        resetForm();
+      }
+    },
+  );
+
+  defineExpose({
+    resetForm,
+  });
+</script>
+
 <template>
   <UiAuthPopup
     :visible="visible"
@@ -9,7 +163,7 @@
         <div :class="$style.inputBlock">
           <input
             id="email"
-            v-model="email"
+            v-model="formData.email"
             type="email"
             placeholder="Почта"
             :class="[$style.input, { [$style.inputError]: emailError }]"
@@ -28,7 +182,7 @@
           >
             <input
               id="password"
-              v-model="password"
+              v-model="formData.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Пароль"
               :class="$style.passwordInput"
@@ -48,6 +202,10 @@
             passwordError
           }}</small>
         </div>
+
+        <div v-if="apiError" :class="$style.apiError">
+          {{ apiError }}
+        </div>
       </section>
     </template>
 
@@ -59,6 +217,7 @@
           class="btn__bs dark"
           :class="$style.button"
           :loading="loading"
+          :disabled="loading"
           @click="handleLogin"
         />
         <Button
@@ -74,105 +233,19 @@
   </UiAuthPopup>
 </template>
 
-<script setup lang="ts">
-  import { ref } from "vue";
-
-  defineProps<{
-    visible: boolean;
-  }>();
-
-  defineEmits<{
-    close: [];
-    "switch-to-register": [];
-    "switch-to-recovery": [email: string];
-  }>();
-
-  const email = ref("");
-  const password = ref("");
-  const emailError = ref("");
-  const passwordError = ref("");
-  const loading = ref(false);
-  const showPassword = ref(false);
-
-  const validateForm = () => {
-    let isValid = true;
-    emailError.value = "";
-    passwordError.value = "";
-
-    if (!email.value) {
-      emailError.value = "Поле обязательно для заполнения";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email.value)) {
-      emailError.value = "Введите корректный email";
-      isValid = false;
-    }
-
-    if (!password.value) {
-      passwordError.value = "Поле обязательно для заполнения";
-      isValid = false;
-    } else if (password.value.length < 6) {
-      passwordError.value = "Пароль должен содержать минимум 6 символов";
-      isValid = false;
-    }
-
-    return isValid;
-  };
-
-  const handleLogin = async () => {
-    if (!validateForm()) return;
-
-    loading.value = true;
-
-    try {
-      // Имитация API запроса
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Симуляция неправильных данных
-      const isInvalidCredentials =
-        email.value === "test@example.com" &&
-        password.value === "wrongpassword";
-
-      if (isInvalidCredentials) {
-        // Эмитируем событие для перехода к восстановлению пароля
-        defineEmits().emit("switch-to-recovery", email.value);
-        return;
-      }
-
-      // Успешный вход
-      console.log("Успешный вход:", { email: email.value });
-      defineEmits().emit("close");
-    } catch (error) {
-      console.error("Ошибка входа:", error);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // Сброс формы при открытии
-  defineExpose({
-    resetForm: () => {
-      email.value = "";
-      password.value = "";
-      emailError.value = "";
-      passwordError.value = "";
-      showPassword.value = false;
-    },
-  });
-</script>
-
 <style module lang="scss">
   .content {
     display: flex;
     flex-direction: column;
     width: 100%;
     border-bottom: rem(1) solid var(--a-border-dark);
+    gap: rem(16);
   }
 
   .inputBlock {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-bottom: rem(16);
   }
 
   .input,
@@ -258,6 +331,17 @@
     color: var(--a-error);
     font-size: rem(12);
     line-height: 1.2;
+  }
+
+  .apiError {
+    margin-top: rem(8);
+    padding: rem(8) rem(12);
+    background-color: var(--a-mainBg);
+    border: 1px solid var(--a-border-accent);
+    border-radius: var(--a-borderR--input);
+    color: var(--a-text-accent);
+    font-size: rem(14);
+    text-align: center;
   }
 
   .btnGroup {

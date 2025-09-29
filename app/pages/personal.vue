@@ -17,7 +17,6 @@
 
   const toast = usePrimeToast();
 
-  // Интерфейс для данных гостя
   interface GuestData {
     lastName: string;
     firstName: string;
@@ -27,7 +26,6 @@
     citizenship: string;
   }
 
-  // Интерфейс для формы
   interface FormData {
     mainGuest: GuestData;
     additionalGuests: GuestData[];
@@ -40,7 +38,6 @@
     agreement: boolean;
   }
 
-  // Данные формы
   const formData = reactive<FormData>({
     mainGuest: {
       lastName: "",
@@ -60,7 +57,8 @@
     agreement: false,
   });
 
-  // Ошибки валидации
+  const { validateRegisterForm } = useFormValidation();
+
   const errors = reactive<{
     mainGuest: Partial<GuestData>;
     additionalGuests: Array<Partial<GuestData>>;
@@ -71,52 +69,42 @@
     agreement: "",
   });
 
-  // Способы оплаты
   const paymentMethods = [
     { label: "Банковской картой", value: "card" },
     { label: "Наличными при заселении", value: "cash" },
     { label: "Банковским переводом", value: "transfer" },
   ];
 
-  // Валидация email
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const guestToRegisterData = (guest: GuestData) => ({
+    surname: guest.lastName,
+    name: guest.firstName,
+    middle_name: guest.middleName || null,
+    phone: guest.phone,
+    email: guest.email,
+    country: guest.citizenship,
+    password: "dummy_password",
+    password_confirmation: "dummy_password",
+  });
 
-  // Валидация телефона (базовая проверка)
-  const validatePhone = (phone: string): boolean => {
-    return phone.replace(/\D/g, "").length >= 10;
-  };
-
-  // Валидация данных гостя
   const validateGuest = (guest: GuestData): Partial<GuestData> => {
     const guestErrors: Partial<GuestData> = {};
+    const registerData = guestToRegisterData(guest);
 
-    if (!guest.lastName.trim()) {
-      guestErrors.lastName = "Фамилия обязательна для заполнения.";
-    }
+    const guestValidation = validateRegisterForm(registerData, true);
 
-    if (!guest.firstName.trim()) {
-      guestErrors.firstName = "Имя обязательно для заполнения.";
-    }
-
-    if (!guest.phone.trim()) {
-      guestErrors.phone = "Номер телефона обязателен для заполнения.";
-    } else if (!validatePhone(guest.phone)) {
-      guestErrors.phone = "Введите корректный номер телефона.";
-    }
-
-    if (!guest.email.trim()) {
-      guestErrors.email = "Email обязателен для заполнения.";
-    } else if (!validateEmail(guest.email)) {
-      guestErrors.email = "Введите корректный email адрес.";
-    }
+    // Маппинг ошибок из формата валидации в формат гостя
+    if (guestValidation.surname) guestErrors.lastName = guestValidation.surname;
+    if (guestValidation.name) guestErrors.firstName = guestValidation.name;
+    if (guestValidation.middle_name)
+      guestErrors.middleName = guestValidation.middle_name;
+    if (guestValidation.phone) guestErrors.phone = guestValidation.phone;
+    if (guestValidation.email) guestErrors.email = guestValidation.email;
+    if (guestValidation.country)
+      guestErrors.citizenship = guestValidation.country;
 
     return guestErrors;
   };
 
-  // Валидация формы
   const validateForm = (): boolean => {
     let isValid = true;
 
@@ -125,23 +113,23 @@
     errors.additionalGuests = [];
     errors.agreement = "";
 
-    // Валидация основного гостя
     const mainGuestErrors = validateGuest(formData.mainGuest);
     if (Object.keys(mainGuestErrors).length > 0) {
       errors.mainGuest = mainGuestErrors;
       isValid = false;
     }
 
-    // Валидация дополнительных гостей
     formData.additionalGuests.forEach((guest, index) => {
-      const guestErrors = validateGuest(guest, index + 1);
+      const guestErrors = validateGuest(guest);
       if (Object.keys(guestErrors).length > 0) {
-        errors.additionalGuests[index] = guestErrors;
+        if (!errors.additionalGuests[index]) {
+          errors.additionalGuests[index] = {};
+        }
+        Object.assign(errors.additionalGuests[index], guestErrors);
         isValid = false;
       }
     });
 
-    // Валидация соглашения
     if (!formData.agreement) {
       errors.agreement = "Необходимо согласие с правилами бронирования.";
       isValid = false;
@@ -167,7 +155,6 @@
     }
   };
 
-  // Добавление нового гостя
   const addAdditionalGuest = () => {
     formData.additionalGuests.push({
       lastName: "",
@@ -180,13 +167,11 @@
     errors.additionalGuests.push({});
   };
 
-  // Удаление гостя
   const removeAdditionalGuest = (index: number) => {
     formData.additionalGuests.splice(index, 1);
     errors.additionalGuests.splice(index, 1);
   };
 
-  // Массив полей формы для оптимизации рендеринга
   const formFields = [
     {
       key: "lastName" as const,
@@ -239,7 +224,6 @@
     },
   ];
 
-  // Поля для блока "Дополнительно"
   const additionalFields = [
     {
       key: "checkInTime" as const,
