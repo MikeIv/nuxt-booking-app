@@ -346,7 +346,7 @@
     }
 
     &.inputError {
-      border-color: var(--a-error);
+      border-color: var(--a-border-accent);
     }
   }
 

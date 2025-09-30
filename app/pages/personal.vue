@@ -241,6 +241,59 @@
       type: "text",
     },
   ];
+
+  // Блок данных бронирования
+  const showBookingDetails = ref(false);
+  const { date, guests, promoCode } = storeToRefs(bookingStore);
+
+  const bookingDetails = computed(() => {
+    if (!roomTariffs.value || roomTariffs.value.length === 0) return null;
+
+    const selectedTariff = roomTariffs.value.find(
+      (tariff) => tariff.room_type_code === selectedRoomType.value,
+    );
+
+    if (!selectedTariff) return null;
+
+    return {
+      room_type_code: selectedTariff.room_type_code,
+      check_in: date.value?.[0] ? formatDate(date.value[0]) : "",
+      check_out: date.value?.[1] ? formatDate(date.value[1]) : "",
+      nights: calculateNights(),
+      additional_services: getAdditionalServices(),
+      price: selectedTariff.price,
+      total_price: selectedTariff.price,
+    };
+  });
+
+  const calculateNights = () => {
+    if (!date.value || date.value.length < 2) return 0;
+
+    const start = new Date(date.value[0]);
+    const end = new Date(date.value[1]);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
+  };
+
+  const getAdditionalServices = () => {
+    const services = [];
+
+    if (promoCode.value) {
+      services.push(`Промокод: ${promoCode.value}`);
+    }
+
+    if (guests.value.children > 0) {
+      services.push(`Дети: ${guests.value.children}`);
+    }
+
+    return services.length > 0 ? services : ["Без дополнительных услуг"];
+  };
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString("ru-RU");
+  };
 </script>
 
 <template>
@@ -376,7 +429,6 @@
           </div>
         </div>
 
-        <!-- Блок "Дополнительно" -->
         <div :class="$style.formItem">
           <h3 :class="$style.sectionHeader">Дополнительно</h3>
           <div :class="$style.additionalBlock">
@@ -396,7 +448,6 @@
           </div>
         </div>
 
-        <!-- Блок "Способ оплаты" -->
         <div :class="$style.formItem">
           <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
           <div :class="$style.paymentBlock">
@@ -455,13 +506,104 @@
             </div>
           </div>
         </div>
+        <section :class="$style.bookingSection">
+          <h3 :class="$style.bookingTitle">Ваше бронирование:</h3>
 
-        <Button
-          type="submit"
-          severity="secondary"
-          label="Продолжить"
-          :class="$style.submitButton"
-        />
+          <!-- Кнопка "Номер 1" -->
+          <Button
+            type="button"
+            :class="$style.roomButton"
+            class="btn__bs dark"
+            unstyled
+            @click="showBookingDetails = !showBookingDetails"
+          >
+            <span :class="$style.roomButtonText">Номер 1</span>
+            <UIcon
+              name="i-chevron-down"
+              :class="[
+                $style.roomButtonIcon,
+                { [$style.roomButtonIconRotated]: showBookingDetails },
+              ]"
+            />
+          </Button>
+
+          <!-- Блок с деталями бронирования -->
+          <div
+            v-if="showBookingDetails && bookingDetails"
+            :class="$style.bookingDetails"
+          >
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Тип номера:</span>
+              <span :class="$style.bookingDetailValue">{{
+                bookingDetails.room_type_code
+              }}</span>
+            </div>
+
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Заезд:</span>
+              <span :class="$style.bookingDetailValue">{{
+                bookingDetails.check_in
+              }}</span>
+            </div>
+
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Выезд:</span>
+              <span :class="$style.bookingDetailValue">{{
+                bookingDetails.check_out
+              }}</span>
+            </div>
+
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Ночей:</span>
+              <span :class="$style.bookingDetailValue">{{
+                bookingDetails.nights
+              }}</span>
+            </div>
+
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Доп. услуги:</span>
+              <span :class="$style.bookingDetailValue">
+                <span
+                  v-for="(service, index) in bookingDetails.additional_services"
+                  :key="index"
+                  :class="$style.serviceItem"
+                >
+                  {{ service
+                  }}{{
+                    index < bookingDetails.additional_services.length - 1
+                      ? ", "
+                      : ""
+                  }}
+                </span>
+              </span>
+            </div>
+
+            <div :class="$style.bookingDetailItem">
+              <span :class="$style.bookingDetailLabel">Стоимость:</span>
+              <span :class="$style.bookingDetailValue"
+                >{{ bookingDetails.price }} ₽</span
+              >
+            </div>
+
+            <div :class="$style.bookingDivider" />
+
+            <div :class="$style.bookingTotal">
+              <span :class="$style.bookingTotalLabel">Итого:</span>
+              <span :class="$style.bookingTotalValue"
+                >{{ bookingDetails.total_price }} ₽</span
+              >
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            severity="secondary"
+            label="Продолжить"
+            unstyled
+            :class="$style.submitButton"
+            class="btn__bs dark"
+          />
+        </section>
       </form>
     </section>
   </div>
@@ -766,14 +908,6 @@
     flex: 1;
   }
 
-  .submitButton {
-    margin-top: rem(16);
-    height: rem(54);
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    font-weight: 600;
-  }
-
   .formItem {
     display: flex;
     flex-direction: column;
@@ -848,87 +982,109 @@
     margin: 0;
   }
 
-  // Адаптивность
-  @media (max-width: size.$tablet) {
-    .personalBlock {
-      padding: rem(12) rem(16);
-    }
-
-    .header {
-      font-size: rem(28);
-      margin: rem(30) 0;
-    }
-
-    .personalTitle {
-      font-size: rem(24);
-    }
-
-    .sectionHeader {
-      font-size: rem(20);
-    }
-
-    .guestBlock {
-      padding: rem(20);
-    }
-
-    .guestTitle {
-      font-size: rem(16);
-    }
-
-    .securityText {
-      padding: rem(12);
-    }
+  .bookingSection {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: rem(24) rem(12);
+    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
+    border-radius: var(--a-borderR--card);
   }
 
-  @media (max-width: size.$mobile) {
-    .personalBlock {
-      padding: rem(12) rem(12);
-    }
+  .bookingTitle {
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin: 0;
+  }
 
-    .header {
-      font-size: rem(24);
-      margin: rem(20) 0;
-    }
+  .roomButton {
+    margin-bottom: rem(16);
+  }
 
-    .personalTitle {
-      font-size: rem(20);
-    }
+  .roomButtonText {
+    flex: 1;
+    text-align: left;
+  }
 
-    .sectionHeader {
-      font-size: rem(18);
-    }
+  .roomButtonIcon {
+    width: rem(16);
+    height: rem(16);
+    color: var(--a-text-dark);
+    transition: transform 0.3s ease;
+  }
 
-    .btnBlock {
-      gap: rem(16);
-    }
+  .roomButtonIconRotated {
+    transform: rotate(180deg);
+  }
 
-    .guestBlock {
-      padding: rem(16);
-      gap: rem(20);
-    }
+  .bookingDetails {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    padding: rem(16);
+    border: rem(1) solid var(--a-border-light);
+    border-radius: var(--a-borderR--input);
+    background: var(--a-whiteBg);
+  }
 
-    .input {
-      height: rem(48);
-      font-size: rem(14);
-    }
+  .bookingDetailItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: rem(8);
+  }
 
-    .dropdown {
-      height: rem(48);
-      font-size: rem(14);
-    }
+  .bookingDetailLabel {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
+    color: var(--a-text-dark);
+    flex-shrink: 0;
+  }
 
-    .addGuestButton {
-      height: rem(48);
-      font-size: rem(14);
-    }
+  .bookingDetailValue {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-light);
+    text-align: right;
+    line-height: 1.4;
+  }
 
-    .submitButton {
-      height: rem(48);
-      font-size: rem(16);
-    }
+  .serviceItem {
+    display: inline;
+  }
 
-    .securityDescription {
-      font-size: rem(13);
-    }
+  .bookingDivider {
+    width: 100%;
+    height: rem(1);
+    background-color: var(--a-border-dark);
+    margin: rem(8) 0;
+  }
+
+  .bookingTotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: rem(8);
+  }
+
+  .bookingTotalLabel {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .bookingTotalValue {
+    font-family: "Inter", sans-serif;
+    font-size: rem(18);
+    font-weight: 700;
+    color: var(--a-text-primary);
+  }
+
+  .submitButton {
+    margin-top: rem(16);
   }
 </style>

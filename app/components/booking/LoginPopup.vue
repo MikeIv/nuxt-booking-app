@@ -237,9 +237,10 @@
   .content {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    border-bottom: rem(1) solid var(--a-border-dark);
     gap: rem(16);
+    width: 100%;
+    padding-bottom: rem(24);
+    border-bottom: rem(1) solid var(--a-border-dark);
   }
 
   .inputBlock {
@@ -265,7 +266,7 @@
     }
 
     &.inputError {
-      border-color: var(--a-error);
+      border-color: var(--a-border-accent);
     }
   }
 
@@ -328,7 +329,7 @@
   .errorText {
     display: block;
     margin-top: rem(4);
-    color: var(--a-error);
+    color: var(--a-text-accent);
     font-size: rem(12);
     line-height: 1.2;
   }
@@ -378,7 +379,7 @@
     color: var(--a-white);
 
     &:hover:not(:disabled) {
-      background-color: var(--a-accentDark);
+      background-color: var(--a-btnAccentBg);
     }
   }
 
@@ -388,7 +389,7 @@
     color: var(--a-text-dark);
 
     &:hover:not(:disabled) {
-      background-color: var(--a-bg-light);
+      background-color: var(--a-lightBg);
       border-color: var(--a-text-dark);
     }
   }
