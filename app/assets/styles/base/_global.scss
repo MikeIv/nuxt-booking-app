@@ -71,6 +71,7 @@ ul {
     border: rem(1) solid var(--a-border-primary);
 
     &:hover {
+      color: var(--a-text-white);
       background-color: var(--a-primaryBg);
     }
   }

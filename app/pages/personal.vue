@@ -322,288 +322,298 @@
 
     <section :class="$style.personalBlock">
       <form :class="$style.formSection" @submit.prevent="onFormSubmit">
-        <div :class="$style.formItem">
-          <h3 :class="$style.sectionHeader">Данные гостей</h3>
-          <!-- Основной гость -->
-          <div :class="$style.guestBlock">
-            <h4 :class="$style.guestTitle">Основной гость</h4>
-            <div
-              v-for="field in formFields"
-              :key="field.key"
-              :class="$style.inputItem"
-            >
-              <InputText
-                v-model="formData.mainGuest[field.key]"
-                :type="field.type"
-                :placeholder="field.placeholder"
-                :class="[
-                  $style.input,
-                  errors.mainGuest[field.key] && $style.inputError,
-                ]"
-                unstyled
-              />
-              <Message
-                v-if="errors.mainGuest[field.key]"
-                severity="error"
-                size="small"
-                variant="simple"
-                unstyled
-                :class="$style.errorMessage"
-              >
-                {{ errors.mainGuest[field.key] }}
-              </Message>
-            </div>
-          </div>
+        <div :class="$style.formContent">
+          <!-- Левая колонка - основные блоки формы -->
+          <div :class="$style.formMain">
+            <div :class="$style.formItem">
+              <h3 :class="$style.sectionHeader">Данные гостей</h3>
+              <!-- Основной гость -->
+              <div :class="$style.guestBlock">
+                <h4 :class="$style.guestTitle">Основной гость</h4>
+                <div
+                  v-for="field in formFields"
+                  :key="field.key"
+                  :class="$style.inputItem"
+                >
+                  <InputText
+                    v-model="formData.mainGuest[field.key]"
+                    :type="field.type"
+                    :placeholder="field.placeholder"
+                    :class="[
+                      $style.input,
+                      errors.mainGuest[field.key] && $style.inputError,
+                    ]"
+                    unstyled
+                  />
+                  <Message
+                    v-if="errors.mainGuest[field.key]"
+                    severity="error"
+                    size="small"
+                    variant="simple"
+                    unstyled
+                    :class="$style.errorMessage"
+                  >
+                    {{ errors.mainGuest[field.key] }}
+                  </Message>
+                </div>
+              </div>
 
-          <!-- Дополнительные гости -->
-          <div
-            v-for="(guest, index) in formData.additionalGuests"
-            :key="index"
-            :class="$style.guestBlock"
-          >
-            <div :class="$style.guestHeader">
-              <h4 :class="$style.guestTitle">Гость {{ index + 2 }}</h4>
+              <!-- Дополнительные гости -->
+              <div
+                v-for="(guest, index) in formData.additionalGuests"
+                :key="index"
+                :class="$style.guestBlock"
+              >
+                <div :class="$style.guestHeader">
+                  <h4 :class="$style.guestTitle">Гость {{ index + 2 }}</h4>
+                  <Button
+                    type="button"
+                    unstyled
+                    :class="$style.removeButton"
+                    @click="removeAdditionalGuest(index)"
+                  >
+                    <UIcon name="i-close" :class="$style.icon" />
+                  </Button>
+                </div>
+                <div
+                  v-for="field in formFields"
+                  :key="field.key"
+                  :class="$style.inputItem"
+                >
+                  <InputText
+                    v-model="guest[field.key]"
+                    :type="field.type"
+                    :placeholder="field.placeholder"
+                    :class="[
+                      $style.input,
+                      errors.additionalGuests[index]?.[field.key] &&
+                        $style.inputError,
+                    ]"
+                    unstyled
+                  />
+                  <Message
+                    v-if="errors.additionalGuests[index]?.[field.key]"
+                    severity="error"
+                    size="small"
+                    variant="simple"
+                    unstyled
+                    :class="$style.errorMessage"
+                  >
+                    {{ errors.additionalGuests[index]?.[field.key] }}
+                  </Message>
+                </div>
+              </div>
+
+              <!-- Кнопка добавления гостя -->
               <Button
                 type="button"
+                label="+ Добавить гостя"
+                :class="$style.addGuestButton"
                 unstyled
-                :class="$style.removeButton"
-                @click="removeAdditionalGuest(index)"
-              >
-                <UIcon name="i-close" :class="$style.icon" />
-              </Button>
-            </div>
-            <div
-              v-for="field in formFields"
-              :key="field.key"
-              :class="$style.inputItem"
-            >
-              <InputText
-                v-model="guest[field.key]"
-                :type="field.type"
-                :placeholder="field.placeholder"
-                :class="[
-                  $style.input,
-                  errors.additionalGuests[index]?.[field.key] &&
-                    $style.inputError,
-                ]"
-                unstyled
+                @click="addAdditionalGuest"
               />
-              <Message
-                v-if="errors.additionalGuests[index]?.[field.key]"
-                severity="error"
-                size="small"
-                variant="simple"
-                unstyled
-                :class="$style.errorMessage"
-              >
-                {{ errors.additionalGuests[index]?.[field.key] }}
-              </Message>
-            </div>
-          </div>
 
-          <!-- Кнопка добавления гостя -->
-          <Button
-            type="button"
-            label="+ Добавить гостя"
-            :class="$style.addGuestButton"
-            unstyled
-            @click="addAdditionalGuest"
-          />
-
-          <div :class="$style.checkInformBlock">
-            <div
-              v-for="checkbox in checkboxOptions"
-              :key="checkbox.id"
-              :class="$style.checkItem"
-            >
-              <Checkbox
-                v-model="formData[checkbox.key]"
-                :input-id="checkbox.id"
-                :binary="true"
-                :class="$style.checkbox"
-              />
-              <label :for="checkbox.id" :class="$style.checkboxLabel">
-                {{ checkbox.label }}
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div :class="$style.formItem">
-          <h3 :class="$style.sectionHeader">Дополнительно</h3>
-          <div :class="$style.additionalBlock">
-            <div
-              v-for="field in additionalFields"
-              :key="field.key"
-              :class="$style.inputItem"
-            >
-              <InputText
-                v-model="formData[field.key]"
-                :type="field.type"
-                :placeholder="field.placeholder"
-                :class="$style.input"
-                unstyled
-              />
-            </div>
-          </div>
-        </div>
-
-        <div :class="$style.formItem">
-          <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
-          <div :class="$style.paymentBlock">
-            <div :class="$style.inputItem">
-              <Dropdown
-                v-model="formData.paymentMethod"
-                :options="paymentMethods"
-                option-label="label"
-                option-value="value"
-                placeholder="Банковской картой"
-                :class="$style.dropdown"
-                unstyled
-              />
-            </div>
-
-            <div :class="$style.agreementBlock">
-              <div :class="$style.checkItem">
-                <Checkbox
-                  v-model="formData.agreement"
-                  input-id="agreement"
-                  :binary="true"
-                  :class="$style.checkbox"
-                />
-                <label for="agreement" :class="$style.checkboxLabel">
-                  Фактом бронирования вы соглашаетесь с правилами
-                  онлайн-бронирования, обработкой персональных данных и
-                  политикой конфиденциальности
-                </label>
-              </div>
-              <Message
-                v-if="errors.agreement"
-                severity="error"
-                size="small"
-                variant="simple"
-                unstyled
-                :class="$style.errorMessage"
-              >
-                {{ errors.agreement }}
-              </Message>
-            </div>
-
-            <div :class="$style.securityText">
-              <h5 :class="$style.securityTitle">Гарантии безопасности</h5>
-              <p :class="$style.securityDescription">
-                Ввод данных и обработка платежа банковской картой проходит на
-                защищённой странице процессинговой системы, которая прошла
-                международную сертификацию. Ваши конфиденциальные данные
-                полностью защищены. Никто, в том числе система бронирования, не
-                может их получить. При работе с конфиденциальными данными
-                применяется стандарт защиты информации, созданный платёжными
-                системами Visa и MasterCard — PCI DSS. Технология передачи
-                данных гарантирует безопасность за счёт использования протоколов
-                шифрования и технологии 3-D Secure. Возврат денег производится
-                на карту, с которой был произведён платёж.
-              </p>
-            </div>
-          </div>
-        </div>
-        <section :class="$style.bookingSection">
-          <h3 :class="$style.bookingTitle">Ваше бронирование:</h3>
-
-          <!-- Кнопка "Номер 1" -->
-          <Button
-            type="button"
-            :class="$style.roomButton"
-            class="btn__bs dark"
-            unstyled
-            @click="showBookingDetails = !showBookingDetails"
-          >
-            <span :class="$style.roomButtonText">Номер 1</span>
-            <UIcon
-              name="i-chevron-down"
-              :class="[
-                $style.roomButtonIcon,
-                { [$style.roomButtonIconRotated]: showBookingDetails },
-              ]"
-            />
-          </Button>
-
-          <!-- Блок с деталями бронирования -->
-          <div
-            v-if="showBookingDetails && bookingDetails"
-            :class="$style.bookingDetails"
-          >
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Тип номера:</span>
-              <span :class="$style.bookingDetailValue">{{
-                bookingDetails.room_type_code
-              }}</span>
-            </div>
-
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Заезд:</span>
-              <span :class="$style.bookingDetailValue">{{
-                bookingDetails.check_in
-              }}</span>
-            </div>
-
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Выезд:</span>
-              <span :class="$style.bookingDetailValue">{{
-                bookingDetails.check_out
-              }}</span>
-            </div>
-
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Ночей:</span>
-              <span :class="$style.bookingDetailValue">{{
-                bookingDetails.nights
-              }}</span>
-            </div>
-
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Доп. услуги:</span>
-              <span :class="$style.bookingDetailValue">
-                <span
-                  v-for="(service, index) in bookingDetails.additional_services"
-                  :key="index"
-                  :class="$style.serviceItem"
+              <div :class="$style.checkInformBlock">
+                <div
+                  v-for="checkbox in checkboxOptions"
+                  :key="checkbox.id"
+                  :class="$style.checkItem"
                 >
-                  {{ service
-                  }}{{
-                    index < bookingDetails.additional_services.length - 1
-                      ? ", "
-                      : ""
-                  }}
-                </span>
-              </span>
+                  <Checkbox
+                    v-model="formData[checkbox.key]"
+                    :input-id="checkbox.id"
+                    :binary="true"
+                    :class="$style.checkbox"
+                  />
+                  <label :for="checkbox.id" :class="$style.checkboxLabel">
+                    {{ checkbox.label }}
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div :class="$style.bookingDetailItem">
-              <span :class="$style.bookingDetailLabel">Стоимость:</span>
-              <span :class="$style.bookingDetailValue"
-                >{{ bookingDetails.price }} ₽</span
-              >
+            <div :class="$style.formItem">
+              <h3 :class="$style.sectionHeader">Дополнительно</h3>
+              <div :class="$style.additionalBlock">
+                <div
+                  v-for="field in additionalFields"
+                  :key="field.key"
+                  :class="$style.inputItem"
+                >
+                  <InputText
+                    v-model="formData[field.key]"
+                    :type="field.type"
+                    :placeholder="field.placeholder"
+                    :class="$style.input"
+                    unstyled
+                  />
+                </div>
+              </div>
             </div>
 
-            <div :class="$style.bookingDivider" />
+            <div :class="$style.formItem">
+              <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
+              <div :class="$style.paymentBlock">
+                <div :class="$style.inputItem">
+                  <Dropdown
+                    v-model="formData.paymentMethod"
+                    :options="paymentMethods"
+                    option-label="label"
+                    option-value="value"
+                    placeholder="Банковской картой"
+                    :class="$style.dropdown"
+                    unstyled
+                  />
+                </div>
 
-            <div :class="$style.bookingTotal">
-              <span :class="$style.bookingTotalLabel">Итого:</span>
-              <span :class="$style.bookingTotalValue"
-                >{{ bookingDetails.total_price }} ₽</span
-              >
+                <div :class="$style.agreementBlock">
+                  <div :class="$style.checkItem">
+                    <Checkbox
+                      v-model="formData.agreement"
+                      input-id="agreement"
+                      :binary="true"
+                      :class="$style.checkbox"
+                    />
+                    <label for="agreement" :class="$style.checkboxLabel">
+                      Фактом бронирования вы соглашаетесь с правилами
+                      онлайн-бронирования, обработкой персональных данных и
+                      политикой конфиденциальности
+                    </label>
+                  </div>
+                  <Message
+                    v-if="errors.agreement"
+                    severity="error"
+                    size="small"
+                    variant="simple"
+                    unstyled
+                    :class="$style.errorMessage"
+                  >
+                    {{ errors.agreement }}
+                  </Message>
+                </div>
+
+                <div :class="$style.securityText">
+                  <h5 :class="$style.securityTitle">Гарантии безопасности</h5>
+                  <p :class="$style.securityDescription">
+                    Ввод данных и обработка платежа банковской картой проходит
+                    на защищённой странице процессинговой системы, которая
+                    прошла международную сертификацию. Ваши конфиденциальные
+                    данные полностью защищены. Никто, в том числе система
+                    бронирования, не может их получить. При работе с
+                    конфиденциальными данными применяется стандарт защиты
+                    информации, созданный платёжными системами Visa и MasterCard
+                    — PCI DSS. Технология передачи данных гарантирует
+                    безопасность за счёт использования протоколов шифрования и
+                    технологии 3-D Secure. Возврат денег производится на карту,
+                    с которой был произведён платёж.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <Button
-            type="submit"
-            severity="secondary"
-            label="Продолжить"
-            unstyled
-            :class="$style.submitButton"
-            class="btn__bs dark"
-          />
-        </section>
+          <!-- Правая колонка - блок бронирования -->
+          <section :class="$style.bookingSection">
+            <h3 :class="$style.bookingTitle">Ваше бронирование:</h3>
+
+            <!-- Кнопка "Номер 1" -->
+            <Button
+              type="button"
+              :class="$style.roomButton"
+              class="btn__bs dark"
+              unstyled
+              @click="showBookingDetails = !showBookingDetails"
+            >
+              <span :class="$style.roomButtonText">Номер 1</span>
+              <UIcon
+                name="i-chevron-down"
+                :class="[
+                  $style.roomButtonIcon,
+                  { [$style.roomButtonIconRotated]: showBookingDetails },
+                ]"
+              />
+            </Button>
+
+            <!-- Блок с деталями бронирования -->
+            <div
+              v-if="showBookingDetails && bookingDetails"
+              :class="$style.bookingDetails"
+            >
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Тип номера:</span>
+                <span :class="$style.bookingDetailValue">{{
+                  bookingDetails.room_type_code
+                }}</span>
+              </div>
+
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Заезд:</span>
+                <span :class="$style.bookingDetailValue">{{
+                  bookingDetails.check_in
+                }}</span>
+              </div>
+
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Выезд:</span>
+                <span :class="$style.bookingDetailValue">{{
+                  bookingDetails.check_out
+                }}</span>
+              </div>
+
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Ночей:</span>
+                <span :class="$style.bookingDetailValue">{{
+                  bookingDetails.nights
+                }}</span>
+              </div>
+
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Доп. услуги:</span>
+                <span :class="$style.bookingDetailValue">
+                  <span
+                    v-for="(
+                      service, index
+                    ) in bookingDetails.additional_services"
+                    :key="index"
+                    :class="$style.serviceItem"
+                  >
+                    {{ service
+                    }}{{
+                      index < bookingDetails.additional_services.length - 1
+                        ? ", "
+                        : ""
+                    }}
+                  </span>
+                </span>
+              </div>
+
+              <div :class="$style.bookingDetailItem">
+                <span :class="$style.bookingDetailLabel">Стоимость:</span>
+                <span :class="$style.bookingDetailValue"
+                  >{{ bookingDetails.price }} ₽</span
+                >
+              </div>
+
+              <div :class="$style.bookingDivider" />
+
+              <div :class="$style.bookingTotal">
+                <span :class="$style.bookingTotalLabel">Итого:</span>
+                <span :class="$style.bookingTotalValue"
+                  >{{ bookingDetails.total_price }} ₽</span
+                >
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              severity="secondary"
+              label="Продолжить"
+              unstyled
+              :class="$style.submitButton"
+              class="btn__bs dark"
+            />
+          </section>
+        </div>
       </form>
     </section>
   </div>
@@ -691,6 +701,10 @@
     flex-direction: column;
     gap: rem(24);
     margin-bottom: rem(25);
+
+    @media (min-width: #{size.$tablet}) {
+      flex-direction: row;
+    }
   }
 
   .personalNote {
@@ -703,8 +717,30 @@
   .formSection {
     display: flex;
     flex-direction: column;
-    gap: rem(32);
     width: 100%;
+  }
+
+  .formContent {
+    display: flex;
+    flex-direction: column;
+    gap: rem(32);
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: rem(40);
+      align-items: start;
+    }
+  }
+
+  .formMain {
+    display: flex;
+    flex-direction: column;
+    gap: rem(32);
+
+    @media (min-width: #{size.$desktopMin}) {
+      gap: rem(32);
+    }
   }
 
   .guestBlock {
@@ -715,6 +751,11 @@
     border: rem(1) solid var(--a-border-light);
     border-radius: var(--a-borderR--input);
     background: var(--a-whiteBg);
+
+    @media (min-width: #{size.$desktopMedium}) {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
   }
 
   .guestHeader {
@@ -725,6 +766,7 @@
   }
 
   .guestTitle {
+    width: 100%;
     font-family: "Inter", sans-serif;
     font-size: rem(18);
     font-weight: 600;
@@ -758,6 +800,10 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: 45%;
+    }
   }
 
   .input {
@@ -989,6 +1035,19 @@
     padding: rem(24) rem(12);
     box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
     border-radius: var(--a-borderR--card);
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(400);
+      position: sticky;
+      top: rem(90);
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: rem(486);
+    }
+    @media (min-width: #{size.$desktopMax}) {
+      width: rem(566);
+    }
   }
 
   .bookingTitle {
