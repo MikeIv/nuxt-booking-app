@@ -48,7 +48,7 @@ export const useFormValidation = () => {
       required: true,
       custom: (value: string) => {
         if (!value) return "Пароль обязателен";
-        if (value.length < 8)
+        if (value.length <= 8)
           return "Пароль должен содержать минимум 8 символов";
         return null;
       },
