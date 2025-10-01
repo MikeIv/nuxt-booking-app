@@ -205,16 +205,10 @@
         </div>
 
         <div :class="$style.inputBlock">
-          <input
-            id="country"
+          <BookingCountrySelect
             v-model="formData.country"
-            type="text"
-            placeholder="Страна"
-            :class="[$style.input, { [$style.inputError]: errors.country }]"
+            :error="errors.country"
           />
-          <small v-if="errors.country" :class="$style.errorText">{{
-            errors.country
-          }}</small>
         </div>
 
         <div :class="$style.inputBlock">

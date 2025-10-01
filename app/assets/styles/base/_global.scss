@@ -84,18 +84,44 @@ ul {
   min-height: rem(54);
   padding: rem(12) rem(24);
   font-family: "Inter", sans-serif;
-  font-size: rem(18);
+  font-size: rem(16);
   color: var(--a-black);
   background: var(--a-text-white);
   border: rem(1) solid var(--a-border-primary);
   border-radius: var(--a-borderR--input);
 }
 .p-select-option {
-  padding: rem(8) 0 !important;
+  padding: rem(6) 0 !important;
 
   &.p-focus {
     color: var(--a-text-accent) !important;
   }
+}
+
+// Scrollbar
+.p-dropdown-panel,
+.p-select-list-container,
+.country-select-panel .p-dropdown-items {
+  &::-webkit-scrollbar {
+    width: rem(3);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: rem(1.5);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--a-text-light);
+    border-radius: rem(1.5);
+
+    &:hover {
+      background: var(--a-text-dark);
+    }
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--a-text-light) transparent;
 }
 
 // Shadow section
