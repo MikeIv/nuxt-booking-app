@@ -2,19 +2,32 @@
   import { useBookingStore } from "~/stores/booking";
   import { storeToRefs } from "pinia";
 
+  const toast = useToast();
   const bookingStore = useBookingStore();
-  const { date, guests, promoCode, searchResults } = storeToRefs(bookingStore);
+  const { date, guests, promoCode } = storeToRefs(bookingStore);
   const router = useRouter();
   const isSearching = ref(false);
 
   const validateForm = () => {
     if (!date.value) {
-      alert("Пожалуйста, выберите даты");
+      // alert("Пожалуйста, выберите даты");
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Пожалуйста, выберите даты",
+        life: 90000,
+      });
       return false;
     }
 
     if (guests.value.adults === 0) {
-      alert("Пожалуйста, укажите количество взрослых");
+      // alert("Пожалуйста, укажите количество взрослых");
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Пожалуйста, укажите количество взрослых",
+        life: 3000,
+      });
       return false;
     }
 
@@ -34,7 +47,13 @@
         await router.push("/rooms");
       }
     } catch (error) {
-      alert(error.message);
+      // alert(error.message);
+      toast.add({
+        severity: "warn",
+        summary: "Поменяйте запрос",
+        detail: `${error.message}`,
+        life: 3000,
+      });
     } finally {
       isSearching.value = false;
     }
@@ -45,12 +64,6 @@
       promoCode: promoCode.value,
     });
   };
-
-  onMounted(async () => {
-    if (date.value && guests.value.adults > 0 && !searchResults.value) {
-      await handleSearch();
-    }
-  });
 </script>
 
 <template>

@@ -141,3 +141,14 @@ ul {
     padding: rem(22) rem(22);
   }
 }
+
+// PrimeVue Toast
+.p-toast-message {
+  border: 1px solid var(--p-toast-warn-border-color);
+}
+.p-toast-message-icon {
+  color: transparent;
+}
+.p-toast-summary {
+  color: var(--a-text-dark);
+}
