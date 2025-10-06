@@ -31,23 +31,30 @@ export const useBookingStore = defineStore(
       children: 0,
     });
     const promoCode = ref("");
-    const loading = ref(false);
+    const loading = ref(false); // Единственный loading ref — используется глобально и локально
     const error = ref<string | null>(null);
     const searchResults = ref<unknown>(null);
     const childrenAges = ref<number[]>([]);
     const selectedRoomType = ref<string | null>(null);
     const roomTariffs = ref<RoomTariff[]>([]);
 
+    const loadingMessage = ref("Загружаем данные о номерах...");
+
     const totalGuests = computed(() => {
       return guests.value.adults + guests.value.children;
     });
 
-    // Функция для обновления возрастов детей
+    const setLoading = (visible: boolean, message?: string) => {
+      loading.value = visible;
+      if (message) {
+        loadingMessage.value = message;
+      }
+    };
+
     function updateChildrenAges(ages: number[]) {
       childrenAges.value = ages;
     }
 
-    // Улучшенная функция для форматирования даты
     const formatDate = (date: Date | string): string => {
       if (typeof date === "string") return date;
 
@@ -61,7 +68,6 @@ export const useBookingStore = defineStore(
       throw new Error(`Неверный формат даты: ${date}`);
     };
 
-    // Новый метод для установки типа комнаты без поиска
     function setSelectedRoomType(roomTypeCode: string) {
       selectedRoomType.value = roomTypeCode;
       roomTariffs.value = [];
@@ -72,7 +78,6 @@ export const useBookingStore = defineStore(
       if (guests.value.adults === 0)
         throw new Error("Укажите количество гостей");
 
-      // Проверяем, не устарели ли даты
       const [startDate] = date.value;
       if (startDate < new Date()) {
         searchResults.value = null;
@@ -81,7 +86,7 @@ export const useBookingStore = defineStore(
         );
       }
 
-      loading.value = true;
+      setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
 
       try {
@@ -89,7 +94,6 @@ export const useBookingStore = defineStore(
 
         const [startDate, endDate] = date.value;
 
-        // Подготавливаем массив возрастов детей
         const childs = childrenAges.value.slice(0, guests.value.children);
         while (childs.length < guests.value.children) {
           childs.push(0);
@@ -117,12 +121,14 @@ export const useBookingStore = defineStore(
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
       } finally {
-        loading.value = false;
+        setLoading(false);
       }
     }
 
     async function createBooking(bookingData: unknown) {
       const { post } = useApi();
+
+      setLoading(true, "Создаём бронирование...");
 
       try {
         if (bookingData && typeof bookingData === "object") {
@@ -158,11 +164,15 @@ export const useBookingStore = defineStore(
         error.value =
           (err as Error).message || "Произошла ошибка при бронировании";
         throw err;
+      } finally {
+        setLoading(false);
       }
     }
 
     async function getBookingDetails(bookingId: string) {
       const { get } = useApi();
+
+      setLoading(true, "Загружаем детали брони...");
 
       try {
         const response = await get<{ booking: unknown }>(`/${bookingId}`);
@@ -178,6 +188,8 @@ export const useBookingStore = defineStore(
         error.value =
           (err as Error).message || "Произошла ошибка при загрузке данных";
         throw err;
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -188,7 +200,7 @@ export const useBookingStore = defineStore(
       if (guests.value.adults === 0)
         throw new Error("Укажите количество гостей");
 
-      loading.value = true;
+      setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
       selectedRoomType.value = roomTypeCode;
 
@@ -233,7 +245,7 @@ export const useBookingStore = defineStore(
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
       } finally {
-        loading.value = false;
+        setLoading(false);
       }
     }
 
@@ -246,6 +258,8 @@ export const useBookingStore = defineStore(
       childrenAges.value = [];
       selectedRoomType.value = null;
       roomTariffs.value = [];
+
+      setLoading(false); // Сброс loading при reset
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("booking-store");
@@ -269,9 +283,11 @@ export const useBookingStore = defineStore(
       childrenAges,
       selectedRoomType,
       roomTariffs,
+      loadingMessage,
       forceReset,
       updateChildrenAges,
       setSelectedRoomType,
+      setLoading,
       search,
       createBooking,
       getBookingDetails,

@@ -10,6 +10,7 @@
       <NuxtRouteAnnouncer />
     </NuxtLayout>
     <Toast />
+    <BookingLoadingOverlay />
   </UApp>
 </template>
 

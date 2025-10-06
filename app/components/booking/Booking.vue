@@ -4,9 +4,9 @@
 
   const toast = useToast();
   const bookingStore = useBookingStore();
-  const { date, guests, promoCode } = storeToRefs(bookingStore);
+  const { date, guests, promoCode, loading } = storeToRefs(bookingStore);
   const router = useRouter();
-  const isSearching = ref(false);
+  const route = useRoute();
 
   const validateForm = () => {
     if (!date.value) {
@@ -15,7 +15,7 @@
         severity: "warn",
         summary: "Некорректные данные",
         detail: "Пожалуйста, выберите даты",
-        life: 90000,
+        life: 3000,
       });
       return false;
     }
@@ -37,32 +37,32 @@
   const handleSearch = async () => {
     if (!validateForm()) return;
 
-    isSearching.value = true;
+    bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      console.log("Making search request...");
-
       await bookingStore.search();
-      if (useRoute().path === "/") {
+      if (route.path === "/") {
         await router.push("/rooms");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // alert(error.message);
       toast.add({
         severity: "warn",
         summary: "Поменяйте запрос",
-        detail: `${error.message}`,
+        detail: `${error?.message || "Неизвестная ошибка"}`,
         life: 3000,
       });
     } finally {
-      isSearching.value = false;
+      bookingStore.setLoading(false);
     }
 
-    console.log("Поиск:", {
-      date: date.value,
-      guests: guests.value,
-      promoCode: promoCode.value,
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("Поиск:", {
+        date: date.value,
+        guests: guests.value,
+        promoCode: promoCode.value,
+      });
+    }
   };
 </script>
 
@@ -78,11 +78,11 @@
         color="bgAccent"
         class="text-white px-4 py-2"
         size="xl"
-        :loading="isSearching"
-        :disabled="isSearching"
+        :loading="loading"
+        :disabled="loading"
         @click="handleSearch"
       >
-        {{ isSearching ? "Поиск..." : "Поиск" }}
+        {{ loading ? "Поиск..." : "Поиск" }}
       </UButton>
     </div>
   </section>
