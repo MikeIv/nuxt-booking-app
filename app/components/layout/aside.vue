@@ -63,36 +63,6 @@
     }
   };
 
-  const handleLogout = async () => {
-    console.log("🔄 Начало выхода...");
-
-    authStore.setLoading(true);
-    authStore.setError(null);
-
-    try {
-      console.log("📡 Отправка запроса на выход...");
-
-      const { post } = useApi();
-      const response = await post("/auth/logout");
-
-      console.log("📨 Ответ сервера:", response);
-
-      if (response.success) {
-        console.log("✅ Успешный выход");
-        authStore.logout();
-      } else {
-        console.log("❌ Ошибка в ответе:", response.message);
-        authStore.logout();
-      }
-    } catch (err: unknown) {
-      console.error("💥 Ошибка при выходе:", err);
-      // Даже при ошибке очищаем локальные данные
-      authStore.logout();
-    } finally {
-      authStore.setLoading(false);
-    }
-  };
-
   const menuLinks = computed(() => [
     { url: "/", text: t("home") },
     { url: "http://varvarkan.grandfs.ru/about.php", text: t("about") },
@@ -154,12 +124,10 @@
       />
       <Button
         v-else
-        :label="authStore.loading ? 'Выход...' : 'Выйти'"
+        label="Личный кабинет"
         class="btn__bs dark"
         unstyled
-        :loading="authStore.loading"
-        :disabled="authStore.loading"
-        @click="handleLogout"
+        @click="$router.push('/cabinet')"
       />
 
       <button :class="$style.langButton" @click="toggleLanguage">

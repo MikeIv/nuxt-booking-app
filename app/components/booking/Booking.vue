@@ -2,19 +2,32 @@
   import { useBookingStore } from "~/stores/booking";
   import { storeToRefs } from "pinia";
 
+  const toast = useToast();
   const bookingStore = useBookingStore();
-  const { date, guests, promoCode, searchResults } = storeToRefs(bookingStore);
+  const { date, guests, promoCode, loading } = storeToRefs(bookingStore);
   const router = useRouter();
-  const isSearching = ref(false);
+  const route = useRoute();
 
   const validateForm = () => {
     if (!date.value) {
-      alert("Пожалуйста, выберите даты");
+      // alert("Пожалуйста, выберите даты");
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Пожалуйста, выберите даты",
+        life: 3000,
+      });
       return false;
     }
 
     if (guests.value.adults === 0) {
-      alert("Пожалуйста, укажите количество взрослых");
+      // alert("Пожалуйста, укажите количество взрослых");
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Пожалуйста, укажите количество взрослых",
+        life: 3000,
+      });
       return false;
     }
 
@@ -24,33 +37,33 @@
   const handleSearch = async () => {
     if (!validateForm()) return;
 
-    isSearching.value = true;
+    bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      console.log("Making search request...");
-
       await bookingStore.search();
-      if (useRoute().path === "/") {
+      if (route.path === "/") {
         await router.push("/rooms");
       }
-    } catch (error) {
-      alert(error.message);
+    } catch (error: unknown) {
+      // alert(error.message);
+      toast.add({
+        severity: "warn",
+        summary: "Поменяйте запрос",
+        detail: `${error?.message || "Неизвестная ошибка"}`,
+        life: 3000,
+      });
     } finally {
-      isSearching.value = false;
+      bookingStore.setLoading(false);
     }
 
-    console.log("Поиск:", {
-      date: date.value,
-      guests: guests.value,
-      promoCode: promoCode.value,
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("Поиск:", {
+        date: date.value,
+        guests: guests.value,
+        promoCode: promoCode.value,
+      });
+    }
   };
-
-  onMounted(async () => {
-    if (date.value && guests.value.adults > 0 && !searchResults.value) {
-      await handleSearch();
-    }
-  });
 </script>
 
 <template>
@@ -65,11 +78,11 @@
         color="bgAccent"
         class="text-white px-4 py-2"
         size="xl"
-        :loading="isSearching"
-        :disabled="isSearching"
+        :loading="loading"
+        :disabled="loading"
         @click="handleSearch"
       >
-        {{ isSearching ? "Поиск..." : "Поиск" }}
+        {{ loading ? "Поиск..." : "Поиск" }}
       </UButton>
     </div>
   </section>
