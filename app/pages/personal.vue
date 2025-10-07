@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import { useToast as usePrimeToast } from "primevue/usetoast";
-  import { reactive } from "vue";
 
   definePageMeta({
     layout: "steps",
@@ -92,7 +91,6 @@
 
     const guestValidation = validateRegisterForm(registerData, true);
 
-    // Маппинг ошибок из формата валидации в формат гостя
     if (guestValidation.surname) guestErrors.lastName = guestValidation.surname;
     if (guestValidation.name) guestErrors.firstName = guestValidation.name;
     if (guestValidation.middle_name)
@@ -108,7 +106,6 @@
   const validateForm = (): boolean => {
     let isValid = true;
 
-    // Сброс ошибок
     errors.mainGuest = {};
     errors.additionalGuests = [];
     errors.agreement = "";
@@ -242,7 +239,6 @@
     },
   ];
 
-  // Блок данных бронирования
   const showBookingDetails = ref(false);
   const { date, guests, promoCode } = storeToRefs(bookingStore);
 
@@ -255,10 +251,15 @@
 
     if (!selectedTariff) return null;
 
+    console.log("selectedTariff", selectedTariff);
+
     return {
+      title: selectedTariff?.title,
       room_type_code: selectedTariff.room_type_code,
       check_in: date.value?.[0] ? formatDate(date.value[0]) : "",
       check_out: date.value?.[1] ? formatDate(date.value[1]) : "",
+      check_in_date: date.value?.[0] ? new Date(date.value[0]) : null,
+      check_out_date: date.value?.[1] ? new Date(date.value[1]) : null,
       nights: calculateNights(),
       additional_services: getAdditionalServices(),
       price: selectedTariff.price,
@@ -292,7 +293,7 @@
   };
 
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("ru-RU");
+    return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
 </script>
 
@@ -323,11 +324,9 @@
     <section :class="$style.personalBlock">
       <form :class="$style.formSection" @submit.prevent="onFormSubmit">
         <div :class="$style.formContent">
-          <!-- Левая колонка - основные блоки формы -->
           <div :class="$style.formMain">
             <div :class="$style.formItem">
               <h3 :class="$style.sectionHeader">Данные гостей</h3>
-              <!-- Основной гость -->
               <div :class="$style.guestBlock">
                 <h4 :class="$style.guestTitle">Основной гость</h4>
                 <div
@@ -358,7 +357,6 @@
                 </div>
               </div>
 
-              <!-- Дополнительные гости -->
               <div
                 v-for="(guest, index) in formData.additionalGuests"
                 :key="index"
@@ -404,7 +402,6 @@
                 </div>
               </div>
 
-              <!-- Кнопка добавления гостя -->
               <Button
                 type="button"
                 label="+ Добавить гостя"
@@ -512,15 +509,13 @@
             </div>
           </div>
 
-          <!-- Правая колонка - блок бронирования -->
           <section :class="$style.bookingSection">
             <h3 :class="$style.bookingTitle">Ваше бронирование:</h3>
 
-            <!-- Кнопка "Номер 1" -->
             <Button
               type="button"
               :class="$style.roomButton"
-              class="btn__bs dark"
+              class="btn__bs dark round"
               unstyled
               @click="showBookingDetails = !showBookingDetails"
             >
@@ -534,75 +529,10 @@
               />
             </Button>
 
-            <!-- Блок с деталями бронирования -->
-            <div
+            <BookingDetails
               v-if="showBookingDetails && bookingDetails"
-              :class="$style.bookingDetails"
-            >
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Тип номера:</span>
-                <span :class="$style.bookingDetailValue">{{
-                  bookingDetails.room_type_code
-                }}</span>
-              </div>
-
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Заезд:</span>
-                <span :class="$style.bookingDetailValue">{{
-                  bookingDetails.check_in
-                }}</span>
-              </div>
-
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Выезд:</span>
-                <span :class="$style.bookingDetailValue">{{
-                  bookingDetails.check_out
-                }}</span>
-              </div>
-
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Ночей:</span>
-                <span :class="$style.bookingDetailValue">{{
-                  bookingDetails.nights
-                }}</span>
-              </div>
-
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Доп. услуги:</span>
-                <span :class="$style.bookingDetailValue">
-                  <span
-                    v-for="(
-                      service, index
-                    ) in bookingDetails.additional_services"
-                    :key="index"
-                    :class="$style.serviceItem"
-                  >
-                    {{ service
-                    }}{{
-                      index < bookingDetails.additional_services.length - 1
-                        ? ", "
-                        : ""
-                    }}
-                  </span>
-                </span>
-              </div>
-
-              <div :class="$style.bookingDetailItem">
-                <span :class="$style.bookingDetailLabel">Стоимость:</span>
-                <span :class="$style.bookingDetailValue"
-                  >{{ bookingDetails.price }} ₽</span
-                >
-              </div>
-
-              <div :class="$style.bookingDivider" />
-
-              <div :class="$style.bookingTotal">
-                <span :class="$style.bookingTotalLabel">Итого:</span>
-                <span :class="$style.bookingTotalValue"
-                  >{{ bookingDetails.total_price }} ₽</span
-                >
-              </div>
-            </div>
+              :booking-details="bookingDetails"
+            />
 
             <Button
               type="submit"
@@ -1051,15 +981,16 @@
   }
 
   .bookingTitle {
+    margin-bottom: rem(20);
     font-family: "Lora", serif;
     font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);
-    margin: 0;
   }
 
   .roomButton {
     margin-bottom: rem(16);
+    padding: 0 rem(20);
   }
 
   .roomButtonText {
@@ -1070,77 +1001,12 @@
   .roomButtonIcon {
     width: rem(16);
     height: rem(16);
-    color: var(--a-text-dark);
+    color: var(--a-text-whitedark);
     transition: transform 0.3s ease;
   }
 
   .roomButtonIconRotated {
     transform: rotate(180deg);
-  }
-
-  .bookingDetails {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-    padding: rem(16);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: var(--a-borderR--input);
-    background: var(--a-whiteBg);
-  }
-
-  .bookingDetailItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: rem(8);
-  }
-
-  .bookingDetailLabel {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    font-weight: 500;
-    color: var(--a-text-dark);
-    flex-shrink: 0;
-  }
-
-  .bookingDetailValue {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-light);
-    text-align: right;
-    line-height: 1.4;
-  }
-
-  .serviceItem {
-    display: inline;
-  }
-
-  .bookingDivider {
-    width: 100%;
-    height: rem(1);
-    background-color: var(--a-border-dark);
-    margin: rem(8) 0;
-  }
-
-  .bookingTotal {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: rem(8);
-  }
-
-  .bookingTotalLabel {
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    font-weight: 600;
-    color: var(--a-text-dark);
-  }
-
-  .bookingTotalValue {
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    font-weight: 700;
-    color: var(--a-text-primary);
   }
 
   .submitButton {

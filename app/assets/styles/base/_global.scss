@@ -75,6 +75,10 @@ ul {
       background-color: var(--a-primaryBg);
     }
   }
+
+  &.round {
+    border-radius: var(--a-borderR--dialog);
+  }
 }
 
 // Select dropdown menu
