@@ -33,27 +33,27 @@
         <span :class="$style.bookingDetailLabel">{{
           bookingDetails.check_in
         }}</span>
-        <span :class="$style.arrow">→</span>
-        <span :class="$style.bookingDetailValue">{{
+        <UIcon name="i-arrow-long" :class="$style.detailIcon" />
+        <span :class="$style.bookingDetailLabel">{{
           bookingDetails.check_out
         }}</span>
       </div>
 
       <div :class="$style.weekdayRow">
-        <span :class="$style.bookingDetailLabel">{{
+        <span :class="$style.detailDay">{{
           getWeekday(bookingDetails.check_in_date)
         }}</span>
-        <span :class="$style.weekdayCenter">{{
+        <span :class="$style.weekday">{{
           formatCount(bookingDetails.nights, "night")
         }}</span>
-        <span :class="$style.bookingDetailValue">{{
+        <span :class="[$style.detailDay, $style.dayRight]">{{
           getWeekday(bookingDetails.check_out_date)
         }}</span>
       </div>
     </div>
 
     <div :class="$style.bookingDetailItem">
-      <span :class="$style.bookingDetailLabel">Доп. услуги:</span>
+      <span :class="$style.bookingDetailLabel">Дополнительные услуги:</span>
       <span :class="$style.bookingDetailValue">
         <span
           v-for="(service, index) in bookingDetails.additional_services"
@@ -132,12 +132,16 @@
     gap: rem(8);
   }
 
-  .weekdayCenter {
-    font-family: "Inter", sans-serif;
+  .weekday {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: rem(2) rem(18);
+    font-family: "Lora", serif;
     font-size: rem(14);
-    color: var(--a-text-light);
-    text-align: center;
-    flex: 1;
+    color: var(--a-text-dark);
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: var(--a-borderR--card);
   }
 
   .bookingDetailItem {
@@ -148,18 +152,27 @@
   }
 
   .bookingDetailLabel {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    font-weight: 500;
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
     color: var(--a-text-dark);
-    flex-shrink: 0;
   }
 
-  .bookingDetailValue {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-light);
-    line-height: 1.4;
+  .detailIcon {
+    width: rem(62);
+    height: rem(8);
+    color: var(--a-text-dark);
+  }
+
+  .detailDay {
+    width: calc(100% / 3);
+    font-family: "Lora", serif;
+    font-size: rem(16);
+    font-weight: 400;
+    color: var(--a-text-dark);
+  }
+
+  .dayRight {
     text-align: right;
   }
 

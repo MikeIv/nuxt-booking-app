@@ -18,7 +18,6 @@ interface RoomTariff {
   price: number;
   available: boolean;
   tariff_details?: unknown;
-  // другие поля ответа
 }
 
 export const useBookingStore = defineStore(
@@ -31,7 +30,7 @@ export const useBookingStore = defineStore(
       children: 0,
     });
     const promoCode = ref("");
-    const loading = ref(false); // Единственный loading ref — используется глобально и локально
+    const loading = ref(false);
     const error = ref<string | null>(null);
     const searchResults = ref<unknown>(null);
     const childrenAges = ref<number[]>([]);
@@ -59,13 +58,6 @@ export const useBookingStore = defineStore(
       if (typeof date === "string") return date;
 
       return date.toISOString().split("T")[0];
-
-      const dateObj = new Date(date);
-      if (!isNaN(dateObj.getTime())) {
-        return dateObj.toISOString().split("T")[0];
-      }
-
-      throw new Error(`Неверный формат даты: ${date}`);
     };
 
     function setSelectedRoomType(roomTypeCode: string) {
@@ -140,7 +132,6 @@ export const useBookingStore = defineStore(
             );
           }
 
-          // Обрабатываем end_at
           if (processedData.end_at) {
             processedData.end_at = formatDate(
               processedData.end_at as string | Date,
@@ -151,7 +142,7 @@ export const useBookingStore = defineStore(
         }
 
         const response = await post<{ booking: unknown }>(
-          "/create",
+          "/booking",
           bookingData,
         );
 
@@ -259,7 +250,7 @@ export const useBookingStore = defineStore(
       selectedRoomType.value = null;
       roomTariffs.value = [];
 
-      setLoading(false); // Сброс loading при reset
+      setLoading(false);
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("booking-store");
@@ -292,6 +283,7 @@ export const useBookingStore = defineStore(
       createBooking,
       getBookingDetails,
       searchWithRoomType,
+      formatDate,
     };
   },
   {
