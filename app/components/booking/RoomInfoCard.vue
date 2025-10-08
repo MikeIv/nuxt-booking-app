@@ -1,30 +1,24 @@
 <script setup lang="ts">
-  import type { Room } from "~/types/room";
+  import type { RoomTariff } from "~/types/room";
 
   interface Props {
-    room: Room;
-    isPopupOpen: boolean;
+    room: RoomTariff;
+    expanded?: boolean;
   }
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
-    openPopup: [event: MouseEvent];
-    toggleExpand: [roomTitle: string];
+    (e: "open-popup", event: MouseEvent): void;
+    (e: "toggle-expand", roomTitle: string): void;
   }>();
 
-  const expandedRooms = ref<Record<string, boolean>>({});
-
   const visibleAmenities = computed(() => {
-    const room = props.room;
-    if (expandedRooms.value[room.title]) {
-      return room.amenities;
-    }
-    return room.amenities.slice(0, 4);
+    const amenities = props.room.packages || [];
+    return props.expanded ? amenities : amenities.slice(0, 4);
   });
 
-  const toggleExpand = (roomTitle: string) => {
-    expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
-    emit("toggleExpand", roomTitle);
+  const toggleExpand = () => {
+    emit("toggleExpand", props.room.title || "");
   };
 
   const openPopup = (event: MouseEvent) => {
@@ -33,7 +27,6 @@
 
   const getCarouselHeight = computed(() => {
     if (typeof window === "undefined") return "auto";
-
     const width = window.innerWidth;
     if (width < 768) return "180px";
     if (width < 1024) return "362px";
@@ -46,14 +39,13 @@
     <BookingCarousel
       :images="room.photos || []"
       :alt-prefix="'Фото номера'"
-      :alt-text="room.title"
+      :alt-text="room.title || ''"
       :height="getCarouselHeight"
       :class="$style.roomImage"
     />
     <div :class="$style.roomInfo">
       <div :class="$style.roomHeader">
-        <span :class="$style.title">{{ room.title }}</span>
-
+        <span :class="$style.title">{{ room.title || "Без названия" }}</span>
         <button
           :class="$style.infoButton"
           data-popup-button
@@ -72,23 +64,21 @@
         v-html="room.description"
       />
 
-      <!-- Удобства номера -->
       <div :class="$style.amenitiesSection">
         <ul :class="$style.amenitiesList">
           <li
-            v-for="(amenity, amenityIndex) in visibleAmenities"
-            :key="amenityIndex"
+            v-for="(amenity, index) in visibleAmenities"
+            :key="index"
             :class="$style.amenityItem"
           >
             <span>{{ amenity.title }}</span>
           </li>
-
           <button
-            v-if="!expandedRooms[room.title] && room.amenities.length > 4"
+            v-if="!props.expanded && (room.packages?.length || 0) > 4"
             :class="$style.amenitiesListShow"
-            @click="toggleExpand(room.title)"
+            @click="toggleExpand"
           >
-            + ещё {{ room.amenities.length - 4 }}
+            + ещё {{ (room.packages?.length || 0) - 4 }}
           </button>
         </ul>
       </div>
@@ -117,7 +107,7 @@
   }
 
   .roomInfo {
-    margin: rem(16) 0 rem(16) 0;
+    margin: rem(16) 0;
 
     @media (min-width: #{size.$desktopMedium}) {
       width: 55%;

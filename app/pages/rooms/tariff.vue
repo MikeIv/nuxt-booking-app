@@ -1,23 +1,23 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import { storeToRefs } from "pinia";
+  import type { PackageResource } from "~/types/room";
 
   definePageMeta({
     layout: "steps",
   });
 
   const router = useRouter();
+  const toast = useToast();
   const bookingStore = useBookingStore();
-  const { searchResults, selectedRoomType, roomTariffs } =
+  const { searchResults, selectedRoomType, roomTariffs, date, guests } =
     storeToRefs(bookingStore);
   const loading = ref(true);
-  const error = ref(null);
+  const error = ref<Error | null>(null);
   const isPopupOpen = ref(false);
   const isServicePopupOpen = ref(false);
-  const selectedService = ref(null);
-
-  console.log("searchResults-TARIF", searchResults.value);
-  console.log("selectedRoomType", selectedRoomType.value);
-  console.log("roomTariffs", roomTariffs.value);
+  const selectedService = ref<PackageResource | null>(null);
+  const expandedRooms = ref<Record<string, boolean>>({});
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
@@ -28,7 +28,7 @@
     isPopupOpen.value = false;
   };
 
-  const openServicePopup = (event: MouseEvent, service: unknown) => {
+  const openServicePopup = (event: MouseEvent, service: PackageResource) => {
     event.stopPropagation();
     selectedService.value = service;
     isServicePopupOpen.value = true;
@@ -39,26 +39,72 @@
     selectedService.value = null;
   };
 
-  const expandedRooms = ref<Record<string, boolean>>({});
-
   const toggleExpand = (roomTitle: string) => {
     expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
   };
 
   const handleTariff = () => {
+    if (!selectedRoomType.value) {
+      toast.add({
+        severity: "warn",
+        summary: "Ошибка",
+        detail: "Выберите тип номера перед продолжением",
+        life: 3000,
+      });
+      return;
+    }
     router.push("/personal");
   };
 
+  const goBackToRooms = async () => {
+    bookingStore.setLoading(true, "Загружаем номера...");
+    bookingStore.selectedRoomType = null;
+    bookingStore.searchResults = null;
+    bookingStore.roomTariffs = [];
+    try {
+      await router.push("/rooms");
+      await nextTick();
+    } finally {
+      bookingStore.setLoading(false);
+      bookingStore.isServerRequest = false;
+    }
+  };
+
   onMounted(async () => {
+    if (!date.value || !guests.value.adults) {
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Укажите даты и количество гостей",
+        life: 3000,
+      });
+      router.push("/");
+      return;
+    }
+
+    if (!selectedRoomType.value) {
+      toast.add({
+        severity: "warn",
+        summary: "Ошибка",
+        detail: "Тип номера не выбран",
+        life: 3000,
+      });
+      router.push("/rooms");
+      return;
+    }
+
     try {
       loading.value = true;
-      if (selectedRoomType.value) {
-        await bookingStore.searchWithRoomType(selectedRoomType.value);
-        console.log("TARIF-data", searchResults.value);
-      }
-    } catch (err) {
-      error.value = err;
-      console.error("Ошибка при загрузке тарифов:", err);
+      await bookingStore.searchWithRoomType(selectedRoomType.value);
+    } catch (err: unknown) {
+      error.value = err as Error;
+      toast.add({
+        severity: "error",
+        summary: "Ошибка загрузки",
+        detail:
+          (err as Error)?.message || "Произошла ошибка при загрузке тарифов",
+        life: 3000,
+      });
     } finally {
       loading.value = false;
     }
@@ -67,19 +113,19 @@
 
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.header">
-      Выбор тарифа для номера {{ selectedRoomType }}
-    </h1>
+    <h1 :class="$style.header">Выбор тарифа для номера 1</h1>
 
     <Booking />
     <BookingAdvantages />
 
     <section :class="$style.tariffBlock">
-      <NuxtLink to="/rooms" :class="$style.return"
-        >Назад к выбору номеров</NuxtLink
-      >
+      <Button
+        label="Назад к выбору номеров"
+        :class="$style.return"
+        unstyled
+        @click="goBackToRooms"
+      />
 
-      <!-- Индикатор загрузки -->
       <div v-if="loading" :class="$style.loadingContainer">
         <div :class="$style.spinner" />
         <p>Загрузка тарифов...</p>
@@ -92,39 +138,32 @@
       <template v-else>
         <h2 :class="$style.tariffTitle">Выберите тариф</h2>
 
-        <div
-          v-if="roomTariffs && roomTariffs.length > 0"
-          :class="$style.tariffs"
-        >
+        <div v-if="roomTariffs?.length > 0" :class="$style.tariffs">
           <div
-            v-for="(room, roomIndex) in roomTariffs"
-            :key="roomIndex"
+            v-for="(room, index) in roomTariffs"
+            :key="index"
             :class="$style.tariffCard"
           >
             <BookingRoomInfoCard
               :room="room"
-              :is-open="isPopupOpen"
+              :expanded="expandedRooms[room.title || '']"
               @open-popup="openPopup"
               @toggle-expand="toggleExpand"
             />
-
             <BookingServicesList
-              :services="searchResults.packages"
+              :services="searchResults?.packages || []"
               :is-service-popup-open="isServicePopupOpen"
               @open-service-popup="openServicePopup"
             />
-
             <BookingTariffsList
-              :tariffs="room.tariffs"
+              :tariffs="room.tariffs || []"
               @book-tariff="handleTariff"
             />
-
             <BookingRoomPopup
               :room="room"
               :is-open="isPopupOpen"
               @close="closePopup"
             />
-
             <BookingServicePopup
               v-if="selectedService"
               :service="selectedService"
@@ -184,11 +223,14 @@
 
   .return {
     position: relative;
+    display: flex;
+    align-items: center;
     margin-bottom: rem(40);
     padding-left: rem(30);
     font-family: "Lora", serif;
     font-size: rem(20);
     color: var(--a-text-dark);
+    cursor: pointer;
 
     &:before {
       content: "<";

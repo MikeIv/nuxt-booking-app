@@ -15,7 +15,7 @@
   const selectedBedType = ref<number | undefined>(undefined);
 
   const bedOptions = computed(() => {
-    const options = [{ id: 0, title: "Все типы кроватей" }];
+    const options = [{ id: 0 }];
 
     if (
       searchResults.value?.filters?.beds &&
