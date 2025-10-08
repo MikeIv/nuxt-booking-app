@@ -1,6 +1,9 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import { storeToRefs } from "pinia";
+  import { useRouter, useRoute } from "vue-router";
+  import { useToast } from "primevue/usetoast";
+  import { nextTick } from "vue";
 
   const toast = useToast();
   const bookingStore = useBookingStore();
@@ -10,7 +13,6 @@
 
   const validateForm = () => {
     if (!date.value) {
-      // alert("Пожалуйста, выберите даты");
       toast.add({
         severity: "warn",
         summary: "Некорректные данные",
@@ -21,7 +23,6 @@
     }
 
     if (guests.value.adults === 0) {
-      // alert("Пожалуйста, укажите количество взрослых");
       toast.add({
         severity: "warn",
         summary: "Некорректные данные",
@@ -43,17 +44,20 @@
       await bookingStore.search();
       if (route.path === "/") {
         await router.push("/rooms");
+
+        await nextTick();
+        bookingStore.setLoading(false);
+        bookingStore.isServerRequest = false;
       }
     } catch (error: unknown) {
-      // alert(error.message);
       toast.add({
         severity: "warn",
         summary: "Поменяйте запрос",
-        detail: `${error?.message || "Неизвестная ошибка"}`,
+        detail: `${(error as Error)?.message || "Неизвестная ошибка"}`,
         life: 3000,
       });
-    } finally {
       bookingStore.setLoading(false);
+      bookingStore.isServerRequest = false;
     }
 
     if (process.env.NODE_ENV === "development") {

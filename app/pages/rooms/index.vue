@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { Room } from "~/types/room";
+  import { useToast } from "primevue/usetoast";
+  import { storeToRefs } from "pinia";
 
   definePageMeta({
     layout: "steps",
@@ -8,51 +10,57 @@
 
   const bookingStore = useBookingStore();
   const { searchResults, date, guests, loading } = storeToRefs(bookingStore);
+  const toast = useToast();
 
-  // Используем undefined для отображения плейсхолдера
   const selectedBedType = ref<number | undefined>(undefined);
 
   const bedOptions = computed(() => {
-    if (
-      !searchResults.value?.filters?.beds ||
-      searchResults.value.filters.beds.length === 0
-    )
-      return [];
+    const options = [{ id: 0, title: "Все типы кроватей" }];
 
-    return searchResults.value.filters.beds.map((bed) => ({
-      id: bed.id,
-      title: bed.title,
-    }));
+    if (
+      searchResults.value?.filters?.beds &&
+      searchResults.value.filters.beds.length > 0
+    ) {
+      options.push(
+        ...searchResults.value.filters.beds.map((bed) => ({
+          id: bed.id,
+          title: bed.title,
+        })),
+      );
+    }
+
+    return options;
   });
 
   const filteredRooms = computed(() => {
     if (!searchResults.value?.rooms) return [];
 
-    // Если ничего не выбрано (плейсхолдер) или выбраны "Все типы кроватей" (id = 0)
     if (selectedBedType.value === undefined || selectedBedType.value === 0) {
-      return searchResults.value.rooms; // Возвращаем все комнаты
+      return searchResults.value.rooms;
     }
 
-    // Фильтруем по id кровати
     return searchResults.value.rooms.filter(
       (room: Room) => room.bed?.id === selectedBedType.value,
     );
   });
 
   const hasSearchResults = computed(() => {
-    return (
-      searchResults.value &&
-      searchResults.value.rooms &&
-      searchResults.value.rooms.length > 0
-    );
+    return searchResults.value?.rooms && searchResults.value.rooms.length > 0;
   });
 
   onMounted(async () => {
     if (date.value && guests.value.adults > 0 && !searchResults.value) {
       try {
         await bookingStore.search();
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Ошибка при загрузке сохраненного поиска:", error);
+        toast.add({
+          severity: "error",
+          summary: "Ошибка загрузки",
+          detail:
+            (error as Error)?.message || "Произошла ошибка при поиске номеров",
+          life: 3000,
+        });
       }
     }
   });
@@ -83,7 +91,6 @@
           :key="item.id"
           :room="item"
         />
-
         <div v-if="filteredRooms.length === 0" :class="$style.noFilterResults">
           Нет номеров с выбранным типом кровати
         </div>
