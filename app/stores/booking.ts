@@ -31,12 +31,12 @@ export const useBookingStore = defineStore(
     });
     const promoCode = ref("");
     const loading = ref(false);
+    const isServerRequest = ref(false);
     const error = ref<string | null>(null);
     const searchResults = ref<unknown>(null);
     const childrenAges = ref<number[]>([]);
     const selectedRoomType = ref<string | null>(null);
     const roomTariffs = ref<RoomTariff[]>([]);
-
     const loadingMessage = ref("Загружаем данные о номерах...");
 
     const totalGuests = computed(() => {
@@ -56,7 +56,9 @@ export const useBookingStore = defineStore(
 
     const formatDate = (date: Date | string): string => {
       if (typeof date === "string") return date;
-
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        throw new Error(`Неверный формат даты: ${date}`);
+      }
       return date.toISOString().split("T")[0];
     };
 
@@ -83,7 +85,6 @@ export const useBookingStore = defineStore(
 
       try {
         const { post } = useApi();
-
         const [startDate, endDate] = date.value;
 
         const childs = childrenAges.value.slice(0, guests.value.children);
@@ -95,12 +96,13 @@ export const useBookingStore = defineStore(
           start_at: formatDate(startDate),
           end_at: formatDate(endDate),
           adults: guests.value.adults,
-          promocode: promoCode.value,
-          childs: childs,
+          promocode: promoCode.value || null,
+          childs,
         };
 
         console.log("Search data:", searchData);
 
+        isServerRequest.value = true;
         const response = await post<SearchResponse>("/search", searchData);
 
         if (response.success) {
@@ -112,8 +114,6 @@ export const useBookingStore = defineStore(
       } catch (err: unknown) {
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -126,23 +126,24 @@ export const useBookingStore = defineStore(
         if (bookingData && typeof bookingData === "object") {
           const processedData = { ...(bookingData as Record<string, unknown>) };
 
-          if (processedData.start_at) {
-            processedData.start_at = formatDate(
-              processedData.start_at as string | Date,
+          if (processedData.order?.start_at) {
+            processedData.order.start_at = formatDate(
+              processedData.order.start_at as string | Date,
             );
           }
 
-          if (processedData.end_at) {
-            processedData.end_at = formatDate(
-              processedData.end_at as string | Date,
+          if (processedData.order?.end_at) {
+            processedData.order.end_at = formatDate(
+              processedData.order.end_at as string | Date,
             );
           }
 
           bookingData = processedData;
         }
 
+        isServerRequest.value = true;
         const response = await post<{ booking: unknown }>(
-          "/booking",
+          "/v1/booking",
           bookingData,
         );
 
@@ -156,6 +157,7 @@ export const useBookingStore = defineStore(
           (err as Error).message || "Произошла ошибка при бронировании";
         throw err;
       } finally {
+        isServerRequest.value = false;
         setLoading(false);
       }
     }
@@ -166,6 +168,7 @@ export const useBookingStore = defineStore(
       setLoading(true, "Загружаем детали брони...");
 
       try {
+        isServerRequest.value = true;
         const response = await get<{ booking: unknown }>(`/${bookingId}`);
 
         if (response.success) {
@@ -180,6 +183,7 @@ export const useBookingStore = defineStore(
           (err as Error).message || "Произошла ошибка при загрузке данных";
         throw err;
       } finally {
+        isServerRequest.value = false;
         setLoading(false);
       }
     }
@@ -198,8 +202,6 @@ export const useBookingStore = defineStore(
       try {
         const { post } = useApi();
 
-        console.log("roomTypeCode", roomTypeCode);
-
         const [startDate, endDate] = date.value;
 
         const childs = childrenAges.value.slice(0, guests.value.children);
@@ -211,14 +213,15 @@ export const useBookingStore = defineStore(
           start_at: formatDate(startDate),
           end_at: formatDate(endDate),
           adults: guests.value.adults,
-          promocode: promoCode.value,
-          childs: childs,
+          promocode: promoCode.value || null,
+          childs,
           with_packages: true,
           room_type_code: roomTypeCode,
         };
 
         console.log("Search with room type data:", searchData);
 
+        isServerRequest.value = true;
         const response = await post<SearchResponse>("/search", searchData);
 
         if (response.success) {
@@ -236,6 +239,7 @@ export const useBookingStore = defineStore(
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
       } finally {
+        isServerRequest.value = false;
         setLoading(false);
       }
     }
@@ -249,8 +253,8 @@ export const useBookingStore = defineStore(
       childrenAges.value = [];
       selectedRoomType.value = null;
       roomTariffs.value = [];
-
       setLoading(false);
+      isServerRequest.value = false;
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("booking-store");
@@ -268,6 +272,7 @@ export const useBookingStore = defineStore(
       guests,
       promoCode,
       loading,
+      isServerRequest,
       error,
       searchResults,
       totalGuests,

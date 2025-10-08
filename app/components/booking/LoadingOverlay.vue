@@ -2,12 +2,13 @@
   import { storeToRefs } from "pinia";
 
   const bookingStore = useBookingStore();
-  const { loading, loadingMessage } = storeToRefs(bookingStore);
+  const { loading, isServerRequest, loadingMessage } =
+    storeToRefs(bookingStore);
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="loading" :class="$style.globalOverlay">
+    <div v-if="loading && isServerRequest" :class="$style.globalOverlay">
       <div :class="$style.spinnerContainer">
         <ProgressSpinner
           style="width: 50px; height: 50px"
