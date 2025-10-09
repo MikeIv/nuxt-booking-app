@@ -41,10 +41,9 @@
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      await bookingStore.search();
+      await bookingStore.search(true); // Передаём skipReset = true
       if (route.path === "/") {
         await router.push("/rooms");
-
         await nextTick();
         bookingStore.setLoading(false);
         bookingStore.isServerRequest = false;
@@ -121,7 +120,7 @@
     flex-wrap: wrap;
     gap: rem(20);
     max-width: size.$desktop;
-    min-width: rem(400);
+    min-width: rem(300);
     min-height: rem(50);
     padding: rem(14) rem(12);
     font-family: "Inter", sans-serif;
