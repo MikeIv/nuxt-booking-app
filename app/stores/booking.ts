@@ -8,12 +8,18 @@ interface GuestInfo {
   children: number;
 }
 
+interface Bed {
+  id: number;
+  title: string;
+}
+
 interface SearchResponse {
   available: boolean;
   rooms?: RoomTariff[];
   totalPrice?: number;
   message?: string;
   packages?: PackageResource[];
+  filters?: { beds?: Bed[] };
 }
 
 export const useBookingStore = defineStore(
@@ -63,14 +69,23 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
     }
 
-    async function search(): Promise<SearchResponse> {
-      if (!date.value) throw new Error("Укажите даты");
-      if (guests.value.adults === 0)
+    async function search(skipReset = false): Promise<SearchResponse> {
+      if (!date.value) {
+        setLoading(false);
+        isServerRequest.value = false;
+        throw new Error("Укажите даты");
+      }
+      if (guests.value.adults === 0) {
+        setLoading(false);
+        isServerRequest.value = false;
         throw new Error("Укажите количество гостей");
+      }
 
       const [startDate] = date.value;
       if (startDate < new Date()) {
         searchResults.value = null;
+        setLoading(false);
+        isServerRequest.value = false;
         throw new Error(
           "Выбранные даты устарели. Пожалуйста, выберите новые даты.",
         );
@@ -115,6 +130,11 @@ export const useBookingStore = defineStore(
       } catch (err: unknown) {
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
+      } finally {
+        if (!skipReset) {
+          isServerRequest.value = false;
+          setLoading(false);
+        }
       }
     }
 
@@ -192,9 +212,16 @@ export const useBookingStore = defineStore(
     async function searchWithRoomType(
       roomTypeCode: string,
     ): Promise<SearchResponse> {
-      if (!date.value) throw new Error("Укажите даты");
-      if (guests.value.adults === 0)
+      if (!date.value) {
+        setLoading(false);
+        isServerRequest.value = false;
+        throw new Error("Укажите даты");
+      }
+      if (guests.value.adults === 0) {
+        setLoading(false);
+        isServerRequest.value = false;
         throw new Error("Укажите количество гостей");
+      }
 
       setLoading(true, "Загружаем данные о номерах...");
       error.value = null;

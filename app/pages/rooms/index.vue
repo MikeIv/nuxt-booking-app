@@ -2,6 +2,7 @@
   import { useBookingStore } from "~/stores/booking";
   import type { Room } from "~/types/room";
   import { useToast } from "primevue/usetoast";
+  import { useRouter } from "vue-router";
   import { storeToRefs } from "pinia";
 
   definePageMeta({
@@ -11,25 +12,22 @@
   const bookingStore = useBookingStore();
   const { searchResults, date, guests, loading } = storeToRefs(bookingStore);
   const toast = useToast();
+  const router = useRouter();
 
   const selectedBedType = ref<number | undefined>(undefined);
 
   const bedOptions = computed(() => {
-    const options = [{ id: 0 }];
-
     if (
-      searchResults.value?.filters?.beds &&
-      searchResults.value.filters.beds.length > 0
+      !searchResults.value?.filters?.beds ||
+      searchResults.value.filters.beds.length === 0
     ) {
-      options.push(
-        ...searchResults.value.filters.beds.map((bed) => ({
-          id: bed.id,
-          title: bed.title,
-        })),
-      );
+      return [];
     }
 
-    return options;
+    return searchResults.value.filters.beds.map((bed) => ({
+      id: bed.id,
+      title: bed.title,
+    }));
   });
 
   const filteredRooms = computed(() => {
@@ -49,7 +47,22 @@
   });
 
   onMounted(async () => {
-    if (date.value && guests.value.adults > 0 && !searchResults.value) {
+    if (!date.value || !guests.value.adults) {
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Укажите даты и количество гостей",
+        life: 3000,
+      });
+      router.push("/");
+      return;
+    }
+
+    if (!searchResults.value) {
+      console.log("onMounted search:", {
+        loading: loading.value,
+        isServerRequest: bookingStore.isServerRequest,
+      });
       try {
         await bookingStore.search();
       } catch (error: unknown) {
@@ -61,6 +74,8 @@
             (error as Error)?.message || "Произошла ошибка при поиске номеров",
           life: 3000,
         });
+        bookingStore.setLoading(false);
+        bookingStore.isServerRequest = false;
       }
     }
   });
@@ -112,6 +127,7 @@
     margin-bottom: rem(40);
     padding: 0 rem(20);
   }
+
   .header {
     display: flex;
     justify-content: center;
