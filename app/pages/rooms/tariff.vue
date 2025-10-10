@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { storeToRefs } from "pinia";
   import type { PackageResource } from "~/types/room";
 
   definePageMeta({

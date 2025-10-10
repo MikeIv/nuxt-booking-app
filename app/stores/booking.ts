@@ -1,25 +1,11 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
-import type { PackageResource, RoomTariff } from "~/types/room";
+import type { RoomTariff } from "~/types/room";
+import type { SearchResponse, BookingData } from "~/types/booking";
 
 interface GuestInfo {
   rooms: number;
   adults: number;
   children: number;
-}
-
-interface Bed {
-  id: number;
-  title: string;
-}
-
-interface SearchResponse {
-  available: boolean;
-  rooms?: RoomTariff[];
-  totalPrice?: number;
-  message?: string;
-  packages?: PackageResource[];
-  filters?: { beds?: Bed[] };
 }
 
 export const useBookingStore = defineStore(
@@ -64,12 +50,7 @@ export const useBookingStore = defineStore(
       return date.toISOString().split("T")[0];
     };
 
-    function setSelectedRoomType(roomTypeCode: string) {
-      selectedRoomType.value = roomTypeCode;
-      roomTariffs.value = [];
-    }
-
-    async function search(skipReset = false): Promise<SearchResponse> {
+    function validateSearchParams() {
       if (!date.value) {
         setLoading(false);
         isServerRequest.value = false;
@@ -80,7 +61,6 @@ export const useBookingStore = defineStore(
         isServerRequest.value = false;
         throw new Error("Укажите количество гостей");
       }
-
       const [startDate] = date.value;
       if (startDate < new Date()) {
         searchResults.value = null;
@@ -90,31 +70,46 @@ export const useBookingStore = defineStore(
           "Выбранные даты устарели. Пожалуйста, выберите новые даты.",
         );
       }
+    }
 
+    function prepareSearchData(roomTypeCode?: string) {
+      const [startDate, endDate] = date.value!;
+      const childs = childrenAges.value.slice(0, guests.value.children);
+      while (childs.length < guests.value.children) {
+        childs.push(0);
+      }
+      const searchData: Record<string, unknown> = {
+        start_at: formatDate(startDate),
+        end_at: formatDate(endDate),
+        adults: guests.value.adults,
+        promocode: promoCode.value || null,
+        childs,
+      };
+      if (roomTypeCode) {
+        searchData.with_packages = true;
+        searchData.room_type_code = roomTypeCode;
+      }
+      return searchData;
+    }
+
+    function setSelectedRoomType(roomTypeCode: string) {
+      selectedRoomType.value = roomTypeCode;
+      roomTariffs.value = [];
+    }
+
+    async function search(skipReset = false): Promise<SearchResponse> {
+      validateSearchParams();
       setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
 
       try {
         const { post } = useApi();
-        const [startDate, endDate] = date.value;
-
-        const childs = childrenAges.value.slice(0, guests.value.children);
-        while (childs.length < guests.value.children) {
-          childs.push(0);
-        }
-
-        const searchData = {
-          start_at: formatDate(startDate),
-          end_at: formatDate(endDate),
-          adults: guests.value.adults,
-          promocode: promoCode.value || null,
-          childs,
-        };
-
-        console.log("Search data:", searchData);
+        const searchData = prepareSearchData();
 
         isServerRequest.value = true;
-        const response = await post<SearchResponse>("/search", searchData);
+        const response = await post<SearchResponse>("/search", searchData, {
+          signal: AbortSignal.timeout(10000),
+        });
 
         if (response.success && response.payload) {
           searchResults.value = response.payload;
@@ -138,34 +133,28 @@ export const useBookingStore = defineStore(
       }
     }
 
-    async function createBooking(bookingData: unknown) {
+    async function createBooking(bookingData: BookingData) {
       const { post } = useApi();
 
       setLoading(true, "Создаём бронирование...");
 
       try {
-        if (bookingData && typeof bookingData === "object") {
-          const processedData = { ...(bookingData as Record<string, unknown>) };
+        const processedData = { ...bookingData };
 
-          if (processedData.order?.start_at) {
-            processedData.order.start_at = formatDate(
-              processedData.order.start_at as string | Date,
-            );
-          }
-
-          if (processedData.order?.end_at) {
-            processedData.order.end_at = formatDate(
-              processedData.order.end_at as string | Date,
-            );
-          }
-
-          bookingData = processedData;
+        if (processedData.order?.start_at) {
+          processedData.order.start_at = formatDate(
+            processedData.order.start_at,
+          );
+        }
+        if (processedData.order?.end_at) {
+          processedData.order.end_at = formatDate(processedData.order.end_at);
         }
 
         isServerRequest.value = true;
         const response = await post<{ booking: unknown }>(
           "/v1/booking",
-          bookingData,
+          processedData,
+          { signal: AbortSignal.timeout(10000) },
         );
 
         if (response.success) {
@@ -190,7 +179,9 @@ export const useBookingStore = defineStore(
 
       try {
         isServerRequest.value = true;
-        const response = await get<{ booking: unknown }>(`/${bookingId}`);
+        const response = await get<{ booking: unknown }>(`/${bookingId}`, {
+          signal: AbortSignal.timeout(10000),
+        });
 
         if (response.success) {
           return response.payload.booking;
@@ -212,45 +203,19 @@ export const useBookingStore = defineStore(
     async function searchWithRoomType(
       roomTypeCode: string,
     ): Promise<SearchResponse> {
-      if (!date.value) {
-        setLoading(false);
-        isServerRequest.value = false;
-        throw new Error("Укажите даты");
-      }
-      if (guests.value.adults === 0) {
-        setLoading(false);
-        isServerRequest.value = false;
-        throw new Error("Укажите количество гостей");
-      }
-
+      validateSearchParams();
       setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
       selectedRoomType.value = roomTypeCode;
 
       try {
         const { post } = useApi();
-
-        const [startDate, endDate] = date.value;
-
-        const childs = childrenAges.value.slice(0, guests.value.children);
-        while (childs.length < guests.value.children) {
-          childs.push(0);
-        }
-
-        const searchData = {
-          start_at: formatDate(startDate),
-          end_at: formatDate(endDate),
-          adults: guests.value.adults,
-          promocode: promoCode.value || null,
-          childs,
-          with_packages: true,
-          room_type_code: roomTypeCode,
-        };
-
-        console.log("Search with room type data:", searchData);
+        const searchData = prepareSearchData(roomTypeCode);
 
         isServerRequest.value = true;
-        const response = await post<SearchResponse>("/search", searchData);
+        const response = await post<SearchResponse>("/search", searchData, {
+          signal: AbortSignal.timeout(10000),
+        });
 
         if (response.success && response.payload) {
           searchResults.value = response.payload;

@@ -1,12 +1,15 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import { useToast as usePrimeToast } from "primevue/usetoast";
+  import { storeToRefs } from "pinia";
+  import type { BookingData } from "~/types/booking";
+
   definePageMeta({
     layout: "steps",
   });
+
   const bookingStore = useBookingStore();
   const {
-    searchResults,
     selectedRoomType,
     roomTariffs,
     date,
@@ -14,10 +17,8 @@
     promoCode,
     childrenAges,
   } = storeToRefs(bookingStore);
-  console.log("searchResults-TARIF", searchResults.value);
-  console.log("selectedRoomType", selectedRoomType.value);
-  console.log("roomTariffs", roomTariffs.value);
   const toast = usePrimeToast();
+
   interface GuestData {
     lastName: string;
     firstName: string;
@@ -26,6 +27,7 @@
     email: string;
     citizenship: string;
   }
+
   interface FormData {
     mainGuest: GuestData;
     additionalGuests: GuestData[];
@@ -38,6 +40,7 @@
     agreement: boolean;
     forSelf: boolean;
   }
+
   const formData = reactive<FormData>({
     mainGuest: {
       lastName: "",
@@ -57,7 +60,9 @@
     agreement: false,
     forSelf: true,
   });
+
   const { validateRegisterForm } = useFormValidation();
+
   const errors = reactive<{
     mainGuest: Partial<GuestData>;
     additionalGuests: Array<Partial<GuestData>>;
@@ -67,11 +72,13 @@
     additionalGuests: [],
     agreement: "",
   });
+
   const paymentMethods = [
     { label: "Банковской картой", value: "card" },
     { label: "Наличными при заселении", value: "cash" },
     { label: "Банковским переводом", value: "transfer" },
   ];
+
   const guestToRegisterData = (guest: GuestData) => ({
     surname: guest.lastName,
     name: guest.firstName,
@@ -82,6 +89,7 @@
     password: "dummy_password",
     password_confirmation: "dummy_password",
   });
+
   const validateGuest = (guest: GuestData): Partial<GuestData> => {
     const guestErrors: Partial<GuestData> = {};
     const registerData = guestToRegisterData(guest);
@@ -96,6 +104,7 @@
       guestErrors.citizenship = guestValidation.country;
     return guestErrors;
   };
+
   const validateForm = (): boolean => {
     let isValid = true;
     errors.mainGuest = {};
@@ -122,13 +131,20 @@
     }
     return isValid;
   };
+
   const formatDateTime = (date: Date, time: string): string | null => {
     if (!date || !time) return null;
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    if (!timeRegex.test(time)) {
+      console.warn(`Неверный формат времени: ${time}. Ожидается HH:mm.`);
+      return null;
+    }
     const [hours, minutes] = time.split(":").map(Number);
     const dateTime = new Date(date);
     dateTime.setHours(hours, minutes, 0, 0);
     return dateTime.toISOString();
   };
+
   const onFormSubmit = async () => {
     if (!validateForm()) {
       toast.add({
@@ -161,7 +177,7 @@
       return;
     }
 
-    const bookingData = {
+    const bookingData: BookingData = {
       guests: [
         {
           name: formData.mainGuest.firstName,
@@ -228,6 +244,7 @@
       });
     }
   };
+
   const addAdditionalGuest = () => {
     formData.additionalGuests.push({
       lastName: "",
@@ -239,10 +256,12 @@
     });
     errors.additionalGuests.push({});
   };
+
   const removeAdditionalGuest = (index: number) => {
     formData.additionalGuests.splice(index, 1);
     errors.additionalGuests.splice(index, 1);
   };
+
   const formFields = [
     {
       key: "lastName" as const,
@@ -281,6 +300,7 @@
       required: false,
     },
   ];
+
   const checkboxOptions = [
     {
       id: "sms",
@@ -293,6 +313,7 @@
       label: "Я хочу узнавать о специальных предложениях и новостях",
     },
   ];
+
   const additionalFields = [
     {
       key: "checkInTime" as const,
@@ -310,6 +331,7 @@
       type: "text",
     },
   ];
+
   const bookingDetails = computed(() => {
     if (!roomTariffs.value || roomTariffs.value.length === 0) return null;
     const selectedTariff = roomTariffs.value.find(
@@ -330,6 +352,7 @@
       total_price: selectedTariff.price,
     };
   });
+
   const calculateNights = () => {
     if (!date.value || date.value.length < 2) return 0;
     const start = new Date(date.value[0]);
@@ -338,6 +361,7 @@
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
+
   const getAdditionalServices = () => {
     const services = [];
     if (promoCode.value) {
@@ -348,6 +372,7 @@
     }
     return services.length > 0 ? services : ["Без дополнительных услуг"];
   };
+
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
@@ -575,11 +600,13 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
+
   .container {
     display: flex;
     flex-direction: column;
     margin-bottom: rem(40);
   }
+
   .header {
     display: flex;
     justify-content: center;
@@ -590,12 +617,14 @@
     font-weight: 600;
     color: var(--a-black);
   }
+
   .personalBlock {
     display: flex;
     flex-direction: column;
     width: 100%;
     padding: rem(12) rem(20);
   }
+
   .return {
     position: relative;
     margin-bottom: rem(40);
@@ -617,6 +646,7 @@
       width: 10px;
     }
   }
+
   .personalTitle {
     margin-bottom: rem(24);
     text-align: center;
@@ -626,6 +656,7 @@
     color: var(--a-text-dark);
     text-transform: uppercase;
   }
+
   .wrapper {
     display: flex;
     flex-direction: column;
@@ -633,6 +664,7 @@
     padding: 0 0 rem(25) 0;
     border-bottom: rem(1) solid var(--a-border-dark);
   }
+
   .sectionHeader {
     font-family: "Inter", sans-serif;
     font-size: rem(24);
@@ -640,6 +672,7 @@
     color: var(--a-text-dark);
     margin-bottom: rem(16);
   }
+
   .btnBlock {
     display: flex;
     flex-direction: column;
@@ -649,17 +682,20 @@
       flex-direction: row;
     }
   }
+
   .personalNote {
     font-family: "Inter", sans-serif;
     font-size: rem(16);
     font-weight: 400;
     color: var(--a-text-light);
   }
+
   .formSection {
     display: flex;
     flex-direction: column;
     width: 100%;
   }
+
   .formContent {
     display: flex;
     flex-direction: column;
@@ -671,6 +707,7 @@
       align-items: start;
     }
   }
+
   .formMain {
     display: flex;
     flex-direction: column;
@@ -679,6 +716,7 @@
       gap: rem(32);
     }
   }
+
   .guestBlock {
     display: flex;
     flex-direction: column;
@@ -692,12 +730,14 @@
       flex-wrap: wrap;
     }
   }
+
   .guestHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: rem(16);
   }
+
   .guestTitle {
     width: 100%;
     font-family: "Inter", sans-serif;
@@ -706,6 +746,7 @@
     color: var(--a-text-dark);
     margin: 0;
   }
+
   .removeButton {
     width: rem(24);
     height: rem(24);
@@ -719,11 +760,13 @@
       }
     }
   }
+
   .icon {
     width: rem(24);
     height: rem(24);
     color: var(--a-text-accent);
   }
+
   .inputItem {
     display: flex;
     flex-direction: column;
@@ -732,6 +775,7 @@
       width: 45%;
     }
   }
+
   .input {
     display: flex;
     justify-content: center;
@@ -756,6 +800,7 @@
       color: var(--a-text-light);
     }
   }
+
   .inputError {
     border-color: var(--a-border-accent) !important;
     &:focus {
@@ -763,12 +808,14 @@
       box-shadow: 0 0 0 2px rgba(var(--a-btnAccentBg), 0.1);
     }
   }
+
   .errorMessage {
     margin-top: rem(8);
     font-family: "Inter", sans-serif;
     font-size: rem(14);
     color: var(--a-text-accent);
   }
+
   .addGuestButton {
     display: flex;
     justify-content: center;
@@ -797,11 +844,13 @@
       box-shadow: 0 0 0 2px rgba(var(--a-border-primary), 0.1);
     }
   }
+
   .checkInformBlock {
     display: flex;
     flex-direction: column;
     gap: rem(16);
   }
+
   .checkItem {
     display: flex;
     align-items: flex-start;
@@ -837,6 +886,7 @@
       }
     }
   }
+
   .checkbox {
     margin-top: rem(4);
     &:hover {
@@ -853,6 +903,7 @@
       display: none;
     }
   }
+
   .checkboxLabel {
     font-family: "Inter", sans-serif;
     font-size: rem(16);
@@ -862,6 +913,7 @@
     margin-top: rem(2);
     flex: 1;
   }
+
   .formItem {
     display: flex;
     flex-direction: column;
@@ -872,16 +924,19 @@
       border-bottom: none;
     }
   }
+
   .additionalBlock {
     display: flex;
     flex-direction: column;
     gap: rem(24);
   }
+
   .paymentBlock {
     display: flex;
     flex-direction: column;
     gap: rem(24);
   }
+
   .dropdown {
     width: 100%;
     height: rem(54);
@@ -901,16 +956,19 @@
       color: var(--a-text-light);
     }
   }
+
   .agreementBlock {
     display: flex;
     flex-direction: column;
     gap: rem(8);
   }
+
   .securityText {
     padding: rem(16);
     background: var(--a-bg-light);
     border-radius: var(--a-borderR--input);
   }
+
   .securityTitle {
     font-family: "Inter", sans-serif;
     font-size: rem(16);
@@ -918,6 +976,7 @@
     color: var(--a-text-dark);
     margin: 0 0 rem(8) 0;
   }
+
   .securityDescription {
     font-family: "Inter", sans-serif;
     font-size: rem(14);
