@@ -17,12 +17,12 @@
     return props.expanded ? amenities : amenities.slice(0, 4);
   });
 
-  const toggleExpand = () => {
-    emit("toggleExpand", props.room.title || "");
+  const _toggleExpand = () => {
+    emit("toggle-expand", props.room.title || "");
   };
 
-  const openPopup = (event: MouseEvent) => {
-    emit("openPopup", event);
+  const _openPopup = (event: MouseEvent) => {
+    emit("open-popup", event);
   };
 
   const getCarouselHeight = computed(() => {
@@ -49,7 +49,7 @@
         <button
           :class="$style.infoButton"
           data-popup-button
-          @click="openPopup($event)"
+          @click="_openPopup"
         >
           <UIcon
             name="i-heroicons-chevron-down-20-solid"
@@ -76,7 +76,7 @@
           <button
             v-if="!props.expanded && (room.packages?.length || 0) > 4"
             :class="$style.amenitiesListShow"
-            @click="toggleExpand"
+            @click="_toggleExpand"
           >
             + ещё {{ (room.packages?.length || 0) - 4 }}
           </button>

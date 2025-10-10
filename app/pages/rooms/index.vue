@@ -1,9 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { Room } from "~/types/room";
-  import { useToast } from "primevue/usetoast";
-  import { useRouter } from "vue-router";
-  import { storeToRefs } from "pinia";
 
   definePageMeta({
     layout: "steps",

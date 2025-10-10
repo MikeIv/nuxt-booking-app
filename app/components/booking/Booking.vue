@@ -1,9 +1,5 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { storeToRefs } from "pinia";
-  import { useRouter, useRoute } from "vue-router";
-  import { useToast } from "primevue/usetoast";
-  import { nextTick } from "vue";
 
   const toast = useToast();
   const bookingStore = useBookingStore();
@@ -41,13 +37,13 @@
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      await bookingStore.search(true); // Передаём skipReset = true
+      await bookingStore.search(true);
       if (route.path === "/") {
         await router.push("/rooms");
         await nextTick();
-        bookingStore.setLoading(false);
-        bookingStore.isServerRequest = false;
       }
+      bookingStore.setLoading(false);
+      bookingStore.isServerRequest = false;
     } catch (error: unknown) {
       toast.add({
         severity: "warn",
@@ -120,7 +116,7 @@
     flex-wrap: wrap;
     gap: rem(20);
     max-width: size.$desktop;
-    min-width: rem(300);
+    min-width: rem(400);
     min-height: rem(50);
     padding: rem(14) rem(12);
     font-family: "Inter", sans-serif;
