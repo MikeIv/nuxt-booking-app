@@ -21,7 +21,7 @@
       unstyled
       @click="showBookingDetails = !showBookingDetails"
     >
-      <span :class="$style.roomButtonText">Номер 1</span>
+      <span :class="$style.roomButtonText">Номер</span>
       <UIcon
         name="i-chevron-down"
         :class="[
