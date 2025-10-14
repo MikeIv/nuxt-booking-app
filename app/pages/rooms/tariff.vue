@@ -112,7 +112,7 @@
 
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.header">Выбор тарифа для номера 1</h1>
+    <h1 :class="$style.header">Выбор тарифа для номера</h1>
 
     <Booking />
     <BookingAdvantages />
