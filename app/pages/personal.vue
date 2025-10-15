@@ -226,6 +226,7 @@
     };
 
     try {
+      bookingStore.setLoading(true, "Создаём бронирование...");
       await bookingStore.createBooking(bookingData);
       toast.add({
         severity: "success",
@@ -242,6 +243,9 @@
         detail: bookingStore.error.value || "Произошла ошибка.",
         life: 5000,
       });
+    } finally {
+      bookingStore.setLoading(false);
+      bookingStore.isServerRequest = false;
     }
   };
 
@@ -376,6 +380,11 @@
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
+
+  onMounted(() => {
+    bookingStore.setLoading(false);
+    bookingStore.isServerRequest = false;
+  });
 </script>
 
 <template>
@@ -735,6 +744,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
     margin-bottom: rem(16);
   }
 

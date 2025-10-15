@@ -6,6 +6,7 @@
       <slot />
     </div>
     <LayoutFooter />
+    <CoreSessionTimeoutHandler />
   </div>
 </template>
 

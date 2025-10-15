@@ -60,7 +60,6 @@
       if (newValue) {
         lockBodyScroll();
         if (props.closeOnClickOutside) {
-          // Используем setTimeout чтобы добавить обработчик после отрисовки
           setTimeout(() => {
             document.addEventListener("click", handleClickOutside);
           }, 0);
