@@ -97,45 +97,47 @@
 
 <template>
   <aside ref="asideRef" :class="$style.aside">
-    <div :class="$style.leftGroup">
-      <BurgerButton :is-active="isMenuOpen" @click="toggleMenu" />
-    </div>
+    <div :class="$style.wrapper">
+      <div :class="$style.leftGroup">
+        <BurgerButton :is-active="isMenuOpen" @click="toggleMenu" />
+      </div>
 
-    <button :class="$style.logoButton" @click="goToHome">
-      <Logo :class="$style.logo" />
-    </button>
-
-    <div :class="$style.rightGroup">
-      <!--      <UButton-->
-      <!--        color="bgAccent"-->
-      <!--        class="text-white px-4 py-2"-->
-      <!--        size="sm"-->
-      <!--        :class="$style.show"-->
-      <!--      >-->
-      <!--        Забронировать-->
-      <!--      </UButton>-->
-
-      <Button
-        v-if="!authStore.isAuthenticated"
-        label="Войти"
-        class="btn__bs dark"
-        unstyled
-        @click="showAuthDialog('login')"
-      />
-      <Button
-        v-else
-        label="Личный кабинет"
-        class="btn__bs dark"
-        unstyled
-        @click="$router.push('/cabinet')"
-      />
-
-      <button :class="$style.langButton" @click="toggleLanguage">
-        {{ locale === "ru" ? "ENG" : "RU" }}
+      <button :class="$style.logoButton" @click="goToHome">
+        <Logo :class="$style.logo" />
       </button>
-      <button :class="$style.phoneButton" @click="goToContacts">
-        <UIcon name="i-phone" :class="$style.phoneIcon" />
-      </button>
+
+      <div :class="$style.rightGroup">
+        <!--      <UButton-->
+        <!--        color="bgAccent"-->
+        <!--        class="text-white px-4 py-2"-->
+        <!--        size="sm"-->
+        <!--        :class="$style.show"-->
+        <!--      >-->
+        <!--        Забронировать-->
+        <!--      </UButton>-->
+
+        <Button
+          v-if="!authStore.isAuthenticated"
+          label="Войти"
+          class="btn__bs dark"
+          unstyled
+          @click="showAuthDialog('login')"
+        />
+        <Button
+          v-else
+          label="Личный кабинет"
+          class="btn__bs dark"
+          unstyled
+          @click="$router.push('/cabinet')"
+        />
+
+        <button :class="$style.langButton" @click="toggleLanguage">
+          {{ locale === "ru" ? "ENG" : "RU" }}
+        </button>
+        <button :class="$style.phoneButton" @click="goToContacts">
+          <UIcon name="i-phone" :class="$style.phoneIcon" />
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -176,18 +178,21 @@
   .aside {
     position: fixed;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    right: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--a-whiteBg);
+    z-index: z.z("header");
+  }
+
+  .wrapper {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     max-width: #{size.$desktopMax};
     height: clamp(60px, 8vw, 95px);
+    margin: 0 auto;
     padding: rem(16);
-    background-color: var(--a-whiteBg);
-    z-index: z.z("header");
   }
 
   .leftGroup {

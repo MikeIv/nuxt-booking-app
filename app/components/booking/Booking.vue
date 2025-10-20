@@ -18,7 +18,11 @@
       return false;
     }
 
-    if (guests.value.adults === 0) {
+    const totalAdults = guests.value.roomList
+      ? guests.value.roomList.reduce((sum, room) => sum + room.adults, 0)
+      : 0;
+
+    if (totalAdults === 0) {
       toast.add({
         severity: "warn",
         summary: "Некорректные данные",

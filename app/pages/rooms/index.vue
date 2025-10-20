@@ -44,7 +44,11 @@
   });
 
   onMounted(async () => {
-    if (!date.value || !guests.value.adults) {
+    const totalAdults = guests.value.roomList
+      ? guests.value.roomList.reduce((sum, r) => sum + r.adults, 0)
+      : 0;
+
+    if (!date.value || totalAdults === 0) {
       toast.add({
         severity: "warn",
         summary: "Некорректные данные",
