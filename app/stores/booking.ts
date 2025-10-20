@@ -12,11 +12,14 @@ export const useBookingStore = defineStore(
   "booking",
   () => {
     const date = ref<[Date, Date] | null>(null);
-    const guests = ref<GuestInfo>({
+    const guests = ref<{
+      rooms: number;
+      roomList: { adults: number; children: number }[];
+    }>({
       rooms: 1,
-      adults: 1,
-      children: 0,
+      roomList: [{ adults: 1, children: 0 }],
     });
+
     const promoCode = ref("");
     const loading = ref(false);
     const isServerRequest = ref(false);
@@ -26,6 +29,7 @@ export const useBookingStore = defineStore(
     const selectedRoomType = ref<string | null>(null);
     const roomTariffs = ref<RoomTariff[]>([]);
     const loadingMessage = ref("Загружаем данные о номерах...");
+    const roomList = ref<GuestInfo[]>([]);
 
     const totalGuests = computed(() => {
       return guests.value.adults + guests.value.children;
@@ -37,6 +41,10 @@ export const useBookingStore = defineStore(
         loadingMessage.value = message;
       }
     };
+
+    function updateRoomList(list: GuestInfo[]) {
+      roomList.value = list;
+    }
 
     function updateChildrenAges(ages: number[]) {
       childrenAges.value = ages;
@@ -74,14 +82,17 @@ export const useBookingStore = defineStore(
 
     function prepareSearchData(roomTypeCode?: string) {
       const [startDate, endDate] = date.value!;
-      const childs = childrenAges.value.slice(0, guests.value.children);
-      while (childs.length < guests.value.children) {
-        childs.push(0);
-      }
+
+      const rooms = guests.value.roomList ?? [];
+      const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
+      const totalChildren = rooms.reduce((sum, room) => sum + room.children, 0);
+
+      const childs = [totalChildren || 0];
+
       const searchData: Record<string, unknown> = {
         start_at: formatDate(startDate),
         end_at: formatDate(endDate),
-        adults: guests.value.adults,
+        adults: totalAdults,
         promocode: promoCode.value || null,
         childs,
       };
@@ -282,6 +293,8 @@ export const useBookingStore = defineStore(
       getBookingDetails,
       searchWithRoomType,
       formatDate,
+      roomList,
+      updateRoomList,
     };
   },
   {
@@ -295,6 +308,7 @@ export const useBookingStore = defineStore(
         "searchResults",
         "selectedRoomType",
         "roomTariffs",
+        "roomList",
       ],
       serializer: {
         serialize: (state) => {
