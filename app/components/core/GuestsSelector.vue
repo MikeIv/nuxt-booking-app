@@ -2,6 +2,7 @@
   interface RoomGuests {
     adults: number;
     children: number;
+    childrenAges: number[];
   }
   interface GuestsValue {
     rooms: number;
@@ -9,67 +10,135 @@
   }
 
   const MAX_ROOMS = 5;
+  const AGE_MIN = 0;
+  const AGE_MAX = 12;
+  const AGE_OPTIONS = Array.from(
+    { length: AGE_MAX - AGE_MIN + 1 },
+    (_, i) => i + AGE_MIN,
+  );
+
   const props = defineProps<{
     modelValue:
       | GuestsValue
       | { rooms: number; adults: number; children: number };
   }>();
   const emit = defineEmits(["update:modelValue"]);
-  const guestsPopover = ref(false);
 
   const guests = computed<GuestsValue>({
     get: () => {
       if (!props.modelValue || typeof props.modelValue !== "object") {
         return {
           rooms: 1,
-          roomList: [{ adults: 1, children: 0 }],
+          roomList: [{ adults: 1, children: 0, childrenAges: [] }],
         };
       }
       if (
         "roomList" in props.modelValue &&
         Array.isArray(props.modelValue.roomList)
       ) {
-        return props.modelValue as GuestsValue;
+        const normalized = (props.modelValue as GuestsValue).roomList.map(
+          (r) => ({
+            adults: r.adults,
+            children: r.children,
+            childrenAges: Array.isArray((r as unknown).childrenAges)
+              ? (r as unknown).childrenAges.slice(0, r.children).concat(
+                  Array.from(
+                    {
+                      length: Math.max(
+                        0,
+                        r.children - ((r as unknown).childrenAges?.length ?? 0),
+                      ),
+                    },
+                    () => AGE_MIN,
+                  ),
+                )
+              : Array.from({ length: r.children }, () => AGE_MIN),
+          }),
+        );
+        return {
+          rooms: (props.modelValue as GuestsValue).rooms,
+          roomList: normalized,
+        };
       }
+      const rooms = props.modelValue.rooms ?? 1;
       return {
-        rooms: props.modelValue.rooms ?? 1,
-        roomList: Array.from({ length: props.modelValue.rooms ?? 1 }).map(
-          (_, idx) =>
-            idx === 0
-              ? {
-                  adults: props.modelValue.adults ?? 1,
-                  children: props.modelValue.children ?? 0,
-                }
-              : { adults: 1, children: 0 },
+        rooms,
+        roomList: Array.from({ length: rooms }).map((_, idx) =>
+          idx === 0
+            ? {
+                adults: (props.modelValue as unknown).adults ?? 1,
+                children: (props.modelValue as unknown).children ?? 0,
+                childrenAges: Array.from(
+                  { length: (props.modelValue as unknown).children ?? 0 },
+                  () => AGE_MIN,
+                ),
+              }
+            : { adults: 1, children: 0, childrenAges: [] },
         ),
       };
     },
     set: (val) => emit("update:modelValue", val),
   });
 
+  const overlayRef = ref();
+
+  function openOverlay(event: Event) {
+    overlayRef.value?.toggle(event);
+  }
+
   function updateRooms(delta: number) {
     let nextRooms = guests.value.rooms + delta;
     nextRooms = Math.max(1, Math.min(MAX_ROOMS, nextRooms));
     const roomList = guests.value.roomList.slice(0, nextRooms);
     for (let i = roomList.length; i < nextRooms; i++)
-      roomList.push({ adults: 1, children: 0 });
+      roomList.push({ adults: 1, children: 0, childrenAges: [] });
     guests.value = { rooms: nextRooms, roomList };
   }
 
   function updateRoomGuests(
     roomIdx: number,
-    key: keyof RoomGuests,
+    key: keyof Omit<RoomGuests, "childrenAges">,
     delta: number,
   ) {
-    const roomList = guests.value.roomList.map((room, idx) =>
-      idx === roomIdx
-        ? {
-            ...room,
-            [key]: Math.max(key === "adults" ? 1 : 0, room[key] + delta),
-          }
-        : room,
-    );
+    const roomList = guests.value.roomList.map((room, idx) => {
+      if (idx !== roomIdx) return room;
+      const next = {
+        ...room,
+        [key]: Math.max(key === "adults" ? 1 : 0, room[key] + delta),
+      } as RoomGuests;
+      if (key === "children") {
+        const count = next.children;
+        const ages = room.childrenAges?.slice(0, count) ?? [];
+        while (ages.length < count) ages.push(AGE_MIN);
+        next.childrenAges = ages;
+      }
+      return next;
+    });
     guests.value = { ...guests.value, roomList };
+  }
+
+  function childAgeLabel(totalChildren: number, index1Based: number): string {
+    if (totalChildren === 1) return "Возраст ребенка";
+    if (index1Based === 1) return "Возраст 1-го ребенка";
+    if (index1Based === 2) return "Возраст 2-го ребенка";
+    return `Возраст ${index1Based}-го ребенка`;
+  }
+
+  function updateChildAge(roomIdx: number, childIdx: number, age: number) {
+    const roomList = guests.value.roomList.map((room, idx) => {
+      if (idx !== roomIdx) return room;
+      const ages = room.childrenAges.slice();
+      ages[childIdx] = Math.min(AGE_MAX, Math.max(AGE_MIN, Number(age)));
+      return { ...room, childrenAges: ages };
+    });
+    guests.value = { ...guests.value, roomList };
+  }
+
+  function getAgeLabel(age: number): string {
+    if (age === 0) return "лет";
+    if (age === 1) return "год";
+    if (age >= 2 && age <= 4) return "года";
+    return "лет";
   }
 
   const summaryString = computed(() => {
@@ -78,24 +147,34 @@
     const totalChildren = roomList.reduce((sum, r) => sum + r.children, 0);
     return `${guests.value.rooms} номер${guests.value.rooms > 1 ? "а" : ""}, ${totalAdults} взр., ${totalChildren} дет.`;
   });
+
+  function applyChanges(event: Event) {
+    emit("update:modelValue", guests.value);
+    overlayRef.value?.hide(event);
+  }
 </script>
 
 <template>
-  <UPopover v-model:open="guestsPopover">
-    <div :class="$style.inputWrapper">
+  <div :class="$style.guestSection">
+    <div :class="$style.inputWrapper" @click="openOverlay">
       <input
         readonly
         :class="$style.customInput"
         :aria-label="`Гости: ${summaryString}`"
         :value="summaryString"
-        @click="guestsPopover = true"
       />
       <span :class="$style.label">Гости</span>
       <UIcon name="i-chevron-down" :class="$style.chevronIcon" />
     </div>
 
-    <template #content>
-      <div :class="$style.guestsDropdown">
+    <OverlayPanel
+      ref="overlayRef"
+      class="guests-dropdown"
+      :pt="{
+        content: { style: 'padding: 0;' },
+      }"
+    >
+      <div :class="$style.guestsDropdownContent">
         <div :class="$style.guestOption">
           <span :class="$style.roomsTitle">Номера</span>
           <div :class="$style.counter">
@@ -154,8 +233,8 @@
 
           <div :class="$style.guestOption">
             <div :class="$style.nameBlock">
-              <span :class="$style.name">Дети</span>
-              <span :class="[$style.name, $style.color]">(до 12 лет)</span>
+              <span :class="$style.name">Количество детей</span>
+              <span :class="[$style.name, $style.subName]">Младше 13 лет</span>
             </div>
             <div :class="$style.counter">
               <Button
@@ -176,31 +255,72 @@
               >
             </div>
           </div>
+
+          <div v-if="room.children > 0" :class="$style.childrenAgesWrapper">
+            <div
+              v-for="childIdx in room.children"
+              :key="childIdx"
+              :class="$style.childAgeRow"
+            >
+              <span :class="$style.name">
+                {{ childAgeLabel(room.children, childIdx) }}
+              </span>
+              <div :class="$style.selectBlock">
+                <Select
+                  :class="$style.ageSelect"
+                  :model-value="room.childrenAges[childIdx - 1]"
+                  :options="
+                    AGE_OPTIONS.map((age) => ({
+                      value: age,
+                      label: `${age} ${getAgeLabel(age)}`,
+                    }))
+                  "
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Возраст"
+                  :pt="{
+                    root: { class: $style.ageSelect },
+                    item: { class: $style.ageOption },
+                    panel: { class: $style.selectPanel },
+                  }"
+                  @update:model-value="
+                    (val) => updateChildAge(idx, childIdx - 1, val)
+                  "
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <Button
           class="btn__bs"
           :class="$style.applyButton"
           unstyled
-          @click="guestsPopover = false"
+          @click="applyChanges"
           >Готово</Button
         >
       </div>
-    </template>
-  </UPopover>
+    </OverlayPanel>
+  </div>
 </template>
+
+<style lang="scss">
+  .guests-dropdown {
+    &.p-popover {
+      background: var(--a-white);
+      border-radius: rem(16);
+      box-shadow: 0 4px 23px rgba(0, 0, 0, 0.4);
+      border: none;
+    }
+  }
+</style>
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
   @use "~/assets/styles/variables/z-index" as z;
 
-  .inputWrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .guestSection {
     width: 100%;
-    gap: rem(4);
 
     @media (min-width: #{size.$desktopMin}) {
       width: calc(50% - rem(12));
@@ -214,6 +334,22 @@
     @media (min-width: #{size.$desktop}) {
       min-width: rem(500);
     }
+
+    :global {
+      .p-select-label.p-placeholder {
+        color: var(--a-text-light);
+      }
+    }
+  }
+
+  .inputWrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: rem(4);
+    cursor: pointer;
   }
 
   .customInput {
@@ -225,6 +361,8 @@
     color: var(--a-black);
     background-color: var(--a-white);
     border-radius: rem(16);
+    border: 1px solid var(--a-border-primary);
+    cursor: pointer;
 
     &:focus {
       outline: none;
@@ -242,6 +380,7 @@
     color: var(--a-text-light);
     margin-left: rem(12);
     z-index: z.z("booking-label");
+    pointer-events: none;
   }
 
   .chevronIcon {
@@ -251,19 +390,14 @@
     width: rem(30);
     height: rem(30);
     color: var(--primary);
-    cursor: pointer;
+    pointer-events: none;
   }
 
-  .guestsDropdown {
+  .guestsDropdownContent {
     display: flex;
     flex-direction: column;
     min-width: rem(360);
     padding: rem(16);
-    border-radius: rem(16);
-    border: none;
-    background-color: var(--a-white);
-    box-shadow: 0 4px 23px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
 
     @media (min-width: #{size.$desktopMin}) {
       min-width: rem(600);
@@ -271,11 +405,17 @@
     }
   }
 
+  .roomGroup {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: rem(16);
+  }
+
   .guestOption {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: rem(18);
+    margin-bottom: rem(12);
     font-family: "Inter", sans-serif;
   }
 
@@ -306,23 +446,26 @@
   }
 
   .name {
+    font-family: "Inter", sans-serif;
     font-size: rem(18);
-    color: var(--a-black);
+    color: var(--a-text-dark);
     text-wrap: wrap;
 
     @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
+      font-size: rem(22);
     }
+  }
 
-    &.color {
-      color: var(--a-text-light);
-    }
+  .subName {
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-primary);
   }
 
   .line {
     border: none;
     border-top: rem(1) solid var(--a-border-primary);
-    margin: rem(16) 0 rem(8);
+    margin: rem(8) 0 rem(8);
   }
 
   .setButton {
@@ -336,6 +479,7 @@
     background-color: var(--a-accentLightBg);
     border-radius: 50%;
     cursor: pointer;
+    border: none;
 
     &:hover {
       background-color: var(--a-accentBg);
@@ -344,6 +488,7 @@
     &:disabled {
       background-color: var(--a-accentLightBg);
       cursor: not-allowed;
+      opacity: 0.5;
     }
 
     &:focus-visible {
@@ -371,10 +516,83 @@
   }
 
   .applyButton {
+    width: 100%;
     height: rem(56);
     margin-top: rem(16);
     color: var(--a-white);
     border-radius: rem(10);
     background-color: var(--a-black);
+    border: none;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 500;
+
+    &:hover {
+      background-color: var(--a-text-dark);
+    }
+  }
+
+  .childrenAgesWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    margin-top: rem(8);
+  }
+
+  .childAgeRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .selectBlock {
+    display: flex;
+    align-items: center;
+
+    :global {
+      .p-select {
+        display: flex;
+        align-items: center;
+        padding: 0 rem(16);
+        font-size: rem(16);
+        color: var(--a-text-dark);
+        background-color: var(--a-whiteBg);
+        border-radius: var(--a-borderR--input);
+        transition: border-color 0.3s ease;
+        border: rem(1) solid var(--a-border-primary);
+      }
+
+      .p-select-label.p-placeholder {
+        color: var(--a-text-light);
+      }
+    }
+  }
+
+  .ageSelect {
+    width: rem(120);
+    height: rem(36);
+    font-size: rem(16);
+    font-family: "Inter", sans-serif;
+    background-color: var(--a-whiteBg);
+    border: rem(1) solid var(--a-border-primary);
+    border-radius: var(--a-borderR--input);
+    color: var(--a-text-dark);
+    cursor: pointer;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(148);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--a-accentBg);
+    }
+  }
+
+  .ageOption {
+    padding: rem(8);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
   }
 </style>
