@@ -243,10 +243,8 @@
     width: clamp(40px, 4vw, 50px);
     max-height: rem(30);
     padding: rem(6) rem(12);
-    border: 1px solid var(--a-accentBg);
-    border-radius: rem(4);
     background: transparent;
-    color: var(--a-base);
+    color: var(--a-text-dark);
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
@@ -274,7 +272,7 @@
     position: absolute;
     width: rem(24);
     height: rem(24);
-    color: var(--primary);
+    color: var(--a-black);
   }
 
   .show {
