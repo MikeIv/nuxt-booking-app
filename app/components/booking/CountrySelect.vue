@@ -48,17 +48,13 @@
     width: 100%;
     height: rem(58);
 
-    &:placeholder {
+    &::placeholder {
       color: var(--a-text-light);
     }
 
     &:focus {
       outline: none;
       border-color: var(--a-accentBg);
-    }
-
-    &.selectError {
-      border-color: var(--a-border-accent);
     }
   }
   .errorText {

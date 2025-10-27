@@ -10,7 +10,7 @@
   const isSessionExpired = ref(false);
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  const TIMEOUT_MS = 10 * 60 * 1000; // 10 минут для тестирования
+  const TIMEOUT_MS = 40 * 60 * 1000; // 40 минут для тестирования
 
   function startTimer() {
     stopTimer();

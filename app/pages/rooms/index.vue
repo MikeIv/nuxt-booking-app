@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import type { Room } from "~/types/room";
 
   definePageMeta({
     layout: "steps",
@@ -11,32 +10,39 @@
   const toast = useToast();
   const router = useRouter();
 
-  const selectedBedType = ref<number | undefined>(undefined);
+  const selectedView = ref<number | undefined>(undefined);
+  const selectedBalcony = ref<number | undefined>(undefined);
 
-  const bedOptions = computed(() => {
-    if (
-      !searchResults.value?.filters?.beds ||
-      searchResults.value.filters.beds.length === 0
-    ) {
-      return [];
-    }
+  const viewOptions = computed(() => {
+    return [
+      { id: 1, title: "Парк" },
+      { id: 2, title: "Город" },
+      { id: 3, title: "Море" },
+      { id: 4, title: "Внутренний двор" },
+    ];
+  });
 
-    return searchResults.value.filters.beds.map((bed) => ({
-      id: bed.id,
-      title: bed.title,
-    }));
+  const balconyOptions = computed(() => {
+    return [
+      { id: 1, title: "Есть балкон" },
+      { id: 2, title: "Нет балкона" },
+    ];
   });
 
   const filteredRooms = computed(() => {
     if (!searchResults.value?.rooms) return [];
 
-    if (selectedBedType.value === undefined || selectedBedType.value === 0) {
-      return searchResults.value.rooms;
+    const filtered = searchResults.value.rooms;
+
+    if (selectedView.value !== undefined && selectedView.value !== 0) {
+      // Filter logic for view (we can expand this later)
     }
 
-    return searchResults.value.rooms.filter(
-      (room: Room) => room.bed?.id === selectedBedType.value,
-    );
+    if (selectedBalcony.value !== undefined && selectedBalcony.value !== 0) {
+      // Filter logic for balcony (we can expand this later)
+    }
+
+    return filtered;
   });
 
   const hasSearchResults = computed(() => {
@@ -87,13 +93,21 @@
     <h1 :class="$style.header">Выбор номера</h1>
     <Booking />
 
-    <div v-if="bedOptions.length > 0">
+    <div :class="$style.filtersWrapper">
       <Select
-        v-model="selectedBedType"
-        :options="bedOptions"
+        v-model="selectedView"
+        :options="viewOptions"
         option-label="title"
         option-value="id"
-        placeholder="Тип кровати"
+        placeholder="Вид из окна"
+        :class="$style.filterSelect"
+      />
+      <Select
+        v-model="selectedBalcony"
+        :options="balconyOptions"
+        option-label="title"
+        option-value="id"
+        placeholder="Балкон"
         :class="$style.filterSelect"
       />
     </div>
@@ -108,7 +122,7 @@
           :room="item"
         />
         <div v-if="filteredRooms.length === 0" :class="$style.noFilterResults">
-          Нет номеров с выбранным типом кровати
+          Нет номеров с выбранными параметрами
         </div>
       </section>
     </template>
@@ -125,7 +139,8 @@
   .container {
     display: flex;
     flex-direction: column;
-    margin-bottom: rem(40);
+    max-width: #{size.$desktopMax};
+    margin: 0 auto rem(40) auto;
     padding: 0 rem(20);
   }
 
@@ -135,9 +150,30 @@
     align-items: center;
     margin: rem(40) 0;
     font-family: "Lora", serif;
-    font-size: rem(34);
+    font-size: rem(28);
     font-weight: 600;
     color: var(--a-black);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(34);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      margin: rem(40) 0 rem(60) 0;
+    }
+  }
+
+  .filtersWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+    margin-bottom: rem(20);
+    width: 100%;
+
+    @media (min-width: #{size.$tabletMin}) {
+      flex-direction: row;
+      gap: rem(24);
+    }
   }
 
   .roomsList {
@@ -145,7 +181,7 @@
     grid-template-columns: 1fr;
     gap: rem(20);
     width: 100%;
-    padding: rem(40) rem(4);
+    padding: 0 rem(4) rem(40) rem(4);
 
     @media (min-width: #{size.$tabletMin}) {
       grid-template-columns: repeat(2, 1fr);
@@ -188,6 +224,7 @@
 
   .filterSelect {
     color: var(--a-black);
+    width: 100%;
 
     @media (min-width: #{size.$mobile}) {
       max-width: rem(368);
@@ -198,15 +235,23 @@
       align-items: center;
       width: 100%;
       min-height: rem(54);
-      padding: rem(12) rem(24);
+      padding: rem(6) rem(24);
       font-family: "Inter", sans-serif;
       font-size: rem(26);
       background: var(--a-text-white);
       border: rem(1) solid var(--a-border-primary);
       border-radius: var(--a-borderR--input);
+      outline: none;
+
+      &:hover {
+        border-color: var(--a-border-primary);
+      }
     }
 
     :global {
+      .p-select-label {
+        font-size: rem(26);
+      }
       .p-select-clear-icon {
         top: 48%;
         right: rem(54);
