@@ -101,8 +101,12 @@
     align-items: center;
     width: 100%;
     margin: 0 auto;
-    margin-bottom: rem(40);
+    margin-bottom: rem(20);
     padding: 0;
+
+    @media (min-width: #{size.$tablet}) {
+      margin-bottom: rem(40);
+    }
 
     @media (min-width: #{size.$tabletMax}) {
       margin-bottom: rem(90);
@@ -120,7 +124,7 @@
     flex-wrap: wrap;
     gap: rem(20);
     max-width: size.$desktop;
-    min-width: rem(400);
+    min-width: rem(300);
     min-height: rem(50);
     padding: rem(14) rem(12);
     font-family: "Inter", sans-serif;
@@ -133,7 +137,12 @@
 
     @media (min-width: #{size.$desktopMedium}) {
       width: 100%;
+      margin: 0 rem(24);
       padding: rem(40) rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMax}) {
+      margin: 0;
     }
   }
 

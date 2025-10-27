@@ -110,16 +110,39 @@
       }
 
       .p-carousel-content {
+        position: relative;
         display: flex;
         flex: 1;
         width: 100%;
         height: 100%;
 
         .p-button-text.p-button-secondary {
-          color: var(--a-text-primary);
+          width: rem(16);
+          height: rem(40);
+          color: var(--a-accentDarkBg);
 
           &:hover {
             color: var(--a-text-dark);
+            background-color: var(--a-lightPrimaryBg);
+          }
+
+          svg {
+            width: rem(24);
+            height: rem(40);
+          }
+
+          &.p-carousel-prev-button {
+            position: absolute;
+            top: 0;
+            left: rem(30);
+            z-index: 1000;
+          }
+
+          &.p-carousel-next-button {
+            position: absolute;
+            top: 0;
+            right: rem(30);
+            z-index: 1000;
           }
         }
       }

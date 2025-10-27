@@ -13,6 +13,11 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
+  const totalAdults = computed(() => {
+    if (!guests.value?.roomList) return 0;
+    return guests.value.roomList.reduce((sum, room) => sum + room.adults, 0);
+  });
+
   const nightsCount = computed(() => {
     if (
       !date.value ||
@@ -40,6 +45,18 @@
     isPopupOpen.value = false;
   };
 
+  const selectedBedType = ref<number | undefined>(undefined);
+
+  const bedOptions = computed(() => {
+    const beds = [
+      { id: 1, title: "Односпальная" },
+      { id: 2, title: "Двуспальная" },
+      { id: 3, title: "Две односпальные" },
+      { id: 4, title: "Королевская" },
+    ];
+    return beds;
+  });
+
   const handleTariff = async () => {
     if (!date.value || date.value.length < 2) {
       console.error("Не выбраны даты бронирования");
@@ -64,57 +81,75 @@
     </header>
 
     <main :class="$style.cardDetails">
-      <div :class="$style.roomInfo">
-        <span :class="$style.title">{{ room.title }}</span>
+      <div :class="$style.wrapperInfoBlock">
+        <div :class="$style.roomInfo">
+          <span :class="$style.title">{{ room.title }}</span>
 
-        <button
-          :class="$style.infoButton"
-          data-popup-button
-          @click="openPopup($event)"
-        >
-          <UIcon
-            name="i-heroicons-chevron-down-20-solid"
-            :class="$style.chevronIcon"
-          />
-        </button>
-      </div>
+          <button
+            :class="$style.infoButton"
+            data-popup-button
+            @click="openPopup($event)"
+          >
+            <UIcon
+              name="i-heroicons-chevron-down-20-solid"
+              :class="$style.chevronIcon"
+            />
+          </button>
+        </div>
 
-      <div :class="$style.description">
-        <div :class="$style.item">
-          <UIcon name="i-persons" :class="$style.icon" />
-          <span :class="$style.itemTitle">
-            До {{ formatCount(room.max_occupancy, "capacity") }}
+        <div :class="$style.description">
+          <div :class="$style.item">
+            <UIcon name="i-persons" :class="$style.icon" />
+            <span :class="$style.itemTitle">
+              До {{ formatCount(room.max_occupancy, "capacity") }}
+            </span>
+          </div>
+          <div :class="$style.item">
+            <UIcon name="i-square" :class="$style.icon" />
+            <span :class="$style.itemTitle">{{ room.square }} м²</span>
+          </div>
+          <div :class="$style.item">
+            <UIcon name="i-dash-square" :class="$style.icon" />
+            <span :class="$style.itemTitle">
+              {{ formatCount(room.rooms, "chamber") }}
+            </span>
+          </div>
+        </div>
+
+        <div :class="$style.priceBlock">
+          <span :class="$style.guestGift">
+            <UIcon name="i-gift-line" :class="$style.icon" />
+            За регистрацию 67 150 ₽
           </span>
-        </div>
-        <div :class="$style.item">
-          <UIcon name="i-square" :class="$style.icon" />
-          <span :class="$style.itemTitle">{{ room.square }} м²</span>
-        </div>
-        <div :class="$style.item">
-          <UIcon name="i-dash-square" :class="$style.icon" />
-          <span :class="$style.itemTitle">
-            {{ formatCount(room.rooms, "chamber") }}
+          <span :class="$style.price">От {{ room.min_price }} руб.</span>
+          <span :class="$style.guestInfo">
+            {{ formatCount(totalAdults, "guest") }} /
+            {{ formatCount(nightsCount, "night") }}
           </span>
         </div>
       </div>
 
       <div :class="$style.footer">
-        <div :class="$style.priceBlock">
-          <span :class="$style.guestInfo">
-            {{ formatCount(guests?.adults, "guest") }} /
-            {{ formatCount(nightsCount, "night") }}
-          </span>
-          <span :class="$style.price">От {{ room.min_price }} руб.</span>
+        <div :class="$style.bedSelect">
+          <Select
+            v-model="selectedBedType"
+            :options="bedOptions"
+            option-label="title"
+            option-value="id"
+            placeholder="Тип кровати"
+          />
         </div>
 
-        <button
+        <Button
+          unstyled
+          class="btn__bs"
           :class="[$style.bookingButton, { [$style.loading]: loading }]"
           :disabled="loading || !date || date.length < 2"
           @click="handleTariff"
         >
           <span v-if="loading">Загрузка...</span>
-          <span v-else>Забронировать</span>
-        </button>
+          <span v-else>Выбрать номер</span>
+        </Button>
       </div>
     </main>
 
@@ -148,12 +183,20 @@
     width: 100%;
   }
 
+  .wrapperInfoBlock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: rem(16);
+    padding: 0 rem(16);
+  }
+
   .roomInfo {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     gap: rem(12);
-    margin-bottom: rem(16);
   }
 
   .title {
@@ -198,7 +241,6 @@
   .description {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: rem(60);
   }
 
   .item {
@@ -222,15 +264,32 @@
     color: var(--a-text-light);
   }
 
+  .bedSelect {
+    margin-bottom: rem(20);
+
+    :global(.p-select) {
+      width: 100%;
+      min-height: rem(44);
+      padding: rem(8) rem(16);
+      font-family: "Inter", sans-serif;
+      font-size: rem(14);
+      color: var(--a-text-dark);
+      background: var(--a-text-white);
+      border: rem(1) solid var(--a-border-primary);
+      border-radius: var(--a-borderR--input);
+    }
+  }
+
   .footer {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    flex-direction: column;
+    width: 100%;
   }
 
   .priceBlock {
     display: flex;
     flex-direction: column;
+    margin-bottom: rem(12);
   }
 
   .guestInfo {
@@ -239,6 +298,24 @@
     font-size: rem(14);
     font-weight: 500;
     color: var(--a-text-light);
+  }
+
+  .guestGift {
+    display: flex;
+    align-items: center;
+    gap: rem(4);
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
+    color: var(--a-text-accent);
+    text-decoration: underline;
+  }
+
+  .giftIcon {
+    width: rem(16);
+    height: rem(16);
+    margin-right: rem(4);
+    vertical-align: middle;
   }
 
   .price {
@@ -252,14 +329,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    max-width: rem(274);
     height: fit-content;
+    margin: 0 auto;
     padding: rem(8) rem(16);
     border: none;
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
     color: var(--a-white);
     font-family: "Inter", sans-serif;
-    font-size: rem(14);
+    font-size: rem(18);
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;

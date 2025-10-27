@@ -1,4 +1,4 @@
-import type { PackageResource, RoomTariff } from "./room";
+import type { PackageResource, Room } from "./room";
 
 interface Bed {
   id: number;
@@ -7,7 +7,7 @@ interface Bed {
 
 interface SearchResponse {
   available: boolean;
-  rooms?: RoomTariff[];
+  rooms?: Room[];
   totalPrice?: number;
   message?: string;
   packages?: PackageResource[];
