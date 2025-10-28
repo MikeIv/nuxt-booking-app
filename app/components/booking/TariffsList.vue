@@ -1,12 +1,8 @@
 <script setup lang="ts">
-  interface Tariff {
-    title: string;
-    packages?: string[];
-    price: number;
-  }
+  import type { RoomTariff } from "~/types/room";
 
   interface Props {
-    tariffs: Tariff[];
+    tariffs: RoomTariff[];
   }
 
   defineProps<Props>();
@@ -30,11 +26,7 @@
       >
         <h4 :class="$style.tariffName">{{ tariff.title }}</h4>
 
-        <!-- Пакеты тарифа -->
-        <div
-          v-if="tariff.packages && tariff.packages.length > 0"
-          :class="$style.tariffPackages"
-        >
+        <div v-if="tariff.packages?.length" :class="$style.tariffPackages">
           <h6 :class="$style.packagesTitle">Включенные пакеты:</h6>
           <div :class="$style.packagesList">
             <span
@@ -42,7 +34,7 @@
               :key="pkgIndex"
               :class="$style.packageItem"
             >
-              {{ pkg }}
+              {{ pkg.title }}
             </span>
           </div>
         </div>

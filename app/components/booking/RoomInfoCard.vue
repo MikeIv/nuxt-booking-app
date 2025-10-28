@@ -1,8 +1,8 @@
 <script setup lang="ts">
-  import type { RoomTariff } from "~/types/room";
+  import type { Room } from "~/types/room";
 
   interface Props {
-    room: RoomTariff;
+    room: Room;
     expanded?: boolean;
   }
 
@@ -13,7 +13,7 @@
   }>();
 
   const visibleAmenities = computed(() => {
-    const amenities = props.room.packages || [];
+    const amenities = props.room.amenities || [];
     return props.expanded ? amenities : amenities.slice(0, 4);
   });
 
@@ -74,11 +74,11 @@
             <span>{{ amenity.title }}</span>
           </li>
           <button
-            v-if="!props.expanded && (room.packages?.length || 0) > 4"
+            v-if="!props.expanded && (room.amenities?.length || 0) > 4"
             :class="$style.amenitiesListShow"
             @click="_toggleExpand"
           >
-            + ещё {{ (room.packages?.length || 0) - 4 }}
+            + ещё {{ (room.amenities?.length || 0) - 4 }}
           </button>
         </ul>
       </div>

@@ -1,19 +1,17 @@
 <script setup lang="ts">
-  interface Service {
-    title: string;
-  }
+  import type { PackageResource } from "~/types/room";
 
   interface Props {
-    services: Service[];
+    services: PackageResource[];
     isServicePopupOpen: boolean;
   }
 
   defineProps<Props>();
   const emit = defineEmits<{
-    "open-service-popup": [event: MouseEvent, service: Service];
+    "open-service-popup": [event: MouseEvent, service: PackageResource];
   }>();
 
-  const openServicePopup = (event: MouseEvent, service: Service) => {
+  const openServicePopup = (event: MouseEvent, service: PackageResource) => {
     event.stopPropagation();
     emit("open-service-popup", event, service);
   };
