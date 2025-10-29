@@ -70,6 +70,9 @@
       "eslint --fix",
       "prettier --write"
     ],
+    "app/assets/styles/variables/*.scss": [
+      "prettier --write"
+    ],
     "*.{css,scss}": [
       "prettier --write",
       "stylelint --fix --allow-empty-input"
