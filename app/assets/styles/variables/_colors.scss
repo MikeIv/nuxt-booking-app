@@ -6,9 +6,9 @@
   --ui-bgAccent: #a02525;
   --ui-bgDark: var(--a-black);
 
-  //  --ui-bg: var(--a-white);--ui-bg--ui-bg
+  //  --ui-bg: var(--a-white);--ui-bg
 
-  --ui-color-primary-50: #f9f6f3;--ui-color-primary-50
+  --ui-color-primary-50: #f9f6f3;
   --ui-color-primary-100: #f2ece2;
   --ui-color-primary-200: #e3d6c5;
   --ui-color-primary-300: #d1bba0;
@@ -54,11 +54,13 @@
   --ui-icon: #a9a9a9;
 
   // Base
+
   --a-white: #fff;Base--a-white
   --a-black: #000;
   --a-base: #bf9d7c;
 
   // Typography
+
   --ui-text: var(--a-white);Typography--ui-text
   --a-text-white: #fff;
   --a-text-primary: #bf9d7c;
@@ -67,6 +69,7 @@
   --a-text-accent: #a02525;
 
   // Background
+
   --a-whiteBg: #fff;Background--a-whiteBg
   --a-blackBg: #000;
   --a-mainBg: #e5e5e5;
@@ -79,6 +82,7 @@
   --a-btnAccentBg: #a02525;
 
   // Border
+
   --a-border: #e5e5e5;Border--a-border
   --a-border-white: #e5e5e5;
   --a-border-primary: #bf9d7c;
@@ -87,10 +91,12 @@
   --a-border-accent: #a02525;
 
   // input
+
   --ui-input-menu-background: #fff;input--ui-input-menu-background
   --ui-input-menu-border-color: #bf9d7c;
 
   // Toast
+
   --p-toast-warn-background: #f6ebe9;Toast--p-toast-warn-background
   --p-toast-warn-border-color: #c77266;
   --p-toast-warn-color: #a02525;

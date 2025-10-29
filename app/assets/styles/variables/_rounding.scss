@@ -1,12 +1,18 @@
 // Скругления
 :root {
-  --a-borderR--x6: 6px; // Радиус скругления для блока
-  --a-borderR--x10: 10px;--a-borderR--x10 // Радиус скругления для блока
-  --a-borderR--card: 22px;--a-borderR--card // Радиус скругления для блока
-  --a-borderR--btn: 10px;--a-borderR--btn // Радиус скругления для кнопок
-  --a-borderR--input: 16px;--a-borderR--input // Радиус скругления для инпута
-  --a-borderR--dialog: 40px;--a-borderR--dialog // Радиус скругления для форм авторизации
+  // Радиус скругления для блока
+  --a-borderR--x6: 6px;--a-borderR--x6
+  // Радиус скругления для блока
+  --a-borderR--x10: 10px;--a-borderR--x10
+  // Радиус скругления для блока
+  --a-borderR--card: 22px;--a-borderR--card
+  // Радиус скругления для кнопок
+  --a-borderR--btn: 10px;--a-borderR--btn
+  // Радиус скругления для инпута
+  --a-borderR--input: 16px;--a-borderR--input
+  // Радиус скругления для форм авторизации
+  --a-borderR--dialog: 40px;--a-borderR--dialog
 
-  // PrimeVue
-  --p-toast-border-radius: 10px;PrimeVue--p-toast-border-radius // Радиус скругления для блока
+  // PrimeVue — радиус скругления для блока
+  --p-toast-border-radius: 10px;PrimeVue--p-toast-border-radius
 }
