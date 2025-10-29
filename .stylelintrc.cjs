@@ -1,5 +1,18 @@
 module.exports = {
-  customSyntax: "postcss-html",
+  overrides: [
+    {
+      files: ["**/*.vue"],
+      customSyntax: "postcss-html",
+    },
+    {
+      files: ["**/*.scss"],
+      customSyntax: "postcss-scss",
+    },
+  ],
+  extends: [
+    "stylelint-config-standard-scss",
+    "stylelint-config-recommended-vue",
+  ],
   rules: {
     indentation: null,
     "custom-property-pattern": null,
