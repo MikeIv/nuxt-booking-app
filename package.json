@@ -72,7 +72,7 @@
     ],
     "*.{css,scss}": [
       "prettier --write",
-      "stylelint --fix"
+      "stylelint --fix --allow-empty-input"
     ]
   },
   "prettier": {

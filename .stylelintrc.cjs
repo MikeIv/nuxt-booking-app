@@ -1,12 +1,9 @@
 module.exports = {
+  customSyntax: "postcss-scss",
   overrides: [
     {
       files: ["**/*.vue"],
       customSyntax: "postcss-html",
-    },
-    {
-      files: ["**/*.scss"],
-      customSyntax: "postcss-scss",
     },
   ],
   extends: [
