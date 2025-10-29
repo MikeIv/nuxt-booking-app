@@ -67,7 +67,7 @@
               <img
                 :src="item.image"
                 class="rounded-lg object-cover w-full h-full"
-              />
+              >
               <div
                 class="absolute bottom-0 left-0 right-0 bg-white bg-opacity-50 text-black p-2 text-center"
               >

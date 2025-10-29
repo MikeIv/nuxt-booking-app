@@ -77,7 +77,7 @@
           :style="{ height: props.height }"
           @load="imageLoaded"
           @error="imageError"
-        />
+        >
         <div
           v-if="imageLoading"
           :class="$style.skeletonLoader"
@@ -93,7 +93,7 @@
           :alt="altText"
           :class="$style.carouselImage"
           :style="{ height }"
-        />
+        >
       </div>
     </template>
   </Carousel>

@@ -543,7 +543,7 @@
               <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
               <div :class="$style.paymentBlock">
                 <div :class="$style.inputItem">
-                  <Dropdown
+                  <Select
                     v-model="formData.paymentMethod"
                     :options="paymentMethods"
                     option-label="label"

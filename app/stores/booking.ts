@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
-import type { RoomTariff } from "~/types/room";
+import type { StateTree } from "pinia";
+import type { PersistenceOptions } from "pinia-plugin-persistedstate";
+import type { Room } from "~/types/room";
 import type { SearchResponse, BookingData } from "~/types/booking";
 
 interface GuestInfo {
@@ -14,10 +16,10 @@ export const useBookingStore = defineStore(
     const date = ref<[Date, Date] | null>(null);
     const guests = ref<{
       rooms: number;
-      roomList: { adults: number; children: number }[];
+      roomList: { adults: number; children: number; childrenAges: number[] }[];
     }>({
       rooms: 1,
-      roomList: [{ adults: 1, children: 0 }],
+      roomList: [{ adults: 1, children: 0, childrenAges: [] }],
     });
 
     const promoCode = ref("");
@@ -27,12 +29,15 @@ export const useBookingStore = defineStore(
     const searchResults = ref<SearchResponse | null>(null);
     const childrenAges = ref<number[]>([]);
     const selectedRoomType = ref<string | null>(null);
-    const roomTariffs = ref<RoomTariff[]>([]);
+    const roomTariffs = ref<Room[]>([]);
     const loadingMessage = ref("Загружаем данные о номерах...");
     const roomList = ref<GuestInfo[]>([]);
 
     const totalGuests = computed(() => {
-      return guests.value.adults + guests.value.children;
+      const rooms = guests.value.roomList ?? [];
+      const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
+      const totalChildren = rooms.reduce((sum, room) => sum + room.children, 0);
+      return totalAdults + totalChildren;
     });
 
     const setLoading = (visible: boolean, message?: string) => {
@@ -50,12 +55,12 @@ export const useBookingStore = defineStore(
       childrenAges.value = ages;
     }
 
-    const formatDate = (date: Date | string): string => {
-      if (typeof date === "string") return date;
-      if (!(date instanceof Date) || isNaN(date.getTime())) {
-        throw new Error(`Неверный формат даты: ${date}`);
+    const formatDate = (value: Date | string): string => {
+      if (typeof value === "string") return value;
+      if (!(value instanceof Date) || isNaN(value.getTime())) {
+        throw new Error(`Неверный формат даты: ${String(value)}`);
       }
-      return date.toISOString().split("T")[0];
+      return value.toISOString().substring(0, 10);
     };
 
     function validateSearchParams() {
@@ -64,7 +69,9 @@ export const useBookingStore = defineStore(
         isServerRequest.value = false;
         throw new Error("Укажите даты");
       }
-      if (guests.value.adults === 0) {
+      const rooms = guests.value.roomList ?? [];
+      const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
+      if (totalAdults === 0) {
         setLoading(false);
         isServerRequest.value = false;
         throw new Error("Укажите количество гостей");
@@ -125,7 +132,7 @@ export const useBookingStore = defineStore(
         if (response.success && response.payload) {
           searchResults.value = response.payload;
           if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
-            roomTariffs.value = response.payload.rooms;
+            roomTariffs.value = response.payload.rooms as Room[];
           } else {
             roomTariffs.value = [];
           }
@@ -168,7 +175,7 @@ export const useBookingStore = defineStore(
           { signal: AbortSignal.timeout(10000) },
         );
 
-        if (response.success) {
+        if (response.success && response.payload) {
           return response.payload.booking;
         } else {
           throw new Error(response.message || "Ошибка при создании брони");
@@ -194,7 +201,7 @@ export const useBookingStore = defineStore(
           signal: AbortSignal.timeout(10000),
         });
 
-        if (response.success) {
+        if (response.success && response.payload) {
           return response.payload.booking;
         } else {
           throw new Error(
@@ -231,7 +238,7 @@ export const useBookingStore = defineStore(
         if (response.success && response.payload) {
           searchResults.value = response.payload;
           if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
-            roomTariffs.value = response.payload.rooms;
+            roomTariffs.value = response.payload.rooms as Room[];
           } else {
             roomTariffs.value = [];
           }
@@ -250,7 +257,10 @@ export const useBookingStore = defineStore(
 
     function forceReset() {
       date.value = null;
-      guests.value = { rooms: 1, adults: 1, children: 0 };
+      guests.value = {
+        rooms: 1,
+        roomList: [{ adults: 1, children: 0, childrenAges: [] }],
+      };
       promoCode.value = "";
       error.value = null;
       searchResults.value = null;
@@ -298,6 +308,7 @@ export const useBookingStore = defineStore(
     };
   },
   {
+    // типизацию persist приводим к совместимой форме
     persist: {
       key: "booking-store",
       paths: [
@@ -311,16 +322,18 @@ export const useBookingStore = defineStore(
         "roomList",
       ],
       serializer: {
-        serialize: (state) => {
-          const serialized = { ...state };
+        serialize: (state: StateTree) => {
+          const serialized = { ...state } as Record<string, unknown> & {
+            date?: unknown;
+          };
           if (serialized.date && Array.isArray(serialized.date)) {
-            serialized.date = serialized.date.map((d) =>
+            serialized.date = (serialized.date as unknown[]).map((d) =>
               d instanceof Date ? d.toISOString() : d,
             );
           }
           return JSON.stringify(serialized);
         },
-        deserialize: (str) => {
+        deserialize: (str: string) => {
           const state = JSON.parse(str);
           if (state.date && Array.isArray(state.date)) {
             state.date = state.date.map((d: string | Date) =>
@@ -330,6 +343,6 @@ export const useBookingStore = defineStore(
           return state;
         },
       },
-    },
+    } as PersistenceOptions,
   },
 );

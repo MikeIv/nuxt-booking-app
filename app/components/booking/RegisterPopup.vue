@@ -148,7 +148,7 @@
               type="text"
               placeholder="Фамилия"
               :class="[$style.input, { [$style.inputError]: errors.surname }]"
-            />
+            >
             <small v-if="errors.surname" :class="$style.errorText">{{
               errors.surname
             }}</small>
@@ -161,7 +161,7 @@
               type="text"
               placeholder="Имя"
               :class="[$style.input, { [$style.inputError]: errors.name }]"
-            />
+            >
             <small v-if="errors.name" :class="$style.errorText">{{
               errors.name
             }}</small>
@@ -175,7 +175,7 @@
             type="text"
             placeholder="Отчество (необязательно)"
             :class="[$style.input]"
-          />
+          >
         </div>
 
         <div :class="$style.inputBlock">
@@ -185,7 +185,7 @@
             type="tel"
             placeholder="Телефон"
             :class="[$style.input, { [$style.inputError]: errors.phone }]"
-          />
+          >
           <small v-if="errors.phone" :class="$style.errorText">{{
             errors.phone
           }}</small>
@@ -198,7 +198,7 @@
             type="email"
             placeholder="Почта"
             :class="[$style.input, { [$style.inputError]: errors.email }]"
-          />
+          >
           <small v-if="errors.email" :class="$style.errorText">{{
             errors.email
           }}</small>
@@ -222,7 +222,7 @@
                 $style.passwordInput,
                 { [$style.inputError]: errors.password },
               ]"
-            />
+            >
             <button
               type="button"
               :class="$style.togglePassword"
@@ -250,7 +250,7 @@
                 $style.passwordInput,
                 { [$style.inputError]: errors.password_confirmation },
               ]"
-            />
+            >
           </div>
           <small
             v-if="errors.password_confirmation"
@@ -266,7 +266,7 @@
               name="agreeTerms"
               type="checkbox"
               :class="$style.checkbox"
-            />
+            >
             <span :class="$style.checkboxText">
               Я даю согласие с&nbsp;правилами
               онлайн-бронирования,&nbsp;обработкой персональных данных

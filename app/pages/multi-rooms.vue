@@ -9,23 +9,32 @@
   const router = useRouter();
   const toast = useToast();
   const bookingStore = useBookingStore();
-  const { searchResults, selectedRoomType, roomTariffs, date, guests } =
+  const { searchResults, roomTariffs, date, guests } =
     storeToRefs(bookingStore);
+
   const loading = ref(true);
   const error = ref<Error | null>(null);
-  const isPopupOpen = ref(false);
   const isServicePopupOpen = ref(false);
   const selectedService = ref<PackageResource | null>(null);
-  const expandedRooms = ref<Record<string, boolean>>({});
 
-  const openPopup = (event: MouseEvent) => {
-    event.stopPropagation();
-    isPopupOpen.value = true;
-  };
+  const selectedView = ref<number | undefined>(undefined);
+  const selectedBalcony = ref<number | undefined>(undefined);
 
-  const closePopup = () => {
-    isPopupOpen.value = false;
-  };
+  const viewOptions = computed(() => {
+    return [
+      { id: 1, title: "Парк" },
+      { id: 2, title: "Город" },
+      { id: 3, title: "Море" },
+      { id: 4, title: "Внутренний двор" },
+    ];
+  });
+
+  const balconyOptions = computed(() => {
+    return [
+      { id: 1, title: "Есть балкон" },
+      { id: 2, title: "Нет балкона" },
+    ];
+  });
 
   const openServicePopup = (event: MouseEvent, service: PackageResource) => {
     event.stopPropagation();
@@ -38,46 +47,10 @@
     selectedService.value = null;
   };
 
-  const toggleExpand = (roomTitle: string) => {
-    expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
-  };
-
-  const handleTariff = () => {
-    if (!selectedRoomType.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Выберите тип номера перед продолжением",
-        life: 3000,
-      });
-      return;
-    }
-    router.push("/personal");
-  };
-
-  const goBackToRooms = async () => {
-    bookingStore.setLoading(true, "Загружаем номера...");
-    bookingStore.selectedRoomType = null;
-    bookingStore.searchResults = null;
-    bookingStore.roomTariffs = [];
-    try {
-      await router.push("/rooms");
-      await nextTick();
-    } finally {
-      bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
-    }
-  };
-
   onMounted(async () => {
-    // Если выбрано больше одного номера — редирект на мультибронирование
     const roomsCount = guests.value?.roomList
       ? guests.value.roomList.length
       : guests.value?.rooms || 1;
-    if (roomsCount > 1) {
-      router.push("/multi-rooms");
-      return;
-    }
 
     const totalAdults = guests.value?.roomList
       ? guests.value.roomList.reduce((sum, r) => sum + r.adults, 0)
@@ -94,20 +67,14 @@
       return;
     }
 
-    if (!selectedRoomType.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Тип номера не выбран",
-        life: 3000,
-      });
-      router.push("/rooms");
+    if (roomsCount <= 1) {
+      router.push("/rooms/tariff");
       return;
     }
 
     try {
       loading.value = true;
-      await bookingStore.searchWithRoomType(selectedRoomType.value);
+      await bookingStore.search();
     } catch (err: unknown) {
       error.value = err as Error;
       toast.add({
@@ -125,19 +92,30 @@
 
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.header">Выбор тарифа для номера</h1>
+    <h1 :class="$style.header">Выбор номеров и тарифов</h1>
 
     <Booking />
-    <BookingAdvantages />
 
-    <section :class="$style.tariffBlock">
-      <Button
-        label="Назад к выбору номеров"
-        :class="$style.return"
-        unstyled
-        @click="goBackToRooms"
+    <div :class="$style.filtersWrapper">
+      <Select
+        v-model="selectedView"
+        :options="viewOptions"
+        option-label="title"
+        option-value="id"
+        placeholder="Вид из окна"
+        :class="$style.filterSelect"
       />
+      <Select
+        v-model="selectedBalcony"
+        :options="balconyOptions"
+        option-label="title"
+        option-value="id"
+        placeholder="Балкон"
+        :class="$style.filterSelect"
+      />
+    </div>
 
+    <section :class="$style.block">
       <div v-if="loading" :class="$style.loadingContainer">
         <div :class="$style.spinner" />
         <p>Загрузка тарифов...</p>
@@ -148,41 +126,21 @@
       </div>
 
       <template v-else>
-        <h2 :class="$style.tariffTitle">Выберите тариф</h2>
+        <div v-if="roomTariffs?.length > 0" :class="$style.cards">
+          <BookingMultiCard
+            v-for="(room, idx) in roomTariffs"
+            :key="idx"
+            :room="room"
+            :services="searchResults?.packages || []"
+            @open-service-popup="openServicePopup"
+          />
 
-        <div v-if="roomTariffs?.length > 0" :class="$style.tariffs">
-          <div
-            v-for="(room, index) in roomTariffs"
-            :key="index"
-            :class="$style.tariffCard"
-          >
-            <BookingRoomInfoCard
-              :room="room"
-              :expanded="expandedRooms[room.title || '']"
-              @open-popup="openPopup"
-              @toggle-expand="toggleExpand"
-            />
-            <BookingServicesList
-              :services="searchResults?.packages || []"
-              :is-service-popup-open="isServicePopupOpen"
-              @open-service-popup="openServicePopup"
-            />
-            <BookingTariffsList
-              :tariffs="room.tariffs || []"
-              @book-tariff="handleTariff"
-            />
-            <BookingRoomPopup
-              :room="room"
-              :is-open="isPopupOpen"
-              @close="closePopup"
-            />
-            <BookingServicePopup
-              v-if="selectedService"
-              :service="selectedService"
-              :is-open="isServicePopupOpen"
-              @close="closeServicePopup"
-            />
-          </div>
+          <BookingServicePopup
+            v-if="selectedService"
+            :service="selectedService"
+            :is-open="isServicePopupOpen"
+            @close="closeServicePopup"
+          />
         </div>
 
         <div
@@ -215,21 +173,35 @@
     justify-content: center;
     align-items: center;
     margin: rem(40) 0;
+    text-align: center;
     font-family: "Lora", serif;
-    font-size: rem(34);
+    font-size: rem(28);
     font-weight: 600;
     color: var(--a-black);
   }
 
-  .tariffBlock {
+  .block {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: rem(40) 0;
+    padding: 0 0 rem(40) 0;
 
     @media (min-width: #{size.$desktopMedium}) {
       max-width: #{size.$desktop};
       margin: 0 auto;
+    }
+  }
+
+  .filtersWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+    margin-bottom: rem(20);
+    width: 100%;
+
+    @media (min-width: #{size.$tabletMin}) {
+      flex-direction: row;
+      gap: rem(24);
     }
   }
 
@@ -254,26 +226,58 @@
     }
   }
 
-  .tariffTitle {
-    margin-bottom: rem(40);
-    text-align: center;
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: 600;
-    color: var(--a-text-dark);
-    text-transform: uppercase;
-  }
-
-  .tariffs {
+  .cards {
     display: flex;
     flex-direction: column;
     gap: rem(32);
     margin-bottom: rem(40);
   }
 
-  .tariffCard {
-    display: flex;
-    flex-direction: column;
+  .filterSelect {
+    color: var(--a-black);
+    width: 100%;
+
+    @media (min-width: #{size.$mobile}) {
+      max-width: rem(368);
+    }
+
+    &:global(.p-select) {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-height: rem(54);
+      padding: rem(6) rem(24);
+      font-family: "Inter", sans-serif;
+      font-size: rem(26);
+      background: var(--a-text-white);
+      border: rem(1) solid var(--a-border-primary);
+      border-radius: var(--a-borderR--input);
+      outline: none;
+
+      &:hover {
+        border-color: var(--a-border-primary);
+      }
+    }
+
+    :global {
+      .p-select-label {
+        font-size: rem(26);
+      }
+      .p-select-clear-icon {
+        top: 48%;
+        right: rem(54);
+        width: rem(20);
+        color: var(--a-text-accent);
+      }
+      .p-select-dropdown {
+        width: rem(22);
+        color: var(--a-text-light);
+
+        svg {
+          width: rem(22);
+        }
+      }
+    }
   }
 
   .noResults {

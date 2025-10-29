@@ -44,7 +44,7 @@ ul {
   align-items: center;
   min-height: rem(44);
   padding: rem(12) rem(44);
-  font-family: "Inter", sans-serif;
+  font-family: Inter, sans-serif;
   font-size: rem(18);
   font-weight: 400;
   line-height: 1;
@@ -87,13 +87,14 @@ ul {
   width: 100%;
   min-height: rem(54);
   padding: rem(12) rem(24);
-  font-family: "Inter", sans-serif;
+  font-family: Inter, sans-serif;
   font-size: rem(16);
   color: var(--a-black);
   background: var(--a-text-white);
   border: rem(1) solid var(--a-border-primary);
   border-radius: var(--a-borderR--input);
 }
+
 .p-select-option {
   padding: rem(6) 0 !important;
 
@@ -132,17 +133,19 @@ ul {
 .section-shadow {
   padding: rem(22) rem(10);
   border-radius: var(--a-borderR--card);
-  box-shadow: rem(4) rem(4) rem(30) rem(-10) rgba(0, 0, 0, 0.1);
+  box-shadow: rem(4) rem(4) rem(30) rem(-10) rgb(0 0 0 / 10%);
   background: var(--a-white);
 
   @media (min-width: #{with.$tablet}) {
     padding: rem(22) rem(14);
   }
+
   @media (min-width: #{with.$desktopMin}) {
     padding: rem(22) rem(16);
   }
+
   @media (min-width: #{with.$desktop}) {
-    padding: rem(22) rem(22);
+    padding: rem(22);
   }
 }
 
@@ -150,9 +153,11 @@ ul {
 .p-toast-message {
   border: 1px solid var(--p-toast-warn-border-color);
 }
+
 .p-toast-message-icon {
   color: transparent;
 }
+
 .p-toast-summary {
   color: var(--a-text-dark);
 }

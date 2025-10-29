@@ -78,7 +78,7 @@
         <div :class="$style.cellForm">
           <p :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</p>
           <div :class="$style.email">
-            <input :class="$style.emailInput" placeholder="E-MAIL" />
+            <input :class="$style.emailInput" placeholder="E-MAIL" >
           </div>
           <div :class="$style.agreement">
             <UCheckbox
@@ -137,13 +137,13 @@
               srcset="/images/footer/qr.svg 1x, /images/footer/qr.svg 2x"
               alt="карта"
               :class="$style.qrImgItem"
-            />
+            >
           </div>
           <div :class="$style.qrText">
             QR-код
-            <br />
+            <br >
             для перехода
-            <br />
+            <br >
             на сайт
           </div>
         </div>
@@ -167,7 +167,7 @@
         srcset="/images/footer/map.svg 1x, /images/footer/map.svg 2x"
         alt="карта"
         :class="$style.imagePic"
-      />
+      >
     </template>
   </LayoutContentBlock>
 </template>

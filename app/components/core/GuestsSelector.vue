@@ -162,12 +162,12 @@
         :class="$style.customInput"
         :aria-label="`Гости: ${summaryString}`"
         :value="summaryString"
-      />
+      >
       <span :class="$style.label">Гости</span>
       <UIcon name="i-chevron-down" :class="$style.chevronIcon" />
     </div>
 
-    <OverlayPanel
+    <Popover
       ref="overlayRef"
       class="guests-dropdown"
       :pt="{
@@ -229,7 +229,7 @@
             </div>
           </div>
 
-          <hr v-if="guests.rooms > 1" :class="$style.line" />
+          <hr v-if="guests.rooms > 1" :class="$style.line" >
 
           <div :class="$style.guestOption">
             <div :class="$style.nameBlock">
@@ -300,7 +300,7 @@
           >Готово</Button
         >
       </div>
-    </OverlayPanel>
+    </Popover>
   </div>
 </template>
 

@@ -6,7 +6,7 @@
   <section :class="$style.content">
     <h1 :class="$style.title">
       Многофункциональный гостиничный
-      <br />
+      <br >
       комплекс «РОССИЯ»
     </h1>
     <p :class="$style.subtitle">coming soon</p>
@@ -15,13 +15,13 @@
       srcset="/images/knocker.png 1x, /images/knocker.png 2x"
       alt="узор"
       :class="$style.image"
-    />
+    >
     <div :class="[$style.textBlock, { [$style.visible]: isVisible }]">
       <p :class="$style.text">гостиница класса люкс</p>
       <p :class="$style.text">премиальный СПА</p>
       <p :class="$style.text">
         апартаменты класса люкс
-        <br />
+        <br >
         с видом на Кремль
       </p>
     </div>

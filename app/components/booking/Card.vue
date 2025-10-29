@@ -65,7 +65,12 @@
 
     bookingStore.setSelectedRoomType(props.room.room_type_code);
 
-    await router.push("/rooms/tariff");
+    const roomsCount = bookingStore.guests?.roomList
+      ? bookingStore.guests.roomList.length
+      : bookingStore.guests?.rooms || 1;
+
+    const target = roomsCount > 1 ? "/multi-rooms" : "/rooms/tariff";
+    await router.push(target);
   };
 </script>
 
