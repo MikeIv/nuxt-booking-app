@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "stylelint": "stylelint \"**/*.{vue,scss}\"",
+    "stylelint:fix": "stylelint \"**/*.{vue,scss}\" --fix",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -48,10 +50,14 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "postcss": "^8.5.6",
+    "postcss-html": "^1.8.0",
     "prettier": "^3.6.2",
     "sass": "^1.89.2",
     "sass-embedded": "^1.89.2",
     "sass-loader": "^16.0.5",
+    "stylelint": "^16.25.0",
+    "stylelint-config-recommended-vue": "^1.6.1",
+    "stylelint-config-standard-scss": "^16.0.0",
     "typescript": "^5.8.3",
     "vite-svg-loader": "^5.1.0"
   },
@@ -59,11 +65,13 @@
     "node": "^20.19.0 || >=22.14.0"
   },
   "lint-staged": {
-    "*.{js,ts,vue}": [
+    "*.{js,ts}": [
+      "eslint --fix",
       "prettier --write"
     ],
     "*.{css,scss}": [
-      "prettier --write"
+      "prettier --write",
+      "stylelint --fix"
     ]
   },
   "prettier": {

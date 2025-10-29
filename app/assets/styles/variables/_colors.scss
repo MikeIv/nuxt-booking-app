@@ -3,10 +3,10 @@
   --secondary: #686062;
   --success: #7dbf8a;
   --info: #a02525;
-
   --ui-bgAccent: #a02525;
   --ui-bgDark: var(--a-black);
-  //  --ui-bg: var(--a-white);
+
+  //  --ui-bg: var(--a-white);--ui-bg
 
   --ui-color-primary-50: #f9f6f3;
   --ui-color-primary-100: #f2ece2;
@@ -19,7 +19,6 @@
   --ui-color-primary-800: #6e4c3e;
   --ui-color-primary-900: #5a4034;
   --ui-color-primary-950: #30201a;
-
   --ui-color-secondary-50: #f3f3f3;
   --ui-color-secondary-100: #e2dfdf;
   --ui-color-secondary-200: #c6c2c2;
@@ -31,7 +30,6 @@
   --ui-color-secondary-800: #4c4749;
   --ui-color-secondary-900: #434042;
   --ui-color-secondary-950: #252324;
-
   --ui-color-success-50: #f0f9f1;
   --ui-color-success-100: #dcefdd;
   --ui-color-success-200: #bbdfbf;
@@ -43,7 +41,6 @@
   --ui-color-success-800: #1d482b;
   --ui-color-success-900: #193b24;
   --ui-color-success-950: #0d2114;
-
   --ui-color-accent-a10: #f6e5e2;
   --ui-color-accent-a15: #f4dbd7;
   --ui-color-accent-a20: #e7b8b0;
@@ -53,26 +50,24 @@
   --ui-color-accent-a50: #a02525;
   --ui-color-accent-a60: #842220;
   --ui-color-accent-a65: #691f1b;
-
   --ui-placeholder: #0d2114;
-
   --ui-icon: #a9a9a9;
 
   // Base
-  --a-white: #fff;
+  --a-white: #fff;Base--a-white
   --a-black: #000;
   --a-base: #bf9d7c;
 
   // Typography
-  --ui-text: var(--a-white);
-  --a-text-white: #ffffff;
+  --ui-text: var(--a-white);Typography--ui-text
+  --a-text-white: #fff;
   --a-text-primary: #bf9d7c;
   --a-text-light: #a9a9a9;
-  --a-text-dark: #000000;
+  --a-text-dark: #000;
   --a-text-accent: #a02525;
 
   // Background
-  --a-whiteBg: #fff;
+  --a-whiteBg: #fff;Background--a-whiteBg
   --a-blackBg: #000;
   --a-mainBg: #e5e5e5;
   --a-primaryBg: #bf9d7c;
@@ -84,19 +79,19 @@
   --a-btnAccentBg: #a02525;
 
   // Border
-  --a-border: #e5e5e5;
+  --a-border: #e5e5e5;Border--a-border
   --a-border-white: #e5e5e5;
   --a-border-primary: #bf9d7c;
-  --a-border-dark: #000000;
+  --a-border-dark: #000;
   --a-border-light: #a9a9a9;
   --a-border-accent: #a02525;
 
   // input
-  --ui-input-menu-background: #fff;
+  --ui-input-menu-background: #fff;input--ui-input-menu-background
   --ui-input-menu-border-color: #bf9d7c;
 
   // Toast
-  --p-toast-warn-background: #f6ebe9;
+  --p-toast-warn-background: #f6ebe9;Toast--p-toast-warn-background
   --p-toast-warn-border-color: #c77266;
   --p-toast-warn-color: #a02525;
   --p-toast-warn-shadow: #a02525;

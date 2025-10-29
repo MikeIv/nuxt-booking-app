@@ -42,8 +42,13 @@
 
     try {
       await bookingStore.search(true);
-      if (route.path === "/") {
-        await router.push("/rooms");
+      const roomsCount = guests.value?.roomList
+        ? guests.value.roomList.length
+        : guests.value?.rooms || 1;
+
+      const target = roomsCount > 1 ? "/multi-rooms" : "/rooms";
+      if (route.path !== target) {
+        await router.push(target);
         await nextTick();
       }
       bookingStore.setLoading(false);
@@ -59,7 +64,7 @@
       bookingStore.isServerRequest = false;
     }
 
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta?.env?.DEV) {
       console.log("Поиск:", {
         date: date.value,
         guests: guests.value,

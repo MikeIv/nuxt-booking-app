@@ -25,7 +25,7 @@
         "
         alt="гостиница"
         :class="$style.image"
-      />
+      >
     </template>
     <template #right-column>
       <h2 :class="$style.infoTitle">Отель класса люкс</h2>
@@ -33,7 +33,7 @@
         <h3 :class="$style.subTitle">156 номеров</h3>
         <p :class="$style.text">
           от 41 кв.м., в том числе номера с уникальной купольной архитектурой
-          <br />и аттиковыми окнами
+          <br >и аттиковыми окнами
         </p>
       </div>
     </template>

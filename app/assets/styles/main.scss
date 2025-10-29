@@ -3,18 +3,17 @@
 @use "variables/colors";
 @use "variables/rounding";
 @use "variables/primevue";
-
 @use "tailwindcss" as *;
 @use "@nuxt/ui" as *;
 
-/*@tailwind base;
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;*/
+@tailwind utilities; */
 
 :root {
   --system-font:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    -apple-system, blinkmacsystemfont, "Segoe UI", roboto, "Helvetica Neue",
+    arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
     "Noto Color Emoji", sans-serif;
 }
 

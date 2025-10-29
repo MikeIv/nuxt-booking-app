@@ -167,7 +167,7 @@
             type="email"
             placeholder="Почта"
             :class="[$style.input, { [$style.inputError]: emailError }]"
-          />
+          >
           <small v-if="emailError" :class="$style.errorText">{{
             emailError
           }}</small>
@@ -186,7 +186,7 @@
               :type="showPassword ? 'text' : 'password'"
               placeholder="Пароль"
               :class="$style.passwordInput"
-            />
+            >
             <button
               type="button"
               :class="$style.togglePassword"

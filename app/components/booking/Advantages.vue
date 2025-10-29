@@ -21,7 +21,7 @@
       </div>
     </div>
     <div :class="$style.imgBlock">
-      <img src="/images/tariff/auth.jpg" alt="номер" />
+      <img src="/images/tariff/auth.jpg" alt="номер" >
     </div>
   </section>
 </template>

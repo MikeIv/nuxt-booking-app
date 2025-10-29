@@ -57,7 +57,7 @@
                 height="370"
                 :class="$style.carouselImage"
                 loading="lazy"
-              />
+              >
             </div>
           </UCarousel>
         </div>

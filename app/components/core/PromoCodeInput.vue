@@ -22,7 +22,7 @@
       @input="
         emit('update:modelValue', ($event.target as HTMLInputElement).value)
       "
-    />
+    >
     <span :class="$style.label">{{ placeholderText }}</span>
   </div>
 </template>

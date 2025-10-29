@@ -51,7 +51,7 @@
               :class="$style.input"
               type="text"
               @input="checkChanges"
-            />
+            >
           </div>
 
           <div :class="$style.field">
@@ -61,7 +61,7 @@
               :class="$style.input"
               type="text"
               @input="checkChanges"
-            />
+            >
           </div>
 
           <div :class="$style.field">
@@ -71,7 +71,7 @@
               :class="$style.input"
               type="tel"
               @input="checkChanges"
-            />
+            >
           </div>
 
           <div :class="$style.field">
@@ -81,7 +81,7 @@
               :class="$style.input"
               type="email"
               @input="checkChanges"
-            />
+            >
           </div>
 
           <div :class="$style.field">
@@ -91,7 +91,7 @@
               :class="$style.input"
               type="text"
               @input="checkChanges"
-            />
+            >
           </div>
 
           <Button

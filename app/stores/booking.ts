@@ -16,10 +16,10 @@ export const useBookingStore = defineStore(
     const date = ref<[Date, Date] | null>(null);
     const guests = ref<{
       rooms: number;
-      roomList: { adults: number; children: number }[];
+      roomList: { adults: number; children: number; childrenAges: number[] }[];
     }>({
       rooms: 1,
-      roomList: [{ adults: 1, children: 0 }],
+      roomList: [{ adults: 1, children: 0, childrenAges: [] }],
     });
 
     const promoCode = ref("");
@@ -257,7 +257,10 @@ export const useBookingStore = defineStore(
 
     function forceReset() {
       date.value = null;
-      guests.value = { rooms: 1, roomList: [{ adults: 1, children: 0 }] };
+      guests.value = {
+        rooms: 1,
+        roomList: [{ adults: 1, children: 0, childrenAges: [] }],
+      };
       promoCode.value = "";
       error.value = null;
       searchResults.value = null;

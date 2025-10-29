@@ -68,7 +68,7 @@
         }"
         :alt="`Slide ${index + 1}`"
         loading="lazy"
-      />
+      >
     </template>
 
     <!-- Мобильные изображения -->
@@ -87,7 +87,7 @@
         }"
         :alt="`Slide ${index + 1}`"
         loading="lazy"
-      />
+      >
     </template>
   </section>
 </template>
