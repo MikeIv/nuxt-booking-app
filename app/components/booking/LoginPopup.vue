@@ -13,6 +13,7 @@
   }>();
 
   const authStore = useAuthStore();
+  const router = useRouter();
 
   const formData = ref({
     email: "",
@@ -43,8 +44,8 @@
     if (!formData.value.password) {
       passwordError.value = "Поле обязательно для заполнения";
       isValid = false;
-    } else if (formData.value.password.length < 6) {
-      passwordError.value = "Пароль должен содержать минимум 6 символов";
+    } else if (formData.value.password.length < 3) {
+      passwordError.value = "Пароль должен содержать минимум 3 символов";
       isValid = false;
     }
 
@@ -92,6 +93,7 @@
 
         emit("login-success");
         emit("close");
+        router.push("/cabinet");
       } else {
         console.log("❌ Ошибка в ответе:", response.message);
 

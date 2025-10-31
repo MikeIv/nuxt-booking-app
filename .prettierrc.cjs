@@ -17,4 +17,8 @@ module.exports = {
   semi: false,
   endOfLine: "lf",
   htmlWhitespaceSensitivity: "css",
+
+  singleAttributePerLine: false,
+
+  proseWrap: "preserve",
 };

@@ -13,7 +13,6 @@
 
   const authStore = useAuthStore();
 
-  // Используем композабл для валидации
   const { validateRegisterForm, useValidationErrors } = useFormValidation();
   const { errors, setErrors, clearErrors } = useValidationErrors();
 
@@ -278,7 +277,6 @@
           }}</small>
         </div>
 
-        <!-- Сообщение об ошибке из API -->
         <div v-if="apiError" :class="$style.apiError">
           {{ apiError }}
         </div>
@@ -355,6 +353,33 @@
 
     &:focus {
       outline: none;
+    }
+  }
+
+  /* Стилизация селекта стран под вид инпута в рамках RegisterPopup */
+  .inputBlock {
+    :global {
+      .p-select {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        height: rem(58);
+        padding: 0 rem(16);
+        font-size: rem(16);
+        color: var(--a-text-dark);
+        background-color: var(--a-whiteBg);
+        border: rem(1) solid var(--a-border-dark);
+        border-radius: var(--a-borderR--input);
+        transition: border-color 0.3s ease;
+      }
+
+      .p-select.p-focus {
+        border-color: var(--a-accentBg);
+      }
+
+      .p-select-label.p-placeholder {
+        color: var(--a-text-light);
+      }
     }
   }
 

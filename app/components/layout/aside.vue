@@ -2,8 +2,6 @@
   import Logo from "~/assets/images/logo.svg";
   import BurgerButton from "~/components/ui/BurgerButton.vue";
   import SlideMenu from "~/components/ui/SlideMenu.vue";
-  import { ref, computed } from "vue";
-  import { useRouter } from "vue-router";
   import { useI18n } from "vue-i18n";
 
   const { locale, availableLocales, t, setLocale } = useI18n();
@@ -127,6 +125,7 @@
           v-else
           label="Личный кабинет"
           class="btn__bs dark"
+          :class="$style.cabinetButton"
           unstyled
           @click="$router.push('/cabinet')"
         />
@@ -217,6 +216,14 @@
     justify-content: flex-end;
     align-items: center;
     gap: rem(16);
+  }
+
+  .cabinetButton {
+    padding: 0 rem(16);
+
+    @media (min-width: #{size.$tabletMin}) {
+      padding: rem(12) rem(44);
+    }
   }
 
   .logo {

@@ -10,6 +10,14 @@ interface GuestInfo {
   children: number;
 }
 
+export interface UserProfileData {
+  name: string;
+  surname: string;
+  phone: string;
+  email: string;
+  country: string;
+}
+
 export const useBookingStore = defineStore(
   "booking",
   () => {
@@ -32,6 +40,7 @@ export const useBookingStore = defineStore(
     const roomTariffs = ref<Room[]>([]);
     const loadingMessage = ref("Загружаем данные о номерах...");
     const roomList = ref<GuestInfo[]>([]);
+    const userProfiles = ref<Record<string, UserProfileData>>({});
 
     const totalGuests = computed(() => {
       const rooms = guests.value.roomList ?? [];
@@ -53,6 +62,17 @@ export const useBookingStore = defineStore(
 
     function updateChildrenAges(ages: number[]) {
       childrenAges.value = ages;
+    }
+
+    function saveUserProfile(userId: string, profile: UserProfileData) {
+      userProfiles.value = {
+        ...userProfiles.value,
+        [userId]: { ...profile },
+      };
+    }
+
+    function getUserProfile(userId: string): UserProfileData | null {
+      return userProfiles.value[userId] || null;
     }
 
     const formatDate = (value: Date | string): string => {
@@ -269,16 +289,7 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
       setLoading(false);
       isServerRequest.value = false;
-
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("booking-store");
-        sessionStorage.removeItem("booking-store");
-
-        const keys = Object.keys(localStorage).filter((key) =>
-          key.startsWith("booking-store"),
-        );
-        keys.forEach((key) => localStorage.removeItem(key));
-      }
+      // deliberately preserve persisted state (e.g., userProfiles)
     }
 
     return {
@@ -305,10 +316,12 @@ export const useBookingStore = defineStore(
       formatDate,
       roomList,
       updateRoomList,
+      userProfiles,
+      saveUserProfile,
+      getUserProfile,
     };
   },
   {
-    // типизацию persist приводим к совместимой форме
     persist: {
       key: "booking-store",
       paths: [
@@ -320,6 +333,7 @@ export const useBookingStore = defineStore(
         "selectedRoomType",
         "roomTariffs",
         "roomList",
+        "userProfiles",
       ],
       serializer: {
         serialize: (state: StateTree) => {

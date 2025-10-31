@@ -37,7 +37,7 @@ ul {
   box-shadow: none !important;
 }
 
-// основная кнопка
+/* основная кнопка */
 .btn__bs {
   display: flex;
   justify-content: center;
@@ -81,7 +81,7 @@ ul {
   }
 }
 
-// Select dropdown menu
+/*Select dropdown menu */
 .p-select-list-container {
   align-items: center;
   width: 100%;
@@ -103,7 +103,7 @@ ul {
   }
 }
 
-// Scrollbar
+/* Scrollbar */
 .p-dropdown-panel,
 .p-select-list-container,
 .country-select-panel .p-dropdown-items {
@@ -129,7 +129,7 @@ ul {
   scrollbar-color: var(--a-text-light) transparent;
 }
 
-// Shadow section
+/* Shadow section */
 .section-shadow {
   padding: rem(22) rem(10);
   border-radius: var(--a-borderR--card);
@@ -149,7 +149,7 @@ ul {
   }
 }
 
-// PrimeVue Toast
+/* PrimeVue Toast */
 .p-toast-message {
   border: 1px solid var(--p-toast-warn-border-color);
 }
