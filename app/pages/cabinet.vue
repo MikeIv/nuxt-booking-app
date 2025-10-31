@@ -1,9 +1,11 @@
 <script setup lang="ts">
   import { useAuthStore } from "~/stores/auth";
+  import { useBookingStore } from "~/stores/booking";
 
   const router = useRouter();
-  console.log("router", router);
   const authStore = useAuthStore();
+  const bookingStore = useBookingStore();
+  const toast = useToast();
 
   const activeSection = ref("personal");
   const hasChanges = ref(false);
@@ -24,18 +26,23 @@
     country: "",
   });
 
-  onMounted(() => {
-    if (authStore.user) {
-      Object.assign(originalData, {
-        name: authStore.user.name || "",
-        surname: authStore.user.surname || "",
-        phone: authStore.user.phone || "",
-        email: authStore.user.email || "",
-        country: authStore.user.country || "",
-      });
+  watch(
+    () => authStore.user,
+    (user) => {
+      if (!user) return;
+      const saved = bookingStore.getUserProfile(user.id);
+      const source = saved || {
+        name: user.name || "",
+        surname: user.surname || "",
+        phone: user.phone || "",
+        email: user.email || "",
+        country: user.country || "",
+      };
+      Object.assign(originalData, source);
       Object.assign(formData, originalData);
-    }
-  });
+      hasChanges.value = false;
+    },
+  );
 
   const checkChanges = () => {
     const keys = Object.keys(originalData) as Array<keyof typeof originalData>;
@@ -47,6 +54,14 @@
 
     const updatedUser = { ...authStore.user, ...formData };
     authStore.setUser(updatedUser);
+
+    bookingStore.saveUserProfile(authStore.user.id, {
+      name: formData.name,
+      surname: formData.surname,
+      phone: formData.phone,
+      email: formData.email,
+      country: formData.country,
+    });
 
     Object.assign(originalData, formData);
     hasChanges.value = false;
@@ -71,17 +86,51 @@
       if (response.success) {
         console.log("✅ Успешный выход");
         authStore.logout();
+        router.push("/");
       } else {
         console.log("❌ Ошибка в ответе:", response.message);
         authStore.logout();
+        toast.add({
+          severity: "error",
+          summary: "Ошибка выхода",
+          detail:
+            response.message || "Не удалось выполнить выход. Попробуйте позже.",
+          life: 5000,
+        });
+        router.push("/");
       }
     } catch (err: unknown) {
       console.error("💥 Ошибка при выходе:", err);
       authStore.logout();
+      const message =
+        (err as { message?: string })?.message ||
+        "Не удалось выполнить выход. Попробуйте позже.";
+      toast.add({
+        severity: "error",
+        summary: "Ошибка выхода",
+        detail: message,
+        life: 5000,
+      });
+      router.push("/");
     } finally {
       authStore.setLoading(false);
     }
   };
+
+  onMounted(() => {
+    if (authStore.user) {
+      const saved = bookingStore.getUserProfile(authStore.user.id);
+      const source = saved || {
+        name: authStore.user.name || "",
+        surname: authStore.user.surname || "",
+        phone: authStore.user.phone || "",
+        email: authStore.user.email || "",
+        country: authStore.user.country || "",
+      };
+      Object.assign(originalData, source);
+      Object.assign(formData, originalData);
+    }
+  });
 </script>
 
 <template>
@@ -136,8 +185,9 @@
       <div v-if="activeSection === 'personal'" :class="$style.content">
         <div :class="$style.form">
           <div :class="$style.field">
-            <label :class="$style.label">Имя</label>
+            <label :for="'name'" :class="$style.label">Имя</label>
             <input
+              id="name"
               v-model="formData.name"
               :class="$style.input"
               type="text"
@@ -147,8 +197,9 @@
           </div>
 
           <div :class="$style.field">
-            <label :class="$style.label">Фамилия</label>
+            <label :for="'surname'" :class="$style.label">Фамилия</label>
             <input
+              id="surname"
               v-model="formData.surname"
               :class="$style.input"
               type="text"
@@ -158,8 +209,9 @@
           </div>
 
           <div :class="$style.field">
-            <label :class="$style.label">Телефон</label>
+            <label :for="'phone'" :class="$style.label">Телефон</label>
             <input
+              id="phone"
               v-model="formData.phone"
               :class="$style.input"
               type="tel"
@@ -169,8 +221,9 @@
           </div>
 
           <div :class="$style.field">
-            <label :class="$style.label">E-mail</label>
+            <label :for="'email'" :class="$style.label">E-mail</label>
             <input
+              id="email"
               v-model="formData.email"
               :class="$style.input"
               type="email"

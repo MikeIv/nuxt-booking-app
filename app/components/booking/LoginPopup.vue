@@ -13,6 +13,7 @@
   }>();
 
   const authStore = useAuthStore();
+  const router = useRouter();
 
   const formData = ref({
     email: "",
@@ -92,6 +93,7 @@
 
         emit("login-success");
         emit("close");
+        router.push("/cabinet");
       } else {
         console.log("❌ Ошибка в ответе:", response.message);
 
