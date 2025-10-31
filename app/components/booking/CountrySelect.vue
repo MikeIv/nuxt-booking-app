@@ -12,7 +12,7 @@
 </script>
 
 <template>
-  <div :class="$style.selectBlock">
+  <div :class="[$style.selectBlock, error ? $style.hasError : '']">
     <Select
       :model-value="modelValue"
       :options="countriesRu"
@@ -26,36 +26,19 @@
 
 <style module lang="scss">
   .selectBlock {
+    position: relative;
+  }
+
+  .hasError {
     :global {
       .p-select {
-        padding: 0 rem(16);
-        font-size: rem(16);
-        background-color: var(--a-whiteBg);
-        border-radius: var(--a-borderR--input);
-        transition: border-color 0.3s ease;
-        color: var(--a-text-dark);
-        border: rem(1) solid var(--a-border-dark);
-      }
-
-      .p-select-label.p-placeholder {
-        color: var(--a-text-light);
+        border-color: var(--a-border-accent);
       }
     }
   }
+
   .select {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: rem(58);
-
-    &::placeholder {
-      color: var(--a-text-light);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--a-accentBg);
-    }
+    position: relative;
   }
   .errorText {
     display: block;

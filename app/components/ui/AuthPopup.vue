@@ -1,19 +1,3 @@
-<template>
-  <Dialog
-    v-model:visible="internalVisible"
-    modal
-    :header="header"
-    pt:root:class="auth-popup"
-    @update:visible="handleVisibilityChange"
-  >
-    <slot name="content" />
-
-    <template #footer>
-      <slot name="footer" />
-    </template>
-  </Dialog>
-</template>
-
 <script setup lang="ts">
   import { ref, watch } from "vue";
 
@@ -45,6 +29,22 @@
     }
   };
 </script>
+
+<template>
+  <Dialog
+    v-model:visible="internalVisible"
+    modal
+    :header="header"
+    pt:root:class="auth-popup"
+    @update:visible="handleVisibilityChange"
+  >
+    <slot name="content" />
+
+    <template #footer>
+      <slot name="footer" />
+    </template>
+  </Dialog>
+</template>
 
 <style lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;

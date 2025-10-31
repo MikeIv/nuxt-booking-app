@@ -1,13 +1,12 @@
-// composables/useFormValidation.ts
 import type { RegisterData } from "~/types/auth";
 
-export interface ValidationRules {
+export interface ValidationRules<FormData = unknown> {
   [key: string]: {
     required?: boolean;
     maxLength?: number;
     pattern?: RegExp;
     patternMessage?: string;
-    custom?: (value: unknown, formData: unknown) => string | null;
+    custom?: (value: unknown, formData?: FormData) => string | null;
   };
 }
 
@@ -16,7 +15,7 @@ export interface ValidationErrors {
 }
 
 export const useFormValidation = () => {
-  const registerFormRules: ValidationRules = {
+  const registerFormRules: ValidationRules<RegisterData> = {
     surname: {
       required: true,
       maxLength: 255,
@@ -46,28 +45,36 @@ export const useFormValidation = () => {
     },
     password: {
       required: true,
-      custom: (value: string) => {
-        if (!value) return "Пароль обязателен";
-        if (value.length <= 8)
-          return "Пароль должен содержать минимум 8 символов";
+      custom: (value: unknown) => {
+        if (
+          value == null ||
+          (typeof value === "string" && value.trim().length === 0)
+        ) {
+          return "Пароль обязателен";
+        }
+        if (typeof value === "string" && value.length < 3) {
+          return "Пароль должен содержать минимум 3 символов";
+        }
         return null;
       },
     },
     password_confirmation: {
       required: true,
-      custom: (value: string, formData: RegisterData) => {
-        if (!value) return "Подтвердите пароль";
-        if (value !== formData.password) return "Пароли не совпадают";
+      custom: (value: unknown, formData?: RegisterData) => {
+        const valueStr = typeof value === "string" ? value : "";
+        if (valueStr.trim().length === 0) return "Подтвердите пароль";
+        if (formData && valueStr !== formData.password)
+          return "Пароли не совпадают";
         return null;
       },
     },
   };
 
-  const validateField = (
+  const validateField = <FormData = unknown>(
     fieldName: string,
     value: unknown,
-    rules: ValidationRules,
-    formData?: unknown,
+    rules: ValidationRules<FormData>,
+    formData?: FormData,
   ): string | null => {
     const rule = rules[fieldName];
     if (!rule) return null;
@@ -79,11 +86,19 @@ export const useFormValidation = () => {
       return getFieldLabel(fieldName) + " обязателен";
     }
 
-    if (rule.maxLength && value && value.length > rule.maxLength) {
+    if (
+      rule.maxLength &&
+      typeof value === "string" &&
+      value.length > rule.maxLength
+    ) {
       return `${getFieldLabel(fieldName)} не должен превышать ${rule.maxLength} символов`;
     }
 
-    if (rule.pattern && value && !rule.pattern.test(value)) {
+    if (
+      rule.pattern &&
+      typeof value === "string" &&
+      !rule.pattern.test(value)
+    ) {
       return (
         rule.patternMessage ||
         `Некорректный формат ${getFieldLabel(fieldName).toLowerCase()}`

@@ -43,8 +43,8 @@
     if (!formData.value.password) {
       passwordError.value = "Поле обязательно для заполнения";
       isValid = false;
-    } else if (formData.value.password.length < 6) {
-      passwordError.value = "Пароль должен содержать минимум 6 символов";
+    } else if (formData.value.password.length < 3) {
+      passwordError.value = "Пароль должен содержать минимум 3 символов";
       isValid = false;
     }
 
