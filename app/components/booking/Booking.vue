@@ -137,13 +137,13 @@
     border-radius: rem(16);
 
     @media (min-width: #{size.$desktopMin}) {
-      padding: rem(40) rem(24);
+      padding: rem(32) rem(24);
     }
 
     @media (min-width: #{size.$desktopMedium}) {
       width: 100%;
       margin: 0 rem(24);
-      padding: rem(40) rem(24);
+      padding: rem(32) rem(24);
     }
 
     @media (min-width: #{size.$desktopMax}) {
