@@ -81,6 +81,19 @@ ul {
   }
 }
 
+/* Popover */
+.p-popover-content {
+  max-width: rem(300);
+  background: var(--a-whiteBg);
+  color: var(--a-text-dark);
+  box-shadow: rem(2) rem(2) rem(30) rem(-10) rgb(0 0 0 / 20%);
+  border-radius: var(--a-borderR--card);
+
+  @media (min-width: #{with.$tabletMin}) {
+    max-width: rem(500);
+  }
+}
+
 /*Select dropdown menu */
 .p-select-list-container {
   align-items: center;
