@@ -92,6 +92,9 @@ ul {
   @media (min-width: #{with.$tabletMin}) {
     max-width: rem(500);
   }
+  @media (min-width: #{with.$desktopMin}) {
+    max-width: rem(600);
+  }
 }
 
 /*Select dropdown menu */
