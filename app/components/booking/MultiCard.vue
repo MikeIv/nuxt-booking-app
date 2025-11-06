@@ -6,12 +6,19 @@
   interface Props {
     room: Room;
     services?: PackageResource[];
+    selectedCodes?: Record<number, string>;
+    roomCardIdx?: number;
   }
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
     (e: "open-service-popup", ev: MouseEvent, service: PackageResource): void;
-    (e: "select-tariff", ratePlanCode: string, roomIdx: number): void;
+    (
+      e: "select-tariff",
+      ratePlanCode: string,
+      roomIdx: number,
+      roomCardIdx?: number,
+    ): void;
   }>();
 
   const bookingStore = useBookingStore();
@@ -68,10 +75,37 @@
 
   function selectTariffFor(index: number, tariff: RoomTariff | null) {
     if (!tariff) return;
-    emit("select-tariff", tariff.rate_plan_code, index);
+    emit("select-tariff", tariff.rate_plan_code, index, props.roomCardIdx);
   }
 
-  // Popover по образцу PrimeVue: держим рефы по коду тарифа и дергаем toggle(event)
+  // Локальное состояние выбранных тарифов в рамках текущей карточки комнаты
+  const selectedTariffsByRoomIdx = ref<Record<number, RoomTariff>>({});
+
+  function onSelectTariff(index: number, tariff: RoomTariff | null) {
+    if (!tariff) return;
+    const alreadySelectedCode =
+      props.selectedCodes?.[index] ??
+      selectedTariffsByRoomIdx.value[index]?.rate_plan_code;
+
+    if (alreadySelectedCode === tariff.rate_plan_code) {
+      Reflect.deleteProperty(selectedTariffsByRoomIdx.value, index);
+      emit("select-tariff", "", index, props.roomCardIdx);
+    } else {
+      selectTariffFor(index, tariff);
+      selectedTariffsByRoomIdx.value[index] = tariff;
+    }
+  }
+
+  function isSelected(index: number, tariff: RoomTariff | null) {
+    if (!tariff) return false;
+    const externalCode = props.selectedCodes?.[index];
+    if (externalCode) return externalCode === tariff.rate_plan_code;
+    return (
+      selectedTariffsByRoomIdx.value[index]?.rate_plan_code ===
+      tariff.rate_plan_code
+    );
+  }
+
   interface PopoverLike {
     toggle: (event: MouseEvent) => void;
     hide?: () => void;
@@ -91,7 +125,6 @@
     }
   }
 
-  // Popover для детализации цены
   const pricePopovers = ref<Record<string, PopoverLike | undefined>>({});
 
   function setPricePopoverRef(el: unknown, key: string) {
@@ -100,7 +133,11 @@
     }
   }
 
-  function togglePriceInfo(event: MouseEvent, roomIdx: number, tariffCode: string) {
+  function togglePriceInfo(
+    event: MouseEvent,
+    roomIdx: number,
+    tariffCode: string,
+  ) {
     const key = `${roomIdx}-${tariffCode}`;
     const instance = pricePopovers.value[key];
     if (instance && typeof instance.toggle === "function") {
@@ -108,13 +145,11 @@
     }
   }
 
-  // Форматирование даты для отображения
   const formatDateDisplay = (date: Date | null): string => {
     if (!date) return "";
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
 
-  // Вычисление количества ночей
   const calculateNights = (): number => {
     if (!date.value || date.value.length < 2) return 0;
     const start = new Date(date.value[0]);
@@ -124,8 +159,9 @@
     return diffDays;
   };
 
-  // Получение информации о гостях для номера
-  const getRoomGuests = (roomIdx: number): { adults: number; children: number; childrenAges: number[] } => {
+  const getRoomGuests = (
+    roomIdx: number,
+  ): { adults: number; children: number; childrenAges: number[] } => {
     const roomList = guests.value?.roomList || [];
     if (roomIdx >= 0 && roomIdx < roomList.length) {
       const room = roomList[roomIdx];
@@ -136,14 +172,12 @@
     return { adults: 0, children: 0, childrenAges: [] };
   };
 
-  // Вычисление итоговой стоимости (цена за ночь * количество ночей)
   const getTotalPrice = (pricePerNight: number | null | undefined): number => {
     const price = pricePerNight || 0;
     const nights = calculateNights();
     return price * nights;
   };
 
-  // Computed для дат (для использования в шаблоне)
   const checkInDate = computed(() => date.value?.[0] || null);
   const checkOutDate = computed(() => date.value?.[1] || null);
 </script>
@@ -265,16 +299,18 @@
                 :class="$style.confirmItem"
               >
                 <div :class="$style.confirmLeft">
-                  <div :class="$style.confirmTitle">Номер {{ idx }}</div>
-                  <div :class="$style.confirmPrice">{{ tar.price }} ₽</div>
-                </div>
-                <div :class="$style.confirmActions">
+                  <div :class="$style.confirmText">
+                    <div :class="$style.confirmTitle">Номер {{ idx }}</div>
+                    <div :class="$style.confirmPrice">{{ tar.price }} ₽</div>
+                  </div>
                   <Button
                     type="button"
                     unstyled
                     :class="$style.smallInfoButton"
                     :aria-label="`Детализация цены для номера ${idx}`"
-                    @click="(e) => togglePriceInfo(e, idx - 1, tar.rate_plan_code)"
+                    @click="
+                      (e) => togglePriceInfo(e, idx - 1, tar.rate_plan_code)
+                    "
                   >
                     <UIcon
                       name="i-heroicons-chevron-down-20-solid"
@@ -282,7 +318,13 @@
                     />
                   </Button>
                   <Popover
-                    :ref="(el) => setPricePopoverRef(el, `${idx - 1}-${tar.rate_plan_code}`)"
+                    :ref="
+                      (el) =>
+                        setPricePopoverRef(
+                          el,
+                          `${idx - 1}-${tar.rate_plan_code}`,
+                        )
+                    "
                     append-to="body"
                     class="pricePopover"
                     :pt="{ content: { style: 'padding: 16px;' } }"
@@ -292,8 +334,8 @@
                         Детализация цены, ₽
                       </div>
                       <div :class="$style.priceDetailsDates">
-                        {{ formatDateDisplay(checkInDate) }} - 
-                        {{ formatDateDisplay(checkOutDate) }}, 
+                        {{ formatDateDisplay(checkInDate) }} -
+                        {{ formatDateDisplay(checkOutDate) }},
                         {{ formatCount(calculateNights(), "night") }}
                       </div>
                       <div :class="$style.priceDetailsGuests">
@@ -302,33 +344,50 @@
                             v-if="getRoomGuests(idx - 1).adults > 0"
                             :class="$style.guestDetailItem"
                           >
-                            {{ formatCount(getRoomGuests(idx - 1).adults, "person") }} на основном месте - 
-                            {{ tar.price?.toLocaleString("ru-RU") || 0 }} ₽ за ночь
+                            {{
+                              formatCount(
+                                getRoomGuests(idx - 1).adults,
+                                "person",
+                              )
+                            }}
+                            на основном месте -
+                            {{ tar.price?.toLocaleString("ru-RU") || 0 }} ₽ за
+                            ночь
                           </div>
                           <div
                             v-if="getRoomGuests(idx - 1).children > 0"
                             :class="$style.guestDetailItem"
                           >
-                            {{ formatCount(getRoomGuests(idx - 1).children, "person") }} на дополнительном месте - 
-                            бесплатно
+                            {{
+                              formatCount(
+                                getRoomGuests(idx - 1).children,
+                                "person",
+                              )
+                            }}
+                            на дополнительном месте - бесплатно
                           </div>
                         </div>
                       </div>
-                      <div :class="$style.priceDetailsDivider"/>
+                      <div :class="$style.priceDetailsDivider" />
                       <div :class="$style.priceDetailsTotal">
                         <span>Стоимость номера за весь период проживания</span>
                         <span :class="$style.priceDetailsTotalAmount">
-                          {{ getTotalPrice(tar.price).toLocaleString("ru-RU") }} ₽
+                          {{ getTotalPrice(tar.price).toLocaleString("ru-RU") }}
+                          ₽
                         </span>
                       </div>
                     </div>
                   </Popover>
-
+                </div>
+                <div :class="$style.confirmActions">
                   <Button
                     type="button"
                     unstyled
-                    :class="$style.selectButton"
-                    @click="selectTariffFor(idx - 1, tar)"
+                    :class="[
+                      $style.selectButton,
+                      isSelected(idx - 1, tar) && $style.selectButtonActive,
+                    ]"
+                    @click="onSelectTariff(idx - 1, tar)"
                     >Выбрать</Button
                   >
                 </div>
@@ -523,23 +582,30 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: rem(12);
+    padding: rem(12) 0;
   }
 
   .confirmLeft {
+    display: flex;
+    align-items: center;
+    gap: rem(12);
+    flex: 1;
+  }
+
+  .confirmText {
     display: flex;
     flex-direction: column;
   }
 
   .confirmTitle {
     font-family: Inter, sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-dark);
+    font-size: rem(12);
+    color: var(--a-text-accent);
   }
 
   .confirmPrice {
     font-family: Lora, serif;
-    font-size: rem(18);
+    font-size: rem(22);
     font-weight: 600;
     color: var(--a-text-dark);
   }
@@ -585,6 +651,10 @@
     color: var(--a-white);
     border: none;
     cursor: pointer;
+  }
+
+  .selectButtonActive {
+    background-color: var(--a-btnAccentBg);
   }
 
   .allTariffs {
@@ -746,6 +816,145 @@
       @media (min-width: #{size.$tabletMin}) {
         transform: translateX(-14px);
       }
+    }
+  }
+
+  /* Блок сводки бронирования */
+  .bookingSummary {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: var(--a-whiteBg);
+    box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
+    border-radius: var(--a-borderR--card) var(--a-borderR--card) 0 0;
+    padding: rem(12) rem(16) rem(16);
+  }
+
+  .bookingSummaryVisible {
+    display: block;
+  }
+
+  .bookingSummaryInner {
+    display: flex;
+    flex-direction: column;
+    gap: rem(10);
+  }
+
+  .bookingSummaryHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(12);
+  }
+
+  .bookingSummaryTitle {
+    font-family: Lora, serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .bookingSummaryDates {
+    font-family: Inter, sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-light);
+  }
+
+  .bookingSummaryContent {
+    display: block;
+  }
+
+  .bookingSummaryContentCollapsed {
+    display: none;
+  }
+
+  .bookingSummaryItem {
+    display: flex;
+    flex-direction: column;
+    gap: rem(6);
+    padding: rem(8) 0;
+  }
+
+  .bookingSummaryItemHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bookingSummaryItemTitle {
+    font-family: Inter, sans-serif;
+    font-size: rem(12);
+    color: var(--a-text-accent);
+  }
+
+  .bookingSummaryItemPrice {
+    font-family: Lora, serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .bookingSummaryItemBody {
+    display: flex;
+    flex-direction: column;
+    gap: rem(6);
+  }
+
+  .bookingSummaryRoomName,
+  .bookingSummaryTariff,
+  .bookingSummaryGuests,
+  .bookingSummarySubtotal {
+    font-family: Inter, sans-serif;
+    font-size: rem(14);
+    color: var(--a-text-dark);
+  }
+
+  .bookingSummaryDivider {
+    width: 100%;
+    height: rem(1);
+    background-color: var(--a-black);
+    opacity: 0.1;
+    margin: rem(8) 0;
+  }
+
+  .bookingSummaryFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(12);
+  }
+
+  .bookingSummaryTotal {
+    display: flex;
+    align-items: center;
+    gap: rem(8);
+    font-family: Inter, sans-serif;
+    font-size: rem(16);
+  }
+
+  .continueButton {
+    padding: rem(10) rem(16);
+    border-radius: var(--a-borderR--btn);
+    background-color: var(--a-blackBg);
+    color: var(--a-white);
+    border: none;
+    cursor: pointer;
+  }
+
+  @media (min-width: #{size.$desktopMin}) {
+    // На десктопе мобильная сводка скрыта, т.к. общая сводка будет в правой колонке страницы
+    .bookingSummary {
+      display: none;
+    }
+
+    .bookingSummaryHeader Button {
+      display: none; // на десктопе иконка скрывается
+    }
+
+    .bookingSummaryContentCollapsed {
+      display: block; // не влияет, т.к. блок скрыт
     }
   }
 </style>
