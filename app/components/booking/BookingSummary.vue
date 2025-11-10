@@ -1,4 +1,10 @@
 <script setup lang="ts">
+  import { computed, ref, toRefs } from "vue";
+  import { storeToRefs } from "pinia";
+  import { formatCount } from "~/utils/declension";
+  import type { DeclensionRules } from "~/utils/declension";
+  import { useBookingStore } from "~/stores/booking";
+
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
@@ -14,10 +20,12 @@
     bookingTotal: number;
   }
 
-  defineProps<Props>();
+  const props = defineProps<Props>();
   const emit = defineEmits<{
     (e: "continue"): void;
   }>();
+
+  const { date, nights, selectedEntries, bookingTotal } = toRefs(props);
 
   const formatDate = (date: Date | null | undefined): string => {
     if (!date) return "";
@@ -33,6 +41,92 @@
     return "ночей";
   };
 
+  const formatWeekday = (date: Date | null | undefined): string => {
+    if (!date) return "";
+    const weekday = date.toLocaleDateString("ru-RU", {
+      weekday: "long",
+    });
+    return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  };
+
+  const checkInDate = computed(() => date.value?.[0] ?? null);
+  const checkOutDate = computed(() => date.value?.[1] ?? null);
+
+  const checkInFormatted = computed(() => formatDate(checkInDate.value));
+  const checkOutFormatted = computed(() => formatDate(checkOutDate.value));
+
+  const checkInWeekday = computed(() => formatWeekday(checkInDate.value));
+  const checkOutWeekday = computed(() => formatWeekday(checkOutDate.value));
+
+  const nightsLabel = computed(
+    () => `${nights.value} ${formatNights(nights.value)}`,
+  );
+
+  console.log("nightsLabel", nightsLabel.value);
+
+  const isDatesDetailsOpen = ref(false);
+
+  const toggleDatesDetails = () => {
+    isDatesDetailsOpen.value = !isDatesDetailsOpen.value;
+  };
+
+  const bookingStore = useBookingStore();
+  const { guests } = storeToRefs(bookingStore);
+
+  const expandedRooms = ref<Record<number, boolean>>({});
+
+  const toggleRoomDetails = (roomIdx: number) => {
+    expandedRooms.value[roomIdx] = !expandedRooms.value[roomIdx];
+  };
+
+  const isRoomExpanded = (roomIdx: number) => {
+    return !!expandedRooms.value[roomIdx];
+  };
+
+  const ADULT_DECLENSION: DeclensionRules = {
+    one: "взрослый",
+    few: "взрослых",
+    many: "взрослых",
+  };
+
+  const CHILD_DECLENSION: DeclensionRules = {
+    one: "ребёнок",
+    few: "ребёнка",
+    many: "детей",
+  };
+
+  const roomGuests = computed(
+    () => guests.value?.roomList?.map((room) => ({ ...room })) ?? [],
+  );
+
+  const roomGuestLines = computed(() => {
+    return roomGuests.value.map((room) => {
+      if (!room) {
+        return [] as string[];
+      }
+
+      const lines: string[] = [];
+
+      if (room.adults > 0) {
+        lines.push(
+          `${formatCount(room.adults, ADULT_DECLENSION)} на основном месте`,
+        );
+      }
+
+      if (room.children > 0) {
+        lines.push(
+          `${formatCount(room.children, CHILD_DECLENSION)} на дополнительном месте`,
+        );
+      }
+
+      return lines;
+    });
+  });
+
+  const roomEntries = computed(() =>
+    Object.values(selectedEntries.value).sort((a, b) => a.roomIdx - b.roomIdx),
+  );
+
   const handleContinue = () => {
     emit("continue");
   };
@@ -43,43 +137,133 @@
     <div :class="$style.pageSummaryInner">
       <div :class="$style.pageSummaryHeader">
         <span :class="$style.pageSummaryTitle">Ваше бронирование</span>
+        <Button
+          type="button"
+          unstyled
+          :class="[
+            $style.infoButton,
+            isDatesDetailsOpen ? $style.infoButtonExpanded : undefined,
+          ]"
+          aria-label="Подробнее о датах проживания"
+          :aria-expanded="isDatesDetailsOpen"
+          @click="toggleDatesDetails"
+        >
+          <UIcon
+            :name="
+              isDatesDetailsOpen
+                ? 'i-heroicons-chevron-up-20-solid'
+                : 'i-heroicons-chevron-down-20-solid'
+            "
+            :class="$style.infoButtonIcon"
+          />
+        </Button>
+      </div>
+      <div v-if="!isDatesDetailsOpen" :class="$style.pageSummaryDatesMobile">
+        {{ formatDate(date?.[0] || null) }} -
+        {{ formatDate(date?.[1] || null) }}, {{ nights }}
+        {{ formatNights(nights) }}
       </div>
       <div :class="$style.pageSummaryDates">
         {{ formatDate(date?.[0] || null) }} -
         {{ formatDate(date?.[1] || null) }}, {{ nights }}
         {{ formatNights(nights) }}
       </div>
-
-      <div :class="$style.pageSummaryList">
-        <div
-          v-for="entry in Object.values(selectedEntries)"
-          :key="entry.roomIdx + '-' + entry.ratePlanCode"
-          :class="$style.pageSummaryItem"
-        >
-          <div :class="$style.pageSummaryItemHeader">
-            <div :class="$style.pageSummaryItemTitle">
-              Номер {{ entry.roomIdx + 1 }}
-            </div>
-            <div :class="$style.pageSummaryItemPrice">
-              {{ (entry.price || 0).toLocaleString("ru-RU") }} ₽/ночь
-            </div>
+      <div
+        :class="[
+          $style.pageSummaryDatesDetails,
+          isDatesDetailsOpen ? $style.open : undefined,
+        ]"
+      >
+        <div :class="$style.roomInfoBlock">
+          <div :class="$style.dateRow">
+            <span :class="$style.bookingDetailLabel">{{
+              checkInFormatted
+            }}</span>
+            <UIcon name="i-arrow-long" :class="$style.detailIcon" />
+            <span :class="$style.bookingDetailLabel">{{
+              checkOutFormatted
+            }}</span>
           </div>
-          <div :class="$style.pageSummaryItemBody">
-            <div :class="$style.pageSummaryRoomName">
-              {{ entry.roomTitle }}
-            </div>
-            <div :class="$style.pageSummaryTariff">
-              Тариф: {{ entry.title }}
-            </div>
-            <div :class="$style.pageSummarySubtotal">
-              За номер:
-              {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
-            </div>
+          <div :class="$style.weekdayRow">
+            <span :class="$style.detailDay">{{ checkInWeekday }}</span>
+            <span :class="$style.weekday">{{
+              formatCount(nights, "night")
+            }}</span>
+            <span :class="[$style.detailDay, $style.dayRight]">{{
+              checkOutWeekday
+            }}</span>
           </div>
         </div>
       </div>
 
+      <div :class="$style.pageSummaryList">
+        <div
+          v-for="entry in roomEntries"
+          :key="entry.roomIdx + '-' + entry.ratePlanCode"
+          :class="$style.pageSummaryItem"
+        >
+          <Button
+            type="button"
+            :class="$style.roomButton"
+            class="btn__bs dark round"
+            unstyled
+            :aria-expanded="isRoomExpanded(entry.roomIdx)"
+            @click="toggleRoomDetails(entry.roomIdx)"
+          >
+            <span :class="$style.roomButtonText">
+              Номер {{ entry.roomIdx + 1 }}
+            </span>
+            <UIcon
+              name="i-chevron-down"
+              :class="[
+                $style.roomButtonIcon,
+                {
+                  [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
+                },
+              ]"
+            />
+          </Button>
+          <Transition name="fade">
+            <div
+              v-if="isRoomExpanded(entry.roomIdx)"
+              :class="$style.roomDetails"
+            >
+              <div :class="$style.roomDetailsHeader">
+                <span :class="$style.roomType">{{ entry.roomTitle }}</span>
+                <span :class="$style.roomPrice">
+                  {{ (entry.price || 0).toLocaleString("ru-RU") }} ₽/ночь
+                </span>
+              </div>
+              <div :class="$style.roomTariff">{{ entry.title }}</div>
+              <div :class="$style.roomDivider" />
+              <div
+                v-for="(line, idx) in roomGuestLines[entry.roomIdx] || []"
+                :key="idx"
+                :class="$style.roomGuestLine"
+              >
+                {{ line }}
+              </div>
+              <div
+                v-if="(roomGuestLines[entry.roomIdx] || []).length > 0"
+                :class="$style.roomDivider"
+              />
+              <div :class="$style.roomTotal">
+                <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
+                <strong>
+                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }}
+                  ₽
+                </strong>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </div>
+
       <div :class="$style.pageSummaryDivider" />
+      <div :class="$style.pageSummaryGrandTotal">
+        <span>Итого:</span>
+        <strong>{{ bookingTotal.toLocaleString("ru-RU") }} ₽</strong>
+      </div>
       <div :class="$style.pageSummaryFooter">
         <div :class="$style.pageSummaryTotal">
           <span>Итого</span>
@@ -98,6 +282,7 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
+  @use "~/assets/styles/variables/z-index" as z;
 
   .pageSummary {
     display: block;
@@ -105,15 +290,17 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 30;
+    margin: 0 rem(20);
+    padding: rem(12) rem(16) rem(16);
     background: var(--a-whiteBg);
     box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
     border-radius: var(--a-borderR--card) var(--a-borderR--card) 0 0;
-    padding: rem(12) rem(16) rem(16);
+    z-index: z.z("booking-summary");
 
     @media (min-width: #{size.$desktopMin}) {
       position: static;
-      width: 33.3333%;
+      width: calc(100% / 3);
+      margin: 0;
       padding: 0;
       box-shadow: none;
       border-radius: 0;
@@ -143,18 +330,136 @@
     margin-bottom: rem(8);
   }
 
+  .infoButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(32);
+    height: rem(32);
+    padding: 0;
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: none;
+    }
+  }
+
+  .infoButtonIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-text-dark);
+    transition: transform 0.2s ease;
+  }
+
+  .infoButtonExpanded .infoButtonIcon {
+    transform: rotate(180deg);
+  }
+
   .pageSummaryTitle {
     font-family: Lora, serif;
-    font-size: rem(20);
+    font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);
   }
 
   .pageSummaryDates {
-    font-family: Inter, sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-light);
+    display: none;
     margin-bottom: rem(12);
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .pageSummaryDatesMobile {
+    display: block;
+    margin-bottom: rem(12);
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: none;
+    }
+  }
+
+  .pageSummaryDatesDetails {
+    display: none;
+    margin-bottom: rem(12);
+  }
+
+  .open {
+    display: block;
+  }
+
+  @media (min-width: #{size.$desktopMin}) {
+    .pageSummaryDatesDetails {
+      display: block;
+    }
+  }
+
+  .roomInfoBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    padding: rem(30) rem(20);
+    background: var(--a-lightPrimaryBg);
+    border-radius: var(--a-borderR--card);
+  }
+
+  .dateRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(8);
+  }
+
+  .weekdayRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(8);
+  }
+
+  .bookingDetailLabel {
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .detailIcon {
+    width: rem(62);
+    height: rem(8);
+    color: var(--a-text-dark);
+  }
+
+  .detailDay {
+    width: calc(100% / 3);
+    font-family: "Lora", serif;
+    font-size: rem(16);
+    font-weight: 400;
+    color: var(--a-text-dark);
+  }
+
+  .dayRight {
+    text-align: right;
+  }
+
+  .weekday {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: rem(2) rem(18);
+    font-family: "Lora", serif;
+    font-size: rem(14);
+    color: var(--a-text-dark);
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: var(--a-borderR--card);
   }
 
   .pageSummaryList {
@@ -166,49 +471,127 @@
   .pageSummaryItem {
     display: flex;
     flex-direction: column;
-    gap: rem(6);
-    padding: rem(8) 0;
-    border-bottom: 1px solid var(--a-border-primary);
+    gap: rem(8);
+    padding: rem(12) 0;
   }
 
-  .pageSummaryItemHeader {
+  .roomButton {
+    display: flex;
+    align-items: center;
+    gap: rem(8);
+    padding: 0 rem(16);
+    width: 100%;
+  }
+
+  .roomButtonText {
+    flex: 1;
+    text-align: left;
+    font-family: Inter, sans-serif;
+    font-size: rem(14);
+    color: var(--a-white);
+  }
+
+  .roomButtonIcon {
+    width: rem(16);
+    height: rem(16);
+    color: var(--a-white);
+    transition: transform 0.3s ease;
+  }
+
+  .roomButtonIconRotated {
+    transform: rotate(180deg);
+  }
+
+  .roomDetails {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    padding: rem(16);
+  }
+
+  .roomDetailsHeader {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: rem(12);
   }
 
-  .pageSummaryItemTitle {
-    font-family: Inter, sans-serif;
-    font-size: rem(12);
-    color: var(--a-text-accent);
-  }
-
-  .pageSummaryItemPrice {
-    font-family: Lora, serif;
-    font-size: rem(16);
+  .roomType {
+    width: 50%;
+    font-family: "Lora", serif;
+    font-size: rem(18);
     font-weight: 600;
     color: var(--a-text-dark);
   }
 
-  .pageSummaryItemBody {
-    display: flex;
-    flex-direction: column;
-    gap: rem(6);
+  .roomPrice {
+    font-family: "Lora", serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    white-space: nowrap;
   }
 
-  .pageSummaryRoomName,
-  .pageSummaryTariff,
-  .pageSummarySubtotal {
+  .roomTariff {
+    font-family: "Lora", serif;
+    font-size: rem(16);
+    font-weight: 500;
+    color: var(--a-text-dark);
+  }
+
+  .roomDivider {
+    width: 100%;
+    height: rem(1);
+    background-color: var(--a-border-dark);
+  }
+
+  .roomGuestLine {
     font-family: Inter, sans-serif;
     font-size: rem(14);
+    font-weight: 400;
     color: var(--a-text-dark);
+  }
+
+  .roomTotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(12);
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .roomTotal strong {
+    font-family: "Lora", serif;
+    font-size: rem(18);
+    font-weight: 600;
   }
 
   .pageSummaryDivider {
     width: 100%;
     height: rem(1);
-    background-color: var(--a-border-primary);
+    background-color: #000;
     margin: rem(12) 0;
+  }
+
+  .pageSummaryGrandTotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(12);
+    margin-bottom: rem(12);
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .pageSummaryGrandTotal strong {
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 600;
   }
 
   .pageSummaryFooter {
