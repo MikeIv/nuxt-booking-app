@@ -404,6 +404,15 @@
             @click="showAllTariffs = !showAllTariffs"
           >
             {{ showAllTariffs ? "Скрыть тарифы" : "Все тарифы" }}
+            <span :class="$style.allTariffsIconWrap">
+              <UIcon
+                name="i-heroicons-chevron-down-20-solid"
+                :class="[
+                  $style.allTariffsChevron,
+                  showAllTariffs && $style.allTariffsChevronRotated,
+                ]"
+              />
+            </span>
           </Button>
         </div>
       </div>
@@ -487,6 +496,7 @@
     flex: none;
     width: rem(24);
     height: rem(24);
+    margin-bottom: rem(6);
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
@@ -503,13 +513,13 @@
   .description {
     display: flex;
     flex-wrap: wrap;
+    gap: rem(12);
   }
 
   .item {
     display: flex;
     gap: rem(8);
     align-items: center;
-    width: 50%;
     margin-bottom: rem(8);
   }
 
@@ -587,7 +597,7 @@
 
   .confirmLeft {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: rem(12);
     flex: 1;
   }
@@ -664,12 +674,43 @@
   }
 
   .allTariffsBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: rem(8);
+    min-width: rem(250);
     margin: 0 auto;
+    padding-right: rem(40);
     background-color: var(--a-btnAccentBg);
 
     &:hover {
       background-color: var(--a-blackBg);
     }
+  }
+
+  .allTariffsIconWrap {
+    position: absolute;
+    right: rem(20);
+    top: 50%;
+    transform: translateY(-50%);
+    width: rem(24);
+    height: rem(24);
+    border-radius: 50%;
+    border: rem(1) solid var(--a-white);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .allTariffsChevron {
+    width: rem(16);
+    height: rem(16);
+    color: var(--a-white);
+    transition: transform 0.2s ease;
+  }
+
+  .allTariffsChevronRotated {
+    transform: rotate(180deg);
   }
 
   .tariffsList {
