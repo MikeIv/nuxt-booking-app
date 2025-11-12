@@ -1,7 +1,16 @@
 import { defineStore } from "pinia";
 import type { StateTree } from "pinia";
 import type { PersistenceOptions } from "pinia-plugin-persistedstate";
-import type { Room } from "~/types/room";
+import type {
+  PackageResource,
+  Room,
+  RoomAmenity,
+  RoomTariff,
+  TariffPackage,
+  RoomBed,
+  RoomView,
+  RoomFamily,
+} from "~/types/room";
 import type { SearchResponse, BookingData } from "~/types/booking";
 
 interface GuestInfo {
@@ -107,27 +116,182 @@ export const useBookingStore = defineStore(
       }
     }
 
+    interface ApiRoomTariff {
+      rate_plan_code: string;
+      title: string;
+      price: number;
+      price_for_register?: number;
+      packages?: TariffPackage[];
+      has_food?: boolean;
+      cancellation_free?: boolean;
+      payment_types?: string[];
+    }
+
+    interface ApiRoomType {
+      id?: number | string;
+      room_type_code: string;
+      title: string;
+      description?: string | null;
+      max_occupancy?: number;
+      square?: number;
+      rooms?: number;
+      amenities?: RoomAmenity[];
+      bed?: RoomBed | null;
+      view?: RoomView | null;
+      family?: RoomFamily | null;
+      min_price?: number;
+      price_for_register?: number;
+      photos?: string[];
+      tariffs?: ApiRoomTariff[];
+    }
+
+    interface ApiGroupedRoom {
+      title: string;
+      description: string | null;
+      max_occupancy: number;
+      square: number;
+      rooms: number;
+      amenities: RoomAmenity[];
+      min_price: number;
+      price_for_register?: number;
+      photos: string[];
+      room_type_codes: ApiRoomType[];
+    }
+
+    interface ApiUngroupedPayload {
+      rooms: ApiRoomType[];
+      packages?: PackageResource[];
+      filters?: SearchResponse["filters"];
+    }
+
+    type ApiSearchPayload = ApiGroupedRoom[] | ApiUngroupedPayload | undefined;
+
+    const ensureChildAges = (count: number, ages: number[]): number[] => {
+      if (count === 0) return [0];
+      if (ages.length === count) return ages;
+      return Array.from({ length: count }, (_, index) => ages[index] ?? 0);
+    };
+
+    const mapTariffs = (tariffs?: ApiRoomTariff[]): RoomTariff[] => {
+      if (!tariffs || tariffs.length === 0) return [];
+      return tariffs.map((tariff) => ({
+        rate_plan_code: tariff.rate_plan_code,
+        title: tariff.title,
+        price: tariff.price,
+        price_for_register: tariff.price_for_register,
+        packages: tariff.packages ?? [],
+        has_food: tariff.has_food,
+        cancellation_free: tariff.cancellation_free,
+        payment_types: tariff.payment_types ?? [],
+      }));
+    };
+
+    const mapRoom = (room: ApiRoomType, group?: ApiGroupedRoom): Room => {
+      return {
+        id: room.id ?? room.room_type_code,
+        room_type_code: room.room_type_code,
+        title: room.title ?? group?.title ?? "",
+        description: room.description ?? group?.description ?? null,
+        max_occupancy: room.max_occupancy ?? group?.max_occupancy ?? 0,
+        square: room.square ?? group?.square ?? 0,
+        rooms: room.rooms ?? group?.rooms ?? 0,
+        amenities:
+          room.amenities && room.amenities.length > 0
+            ? room.amenities
+            : (group?.amenities ?? []),
+        bed: room.bed ?? null,
+        view: room.view ?? null,
+        family: room.family ?? null,
+        min_price: room.min_price ?? group?.min_price ?? 0,
+        price_for_register:
+          room.price_for_register ?? group?.price_for_register ?? undefined,
+        photos:
+          room.photos && room.photos.length > 0
+            ? room.photos
+            : (group?.photos ?? []),
+        tariffs: mapTariffs(room.tariffs),
+        group_title: group?.title,
+        group_description: group?.description ?? null,
+      };
+    };
+
+    const normalizeSearchPayload = (
+      payload: ApiSearchPayload,
+      groupedByBed: boolean,
+    ): SearchResponse => {
+      if (!payload) {
+        return {
+          available: false,
+          rooms: [],
+          packages: [],
+          groupedByBed,
+          rawPayload: payload,
+        };
+      }
+
+      if (Array.isArray(payload)) {
+        const rooms = payload.flatMap((group) =>
+          (group.room_type_codes ?? []).map((room) => mapRoom(room, group)),
+        );
+
+        return {
+          available: rooms.length > 0,
+          rooms,
+          packages: [],
+          groupedByBed: true,
+          rawPayload: payload,
+        };
+      }
+
+      const rooms = (payload.rooms ?? []).map((room) => mapRoom(room));
+
+      return {
+        available: rooms.length > 0,
+        rooms,
+        packages: payload.packages ?? [],
+        filters: payload.filters,
+        groupedByBed,
+        rawPayload: payload,
+      };
+    };
+
     function prepareSearchData(roomTypeCode?: string) {
       const [startDate, endDate] = date.value!;
 
-      const rooms = guests.value.roomList ?? [];
-      const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
-      const totalChildren = rooms.reduce((sum, room) => sum + room.children, 0);
+      const list = guests.value.roomList ?? [];
+      const totalAdults = list.reduce((sum, room) => sum + room.adults, 0);
+      const guestsPayload = list.length
+        ? list.map((room) => ({
+            adults: room.adults,
+            childs: ensureChildAges(room.children, room.childrenAges ?? []),
+          }))
+        : [
+            {
+              adults: totalAdults > 0 ? totalAdults : 1,
+              childs: ensureChildAges(
+                childrenAges.value.length,
+                childrenAges.value,
+              ),
+            },
+          ];
 
-      const childs = [totalChildren || 0];
+      const groupedByBed = guestsPayload.length === 1;
 
       const searchData: Record<string, unknown> = {
         start_at: formatDate(startDate),
         end_at: formatDate(endDate),
-        adults: totalAdults,
         promocode: promoCode.value || null,
-        childs,
+        step: 1,
+        grouped_by_bed: groupedByBed,
+        room_type_code: roomTypeCode ?? null,
+        guests: guestsPayload,
       };
+
       if (roomTypeCode) {
         searchData.with_packages = true;
-        searchData.room_type_code = roomTypeCode;
       }
-      return searchData;
+
+      return { searchData, groupedByBed };
     }
 
     function setSelectedRoomType(roomTypeCode: string) {
@@ -142,24 +306,24 @@ export const useBookingStore = defineStore(
 
       try {
         const { post } = useApi();
-        const searchData = prepareSearchData();
+        const { searchData, groupedByBed } = prepareSearchData();
 
         isServerRequest.value = true;
-        const response = await post<SearchResponse>("/search", searchData, {
+        const response = await post<ApiSearchPayload>("/search", searchData, {
           signal: AbortSignal.timeout(10000),
         });
 
-        if (response.success && response.payload) {
-          searchResults.value = response.payload;
-          if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
-            roomTariffs.value = response.payload.rooms as Room[];
-          } else {
-            roomTariffs.value = [];
-          }
-          return response.payload;
-        } else {
-          throw new Error(response.message || "Ошибка при поиске номеров");
+        if (response.success) {
+          const normalized = normalizeSearchPayload(
+            response.payload,
+            groupedByBed,
+          );
+          searchResults.value = normalized;
+          roomTariffs.value = normalized.rooms;
+          return normalized;
         }
+
+        throw new Error(response.message || "Ошибка при поиске номеров");
       } catch (err: unknown) {
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
@@ -248,24 +412,24 @@ export const useBookingStore = defineStore(
 
       try {
         const { post } = useApi();
-        const searchData = prepareSearchData(roomTypeCode);
+        const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
 
         isServerRequest.value = true;
-        const response = await post<SearchResponse>("/search", searchData, {
+        const response = await post<ApiSearchPayload>("/search", searchData, {
           signal: AbortSignal.timeout(10000),
         });
 
-        if (response.success && response.payload) {
-          searchResults.value = response.payload;
-          if (response.payload.rooms && Array.isArray(response.payload.rooms)) {
-            roomTariffs.value = response.payload.rooms as Room[];
-          } else {
-            roomTariffs.value = [];
-          }
-          return response.payload;
-        } else {
-          throw new Error(response.message || "Ошибка при поиске номеров");
+        if (response.success) {
+          const normalized = normalizeSearchPayload(
+            response.payload,
+            groupedByBed,
+          );
+          searchResults.value = normalized;
+          roomTariffs.value = normalized.rooms;
+          return normalized;
         }
+
+        throw new Error(response.message || "Ошибка при поиске номеров");
       } catch (err: unknown) {
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;

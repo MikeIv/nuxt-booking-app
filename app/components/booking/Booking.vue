@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { ApiError } from "~/composables/useApi";
+  import { getRequestErrorContent } from "~/components/common/RequestErrorMessage.vue";
 
   const toast = useToast();
   const bookingStore = useBookingStore();
@@ -56,14 +57,11 @@
       bookingStore.isServerRequest = false;
     } catch (error: unknown) {
       const { status, message } = (error || {}) as ApiError;
-      const isValidationError = status === 422;
-      const detail = isValidationError
-        ? "Ошибка поиска. Обратитесь к администратору или попробуйте еще раз"
-        : message || "Неизвестная ошибка";
+      const { summary, detail } = getRequestErrorContent(status, message);
 
       toast.add({
         severity: "warn",
-        summary: "Поменяйте запрос",
+        summary,
         detail,
         life: 3000,
       });

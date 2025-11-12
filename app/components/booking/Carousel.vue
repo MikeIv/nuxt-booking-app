@@ -1,22 +1,34 @@
 <script setup lang="ts">
   import Carousel from "primevue/carousel";
 
+  interface PlaceholderSlide {
+    placeholder: true;
+    label?: string;
+  }
+
+  type CarouselItem = string | PlaceholderSlide;
+
+  const isPlaceholderSlide = (item: CarouselItem): item is PlaceholderSlide => {
+    return typeof item === "object" && item?.placeholder === true;
+  };
+
   interface Props {
-    images: string[];
+    images: CarouselItem[];
     altPrefix: string;
     altText: string;
     height?: string;
-    emptyImage?: string;
     showNavigators?: boolean;
   }
 
   const props = withDefaults(defineProps<Props>(), {
     height: "auto",
-    emptyImage: "/images/room/room-01.jpg",
     showNavigators: undefined,
   });
 
   const imageLoading = ref(true);
+  const hasRealImages = computed(() =>
+    props.images.some((image) => typeof image === "string" && image.length > 0),
+  );
 
   const imageLoaded = () => {
     imageLoading.value = false;
@@ -27,10 +39,16 @@
   };
 
   watch(
-    () => props.images,
-    () => {
-      imageLoading.value = true;
+    hasRealImages,
+    (value) => {
+      imageLoading.value = value;
     },
+    { immediate: true },
+  );
+
+  const showSkeleton = computed(() => hasRealImages.value && imageLoading.value);
+  const showNavigatorsValue = computed(
+    () => props.showNavigators ?? props.images.length > 1,
   );
 
   const responsiveOptions = ref([
@@ -65,37 +83,36 @@
     :responsive-options="responsiveOptions"
     circular
     :show-indicators="true"
-    :show-navigators="showNavigators ?? images?.length > 1"
+    :show-navigators="showNavigatorsValue"
     :class="$style.carouselBlock"
   >
     <template #item="slotProps">
-      <div :class="[$style.carouselItem]">
-        <img
-          :src="slotProps.data"
-          :alt="`${altPrefix} ${altText}`"
-          :class="[$style.carouselImage, { [$style.loaded]: !imageLoading }]"
-          :style="{ height: props.height }"
-          @load="imageLoaded"
-          @error="imageError"
-        >
+      <div :class="$style.carouselItem">
+        <template v-if="!isPlaceholderSlide(slotProps.data)">
+          <img
+            :src="slotProps.data"
+            :alt="`${altPrefix} ${altText}`"
+            :class="[$style.carouselImage, { [$style.loaded]: !imageLoading }]"
+            :style="{ height }"
+            @load="imageLoaded"
+            @error="imageError"
+          >
+          <div
+            v-if="showSkeleton"
+            :class="$style.skeletonLoader"
+            :style="{ height }"
+          />
+        </template>
         <div
-          v-if="imageLoading"
-          :class="$style.skeletonLoader"
-          :style="{ height }"
-        />
+          v-else
+          :class="$style.placeholderSlide"
+          :style="{ height: props.height }"
+        >
+          <span>{{ slotProps.data.label ?? "Room Photo" }}</span>
+        </div>
       </div>
     </template>
 
-    <template #empty>
-      <div :class="[$style.emptyCarousel, { [$style.customHeight]: height }]">
-        <img
-          :src="emptyImage"
-          :alt="altText"
-          :class="$style.carouselImage"
-          :style="{ height }"
-        >
-      </div>
-    </template>
   </Carousel>
 </template>
 
@@ -115,6 +132,7 @@
         flex: 1;
         width: 100%;
         height: 100%;
+        padding: 0;
 
         .p-button-text.p-button-secondary {
           width: rem(16);
@@ -172,15 +190,27 @@
           }
         }
       }
+
+      .p-carousel-content-container,
+      .p-carousel-items-container,
+      .p-carousel-items-content {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      .p-carousel-items-content {
+        display: flex;
+      }
+
+      .p-carousel-item {
+        padding: 0;
+      }
     }
   }
   .carouselItem {
     position: relative;
     width: 100%;
-  }
-
-  .customHeight {
-    height: auto;
   }
 
   .carouselImage {
@@ -195,10 +225,20 @@
     }
   }
 
-  .emptyCarousel {
+  .placeholderSlide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    border-radius: rem(8);
+    background-color: var(--a-accentLightBg);
+    color: var(--a-text-light);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
-
   .skeletonLoader {
     position: absolute;
     top: 0;

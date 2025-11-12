@@ -13,6 +13,8 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
+  type CarouselItem = string | { placeholder: true; label?: string };
+
   const totalAdults = computed(() => {
     if (!guests.value?.roomList) return 0;
     return guests.value.roomList.reduce((sum, room) => sum + room.adults, 0);
@@ -57,6 +59,19 @@
     return beds;
   });
 
+  const placeholderSlides: CarouselItem[] = Array.from({ length: 4 }, () => ({
+    placeholder: true,
+    label: "Room Photo",
+  }));
+
+  const carouselImages = computed<CarouselItem[]>(() => {
+    if (props.room.photos && props.room.photos.length > 0) {
+      return props.room.photos;
+    }
+
+    return placeholderSlides;
+  });
+
   const handleTariff = async () => {
     if (!date.value || date.value.length < 2) {
       console.error("Не выбраны даты бронирования");
@@ -78,7 +93,7 @@
   <section :class="$style.card">
     <header :class="$style.carouselWrapper">
       <BookingCarousel
-        :images="room.photos || []"
+        :images="carouselImages"
         :alt-prefix="'Фото номера'"
         :alt-text="room.title"
         height="326px"
@@ -180,6 +195,12 @@
     height: 100%;
     margin-bottom: rem(20);
     min-height: rem(326);
+    justify-content: center;
+    align-items: center;
+
+    :global(.p-carousel) {
+      width: 100%;
+    }
   }
 
   .cardDetails {
