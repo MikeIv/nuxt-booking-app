@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import type { ApiError } from "~/composables/useApi";
 
   const toast = useToast();
   const bookingStore = useBookingStore();
@@ -54,10 +55,16 @@
       bookingStore.setLoading(false);
       bookingStore.isServerRequest = false;
     } catch (error: unknown) {
+      const { status, message } = (error || {}) as ApiError;
+      const isValidationError = status === 422;
+      const detail = isValidationError
+        ? "Ошибка поиска. Обратитесь к администратору или попробуйте еще раз"
+        : message || "Неизвестная ошибка";
+
       toast.add({
         severity: "warn",
         summary: "Поменяйте запрос",
-        detail: `${(error as Error)?.message || "Неизвестная ошибка"}`,
+        detail,
         life: 3000,
       });
       bookingStore.setLoading(false);
