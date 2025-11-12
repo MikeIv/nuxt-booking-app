@@ -1,17 +1,24 @@
-import type { PackageResource, Room } from "./room";
+import type { PackageResource, Room, RoomBed, RoomView } from "./room";
 
-interface Bed {
+interface SearchFilter<T = RoomBed | RoomView> {
   id: number;
   title: string;
+  extra?: T;
+}
+
+interface SearchFilters {
+  beds?: SearchFilter[];
+  views?: SearchFilter[];
+  balconies?: SearchFilter[];
 }
 
 interface SearchResponse {
   available: boolean;
-  rooms?: Room[];
-  totalPrice?: number;
-  message?: string;
-  packages?: PackageResource[];
-  filters?: { beds?: Bed[] };
+  rooms: Room[];
+  packages: PackageResource[];
+  filters?: SearchFilters;
+  groupedByBed: boolean;
+  rawPayload?: unknown;
 }
 
 interface BookingData {
@@ -44,4 +51,4 @@ interface BookingData {
   };
 }
 
-export type { Bed, SearchResponse, BookingData };
+export type { SearchResponse, BookingData, SearchFilters, SearchFilter };

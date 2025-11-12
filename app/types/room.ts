@@ -11,24 +11,53 @@ export interface PackageResource {
   calculation_rate_title: string;
 }
 
+export interface TariffPackage {
+  title: string;
+  [key: string]: unknown;
+}
+
 export interface RoomTariff {
   rate_plan_code: string;
   title: string;
   price: number;
-  packages: PackageResource[];
+  price_for_register?: number;
+  packages: TariffPackage[];
+  has_food?: boolean;
+  cancellation_free?: boolean;
+  payment_types?: string[];
+}
+
+export interface RoomBed {
+  id: number;
+  title: string;
+}
+
+export interface RoomView {
+  id: number;
+  title: string;
+}
+
+export interface RoomFamily {
+  id: number;
+  title: string;
 }
 
 export interface Room {
-  id?: number;
+  id?: string | number;
   room_type_code: string;
   title: string;
-  description: string;
+  description: string | null;
   max_occupancy: number;
   square: number;
   rooms: number;
   amenities: RoomAmenity[];
-  bed: string | null;
+  bed?: RoomBed | null;
+  view?: RoomView | null;
+  family?: RoomFamily | null;
   min_price: number;
+  price_for_register?: number;
   photos: string[];
   tariffs: RoomTariff[];
+  group_title?: string;
+  group_description?: string | null;
 }

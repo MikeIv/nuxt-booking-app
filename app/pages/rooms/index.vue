@@ -118,7 +118,7 @@
       <section :class="$style.roomsList">
         <BookingCard
           v-for="item in filteredRooms"
-          :key="item.id"
+          :key="item.room_type_code"
           :room="item"
         />
         <div v-if="filteredRooms.length === 0" :class="$style.noFilterResults">
