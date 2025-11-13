@@ -47,16 +47,82 @@
     isPopupOpen.value = false;
   };
 
-  const selectedBedType = ref<number | undefined>(undefined);
+  const availableRoomVariants = computed<Room[]>(() => {
+    const variants = props.room.room_type_codes ?? [];
+    return variants.length > 0 ? variants : [props.room];
+  });
+
+  const selectedBedType = ref<string | null>(null);
+
+  watch(
+    availableRoomVariants,
+    (variants) => {
+      const fallbackFromProps = props.room.room_type_code;
+      const fallbackVariant =
+        variants.find(
+          (variant) =>
+            variant.room_type_code === fallbackFromProps && variant.bed?.title,
+        ) ??
+        variants.find((variant) => variant.bed?.title) ??
+        variants[0];
+      const fallback = fallbackVariant?.room_type_code ?? fallbackFromProps;
+
+      if (!fallback) {
+        selectedBedType.value = null;
+        return;
+      }
+
+      const hasCurrentSelection = variants.some(
+        (variant) => variant.room_type_code === selectedBedType.value,
+      );
+
+      if (!hasCurrentSelection) {
+        selectedBedType.value = fallback;
+      }
+    },
+    { immediate: true },
+  );
 
   const bedOptions = computed(() => {
-    const beds = [
-      { id: 1, title: "Односпальная" },
-      { id: 2, title: "Двуспальная" },
-      { id: 3, title: "Две односпальные" },
-      { id: 4, title: "Королевская" },
-    ];
-    return beds;
+    const seenTitles = new Set<string>();
+
+    return availableRoomVariants.value
+      .map((variant, index) => {
+        const bedTitle = variant.bed?.title?.trim();
+
+        if (!bedTitle) {
+          return null;
+        }
+
+        return {
+          id: variant.room_type_code || String(index),
+          title: bedTitle,
+        };
+      })
+      .filter((option) => {
+        if (!option) return false;
+        if (seenTitles.has(option.title)) return false;
+
+        seenTitles.add(option.title);
+        return true;
+      }) as { id: string; title: string }[];
+  });
+
+  const currentRoom = computed<Room>(() => {
+    const variants = availableRoomVariants.value;
+    const fallbackRoom =
+      variants.find(
+        (variant) => variant.room_type_code === selectedBedType.value,
+      ) ??
+      variants.find((variant) => variant.bed?.title) ??
+      variants[0] ??
+      props.room;
+
+    const found = variants.find(
+      (variant) => variant.room_type_code === selectedBedType.value,
+    );
+
+    return found ?? fallbackRoom;
   });
 
   const placeholderSlides: CarouselItem[] = Array.from({ length: 4 }, () => ({
@@ -65,8 +131,10 @@
   }));
 
   const carouselImages = computed<CarouselItem[]>(() => {
-    if (props.room.photos && props.room.photos.length > 0) {
-      return props.room.photos;
+    const roomData = currentRoom.value;
+
+    if (roomData.photos && roomData.photos.length > 0) {
+      return roomData.photos;
     }
 
     return placeholderSlides;
@@ -78,7 +146,9 @@
       return;
     }
 
-    bookingStore.setSelectedRoomType(props.room.room_type_code);
+    const roomData = currentRoom.value;
+
+    bookingStore.setSelectedRoomType(roomData.room_type_code);
 
     const roomsCount = bookingStore.guests?.roomList
       ? bookingStore.guests.roomList.length
@@ -95,7 +165,7 @@
       <BookingCarousel
         :images="carouselImages"
         :alt-prefix="'Фото номера'"
-        :alt-text="room.title"
+        :alt-text="currentRoom.title"
         height="326px"
       />
     </header>
@@ -103,7 +173,7 @@
     <main :class="$style.cardDetails">
       <div :class="$style.wrapperInfoBlock">
         <div :class="$style.roomInfo">
-          <span :class="$style.title">{{ room.title }}</span>
+          <span :class="$style.title">{{ currentRoom.title }}</span>
 
           <button
             :class="$style.infoButton"
@@ -121,17 +191,17 @@
           <div :class="$style.item">
             <UIcon name="i-persons" :class="$style.icon" />
             <span :class="$style.itemTitle">
-              До {{ formatCount(room.max_occupancy, "capacity") }}
+              До {{ formatCount(currentRoom.max_occupancy, "capacity") }}
             </span>
           </div>
           <div :class="$style.item">
             <UIcon name="i-square" :class="$style.icon" />
-            <span :class="$style.itemTitle">{{ room.square }} м²</span>
+            <span :class="$style.itemTitle">{{ currentRoom.square }} м²</span>
           </div>
           <div :class="$style.item">
             <UIcon name="i-dash-square" :class="$style.icon" />
             <span :class="$style.itemTitle">
-              {{ formatCount(room.rooms, "chamber") }}
+              {{ formatCount(currentRoom.rooms, "chamber") }}
             </span>
           </div>
         </div>
@@ -139,12 +209,19 @@
         <div :class="$style.priceBlock">
           <span :class="$style.guestGift">
             <UIcon name="i-gift-line" :class="$style.icon" />
-            За регистрацию 67 150 ₽
+            За регистрацию {{ currentRoom.price_for_register }} ₽
           </span>
-          <span :class="$style.price">От {{ room.min_price }} руб.</span>
+          <span :class="$style.price">От {{ currentRoom.min_price }} руб.</span>
           <span :class="$style.guestInfo">
             {{ formatCount(totalAdults, "guest") }} /
             {{ formatCount(nightsCount, "night") }}
+          </span>
+
+          <span
+            :class="$style.guestInfo"
+            style="font-size: 10px; text-decoration: underline"
+          >
+            Тест кода: {{ currentRoom.room_type_code }}
           </span>
         </div>
       </div>
@@ -173,7 +250,11 @@
       </div>
     </main>
 
-    <BookingRoomPopup :room="room" :is-open="isPopupOpen" @close="closePopup" />
+    <BookingRoomPopup
+      :room="currentRoom"
+      :is-open="isPopupOpen"
+      @close="closePopup"
+    />
   </section>
 </template>
 
@@ -229,7 +310,7 @@
     display: inline-flex;
     flex-shrink: 1;
     font-family: "Lora", serif;
-    font-size: rem(24);
+    font-size: rem(22);
     font-weight: bold;
     color: var(--a-text-dark);
   }
@@ -238,8 +319,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: rem(32);
-    height: rem(32);
+    width: rem(40);
+    height: rem(40);
     min-width: auto;
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
@@ -259,21 +340,21 @@
   }
 
   .chevronIcon {
-    width: rem(20);
-    height: rem(20);
+    width: rem(26);
+    height: rem(26);
     color: var(--a-black);
   }
 
   .description {
     display: flex;
     flex-wrap: wrap;
+    gap: rem(16);
   }
 
   .item {
     display: flex;
     gap: rem(8);
     align-items: center;
-    width: 50%;
     margin-bottom: rem(8);
   }
 
@@ -285,7 +366,7 @@
 
   .itemTitle {
     font-family: "Inter", sans-serif;
-    font-size: rem(14);
+    font-size: rem(12);
     font-weight: 500;
     color: var(--a-text-light);
   }

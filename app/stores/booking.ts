@@ -215,6 +215,47 @@ export const useBookingStore = defineStore(
       };
     };
 
+    const mapGroupedRoom = (group: ApiGroupedRoom): Room => {
+      const variants =
+        group.room_type_codes?.map((variant) => mapRoom(variant, group)) ?? [];
+
+      const primaryVariant = variants[0];
+
+      const baseRoom: Room = {
+        id: primaryVariant?.id ?? group.title,
+        room_type_code:
+          primaryVariant?.room_type_code ??
+          group.room_type_codes?.[0]?.room_type_code ??
+          group.title,
+        title: group.title ?? primaryVariant?.title ?? "",
+        description: group.description ?? primaryVariant?.description ?? null,
+        max_occupancy:
+          group.max_occupancy ?? primaryVariant?.max_occupancy ?? 0,
+        square: group.square ?? primaryVariant?.square ?? 0,
+        rooms: group.rooms ?? primaryVariant?.rooms ?? 0,
+        amenities:
+          group.amenities && group.amenities.length > 0
+            ? group.amenities
+            : (primaryVariant?.amenities ?? []),
+        bed: primaryVariant?.bed ?? null,
+        view: primaryVariant?.view ?? null,
+        family: primaryVariant?.family ?? null,
+        min_price: group.min_price ?? primaryVariant?.min_price ?? 0,
+        price_for_register:
+          group.price_for_register ?? primaryVariant?.price_for_register,
+        photos:
+          group.photos && group.photos.length > 0
+            ? group.photos
+            : (primaryVariant?.photos ?? []),
+        tariffs: primaryVariant?.tariffs ?? [],
+        room_type_codes: variants,
+        group_title: group.title,
+        group_description: group.description ?? null,
+      };
+
+      return baseRoom;
+    };
+
     const normalizeSearchPayload = (
       payload: ApiSearchPayload,
       groupedByBed: boolean,
@@ -230,9 +271,79 @@ export const useBookingStore = defineStore(
       }
 
       if (Array.isArray(payload)) {
-        const rooms = payload.flatMap((group) =>
-          (group.room_type_codes ?? []).map((room) => mapRoom(room, group)),
-        );
+        const groupedRooms = new Map<string, Room>();
+
+        payload.forEach((group, index) => {
+          const room = mapGroupedRoom(group);
+
+          const key =
+            group.room_type_codes?.[0]?.family?.id?.toString() ??
+            group.room_type_codes?.[0]?.family?.title ??
+            group.title ??
+            room.room_type_code ??
+            `group-${index}`;
+
+          const existing = groupedRooms.get(key);
+
+          if (existing) {
+            const existingVariants = existing.room_type_codes ?? [];
+            const newVariants = room.room_type_codes ?? [];
+
+            const variantMap = new Map<string, Room>();
+
+            existingVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            newVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-new-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            existing.room_type_codes = Array.from(variantMap.values());
+
+            existing.min_price = Math.min(existing.min_price, room.min_price);
+
+            if (
+              existing.price_for_register === undefined ||
+              (room.price_for_register !== undefined &&
+                room.price_for_register < existing.price_for_register)
+            ) {
+              existing.price_for_register = room.price_for_register;
+            }
+
+            if (
+              (!existing.photos || existing.photos.length === 0) &&
+              room.photos &&
+              room.photos.length > 0
+            ) {
+              existing.photos = room.photos;
+            }
+
+            if (
+              (!existing.amenities || existing.amenities.length === 0) &&
+              room.amenities &&
+              room.amenities.length > 0
+            ) {
+              existing.amenities = room.amenities;
+            }
+          } else {
+            groupedRooms.set(key, room);
+          }
+        });
+
+        const rooms = Array.from(groupedRooms.values());
 
         return {
           available: rooms.length > 0,
