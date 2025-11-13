@@ -228,6 +228,7 @@
 
       <div :class="$style.footer">
         <div :class="$style.bedSelect">
+          <span :class="$style.bedSelectLabel">Тип кровати:</span>
           <Select
             v-model="selectedBedType"
             :options="bedOptions"
@@ -372,10 +373,18 @@
   }
 
   .bedSelect {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: rem(12);
     margin-bottom: rem(20);
+    padding: 0 rem(16);
 
     :global(.p-select) {
+      flex: 1 1 rem(220);
+      min-width: rem(200);
       width: 100%;
+      max-width: 100%;
       min-height: rem(44);
       padding: rem(8) rem(16);
       font-family: "Inter", sans-serif;
@@ -385,6 +394,16 @@
       border: rem(1) solid var(--a-border-primary);
       border-radius: var(--a-borderR--input);
     }
+  }
+
+  .bedSelectLabel {
+    display: inline-flex;
+    align-items: center;
+    font-family: "Inter", sans-serif;
+    font-size: rem(18);
+    color: var(--a-text-dark);
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .footer {
