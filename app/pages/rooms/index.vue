@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import type { Room } from "~/types/room";
 
   definePageMeta({
     layout: "steps",
@@ -10,11 +11,12 @@
   const toast = useToast();
   const router = useRouter();
 
-  const selectedView = ref<number | undefined>(undefined);
-  const selectedBalcony = ref<number | undefined>(undefined);
+  const selectedView = ref<number>(0);
+  const selectedBalcony = ref<number>(0);
 
   const viewOptions = computed(() => {
     return [
+      { id: 0, title: "Вид из окна любой" },
       { id: 1, title: "Парк" },
       { id: 2, title: "Город" },
       { id: 3, title: "Море" },
@@ -24,25 +26,68 @@
 
   const balconyOptions = computed(() => {
     return [
+      { id: 0, title: "Балкон любой" },
       { id: 1, title: "Есть балкон" },
       { id: 2, title: "Нет балкона" },
     ];
   });
 
+  const hasBalconyAmenity = (room: Room): boolean => {
+    const amenities = room.amenities ?? [];
+    const includesBalcony = amenities.some((amenity) =>
+      amenity.title ? /балкон/i.test(amenity.title) : false,
+    );
+
+    if (includesBalcony) {
+      return true;
+    }
+
+    const variants = room.room_type_codes ?? [];
+    return variants.some((variant) =>
+      variant.amenities?.some((amenity) =>
+        amenity.title ? /балкон/i.test(amenity.title) : false,
+      ),
+    );
+  };
+
+  const hasSelectedView = (room: Room, viewId: number): boolean => {
+    if (room.view?.id === viewId) {
+      return true;
+    }
+
+    const variants = room.room_type_codes ?? [];
+    return variants.some((variant) => variant.view?.id === viewId);
+  };
+
   const filteredRooms = computed(() => {
     if (!searchResults.value?.rooms) return [];
 
-    const filtered = searchResults.value.rooms;
+    const rooms = [...searchResults.value.rooms];
 
-    if (selectedView.value !== undefined && selectedView.value !== 0) {
-      // Filter logic for view (we can expand this later)
-    }
+    const activeView = selectedView.value ?? 0;
+    const activeBalcony = selectedBalcony.value ?? 0;
 
-    if (selectedBalcony.value !== undefined && selectedBalcony.value !== 0) {
-      // Filter logic for balcony (we can expand this later)
-    }
+    return rooms.filter((room) => {
+      if (activeView !== 0 && activeView !== undefined) {
+        if (!hasSelectedView(room, activeView)) {
+          return false;
+        }
+      }
 
-    return filtered;
+      if (activeBalcony !== 0 && activeBalcony !== undefined) {
+        const hasBalcony = hasBalconyAmenity(room);
+
+        if (activeBalcony === 1 && !hasBalcony) {
+          return false;
+        }
+
+        if (activeBalcony === 2 && hasBalcony) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   });
 
   const hasSearchResults = computed(() => {

@@ -60,4 +60,5 @@ export interface Room {
   tariffs: RoomTariff[];
   group_title?: string;
   group_description?: string | null;
+  room_type_codes?: Room[];
 }
