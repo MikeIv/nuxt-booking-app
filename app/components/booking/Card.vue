@@ -125,19 +125,29 @@
     return found ?? fallbackRoom;
   });
 
-  const placeholderSlides: CarouselItem[] = Array.from({ length: 4 }, () => ({
+  const createPlaceholder = (): CarouselItem => ({
     placeholder: true,
     label: "Room Photo",
-  }));
+  });
 
   const carouselImages = computed<CarouselItem[]>(() => {
     const roomData = currentRoom.value;
+    const photos = roomData.photos || [];
+    const photosCount = photos.length;
 
-    if (roomData.photos && roomData.photos.length > 0) {
-      return roomData.photos;
+    // Если изображений 2 или больше, используем их как есть
+    if (photosCount >= 2) {
+      return photos;
     }
 
-    return placeholderSlides;
+    // Если изображений меньше 2, добавляем плейсхолдеры до минимум 3 слайдов
+    const placeholdersNeeded = 3 - photosCount;
+    const placeholders = Array.from(
+      { length: placeholdersNeeded },
+      createPlaceholder,
+    );
+
+    return [...photos, ...placeholders];
   });
 
   const handleTariff = async () => {
@@ -278,7 +288,7 @@
     margin-bottom: rem(20);
     min-height: rem(326);
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
 
     :global(.p-carousel) {
       width: 100%;
@@ -317,9 +327,9 @@
   }
 
   .infoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
+    flex: none;
     width: rem(40);
     height: rem(40);
     min-width: auto;

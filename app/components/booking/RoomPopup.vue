@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import UIPopup from "~/components/ui/Popup.vue";
+  import RoomPopupCarousel from "~/components/booking/RoomPopupCarousel.vue";
   import type { Room } from "~/types/room";
 
   interface Props {
@@ -7,12 +8,38 @@
     isOpen: boolean;
   }
 
-  defineProps<Props>();
+  const props = defineProps<Props>();
   const emit = defineEmits(["close"]);
 
   const closePopup = () => {
     emit("close");
   };
+
+  type CarouselItem = string | { placeholder: true; label?: string };
+
+  const createPlaceholder = (): CarouselItem => ({
+    placeholder: true,
+    label: "Room Photo",
+  });
+
+  const carouselImages = computed<CarouselItem[]>(() => {
+    const photos = props.room.photos || [];
+    const photosCount = photos.length;
+
+    // Если изображений 2 или больше, используем их как есть
+    if (photosCount >= 2) {
+      return photos;
+    }
+
+    // Если изображений меньше 2, добавляем плейсхолдеры до минимум 3 слайдов
+    const placeholdersNeeded = 3 - photosCount;
+    const placeholders = Array.from(
+      { length: placeholdersNeeded },
+      createPlaceholder,
+    );
+
+    return [...photos, ...placeholders];
+  });
 </script>
 
 <template>
@@ -43,23 +70,11 @@
         </div>
 
         <div id="gallery" :class="$style.sliderWrapper">
-          <UCarousel
-            v-slot="{ item }"
-            loop
-            arrows
-            :items="room.photos"
-            :slides-per-view="1"
-          >
-            <div :class="$style.slideContainer">
-              <img
-                :src="item"
-                width="300"
-                height="370"
-                :class="$style.carouselImage"
-                loading="lazy"
-              >
-            </div>
-          </UCarousel>
+          <RoomPopupCarousel
+            :images="carouselImages"
+            :alt-prefix="'Фото номера'"
+            :alt-text="room.title"
+          />
         </div>
 
         <div id="amenities" :class="$style.amenitiesSection">
@@ -207,32 +222,7 @@
   .sliderWrapper {
     padding: 0;
     width: 100%;
-    overflow: hidden; /* Добавлено для скрытия выходящих элементов */
-
-    :global(.carousel-container) {
-      padding: rem(10) 0;
-      margin: 0 -10px; /* Компенсируем padding слайдов */
-    }
-  }
-
-  .slideContainer {
-    padding: 0 rem(10);
-  }
-
-  .carouselImage {
-    border-radius: rem(12);
-    object-fit: cover;
-    width: 100%;
-    height: rem(370);
-    transition: transform 0.3s ease;
-
-    &:hover {
-      transform: scale(1.02);
-    }
-
-    @media (min-width: #{size.$tablet}) {
-      height: rem(680);
-    }
+    overflow: hidden;
   }
 
   .roomContent > * {
