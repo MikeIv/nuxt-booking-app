@@ -125,19 +125,29 @@
     return found ?? fallbackRoom;
   });
 
-  const placeholderSlides: CarouselItem[] = Array.from({ length: 4 }, () => ({
+  const createPlaceholder = (): CarouselItem => ({
     placeholder: true,
     label: "Room Photo",
-  }));
+  });
 
   const carouselImages = computed<CarouselItem[]>(() => {
     const roomData = currentRoom.value;
+    const photos = roomData.photos || [];
+    const photosCount = photos.length;
 
-    if (roomData.photos && roomData.photos.length > 0) {
-      return roomData.photos;
+    // Если изображений 2 или больше, используем их как есть
+    if (photosCount >= 2) {
+      return photos;
     }
 
-    return placeholderSlides;
+    // Если изображений меньше 2, добавляем плейсхолдеры до минимум 3 слайдов
+    const placeholdersNeeded = 3 - photosCount;
+    const placeholders = Array.from(
+      { length: placeholdersNeeded },
+      createPlaceholder,
+    );
+
+    return [...photos, ...placeholders];
   });
 
   const handleTariff = async () => {
@@ -228,6 +238,7 @@
 
       <div :class="$style.footer">
         <div :class="$style.bedSelect">
+          <span :class="$style.bedSelectLabel">Тип кровати:</span>
           <Select
             v-model="selectedBedType"
             :options="bedOptions"
@@ -277,7 +288,7 @@
     margin-bottom: rem(20);
     min-height: rem(326);
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
 
     :global(.p-carousel) {
       width: 100%;
@@ -316,9 +327,9 @@
   }
 
   .infoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
+    flex: none;
     width: rem(40);
     height: rem(40);
     min-width: auto;
@@ -372,10 +383,18 @@
   }
 
   .bedSelect {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: rem(12);
     margin-bottom: rem(20);
+    padding: 0 rem(16);
 
     :global(.p-select) {
+      flex: 1 1 rem(220);
+      min-width: rem(200);
       width: 100%;
+      max-width: 100%;
       min-height: rem(44);
       padding: rem(8) rem(16);
       font-family: "Inter", sans-serif;
@@ -385,6 +404,16 @@
       border: rem(1) solid var(--a-border-primary);
       border-radius: var(--a-borderR--input);
     }
+  }
+
+  .bedSelectLabel {
+    display: inline-flex;
+    align-items: center;
+    font-family: "Inter", sans-serif;
+    font-size: rem(18);
+    color: var(--a-text-dark);
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .footer {
