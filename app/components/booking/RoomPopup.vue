@@ -26,12 +26,10 @@
     const photos = props.room.photos || [];
     const photosCount = photos.length;
 
-    // Если изображений 2 или больше, используем их как есть
     if (photosCount >= 2) {
       return photos;
     }
 
-    // Если изображений меньше 2, добавляем плейсхолдеры до минимум 3 слайдов
     const placeholdersNeeded = 3 - photosCount;
     const placeholders = Array.from(
       { length: placeholdersNeeded },

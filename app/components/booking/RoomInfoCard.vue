@@ -28,16 +28,26 @@
   const getCarouselHeight = computed(() => {
     if (typeof window === "undefined") return "auto";
     const width = window.innerWidth;
-    if (width < 768) return "180px";
-    if (width < 1024) return "362px";
-    return "454px";
+    // Мобильный: < 768px
+    if (width < 768) return "202px";
+    // Планшет: >= 768px и < 1366px
+    if (width < 1366) return "400px";
+    // Десктоп и выше: >= 1366px
+    return "433px";
   });
+
+  const { carouselImages } = useRoomCarousel(
+    computed(() => props.room.photos || []),
+    2,
+    3,
+    "Room Photo",
+  );
 </script>
 
 <template>
   <section :class="$style.roomInfoSection" class="section-shadow">
     <BookingCarousel
-      :images="room.photos || []"
+      :images="carouselImages"
       :alt-prefix="'Фото номера'"
       :alt-text="room.title || ''"
       :height="getCarouselHeight"
@@ -103,6 +113,10 @@
     @media (min-width: #{size.$desktopMedium}) {
       width: 45%;
       margin-right: rem(32);
+    }
+
+    :global(.p-carousel-indicator-list) {
+      display: none !important;
     }
   }
 

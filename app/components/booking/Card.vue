@@ -13,8 +13,6 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
-  type CarouselItem = string | { placeholder: true; label?: string };
-
   const totalAdults = computed(() => {
     if (!guests.value?.roomList) return 0;
     return guests.value.roomList.reduce((sum, room) => sum + room.adults, 0);
@@ -125,30 +123,12 @@
     return found ?? fallbackRoom;
   });
 
-  const createPlaceholder = (): CarouselItem => ({
-    placeholder: true,
-    label: "Room Photo",
-  });
-
-  const carouselImages = computed<CarouselItem[]>(() => {
-    const roomData = currentRoom.value;
-    const photos = roomData.photos || [];
-    const photosCount = photos.length;
-
-    // Если изображений 2 или больше, используем их как есть
-    if (photosCount >= 2) {
-      return photos;
-    }
-
-    // Если изображений меньше 2, добавляем плейсхолдеры до минимум 3 слайдов
-    const placeholdersNeeded = 3 - photosCount;
-    const placeholders = Array.from(
-      { length: placeholdersNeeded },
-      createPlaceholder,
-    );
-
-    return [...photos, ...placeholders];
-  });
+  const { carouselImages } = useRoomCarousel(
+    computed(() => currentRoom.value.photos || []),
+    2,
+    3,
+    "Room Photo",
+  );
 
   const handleTariff = async () => {
     if (!date.value || date.value.length < 2) {
