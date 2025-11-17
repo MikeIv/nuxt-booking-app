@@ -176,7 +176,7 @@
 </script>
 
 <template>
-  <section :class="$style.card">
+  <article :class="$style.card">
     <header :class="$style.carouselWrapper">
       <BookingCarousel
         :images="carouselImages"
@@ -186,59 +186,80 @@
       />
     </header>
 
-    <main :class="$style.cardDetails">
+    <div :class="$style.cardDetails">
       <div :class="$style.wrapperInfoBlock">
         <div :class="$style.roomInfo">
-          <span :class="$style.title">{{ currentRoom.title }}</span>
+          <h2 :class="$style.title">{{ currentRoom.title }}</h2>
 
           <button
             :class="$style.infoButton"
             data-popup-button
+            aria-label="Подробнее о номере"
             @click="openPopup($event)"
           >
             <UIcon
               name="i-heroicons-chevron-down-20-solid"
               :class="$style.chevronIcon"
+              aria-hidden="true"
             />
           </button>
         </div>
 
-        <div :class="$style.description">
+        <dl :class="$style.description">
           <div :class="$style.item">
-            <UIcon name="i-persons" :class="$style.icon" />
-            <span :class="$style.itemTitle">
+            <dt :class="$style.itemTerm">
+              <UIcon name="i-persons" :class="$style.icon" aria-hidden="true" />
+            </dt>
+            <dd :class="$style.itemTitle">
               До {{ formatCount(currentRoom.max_occupancy, "capacity") }}
-            </span>
+            </dd>
           </div>
           <div :class="$style.item">
-            <UIcon name="i-square" :class="$style.icon" />
-            <span :class="$style.itemTitle">{{ currentRoom.square }} м²</span>
+            <dt :class="$style.itemTerm">
+              <UIcon name="i-square" :class="$style.icon" aria-hidden="true" />
+            </dt>
+            <dd :class="$style.itemTitle">{{ currentRoom.square }} м²</dd>
           </div>
           <div :class="$style.item">
-            <UIcon name="i-dash-square" :class="$style.icon" />
-            <span :class="$style.itemTitle">
+            <dt :class="$style.itemTerm">
+              <UIcon
+                name="i-dash-square"
+                :class="$style.icon"
+                aria-hidden="true"
+              />
+            </dt>
+            <dd :class="$style.itemTitle">
               {{ formatCount(currentRoom.rooms, "chamber") }}
-            </span>
+            </dd>
           </div>
-        </div>
+        </dl>
 
         <div :class="$style.priceBlock">
-          <span :class="$style.guestGift">
-            <UIcon name="i-gift-line" :class="$style.icon" />
+          <p :class="$style.guestGift">
+            <UIcon name="i-gift-line" :class="$style.icon" aria-hidden="true" />
             За регистрацию {{ currentRoom.price_for_register }} ₽
-          </span>
-          <span :class="$style.price">От {{ currentRoom.min_price }} руб.</span>
-          <span :class="$style.guestInfo">
+          </p>
+          <data
+            :class="$style.price"
+            :value="currentRoom.min_price"
+            itemprop="price"
+          >
+            От {{ currentRoom.min_price }} руб.
+          </data>
+          <p :class="$style.guestInfo">
             {{ formatCount(totalAdults, "guest") }} /
             {{ formatCount(nightsCount, "night") }}
-          </span>
+          </p>
         </div>
       </div>
 
-      <div :class="$style.footer">
+      <footer :class="$style.footer">
         <div :class="$style.bedSelect">
-          <span :class="$style.bedSelectLabel">Тип кровати:</span>
+          <label :class="$style.bedSelectLabel" for="bed-type-select">
+            Тип кровати:
+          </label>
           <Select
+            id="bed-type-select"
             v-model="selectedBedType"
             :options="bedOptions"
             option-label="title"
@@ -257,15 +278,15 @@
           <span v-if="loading">Загрузка...</span>
           <span v-else>Выбрать номер</span>
         </Button>
-      </div>
-    </main>
+      </footer>
+    </div>
 
     <BookingRoomPopup
       :room="currentRoom"
       :is-open="isPopupOpen"
       @close="closePopup"
     />
-  </section>
+  </article>
 </template>
 
 <style module lang="scss">
@@ -323,6 +344,7 @@
     font-size: rem(22);
     font-weight: bold;
     color: var(--a-text-dark);
+    margin: 0;
   }
 
   .infoButton {
@@ -359,6 +381,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: rem(16);
+    margin: 0;
+    padding: 0;
   }
 
   .item {
@@ -366,6 +390,12 @@
     gap: rem(8);
     align-items: center;
     margin-bottom: rem(8);
+  }
+
+  .itemTerm {
+    display: flex;
+    align-items: center;
+    margin: 0;
   }
 
   .icon {
@@ -379,6 +409,7 @@
     font-size: rem(12);
     font-weight: 500;
     color: var(--a-text-light);
+    margin: 0;
   }
 
   .bedSelect {
@@ -413,6 +444,7 @@
     color: var(--a-text-dark);
     white-space: nowrap;
     flex: 0 0 auto;
+    cursor: pointer;
   }
 
   .footer {
@@ -428,7 +460,7 @@
   }
 
   .guestInfo {
-    margin-bottom: rem(4);
+    margin: 0 0 rem(4) 0;
     font-family: "Inter", sans-serif;
     font-size: rem(14);
     font-weight: 500;
@@ -439,6 +471,7 @@
     display: flex;
     align-items: center;
     gap: rem(4);
+    margin: 0;
     font-family: "Inter", sans-serif;
     font-size: rem(14);
     font-weight: 500;

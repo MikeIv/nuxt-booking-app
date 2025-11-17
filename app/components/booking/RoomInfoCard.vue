@@ -221,7 +221,7 @@
     font-size: rem(16);
     color: var(--a-text-dark);
     border: rem(1) solid var(--a-border-primary);
-    border-radius: rem(8);
+    border-radius: var(--a-borderR--dialog);
     background: var(--a-whiteBg);
     transition: all 0.2s ease;
   }

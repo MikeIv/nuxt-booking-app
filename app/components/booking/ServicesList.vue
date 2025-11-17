@@ -19,7 +19,7 @@
 
 <template>
   <section :class="$style.servicesWrapper">
-    <h3 :class="$style.servicesTitle">Включить дополнительно:</h3>
+    <h3 :class="$style.servicesTitle">Тарифы к номеру</h3>
     <ul :class="$style.servicesList">
       <li
         v-for="(service, serviceIndex) in services"
@@ -52,8 +52,9 @@
 
   .servicesTitle {
     margin-bottom: rem(40);
+    text-align: center;
     font-family: "Lora", serif;
-    font-size: rem(28);
+    font-size: rem(24);
     font-weight: 500;
     color: var(--a-text-dark);
   }

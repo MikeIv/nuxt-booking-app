@@ -118,9 +118,6 @@
       margin-bottom: rem(40);
     }
 
-    @media (min-width: #{size.$tabletMax}) {
-      margin-bottom: rem(90);
-    }
     @media (min-width: #{size.$desktopMin}) {
       padding: 0;
     }
