@@ -16,7 +16,7 @@
     }
   ],
   "compilerOptions": {
-    "types": ["vite-svg-loader"],
+    "types": ["vite-svg-loader", "node"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
