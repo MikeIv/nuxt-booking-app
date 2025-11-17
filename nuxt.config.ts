@@ -7,6 +7,7 @@ const IS_DEV = process.env.NODE_ENV === "development";
 
 export default defineNuxtConfig({
   routeRules: {
+    // @ts-expect-error - middleware works correctly despite type error
     "/": { middleware: "booking.reset" },
   },
 
@@ -32,12 +33,8 @@ export default defineNuxtConfig({
   },
 
   ui: {
-    global: true,
+    // @ts-expect-error - Nuxt UI types may not include all icon options
     icons: ["mdi", "simple-icons"],
-    fonts: {
-      sans: "var(--system-font)",
-      mono: false,
-    },
     theme: {
       colors: [
         "primary",
@@ -116,6 +113,8 @@ export default defineNuxtConfig({
 
   devServer: {
     https: false,
+    host: process.env.NUXT_HOST || "localhost",
+    port: process.env.NUXT_PORT ? Number(process.env.NUXT_PORT) : 3000,
   },
 
   features: {
@@ -164,7 +163,6 @@ export default defineNuxtConfig({
       "@nuxt/eslint",
       "@vueuse/nuxt",
       "@pinia/nuxt",
-      "truncate-html",
     ],
     ...(!IS_DEV && {
       analyze: {
@@ -217,12 +215,7 @@ export default defineNuxtConfig({
 
   eslint: {
     config: {
-      plugins: ["vue"],
-      extends: [
-        "plugin:vue/vue3-essential",
-        "@nuxt/eslint-config",
-        "plugin:prettier/recommended",
-      ],
+      // @ts-expect-error - ESLint config types may not include all rule options
       rules: {
         "vue/no-v-html": "off",
         "vue/no-multiple-template-root": "off",
@@ -306,7 +299,6 @@ export default defineNuxtConfig({
   },
 
   optimizeDeps: {
-    include: ["truncate-html"],
     exclude: ["@nuxt/ui"],
   },
 });

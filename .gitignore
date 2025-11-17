@@ -1,27 +1,39 @@
-# Nuxt dev/build outputs
-.output
-.data
+# Nuxt
 .nuxt
+.output
 .nitro
 .cache
 dist
 
-# Node dependencies
+# Node
 node_modules
-
-# Logs
-logs
 *.log
-
-# Misc
-.DS_Store
-.fleet
-.idea
-yarn.lock
-package-lock.json
-
-# Local env files
-.env
-.env.*
-!.env.example
+yarn-error.log
 .eslintcache
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+.nyc_output
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+blob-report/
+playwright/.cache/
