@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource } from "~/types/room";
+  import ArrowBack from "~/assets/icons/arrow-back.svg";
 
   definePageMeta({
     layout: "steps",
@@ -27,7 +28,7 @@
     isPopupOpen.value = false;
   };
 
-  const openServicePopup = (event: MouseEvent, service: PackageResource) => {
+  const _openServicePopup = (event: MouseEvent, service: PackageResource) => {
     event.stopPropagation();
     selectedService.value = service;
     isServicePopupOpen.value = true;
@@ -128,15 +129,13 @@
     <h1 :class="$style.header">Выбор тарифа для номера</h1>
 
     <Booking />
-    <BookingAdvantages />
+    <!-- <BookingAdvantages /> -->
 
     <section :class="$style.tariffBlock">
-      <Button
-        label="Назад к выбору номеров"
-        :class="$style.return"
-        unstyled
-        @click="goBackToRooms"
-      />
+      <Button :class="$style.return" unstyled @click="goBackToRooms">
+        <ArrowBack :class="$style.arrowIcon" />
+        <span>Назад к выбору номеров</span>
+      </Button>
 
       <div v-if="loading" :class="$style.loadingContainer">
         <div :class="$style.spinner" />
@@ -148,7 +147,7 @@
       </div>
 
       <template v-else>
-        <h2 :class="$style.tariffTitle">Выберите тариф</h2>
+        <h2 :class="$style.tariffTitle">Выберите тариф к номеру</h2>
 
         <div v-if="roomTariffs?.length > 0" :class="$style.tariffs">
           <div
@@ -162,11 +161,11 @@
               @open-popup="openPopup"
               @toggle-expand="toggleExpand"
             />
-            <BookingServicesList
-              :services="searchResults?.packages || []"
-              :is-service-popup-open="isServicePopupOpen"
-              @open-service-popup="openServicePopup"
-            />
+            <!--            <BookingServicesList-->
+            <!--              :services="searchResults?.packages || []"-->
+            <!--              :is-service-popup-open="isServicePopupOpen"-->
+            <!--              @open-service-popup="openServicePopup"-->
+            <!--            />-->
             <BookingTariffsList
               :tariffs="room.tariffs || []"
               @book-tariff="handleTariff"
@@ -225,7 +224,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: rem(40) 0;
+    padding: rem(20) 0;
 
     @media (min-width: #{size.$desktopMedium}) {
       max-width: #{size.$desktop};
@@ -237,31 +236,36 @@
     position: relative;
     display: flex;
     align-items: center;
+    gap: rem(32);
     margin-bottom: rem(40);
-    padding-left: rem(30);
     font-family: "Lora", serif;
     font-size: rem(20);
     color: var(--a-text-dark);
     cursor: pointer;
 
-    &:before {
-      content: "<";
-      position: absolute;
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-      width: 10px;
+    &:hover {
+      color: var(--a-text-accent);
     }
+  }
+
+  .arrowIcon {
+    width: rem(14);
+    height: rem(28);
+    flex-shrink: 0;
   }
 
   .tariffTitle {
     margin-bottom: rem(40);
     text-align: center;
     font-family: "Lora", serif;
-    font-size: rem(28);
+    font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);
     text-transform: uppercase;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(28);
+    }
   }
 
   .tariffs {
