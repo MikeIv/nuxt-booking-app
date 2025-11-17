@@ -44,6 +44,29 @@ export function mountComponent<T extends Component>(
           props: ["modelValue"],
           emits: ["update:modelValue"],
         },
+        // Заглушки для PrimeVue компонентов
+        Select: {
+          template:
+            '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
+          props: [
+            "modelValue",
+            "options",
+            "optionLabel",
+            "optionValue",
+            "placeholder",
+          ],
+          emits: ["update:modelValue"],
+        },
+        // Заглушка для BookingCard
+        BookingCard: {
+          template:
+            '<div data-testid="booking-card">{{ room?.title || "" }}</div>',
+          props: ["room"],
+        },
+        // Заглушка для Booking
+        Booking: {
+          template: '<div data-testid="booking-component"></div>',
+        },
         ...options?.global?.stubs,
       },
     },

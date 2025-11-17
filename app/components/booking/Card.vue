@@ -13,25 +13,37 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
+  // Константы для карусели
+  const CAROUSEL_MIN_PHOTOS = 2;
+  const CAROUSEL_TARGET_ITEMS = 3;
+  const CAROUSEL_PLACEHOLDER_LABEL = "Room Photo";
+  const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+
+  // Проверка валидности дат
+  const isValidDateRange = computed(() => {
+    return (
+      date.value &&
+      date.value.length >= 2 &&
+      date.value[0] &&
+      date.value[1]
+    );
+  });
+
   const totalAdults = computed(() => {
     if (!guests.value?.roomList) return 0;
     return guests.value.roomList.reduce((sum, room) => sum + room.adults, 0);
   });
 
   const nightsCount = computed(() => {
-    if (
-      !date.value ||
-      date.value.length < 2 ||
-      !date.value[0] ||
-      !date.value[1]
-    ) {
-      return 0;
-    }
+    if (!isValidDateRange.value || !date.value) return 0;
 
-    const checkIn = new Date(date.value[0]);
-    const checkOut = new Date(date.value[1]);
+    const [checkInDate, checkOutDate] = date.value;
+    if (!checkInDate || !checkOutDate) return 0;
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
     const diffTime = checkOut.getTime() - checkIn.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(diffTime / MILLISECONDS_PER_DAY);
 
     return diffDays > 0 ? diffDays : 0;
   });
@@ -52,17 +64,41 @@
 
   const selectedBedType = ref<string | null>(null);
 
+  // Поиск варианта комнаты по коду
+  const findVariantByCode = (variants: Room[], code: string | null) => {
+    if (!code) return null;
+    return variants.find((variant) => variant.room_type_code === code) ?? null;
+  };
+
+  // Поиск варианта с кроватью
+  const findVariantWithBed = (variants: Room[]) => {
+    return variants.find((variant) => variant.bed?.title) ?? null;
+  };
+
   watch(
     availableRoomVariants,
     (variants) => {
       const fallbackFromProps = props.room.room_type_code;
-      const fallbackVariant =
-        variants.find(
-          (variant) =>
-            variant.room_type_code === fallbackFromProps && variant.bed?.title,
-        ) ??
-        variants.find((variant) => variant.bed?.title) ??
-        variants[0];
+      let fallbackVariant: Room | null = null;
+
+      // Сначала пытаемся найти вариант с кодом из props, у которого есть кровать
+      if (fallbackFromProps) {
+        const variantWithCode = findVariantByCode(variants, fallbackFromProps);
+        if (variantWithCode?.bed?.title) {
+          fallbackVariant = variantWithCode;
+        }
+      }
+
+      // Если не нашли, ищем любой вариант с кроватью
+      if (!fallbackVariant) {
+        fallbackVariant = findVariantWithBed(variants);
+      }
+
+      // Если и это не помогло, берем первый вариант
+      if (!fallbackVariant) {
+        fallbackVariant = variants[0] ?? null;
+      }
+
       const fallback = fallbackVariant?.room_type_code ?? fallbackFromProps;
 
       if (!fallback) {
@@ -83,61 +119,51 @@
 
   const bedOptions = computed(() => {
     const seenTitles = new Set<string>();
+    const options: { id: string; title: string }[] = [];
 
-    return availableRoomVariants.value
-      .map((variant, index) => {
-        const bedTitle = variant.bed?.title?.trim();
+    for (const variant of availableRoomVariants.value) {
+      const bedTitle = variant.bed?.title?.trim();
+      if (!bedTitle || seenTitles.has(bedTitle)) continue;
 
-        if (!bedTitle) {
-          return null;
-        }
+      seenTitles.add(bedTitle);
+      options.push({
+        id: variant.room_type_code || String(options.length),
+        title: bedTitle,
+      });
+    }
 
-        return {
-          id: variant.room_type_code || String(index),
-          title: bedTitle,
-        };
-      })
-      .filter((option) => {
-        if (!option) return false;
-        if (seenTitles.has(option.title)) return false;
-
-        seenTitles.add(option.title);
-        return true;
-      }) as { id: string; title: string }[];
+    return options;
   });
 
   const currentRoom = computed<Room>(() => {
     const variants = availableRoomVariants.value;
-    const fallbackRoom =
-      variants.find(
-        (variant) => variant.room_type_code === selectedBedType.value,
-      ) ??
-      variants.find((variant) => variant.bed?.title) ??
-      variants[0] ??
-      props.room;
 
-    const found = variants.find(
-      (variant) => variant.room_type_code === selectedBedType.value,
-    );
+    // Сначала пытаемся найти по выбранному типу кровати
+    const selectedVariant = findVariantByCode(variants, selectedBedType.value);
+    if (selectedVariant) return selectedVariant;
 
-    return found ?? fallbackRoom;
+    // Затем ищем вариант с кроватью
+    const variantWithBed = findVariantWithBed(variants);
+    if (variantWithBed) return variantWithBed;
+
+    // Возвращаем первый вариант или исходную комнату
+    return variants[0] ?? props.room;
   });
 
   const { carouselImages } = useRoomCarousel(
     computed(() => currentRoom.value.photos || []),
-    2,
-    3,
-    "Room Photo",
+    CAROUSEL_MIN_PHOTOS,
+    CAROUSEL_TARGET_ITEMS,
+    CAROUSEL_PLACEHOLDER_LABEL,
   );
 
   const handleTariff = async () => {
-    if (!date.value || date.value.length < 2) {
+    if (!isValidDateRange.value) {
       console.error("Не выбраны даты бронирования");
       return;
     }
 
     const roomData = currentRoom.value;
-
     bookingStore.setSelectedRoomType(roomData.room_type_code);
 
     const roomsCount = bookingStore.guests?.roomList
@@ -206,13 +232,6 @@
             {{ formatCount(totalAdults, "guest") }} /
             {{ formatCount(nightsCount, "night") }}
           </span>
-
-          <span
-            :class="$style.guestInfo"
-            style="font-size: 10px; text-decoration: underline"
-          >
-            Тест кода: {{ currentRoom.room_type_code }}
-          </span>
         </div>
       </div>
 
@@ -232,7 +251,7 @@
           unstyled
           class="btn__bs"
           :class="[$style.bookingButton, { [$style.loading]: loading }]"
-          :disabled="loading || !date || date.length < 2"
+          :disabled="loading || !isValidDateRange"
           @click="handleTariff"
         >
           <span v-if="loading">Загрузка...</span>
@@ -425,13 +444,6 @@
     font-weight: 500;
     color: var(--a-text-accent);
     text-decoration: underline;
-  }
-
-  .giftIcon {
-    width: rem(16);
-    height: rem(16);
-    margin-right: rem(4);
-    vertical-align: middle;
   }
 
   .price {

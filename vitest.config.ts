@@ -33,4 +33,12 @@ export default defineConfig({
       "~/composables": resolve(__dirname, "./app/composables"),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: "modern",
+        silenceDeprecations: ["legacy-js-api"],
+      },
+    },
+  },
 });

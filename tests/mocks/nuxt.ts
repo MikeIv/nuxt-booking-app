@@ -16,6 +16,7 @@ vi.mock("#app", () => ({
   useToast: () => ({
     add: mockToastAdd,
   }),
+  definePageMeta: vi.fn(),
 }));
 
 // Мокируем глобальные auto-imports Nuxt
@@ -27,6 +28,7 @@ vi.mock("nuxt/app", () => ({
   useToast: () => ({
     add: mockToastAdd,
   }),
+  definePageMeta: vi.fn(),
 }));
 
 // Глобальные моки для window/global
@@ -38,4 +40,5 @@ if (typeof globalThis !== "undefined") {
   (globalThis as Record<string, unknown>).useToast = () => ({
     add: mockToastAdd,
   });
+  (globalThis as Record<string, unknown>).definePageMeta = vi.fn();
 }

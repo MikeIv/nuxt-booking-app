@@ -3,12 +3,14 @@
  */
 import { ref } from "vue";
 import { vi } from "vitest";
+import type { SearchResponse } from "~/types/booking";
 
 /**
  * Создает мок для booking store
  */
 export function createMockBookingStore() {
   const isServerRequestRef = ref(false);
+  const searchResultsRef = ref<SearchResponse | null>(null);
 
   return {
     date: ref<[Date, Date] | null>(null),
@@ -18,6 +20,7 @@ export function createMockBookingStore() {
     }),
     promoCode: ref(""),
     loading: ref(false),
+    searchResults: searchResultsRef,
     // Используем геттер/сеттер для поддержки прямой записи
     get isServerRequest() {
       return isServerRequestRef;
@@ -43,6 +46,7 @@ export function resetMockBookingStore(
   };
   store.promoCode.value = "";
   store.loading.value = false;
+  store.searchResults.value = null;
   // Используем сеттер для установки значения
   store.isServerRequest = false;
   store.setLoading.mockClear();
