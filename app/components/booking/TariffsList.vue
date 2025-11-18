@@ -14,6 +14,30 @@
   const selectedFilter = ref<string | null>(null);
 
   /**
+   * Состояние открытия/закрытия информационных блоков для каждого тарифа
+   */
+  const openTariffInfo = ref<Record<string, boolean>>({});
+
+  /**
+   * Переключает состояние информационного блока тарифа
+   */
+  const toggleTariffInfo = (ratePlanCode: string) => {
+    openTariffInfo.value[ratePlanCode] = !openTariffInfo.value[ratePlanCode];
+  };
+
+  /**
+   * Дефолтное описание тарифа (используется, если описание не приходит из API)
+   */
+  const defaultTariffDescription = `Данный тариф предлагает оптимальное сочетание комфорта и стоимости для вашего пребывания. В стоимость включены основные удобства номера, а также услуги, указанные в условиях бронирования. При необходимости вы можете уточнить детали и дополнительные услуги при оформлении заказа. Обратите внимание на условия отмены и изменения бронирования, которые зависят от выбранного тарифа. Для получения полной информации о тарифе и его особенностях, пожалуйста, свяжитесь с администрацией отеля или ознакомьтесь с условиями при бронировании.`;
+
+  /**
+   * Получает описание тарифа (из API или дефолтное)
+   */
+  const getTariffDescription = (tariff: RoomTariff): string => {
+    return tariff.description || defaultTariffDescription;
+  };
+
+  /**
    * Определяет тип тарифа на основе его свойств
    * Предоплатный тариф обычно имеет price_for_register
    */
@@ -106,13 +130,35 @@
         <article class="section-shadow">
           <div :class="$style.otherTariffInfo">
             <h3 :class="$style.tariffName">{{ tariff.title }}</h3>
-            <BookingInfoButtonWithPopover
-              :popover-id="tariff.rate_plan_code"
-              size="medium"
+            <Button
+              unstyled
+              :class="[$style.infoButton, $style.infoButton_medium]"
               :aria-label="`Информация о тарифе ${tariff.title}`"
+              :aria-expanded="openTariffInfo[tariff.rate_plan_code] || false"
+              type="button"
+              @click="toggleTariffInfo(tariff.rate_plan_code)"
             >
-              <BookingTariffPopoverContent />
-            </BookingInfoButtonWithPopover>
+              <UIcon
+                name="i-heroicons-chevron-down-20-solid"
+                :class="[
+                  $style.chevronIcon,
+                  $style.chevronIcon_medium,
+                  {
+                    [$style.chevronIconRotated]:
+                      openTariffInfo[tariff.rate_plan_code],
+                  },
+                ]"
+              />
+            </Button>
+          </div>
+
+          <div
+            v-if="openTariffInfo[tariff.rate_plan_code]"
+            :class="$style.tariffInfoBlock"
+          >
+            <p :class="$style.tariffDescription">
+              {{ getTariffDescription(tariff) }}
+            </p>
           </div>
 
           <ul :class="$style.tariffData">
@@ -316,6 +362,62 @@
     font-size: rem(28);
     font-weight: 600;
     color: var(--a-text-dark);
+    margin: 0;
+  }
+
+  .infoButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    padding: 0;
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--a-text-primary);
+    }
+
+    &:focus-visible {
+      outline: rem(2) solid var(--a-primaryBg);
+      outline-offset: rem(2);
+    }
+  }
+
+  .infoButton_medium {
+    width: rem(40);
+    height: rem(40);
+  }
+
+  .chevronIcon {
+    color: var(--a-black);
+    transition: transform 0.3s ease;
+  }
+
+  .chevronIcon_medium {
+    width: rem(28);
+    height: rem(28);
+  }
+
+  .chevronIconRotated {
+    transform: rotate(180deg);
+  }
+
+  .tariffInfoBlock {
+    margin-top: rem(16);
+    margin-bottom: rem(24);
+    padding: rem(16);
+    background: var(--a-whiteBg);
+  }
+
+  .tariffDescription {
+    font-family: "Inter", sans-serif;
+    font-size: rem(20);
+    color: var(--a-text-dark);
+    line-height: 1.5;
     margin: 0;
   }
 
