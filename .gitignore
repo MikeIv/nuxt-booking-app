@@ -4,6 +4,7 @@
 .nitro
 .cache
 dist
+.cursor
 
 # Node
 node_modules

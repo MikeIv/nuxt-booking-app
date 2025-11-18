@@ -12,13 +12,13 @@
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
-    (e: "open-service-popup", ev: MouseEvent, service: PackageResource): void;
+    (e: "open-service-popup",; ev: MouseEvent,; service: PackageResource): void;
     (
-      e: "select-tariff",
-      ratePlanCode: string,
-      roomIdx: number,
+      e: "select-tariff",;
+      ratePlanCode: string,;
+      roomIdx: number,;
       roomCardIdx?: number,
-    ): void;
+    ): void
   }>();
 
   const bookingStore = useBookingStore();
@@ -106,45 +106,6 @@
     );
   }
 
-  interface PopoverLike {
-    toggle: (event: MouseEvent) => void;
-    hide?: () => void;
-  }
-  const tariffPopovers = ref<Record<string, PopoverLike | undefined>>({});
-
-  function setTariffPopoverRef(el: unknown, code: string) {
-    if (el) {
-      tariffPopovers.value[code] = el as PopoverLike;
-    }
-  }
-
-  function toggleTariffInfo(event: MouseEvent, code: string) {
-    const instance = tariffPopovers.value[code];
-    if (instance && typeof instance.toggle === "function") {
-      instance.toggle(event);
-    }
-  }
-
-  const pricePopovers = ref<Record<string, PopoverLike | undefined>>({});
-
-  function setPricePopoverRef(el: unknown, key: string) {
-    if (el) {
-      pricePopovers.value[key] = el as PopoverLike;
-    }
-  }
-
-  function togglePriceInfo(
-    event: MouseEvent,
-    roomIdx: number,
-    tariffCode: string,
-  ) {
-    const key = `${roomIdx}-${tariffCode}`;
-    const instance = pricePopovers.value[key];
-    if (instance && typeof instance.toggle === "function") {
-      instance.toggle(event);
-    }
-  }
-
   const formatDateDisplay = (date: Date | null): string => {
     if (!date) return "";
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
@@ -169,7 +130,7 @@
         return room;
       }
     }
-    return { adults: 0, children: 0, childrenAges: [] };
+    return { adults: 0,; children: 0,; childrenAges: [] };
   };
 
   const getTotalPrice = (pricePerNight: number | null | undefined): number => {
@@ -262,34 +223,13 @@
           <div v-for="tar in visibleTariffs" :key="tar.rate_plan_code">
             <div :class="$style.otherTariffInfo">
               <span :class="$style.tariffName">{{ tar.title }}</span>
-              <Button
-                unstyled
-                :class="$style.smallInfoButton"
+              <BookingInfoButtonWithPopover
+                :popover-id="tar.rate_plan_code"
+                size="small"
                 :aria-label="`Информация о тарифе ${tar.title}`"
-                type="button"
-                @click="(e) => toggleTariffInfo(e, tar.rate_plan_code)"
               >
-                <UIcon
-                  name="i-heroicons-chevron-down-20-solid"
-                  :class="$style.chevronIcon"
-                />
-              </Button>
-              <Popover
-                :ref="(el) => setTariffPopoverRef(el, tar.rate_plan_code)"
-                append-to="body"
-                class="tariffPopover"
-                :pt="{ content: { style: 'padding: 12px;' } }"
-              >
-                <div :class="$style.detailsPopup">
-                  <div :class="$style.detailsRow">Краткое описание тарифа.</div>
-                  <div :class="$style.detailsRow">
-                    Условия и ограничения применяются.
-                  </div>
-                  <div :class="$style.detailsRow">
-                    Подробности уточняйте при бронировании.
-                  </div>
-                </div>
-              </Popover>
+                <BookingTariffPopoverContent />
+              </BookingInfoButtonWithPopover>
             </div>
 
             <div :class="$style.confirmList">
@@ -303,31 +243,12 @@
                     <div :class="$style.confirmTitle">Номер {{ idx }}</div>
                     <div :class="$style.confirmPrice">{{ tar.price }} ₽</div>
                   </div>
-                  <Button
-                    type="button"
-                    unstyled
-                    :class="$style.smallInfoButton"
+                  <BookingInfoButtonWithPopover
+                    :popover-id="`${idx - 1}-${tar.rate_plan_code}`"
+                    size="small"
                     :aria-label="`Детализация цены для номера ${idx}`"
-                    @click="
-                      (e) => togglePriceInfo(e, idx - 1, tar.rate_plan_code)
-                    "
-                  >
-                    <UIcon
-                      name="i-heroicons-chevron-down-20-solid"
-                      :class="$style.chevronIcon"
-                    />
-                  </Button>
-                  <Popover
-                    :ref="
-                      (el) =>
-                        setPricePopoverRef(
-                          el,
-                          `${idx - 1}-${tar.rate_plan_code}`,
-                        )
-                    "
-                    append-to="body"
-                    class="pricePopover"
-                    :pt="{ content: { style: 'padding: 16px;' } }"
+                    popover-class="pricePopover"
+                    popover-padding="16px"
                   >
                     <div :class="$style.priceDetailsPopup">
                       <div :class="$style.priceDetailsTitle">
@@ -377,7 +298,7 @@
                         </span>
                       </div>
                     </div>
-                  </Popover>
+                  </BookingInfoButtonWithPopover>
                 </div>
                 <div :class="$style.confirmActions">
                   <Button
@@ -405,7 +326,7 @@
           >
             {{ showAllTariffs ? "Скрыть тарифы" : "Все тарифы" }}
             <span :class="$style.allTariffsIconWrap">
-              <UIcon
+              <UIcon;
                 name="i-heroicons-chevron-down-20-solid"
                 :class="[
                   $style.allTariffsChevron,
@@ -416,7 +337,7 @@
           </Button>
         </div>
       </div>
-    </main>
+    </main>;
     <BookingRoomPopup :room="room" :is-open="isPopupOpen" @close="closePopup" />
   </section>
 </template>
@@ -489,24 +410,9 @@
     cursor: pointer;
   }
 
-  .smallInfoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    width: rem(24);
-    height: rem(24);
-    margin-bottom: rem(6);
-    padding: 0;
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-  }
-
   .chevronIcon {
-    width: rem(20);
-    height: rem(20);
+    width: rem(28);
+    height: rem(28);
     color: var(--a-black);
   }
 
@@ -637,21 +543,6 @@
     display: inline-flex;
     justify-content: center;
     align-items: center;
-  }
-
-  .detailsPopup {
-    display: flex;
-    flex-direction: column;
-    gap: rem(8);
-    min-width: rem(220);
-  }
-
-  .detailsRow {
-    display: flex;
-    justify-content: space-between;
-    gap: rem(10);
-    font-family: Inter, sans-serif;
-    font-size: rem(14);
   }
 
   .selectButton {
