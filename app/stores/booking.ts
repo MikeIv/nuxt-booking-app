@@ -125,6 +125,7 @@ export const useBookingStore = defineStore(
       has_food?: boolean;
       cancellation_free?: boolean;
       payment_types?: string[];
+      description?: string | null;
     }
 
     interface ApiRoomType {
@@ -183,6 +184,7 @@ export const useBookingStore = defineStore(
         has_food: tariff.has_food,
         cancellation_free: tariff.cancellation_free,
         payment_types: tariff.payment_types ?? [],
+        description: tariff.description ?? null,
       }));
     };
 

@@ -25,6 +25,8 @@ export interface RoomTariff {
   has_food?: boolean;
   cancellation_free?: boolean;
   payment_types?: string[];
+  /** Описание тарифа (приходит из API) */
+  description?: string | null;
   /** Данные для popover о бесплатной отмене */
   cancellation_popover?: {
     title?: string;
