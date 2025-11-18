@@ -78,6 +78,11 @@
       "eslint --fix",
       "prettier --write"
     ],
+    "*.vue": [
+      "eslint --fix",
+      "prettier --write",
+      "stylelint --fix --allow-empty-input"
+    ],
     "*.{css,scss}": [
       "prettier --write",
       "stylelint --fix --allow-empty-input"

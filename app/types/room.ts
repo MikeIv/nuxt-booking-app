@@ -25,6 +25,11 @@ export interface RoomTariff {
   has_food?: boolean;
   cancellation_free?: boolean;
   payment_types?: string[];
+  /** Данные для popover о бесплатной отмене */
+  cancellation_popover?: {
+    title?: string;
+    description?: string;
+  };
 }
 
 export interface RoomBed {

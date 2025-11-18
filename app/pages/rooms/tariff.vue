@@ -19,6 +19,24 @@
   const selectedService = ref<PackageResource | null>(null);
   const expandedRooms = ref<Record<string, boolean>>({});
 
+  console.log(
+    "roomTariffs",
+    roomTariffs.value,
+    "searchResults",
+    searchResults.value,
+    "selectedRoomType",
+    selectedRoomType.value,
+    "date",
+    date.value,
+    "guests",
+    guests.value,
+    "expandedRooms",
+    expandedRooms.value,
+    "isPopupOpen",
+    isPopupOpen.value,
+    "isService",
+  );
+
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
     isPopupOpen.value = true;
@@ -125,32 +143,32 @@
 </script>
 
 <template>
-  <div :class="$style.container">
+  <div :class="$style.container">;
     <h1 :class="$style.header">Выбор тарифа для номера</h1>
 
     <Booking />
-    <!-- <BookingAdvantages /> -->
+    <!-- <BookingAdvantages /> -->;
 
-    <section :class="$style.tariffBlock">
-      <Button :class="$style.return" unstyled @click="goBackToRooms">
+    <section :class="$style.tariffBlock">;
+      <Button :class="$style.return" unstyled @click="goBackToRooms">;
         <ArrowBack :class="$style.arrowIcon" />
         <span>Назад к выбору номеров</span>
       </Button>
 
-      <div v-if="loading" :class="$style.loadingContainer">
+      <div; v-if="loading" :class="$style.loadingContainer">;
         <div :class="$style.spinner" />
         <p>Загрузка тарифов...</p>
       </div>
 
-      <div v-else-if="error" :class="$style.errorContainer">
+      <div; v-else-if="error" :class="$style.errorContainer">
         <p>Произошла ошибка при загрузке тарифов. Попробуйте позже.</p>
       </div>
 
-      <template v-else>
+      <template v-else>;
         <h2 :class="$style.tariffTitle">Выберите тариф к номеру</h2>
 
-        <div v-if="roomTariffs?.length > 0" :class="$style.tariffs">
-          <div
+        <div; v-if="roomTariffs?.length > 0" :class="$style.tariffs">
+          <div;
             v-for="(room, index) in roomTariffs"
             :key="index"
             :class="$style.tariffCard"

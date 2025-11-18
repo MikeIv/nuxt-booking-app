@@ -94,7 +94,7 @@ export default defineNuxtConfig({
       ripple: true,
     },
     components: {
-      include: ["Button", "InputText", "Message", "Toast", "Select"],
+      include: ["Button", "InputText", "Message", "Toast", "Select", "Popover"],
     },
   },
 

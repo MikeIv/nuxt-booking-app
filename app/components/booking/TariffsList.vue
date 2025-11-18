@@ -5,25 +5,41 @@
     tariffs: RoomTariff[];
   }
 
-  defineProps<Props>();
+  const props = defineProps<Props>();
   const emit = defineEmits<{
-    "book-tariff": [];
+    
   }>();
 
   const selectedFilter = ref<string | null>(null);
+
+  /**
+   * Определяет тип тарифа на основе его свойств
+   * Предоплатный тариф обычно имеет price_for_register
+   */
+  const getTariffType = (tariff: RoomTariff): "basic" | "prepaid" => {
+    // Если есть price_for_register, считаем тариф предоплатным
+    // В противном случае - базовым
+    return tariff.price_for_register !== undefined ? "prepaid" : "basic";price_for_register,returntariff.price_for_registerundefined
+  };
+
+  /**
+   * Отфильтрованные тарифы на основе выбранного фильтра
+   */
+  const filteredTariffs = computed(() => {
+    if (selectedFilter.value === null) {
+      return props.tariffs;
+    }
+    return props.tariffs.filter(
+      (tariff) => getTariffType(tariff) === selectedFilter.value,
+    );
+  });
 
   const handleBook = () => {
     emit("book-tariff");
   };
 
   const handleFilterClick = (filterType: string | null) => {
-    if (filterType === null) {
-      // Сброс фильтра - показываем все тарифы
-      selectedFilter.value = null;
-    } else {
-      selectedFilter.value = filterType;
-    }
-    // Интеграция с API будет позже
+    selectedFilter.value = filterType;
   };
 </script>
 
@@ -66,14 +82,87 @@
         Предоплатный
       </button>
     </nav>
-    <ul :class="$style.tariffsList">
+    <div
+      v-if="filteredTariffs.length === 0"
+      :class="$style.emptyState"
+      role="status"
+      aria-live="polite"
+    >
+      <p>Тарифы не найдены</p>
+    </div>
+    <ul
+      v-else
+      :class="$style.tariffsList"
+      role="list"
+      aria-label="Список тарифов"
+    >
       <li
-        v-for="(tariff, tariffIndex) in tariffs"
-        :key="tariffIndex"
+        v-for="tariff in filteredTariffs"
+        :key="tariff.rate_plan_code"
         :class="$style.tariffItem"
+        role="listitem"
       >
         <article class="section-shadow">
-          <h3 :class="$style.tariffName">{{ tariff.title }}</h3>
+          <div :class="$style.otherTariffInfo">
+            <h3 :class="$style.tariffName">{{ tariff.title }}</h3>
+            <BookingInfoButtonWithPopover
+              :popover-id="tariff.rate_plan_code"
+              size="medium"
+              :aria-label="`Информация о тарифе ${tariff.title}`"
+            >
+              <BookingTariffPopoverContent />
+            </BookingInfoButtonWithPopover>
+          </div>
+
+          <ul :class="$style.tariffData">
+            <li :class="$style.dataItem">
+              <UIcon
+                name="i-fork-knife"
+                :class="[
+                  $style.dataIcon,
+                  { [$style.dataIconPenalty]: !tariff.has_food },
+                ]"
+              />
+              <span :class="$style.dataText">
+                {{
+                  tariff.has_food ? "Питание включено" : "Питание не включено"
+                }}
+              </span>
+            </li>
+            <li :class="$style.dataItem">
+              <UIcon
+                name="i-cancellation"
+                :class="[
+                  $style.dataIcon,
+                  { [$style.dataIconPenalty]: !tariff.cancellation_free },
+                ]"
+              />
+              <span :class="$style.dataText">
+                {{
+                  tariff.cancellation_free
+                    ? "Отмена без штрафа"
+                    : "Отмена со штрафом"
+                }}
+              </span>
+              <BookingInfoButtonWithPopover
+                :popover-id="`cancellation-${tariff.rate_plan_code}`"
+                size="small"
+                :aria-label="`Информация об отмене для тарифа ${tariff.title}`"
+              >
+                <BookingCancellationPopoverContent
+                  :title="tariff.cancellation_popover?.title"
+                  :description="tariff.cancellation_popover?.description"
+                />
+              </BookingInfoButtonWithPopover>
+            </li>
+            <li :class="$style.dataItem">
+              <UIcon name="i-payment" :class="$style.dataIcon" />
+              <span :class="$style.dataText">
+                Оплата банковской картой, по QR-коду (СБП), гарантия банковской
+                картой
+              </span>
+            </li>
+          </ul>
 
           <section
             v-if="tariff.packages?.length"
@@ -83,7 +172,7 @@
             <ul :class="$style.packagesList">
               <li
                 v-for="(pkg, pkgIndex) in tariff.packages"
-                :key="pkgIndex"
+                :key="`${tariff.rate_plan_code}-pkg-${pkgIndex}`"
                 :class="$style.packageItem"
               >
                 {{ pkg.title }}
@@ -92,7 +181,6 @@
           </section>
 
           <footer :class="$style.tariffBookingSection">
-            <span :class="$style.tariffPriceLabel"> Стоимость за 1 ночь </span>
             <data
               :class="$style.tariffPrice"
               :value="tariff.price"
@@ -100,7 +188,10 @@
             >
               {{ tariff.price }} руб.
             </data>
-            <Button
+            <span :class="$style.tariffPriceLabel"
+              >Средняя стоимость за 1 ночь
+            </span>
+            <Button;
               label="Забронировать"
               :class="$style.tariffBookingButton"
               unstyled
@@ -167,6 +258,12 @@
 
     &:hover {
       color: var(--a-text-primary);
+      border-color: var(--a-text-primary);
+    }
+
+    &:focus-visible {
+      outline: rem(2) solid var(--a-primaryBg);
+      outline-offset: rem(2);
     }
 
     &.filterItemActive {
@@ -176,6 +273,11 @@
 
       &:hover {
         color: var(--a-text-white);
+        border-color: var(--a-primaryBg);
+      }
+
+      &:focus-visible {
+        outline-color: var(--a-text-white);
       }
     }
   }
@@ -186,12 +288,26 @@
     gap: rem(16);
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 0 0 rem(24) 0;
   }
 
   .tariffItem {
-    margin-bottom: rem(40);
     list-style: none;
+  }
+
+  .emptyState {
+    padding: rem(40) rem(20);
+    text-align: center;
+    font-family: "Inter", sans-serif;
+    font-size: rem(18);
+    color: var(--a-text-light);
+  }
+
+  .otherTariffInfo {
+    display: flex;
+    align-items: center;
+    gap: rem(24);
+    margin-bottom: rem(20);
   }
 
   .tariffName {
@@ -200,7 +316,39 @@
     font-weight: 600;
     color: var(--a-text-dark);
     margin: 0;
-    flex: 1;
+  }
+
+  .tariffData {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    margin-top: rem(16);
+    margin-bottom: rem(24);
+    list-style: none;
+    padding: 0;
+  }
+
+  .dataItem {
+    display: flex;
+    align-items: center;
+    gap: rem(16);
+  }
+
+  .dataIcon {
+    width: rem(20);
+    height: rem(20);
+    flex-shrink: 0;
+    color: #178b08;
+  }
+
+  .dataIconPenalty {
+    color: #9ca3af;
+  }
+
+  .dataText {
+    font-family: "Lora", serif;
+    font-size: rem(20);
+    color: var(--a-text-dark);
   }
 
   .tariffBookingSection {
@@ -211,6 +359,7 @@
 
   .tariffPriceLabel {
     margin-left: auto;
+    margin-bottom: rem(20);
     font-family: "Inter", sans-serif;
     font-size: rem(12);
     font-weight: 500;
@@ -219,7 +368,6 @@
 
   .tariffPrice {
     margin-left: auto;
-    margin-bottom: rem(10);
     font-family: "Lora", serif;
     font-size: rem(34);
     font-weight: 700;
@@ -240,9 +388,15 @@
     background-color: var(--a-blackBg);
     border-radius: var(--a-borderR--btn);
     cursor: pointer;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background-color: var(--a-btnAccentBg);
+    }
+
+    &:focus-visible {
+      outline: rem(2) solid var(--a-primaryBg);
+      outline-offset: rem(2);
     }
   }
 
@@ -271,5 +425,19 @@
     font-family: "Inter", sans-serif;
     font-size: rem(12);
     color: var(--a-text-dark);
+  }
+
+  :global {
+    .p-popover:before {
+      left: 20px !important;
+    }
+
+    .tariffPopover {
+      transform: translateX(18px);
+
+      @media (min-width: #{size.$tabletMin}) {
+        transform: translateX(-14px);
+      }
+    }
   }
 </style>
