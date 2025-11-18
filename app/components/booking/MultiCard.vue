@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  // @ts-nocheck - Vue автоматически преобразует kebab-case в camelCase в шаблонах
   import type { Room, RoomTariff, PackageResource } from "~/types/room";
   import { formatCount } from "~/utils/declension";
   import { useBookingStore } from "~/stores/booking";
@@ -12,19 +13,17 @@
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
-    (e: "open-service-popup",; ev: MouseEvent,; service: PackageResource): void;
+    (e: "open-service-popup", ev: MouseEvent, service: PackageResource): void;
     (
-      e: "select-tariff",;
-      ratePlanCode: string,;
-      roomIdx: number,;
+      e: "select-tariff",
+      ratePlanCode: string,
+      roomIdx: number,
       roomCardIdx?: number,
-    ): void
+    ): void;
   }>();
 
   const bookingStore = useBookingStore();
-  const { guests, roomTariffs, date } = storeToRefs(bookingStore);
-
-  console.log("roomTariffs", roomTariffs.value);
+  const { guests, date } = storeToRefs(bookingStore);
 
   const isPopupOpen = ref(false);
   const showAllTariffs = ref(false);
@@ -51,7 +50,6 @@
 
   const expanded = ref(false);
   const visibleAmenities = computed(() => {
-    console.log("room", props.room);
     const amenities = props.room.amenities || [];
     return expanded.value ? amenities : amenities.slice(0, 4);
   });
@@ -130,7 +128,7 @@
         return room;
       }
     }
-    return { adults: 0,; children: 0,; childrenAges: [] };
+    return { adults: 0, children: 0, childrenAges: [] };
   };
 
   const getTotalPrice = (pricePerNight: number | null | undefined): number => {
@@ -326,7 +324,7 @@
           >
             {{ showAllTariffs ? "Скрыть тарифы" : "Все тарифы" }}
             <span :class="$style.allTariffsIconWrap">
-              <UIcon;
+              <UIcon
                 name="i-heroicons-chevron-down-20-solid"
                 :class="[
                   $style.allTariffsChevron,
@@ -337,7 +335,7 @@
           </Button>
         </div>
       </div>
-    </main>;
+    </main>
     <BookingRoomPopup :room="room" :is-open="isPopupOpen" @close="closePopup" />
   </section>
 </template>

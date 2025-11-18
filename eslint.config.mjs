@@ -1,5 +1,6 @@
 import withNuxt from "./.nuxt/eslint.config.mjs";
 import prettierPlugin from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
 
 export default withNuxt([
   {
@@ -16,21 +17,14 @@ export default withNuxt([
           }
         }
       ],
-      "prettier/prettier": [
-        "error",
-        {
-          vueIndentScriptAndStyle: true,
-          tabWidth: 2
-        }
-      ]
+      // Используем настройки из .prettierrc.cjs
+      "prettier/prettier": "error"
     },
     files: ["**/*.{js,ts}"]
   },
   {
     files: ["**/*.vue"],
-    plugins: {
-      prettier: prettierPlugin
-    },
+    // Не подключаем prettier плагин для Vue файлов, чтобы избежать конфликтов
     rules: {
       "vue/no-v-html": "off",
       "vue/html-self-closing": [
@@ -41,7 +35,16 @@ export default withNuxt([
           }
         }
       ],
-      "prettier/prettier": "off"
+      // Разрешаем @ts-nocheck для файлов, где Vue преобразует kebab-case в camelCase
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        {
+          "ts-nocheck": "allow-with-description",
+          "ts-ignore": "allow-with-description"
+        }
+      ]
     }
-  }
+  },
+  // Отключаем правила ESLint, которые конфликтуют с Prettier
+  prettierConfig
 ]);

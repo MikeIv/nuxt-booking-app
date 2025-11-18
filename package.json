@@ -78,11 +78,6 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.vue": [
-      "eslint --fix",
-      "prettier --write",
-      "stylelint --fix --allow-empty-input"
-    ],
     "*.{css,scss}": [
       "prettier --write",
       "stylelint --fix --allow-empty-input"
@@ -91,10 +86,9 @@
   "prettier": {
     "overrides": [
       {
-        "files": "*.{vue,scss}",
+        "files": "*.scss",
         "options": {
-          "tabWidth": 2,
-          "vueIndentScriptAndStyle": true
+          "tabWidth": 2
         }
       }
     ]
