@@ -12,8 +12,6 @@ module.exports = {
   bracketSameLine: false,
   arrowParens: "always",
 
-  vueIndentScriptAndStyle: true,
-
   semi: false,
   endOfLine: "lf",
   htmlWhitespaceSensitivity: "css",
@@ -21,4 +19,8 @@ module.exports = {
   singleAttributePerLine: false,
 
   proseWrap: "preserve",
+  
+  // Vue файлы полностью исключены через .prettierignore
+  // Vue файлы форматируются только через ESLint и Stylelint
+  // Не добавляем overrides для Vue файлов, чтобы избежать конфликтов
 };

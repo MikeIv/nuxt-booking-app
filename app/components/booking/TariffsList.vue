@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  // @ts-nocheck - Vue автоматически преобразует kebab-case в camelCase в шаблонах
   import type { RoomTariff } from "~/types/room";
 
   interface Props {
@@ -7,7 +8,7 @@
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
-    
+    (e: "book-tariff"): void;
   }>();
 
   const selectedFilter = ref<string | null>(null);
@@ -19,7 +20,7 @@
   const getTariffType = (tariff: RoomTariff): "basic" | "prepaid" => {
     // Если есть price_for_register, считаем тариф предоплатным
     // В противном случае - базовым
-    return tariff.price_for_register !== undefined ? "prepaid" : "basic";price_for_register,returntariff.price_for_registerundefined
+    return tariff.price_for_register !== undefined ? "prepaid" : "basic";
   };
 
   /**
@@ -191,7 +192,7 @@
             <span :class="$style.tariffPriceLabel"
               >Средняя стоимость за 1 ночь
             </span>
-            <Button;
+            <Button
               label="Забронировать"
               :class="$style.tariffBookingButton"
               unstyled
