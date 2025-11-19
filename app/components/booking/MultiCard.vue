@@ -109,14 +109,8 @@
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
 
-  const calculateNights = (): number => {
-    if (!date.value || date.value.length < 2) return 0;
-    const start = new Date(date.value[0]);
-    const end = new Date(date.value[1]);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+  const nights = useNights(date);
+  const calculateNights = (): number => nights.value;
 
   const getRoomGuests = (
     roomIdx: number,

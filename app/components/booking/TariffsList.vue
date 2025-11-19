@@ -8,7 +8,7 @@
 
   const props = defineProps<Props>();
   const emit = defineEmits<{
-    (e: "book-tariff"): void;
+    (e: "book-tariff", tariff: RoomTariff): void;
   }>();
 
   const selectedFilter = ref<string | null>(null);
@@ -59,8 +59,8 @@
     );
   });
 
-  const handleBook = () => {
-    emit("book-tariff");
+  const handleBook = (tariff: RoomTariff) => {
+    emit("book-tariff", tariff);
   };
 
   const handleFilterClick = (filterType: string | null) => {
@@ -242,7 +242,7 @@
               label="Забронировать"
               :class="$style.tariffBookingButton"
               unstyled
-              @click="handleBook"
+              @click="handleBook(tariff)"
             />
           </footer>
         </article>

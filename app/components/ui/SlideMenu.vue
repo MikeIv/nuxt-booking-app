@@ -29,7 +29,7 @@
 
   const emit = defineEmits(["close"]);
 
-  const enterAnimation = (el: HTMLElement, done: () => void) => {
+  const enterAnimation = (el: Element, done: () => void) => {
     gsap.fromTo(
       el,
       { y: "-100%", opacity: 0 },
@@ -43,7 +43,7 @@
     );
   };
 
-  const leaveAnimation = (el: HTMLElement, done: () => void) => {
+  const leaveAnimation = (el: Element, done: () => void) => {
     gsap.fromTo(
       el,
       { y: "0%", opacity: 1 },
@@ -100,7 +100,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--a-whiteBg);
+    background-color: var(--bg-color, var(--a-whiteBg));
     z-index: z.z("modal", "nav-menu");
     overflow-y: hidden;
     transform: translateY(-100%);

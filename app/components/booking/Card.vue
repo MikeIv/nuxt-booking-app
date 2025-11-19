@@ -17,7 +17,6 @@
   const CAROUSEL_MIN_PHOTOS = 2;
   const CAROUSEL_TARGET_ITEMS = 3;
   const CAROUSEL_PLACEHOLDER_LABEL = "Room Photo";
-  const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
   // Проверка валидности дат
   const isValidDateRange = computed(() => {
@@ -34,19 +33,7 @@
     return guests.value.roomList.reduce((sum, room) => sum + room.adults, 0);
   });
 
-  const nightsCount = computed(() => {
-    if (!isValidDateRange.value || !date.value) return 0;
-
-    const [checkInDate, checkOutDate] = date.value;
-    if (!checkInDate || !checkOutDate) return 0;
-
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-    const diffTime = checkOut.getTime() - checkIn.getTime();
-    const diffDays = Math.ceil(diffTime / MILLISECONDS_PER_DAY);
-
-    return diffDays > 0 ? diffDays : 0;
-  });
+  const nightsCount = useNights(date);
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
