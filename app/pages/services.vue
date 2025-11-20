@@ -127,6 +127,7 @@
           <BookingRoomInfoCard
             :room="selectedRoom"
             :expanded="expandedRoom"
+            :hide-description="true"
             @open-popup="openPopup"
             @toggle-expand="toggleExpand"
           />

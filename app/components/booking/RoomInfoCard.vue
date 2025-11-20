@@ -4,6 +4,7 @@
   interface Props {
     room: Room;
     expanded?: boolean;
+    hideDescription?: boolean;
   }
 
   const props = defineProps<Props>();
@@ -69,7 +70,7 @@
       </div>
 
       <div
-        v-if="room.description"
+        v-if="room.description && !props.hideDescription"
         :class="$style.roomDescription"
         v-html="room.description"
       />
