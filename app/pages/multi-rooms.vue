@@ -67,12 +67,7 @@
     return map;
   });
 
-  const nights = computed(() => {
-    if (!date.value || date.value.length < 2) return 0;
-    const start = new Date(date.value[0]);
-    const end = new Date(date.value[1]);
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  });
+  const nights = useNights(date);
 
   const bookingTotal = computed(() => {
     return Object.values(selectedByRoomIdx.value).reduce((sum, e) => {

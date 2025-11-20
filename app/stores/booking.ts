@@ -46,6 +46,7 @@ export const useBookingStore = defineStore(
     const searchResults = ref<SearchResponse | null>(null);
     const childrenAges = ref<number[]>([]);
     const selectedRoomType = ref<string | null>(null);
+    const selectedTariff = ref<RoomTariff | null>(null);
     const roomTariffs = ref<Room[]>([]);
     const loadingMessage = ref("Загружаем данные о номерах...");
     const roomList = ref<GuestInfo[]>([]);
@@ -580,6 +581,7 @@ export const useBookingStore = defineStore(
       totalGuests,
       childrenAges,
       selectedRoomType,
+      selectedTariff,
       roomTariffs,
       loadingMessage,
       forceReset,
@@ -608,6 +610,7 @@ export const useBookingStore = defineStore(
         "childrenAges",
         "searchResults",
         "selectedRoomType",
+        "selectedTariff",
         "roomTariffs",
         "roomList",
         "userProfiles",
