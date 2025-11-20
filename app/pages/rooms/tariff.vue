@@ -43,7 +43,7 @@
     expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
   };
 
-  const handleTariff = (tariff: RoomTariff) => {
+  const handleTariff = async (tariff: RoomTariff) => {
     if (!selectedRoomType.value) {
       toast.add({
         severity: "warn",
@@ -54,7 +54,7 @@
       return;
     }
     bookingStore.selectedTariff = tariff;
-    router.push("/services");
+    await router.push("/services");
   };
 
   const goBackToRooms = async () => {

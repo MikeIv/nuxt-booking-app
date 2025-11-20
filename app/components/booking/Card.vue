@@ -13,12 +13,10 @@
   const loading = ref(false);
   const isPopupOpen = ref(false);
 
-  // Константы для карусели
   const CAROUSEL_MIN_PHOTOS = 2;
   const CAROUSEL_TARGET_ITEMS = 3;
   const CAROUSEL_PLACEHOLDER_LABEL = "Room Photo";
 
-  // Проверка валидности дат
   const isValidDateRange = computed(() => {
     return (
       date.value &&
@@ -150,15 +148,21 @@
       return;
     }
 
-    const roomData = currentRoom.value;
-    bookingStore.setSelectedRoomType(roomData.room_type_code);
+    loading.value = true;
 
-    const roomsCount = bookingStore.guests?.roomList
-      ? bookingStore.guests.roomList.length
-      : bookingStore.guests?.rooms || 1;
+    try {
+      const roomData = currentRoom.value;
+      bookingStore.setSelectedRoomType(roomData.room_type_code);
 
-    const target = roomsCount > 1 ? "/multi-rooms" : "/rooms/tariff";
-    await router.push(target);
+      const roomsCount = bookingStore.guests?.roomList
+        ? bookingStore.guests.roomList.length
+        : bookingStore.guests?.rooms || 1;
+
+      const target = roomsCount > 1 ? "/multi-rooms" : "/rooms/tariff";
+      await router.push(target);
+    } finally {
+      loading.value = false;
+    }
   };
 </script>
 
@@ -262,8 +266,16 @@
           :disabled="loading || !isValidDateRange"
           @click="handleTariff"
         >
-          <span v-if="loading">Загрузка...</span>
-          <span v-else>Выбрать номер</span>
+          <span :class="$style.buttonText">Выбрать номер</span>
+          <ProgressSpinner
+            v-show="loading"
+            :class="$style.buttonSpinner"
+            style="width: 16px; height: 16px"
+            stroke-width="3"
+            fill="transparent"
+            animation-duration="1s"
+            aria-label="Загрузка"
+          />
         </Button>
       </footer>
     </div>
@@ -277,6 +289,8 @@
 </template>
 
 <style module lang="scss">
+  @use "~/assets/styles/variables/z-index" as z;
+
   .card {
     position: relative;
     display: flex;
@@ -474,6 +488,7 @@
   }
 
   .bookingButton {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -504,5 +519,19 @@
     &.loading {
       background-color: var(--a-btnAccentBg);
     }
+  }
+
+  .buttonText {
+    position: relative;
+    z-index: z.z("default");
+  }
+
+  .buttonSpinner {
+    position: absolute;
+    right: rem(16);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: z.z("behind");
+    pointer-events: none;
   }
 </style>

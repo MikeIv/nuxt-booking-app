@@ -9,7 +9,7 @@
   const router = useRouter();
   const toast = useToast();
   const bookingStore = useBookingStore();
-  const { searchResults, roomTariffs, date, guests } =
+  const { searchResults, roomTariffs, date, guests, selectedServices } =
     storeToRefs(bookingStore);
 
   const loading = ref(true);
@@ -70,10 +70,12 @@
   const nights = useNights(date);
 
   const bookingTotal = computed(() => {
-    return Object.values(selectedByRoomIdx.value).reduce((sum, e) => {
+    const roomsTotal = Object.values(selectedByRoomIdx.value).reduce((sum, e) => {
       const perNight = e.price || 0;
       return sum + perNight * nights.value;
     }, 0);
+    const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
+    return roomsTotal + servicesTotal;
   });
 
   const hasSummary = computed(

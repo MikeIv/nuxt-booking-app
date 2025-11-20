@@ -27,6 +27,12 @@ export interface UserProfileData {
   country: string;
 }
 
+export interface SelectedService {
+  id: number;
+  title: string;
+  price: number;
+}
+
 export const useBookingStore = defineStore(
   "booking",
   () => {
@@ -51,6 +57,25 @@ export const useBookingStore = defineStore(
     const loadingMessage = ref("Загружаем данные о номерах...");
     const roomList = ref<GuestInfo[]>([]);
     const userProfiles = ref<Record<string, UserProfileData>>({});
+
+    const selectedServices = ref<SelectedService[]>([]);
+
+    function addService(service: SelectedService) {
+      if (!selectedServices.value.find((s) => s.id === service.id)) {
+        selectedServices.value.push(service);
+      }
+    }
+
+    function removeService(serviceId: number) {
+      const index = selectedServices.value.findIndex((s) => s.id === serviceId);
+      if (index !== -1) {
+        selectedServices.value.splice(index, 1);
+      }
+    }
+
+    function isServiceSelected(serviceId: number): boolean {
+      return selectedServices.value.some((s) => s.id === serviceId);
+    }
 
     const totalGuests = computed(() => {
       const rooms = guests.value.roomList ?? [];
@@ -565,6 +590,7 @@ export const useBookingStore = defineStore(
       childrenAges.value = [];
       selectedRoomType.value = null;
       roomTariffs.value = [];
+      selectedServices.value = [];
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -598,6 +624,10 @@ export const useBookingStore = defineStore(
       userProfiles,
       saveUserProfile,
       getUserProfile,
+      selectedServices,
+      addService,
+      removeService,
+      isServiceSelected,
     };
   },
   {
@@ -614,6 +644,7 @@ export const useBookingStore = defineStore(
         "roomTariffs",
         "roomList",
         "userProfiles",
+        "selectedServices",
       ],
       serializer: {
         serialize: (state: StateTree) => {
