@@ -2,6 +2,7 @@
   import UIPopup from "~/components/ui/Popup.vue";
   import RoomPopupCarousel from "~/components/booking/RoomPopupCarousel.vue";
   import type { Room } from "~/types/room";
+  import { formatCount } from "~/utils/declension";
 
   interface Props {
     room: Room;
@@ -54,7 +55,7 @@
           <ul :class="$style.infoList">
             <li :class="$style.infoItem">
               <UIcon name="i-persons" :class="$style.infoIcon" />
-              <span>До {{ room.max_occupancy }} гостей</span>
+              <span>До {{ formatCount(room.max_occupancy, "capacity") }}</span>
             </li>
             <li :class="$style.infoItem">
               <UIcon name="i-square" :class="$style.infoIcon" />
@@ -62,7 +63,7 @@
             </li>
             <li :class="$style.infoItem">
               <UIcon name="i-dash-square" :class="$style.infoIcon" />
-              <span>{{ room.rooms }} комнаты</span>
+              <span>{{ formatCount(room.rooms, "chamber") }}</span>
             </li>
           </ul>
         </div>
