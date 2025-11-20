@@ -1,11 +1,15 @@
 <script setup lang="ts">
+  import { useBookingStore } from "~/stores/booking";
+
   interface Props {
+    id: number;
     title: string;
     price: number;
   }
 
   const props = defineProps<Props>();
   const isPopupOpen = ref(false);
+  const bookingStore = useBookingStore();
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
@@ -29,9 +33,20 @@
     CAROUSEL_PLACEHOLDER_LABEL,
   );
 
+  const isSelected = computed(() => {
+    return bookingStore.isServiceSelected(props.id);
+  });
+
   const handleAddService = () => {
-    // Логика добавления услуги
-    console.log("Добавить услугу:", props.title);
+    if (isSelected.value) {
+      bookingStore.removeService(props.id);
+    } else {
+      bookingStore.addService({
+        id: props.id,
+        title: props.title,
+        price: props.price,
+      });
+    }
   };
 </script>
 
@@ -97,7 +112,10 @@
         <Button
           unstyled
           class="btn__bs"
-          :class="$style.addServiceButton"
+          :class="[
+            $style.addServiceButton,
+            isSelected ? $style.addServiceButtonSelected : undefined,
+          ]"
           @click="handleAddService"
         >
           <span>Добавить услугу</span>
@@ -287,6 +305,14 @@
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+  }
+
+  .addServiceButtonSelected {
+    background-color: var(--a-primaryBg);
+
+    &:hover:not(:disabled) {
+      background-color: var(--a-primaryBg);
     }
   }
 </style>

@@ -19,6 +19,11 @@
   const openTariffInfo = ref<Record<string, boolean>>({});
 
   /**
+   * Состояние загрузки для каждого тарифа
+   */
+  const loadingTariffs = ref<Record<string, boolean>>({});
+
+  /**
    * Переключает состояние информационного блока тарифа
    */
   const toggleTariffInfo = (ratePlanCode: string) => {
@@ -59,9 +64,33 @@
     );
   });
 
-  const handleBook = (tariff: RoomTariff) => {
-    emit("book-tariff", tariff);
+  const route = useRoute();
+  const currentPath = ref(route.path);
+
+  const handleBook = async (tariff: RoomTariff) => {
+    loadingTariffs.value[tariff.rate_plan_code] = true;
+    currentPath.value = route.path;
+
+    try {
+      emit("book-tariff", tariff);
+
+      // Проверяем, произошел ли переход через небольшую задержку
+      await nextTick();
+      setTimeout(() => {
+        // Если мы все еще на той же странице, сбросить loading
+        if (route.path === currentPath.value) {
+          loadingTariffs.value[tariff.rate_plan_code] = false;
+        }
+      }, 100);
+    } catch {
+      loadingTariffs.value[tariff.rate_plan_code] = false;
+    }
   };
+
+  // Сброс loading при переходе на другую страницу
+  onBeforeRouteLeave(() => {
+    loadingTariffs.value = {};
+  });
 
   const handleFilterClick = (filterType: string | null) => {
     selectedFilter.value = filterType;
@@ -239,11 +268,28 @@
               >Средняя стоимость за 1 ночь
             </span>
             <Button
-              label="Забронировать"
-              :class="$style.tariffBookingButton"
+              :class="[
+                $style.tariffBookingButton,
+                {
+                  [$style.loading]:
+                    loadingTariffs[tariff.rate_plan_code],
+                },
+              ]"
+              :disabled="loadingTariffs[tariff.rate_plan_code]"
               unstyled
               @click="handleBook(tariff)"
-            />
+            >
+              <span :class="$style.buttonText">Забронировать</span>
+              <ProgressSpinner
+                v-show="loadingTariffs[tariff.rate_plan_code]"
+                :class="$style.buttonSpinner"
+                style="width: 16px; height: 16px"
+                stroke-width="3"
+                fill="transparent"
+                animation-duration="1s"
+                aria-label="Загрузка"
+              />
+            </Button>
           </footer>
         </article>
       </li>
@@ -253,6 +299,7 @@
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
+  @use "~/assets/styles/variables/z-index" as z;
 
   .tariffsSection {
     padding-top: rem(24);
@@ -479,6 +526,7 @@
   }
 
   .tariffBookingButton {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -493,7 +541,7 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: var(--a-btnAccentBg);
     }
 
@@ -501,6 +549,29 @@
       outline: rem(2) solid var(--a-primaryBg);
       outline-offset: rem(2);
     }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &.loading {
+      background-color: var(--a-btnAccentBg);
+    }
+  }
+
+  .buttonText {
+    position: relative;
+    z-index: z.z("default");
+  }
+
+  .buttonSpinner {
+    position: absolute;
+    right: rem(16);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: z.z("behind");
+    pointer-events: none;
   }
 
   .packagesTitle {

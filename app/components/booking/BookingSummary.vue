@@ -58,12 +58,6 @@
   const checkInWeekday = computed(() => formatWeekday(checkInDate.value));
   const checkOutWeekday = computed(() => formatWeekday(checkOutDate.value));
 
-  const nightsLabel = computed(
-    () => `${nights.value} ${formatNights(nights.value)}`,
-  );
-
-  console.log("nightsLabel", nightsLabel.value);
-
   const isDatesDetailsOpen = ref(false);
 
   const toggleDatesDetails = () => {
@@ -71,7 +65,7 @@
   };
 
   const bookingStore = useBookingStore();
-  const { guests } = storeToRefs(bookingStore);
+  const { guests, selectedServices } = storeToRefs(bookingStore);
 
   const expandedRooms = ref<Record<number, boolean>>({});
 
@@ -247,10 +241,45 @@
                 v-if="(roomGuestLines[entry.roomIdx] || []).length > 0"
                 :class="$style.roomDivider"
               />
+              <div v-if="selectedServices.length > 0" :class="$style.servicesSection">
+                <div :class="$style.servicesHeader">Дополнительные услуги:</div>
+                <div :class="$style.servicesList">
+                  <div
+                    v-for="service in selectedServices"
+                    :key="service.id"
+                    :class="$style.serviceItem"
+                  >
+                    <span :class="$style.serviceTitle">{{ service.title }}</span>
+                    <div :class="$style.serviceActions">
+                      <span :class="$style.servicePrice">
+                        {{ service.price.toLocaleString("ru-RU") }} ₽
+                      </span>
+                      <Button
+                        type="button"
+                        unstyled
+                        :class="$style.removeServiceButton"
+                        aria-label="Удалить услугу"
+                        @click="bookingStore.removeService(service.id)"
+                      >
+                        <UIcon name="i-close" :class="$style.removeIcon" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                v-if="selectedServices.length > 0"
+                :class="$style.roomDivider"
+              />
               <div :class="$style.roomTotal">
                 <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
                 <strong>
-                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }}
+                  {{
+                    (
+                      (entry.price || 0) * nights +
+                      selectedServices.reduce((sum, s) => sum + s.price, 0)
+                    ).toLocaleString("ru-RU")
+                  }}
                   ₽
                 </strong>
               </div>
@@ -567,6 +596,79 @@
     font-family: "Lora", serif;
     font-size: rem(18);
     font-weight: 600;
+  }
+
+  .servicesSection {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    padding: rem(16) 0;
+  }
+
+  .servicesHeader {
+    font-family: "Lora", serif;
+    font-size: rem(16);
+    font-weight: 500;
+    color: var(--a-text-dark);
+  }
+
+  .servicesList {
+    display: flex;
+    flex-direction: column;
+    gap: rem(8);
+  }
+
+  .serviceItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(12);
+    padding: rem(8) 0;
+  }
+
+  .serviceTitle {
+    flex: 1;
+    font-family: Inter, sans-serif;
+    font-size: rem(14);
+    font-weight: 400;
+    color: var(--a-text-dark);
+  }
+
+  .serviceActions {
+    display: flex;
+    align-items: center;
+    gap: rem(12);
+  }
+
+  .servicePrice {
+    font-family: "Lora", serif;
+    font-size: rem(14);
+    font-weight: 500;
+    color: var(--a-text-dark);
+    white-space: nowrap;
+  }
+
+  .removeServiceButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(24);
+    height: rem(24);
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .removeServiceButton:hover {
+    opacity: 0.7;
+  }
+
+  .removeIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-text-dark);
   }
 
   .pageSummaryDivider {

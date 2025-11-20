@@ -17,7 +17,7 @@
   const router = useRouter();
   const toast = useToast();
   const bookingStore = useBookingStore();
-  const { selectedRoomType, selectedTariff: selectedTariffStore, roomTariffs, date } =
+  const { selectedRoomType, selectedTariff: selectedTariffStore, roomTariffs, date, selectedServices } =
     storeToRefs(bookingStore);
 
   // Получаем выбранный номер
@@ -41,7 +41,9 @@
 
   const bookingTotal = computed(() => {
     if (!selectedTariff.value?.price) return 0;
-    return selectedTariff.value.price * nights.value;
+    const roomTotal = selectedTariff.value.price * nights.value;
+    const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
+    return roomTotal + servicesTotal;
   });
 
   const selectedEntry = computed<SelectedEntry | null>(() => {
@@ -139,6 +141,7 @@
           <section :class="$style.servicesList">
             <BookingServiceCard
               v-for="service in services"
+              :id="service.id"
               :key="service.id"
               :title="service.title"
               :price="service.price"
