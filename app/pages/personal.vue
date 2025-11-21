@@ -8,14 +8,14 @@
     layout: "steps",
   });
 
+  const router = useRouter();
   const bookingStore = useBookingStore();
   const {
     selectedRoomType,
+    selectedTariff: selectedTariffStore,
     roomTariffs,
     date,
-    guests,
-    promoCode,
-    childrenAges,
+    selectedServices,
   } = storeToRefs(bookingStore);
   const toast = usePrimeToast();
 
@@ -140,6 +140,7 @@
       return null;
     }
     const [hours, minutes] = time.split(":").map(Number);
+    if (hours === undefined || minutes === undefined) return null;
     const dateTime = new Date(date);
     dateTime.setHours(hours, minutes, 0, 0);
     return dateTime.toISOString();
@@ -155,7 +156,7 @@
       return;
     }
 
-    if (!date.value || !selectedRoomType.value || !roomTariffs.value) {
+    if (!date.value || !selectedRoomType.value || !selectedTariff.value) {
       toast.add({
         severity: "error",
         summary: "Недостаточно данных для бронирования.",
@@ -164,54 +165,37 @@
       return;
     }
 
-    const selectedTariff = roomTariffs.value.find(
-      (tariff) => tariff.room_type_code === selectedRoomType.value,
-    );
-
-    if (!selectedTariff) {
-      toast.add({
-        severity: "error",
-        summary: "Выберите тариф для бронирования.",
-        life: 3000,
-      });
-      return;
-    }
+    const allGuests = [
+      {
+        name: formData.mainGuest.firstName,
+        surname: formData.mainGuest.lastName,
+        middle_name: formData.mainGuest.middleName || null,
+        phone: formData.mainGuest.phone,
+        email: formData.mainGuest.email,
+        nationality: formData.mainGuest.citizenship,
+        sms_confirmation: formData.smsConfirmation,
+        email_subscribe: formData.specialOffers,
+      },
+      ...formData.additionalGuests.map((guest) => ({
+        name: guest.firstName,
+        surname: guest.lastName,
+        middle_name: guest.middleName || null,
+        phone: guest.phone,
+        email: guest.email,
+        nationality: guest.citizenship,
+        sms_confirmation: false,
+        email_subscribe: false,
+      })),
+    ];
 
     const bookingData: BookingData = {
-      guests: [
-        {
-          name: formData.mainGuest.firstName,
-          surname: formData.mainGuest.lastName,
-          middle_name: formData.mainGuest.middleName || null,
-          phone: formData.mainGuest.phone,
-          email: formData.mainGuest.email,
-          country: formData.mainGuest.citizenship,
-        },
-        ...formData.additionalGuests.map((guest) => ({
-          name: guest.firstName,
-          surname: guest.lastName,
-          middle_name: guest.middleName || null,
-          phone: guest.phone,
-          email: guest.email,
-          country: guest.citizenship,
-        })),
-      ],
-      subscribe_newsletter: formData.specialOffers,
-      payment_method: formData.paymentMethod,
       for_self: formData.forSelf,
-      order: {
-        start_at: date.value?.[0]
-          ? bookingStore.formatDate(date.value[0])
-          : null,
-        end_at: date.value?.[1] ? bookingStore.formatDate(date.value[1]) : null,
-        adults: guests.value.adults,
-        childs: childrenAges.value.slice(0, guests.value.children),
-        promocode: promoCode.value || null,
-        room_type_code: selectedRoomType.value,
-        rate_plan_code: selectedTariff?.tariff_details?.rate_plan_code || null,
-        packages: bookingDetails.value?.additional_services || [],
-      },
-      sms_confirmation: formData.smsConfirmation,
+      start_at: date.value?.[0]
+        ? bookingStore.formatDate(date.value[0])
+        : "",
+      end_at: date.value?.[1] ? bookingStore.formatDate(date.value[1]) : "",
+      payment: formData.paymentMethod || "",
+      agreements: formData.agreement,
       additional: {
         start_at:
           date.value?.[0] && formData.checkInTime
@@ -223,6 +207,13 @@
             : null,
         comment: formData.comment || null,
       },
+      rooms: [
+        {
+          room_type_code: selectedRoomType.value!,
+          rate_type_code: selectedTariff.value!.rate_plan_code,
+          guests: allGuests,
+        },
+      ],
     };
 
     try {
@@ -233,14 +224,13 @@
         summary: "Бронирование успешно создано!",
         life: 3000,
       });
-      console.log("Form data:", formData);
-      console.log("Booking data:", bookingData);
+      router.push("/confirmation");
     } catch (error) {
       console.log("error:", error);
       toast.add({
         severity: "error",
         summary: "Ошибка при создании бронирования.",
-        detail: bookingStore.error.value || "Произошла ошибка.",
+        detail: bookingStore.error || "Произошла ошибка.",
         life: 5000,
       });
     } finally {
@@ -336,48 +326,81 @@
     },
   ];
 
-  const bookingDetails = computed(() => {
-    if (!roomTariffs.value || roomTariffs.value.length === 0) return null;
-    const selectedTariff = roomTariffs.value.find(
-      (tariff) => tariff.room_type_code === selectedRoomType.value,
+  // Получаем выбранный номер
+  const selectedRoom = computed(() => {
+    if (!roomTariffs.value?.length) return null;
+    return (
+      roomTariffs.value.find(
+        (room) => room.room_type_code === selectedRoomType.value,
+      ) || roomTariffs.value[0] || null
     );
-    if (!selectedTariff) return null;
-    console.log("selectedTariff", selectedTariff);
-    return {
-      title: selectedTariff?.title,
-      room_type_code: selectedTariff.room_type_code,
-      check_in: date.value?.[0] ? formatDate(date.value[0]) : "",
-      check_out: date.value?.[1] ? formatDate(date.value[1]) : "",
-      check_in_date: date.value?.[0] ? new Date(date.value[0]) : null,
-      check_out_date: date.value?.[1] ? new Date(date.value[1]) : null,
-      nights: calculateNights(),
-      additional_services: getAdditionalServices(),
-      price: selectedTariff.price,
-      total_price: selectedTariff.price,
-    };
+  });
+
+  const selectedTariff = computed(() => {
+    if (selectedTariffStore?.value) return selectedTariffStore.value;
+    if (!selectedRoom.value?.tariffs?.length) return null;
+    return selectedRoom.value.tariffs[0] || null;
   });
 
   const nights = useNights(date);
-  const calculateNights = () => nights.value;
 
-  const getAdditionalServices = () => {
-    const services = [];
-    if (promoCode.value) {
-      services.push(`Промокод: ${promoCode.value}`);
-    }
-    if (guests.value.children > 0) {
-      services.push(`Дети: ${guests.value.children}`);
-    }
-    return services.length > 0 ? services : ["Без дополнительных услуг"];
-  };
+  interface SelectedEntry {
+    roomIdx: number;
+    roomTitle: string;
+    ratePlanCode: string;
+    price: number | null | undefined;
+    title: string;
+  }
 
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
-  };
+  const selectedEntry = computed<SelectedEntry | null>(() => {
+    if (!selectedRoom.value || !selectedTariff.value) return null;
+    return {
+      roomIdx: 0,
+      roomTitle: selectedRoom.value.title || "",
+      ratePlanCode: selectedTariff.value.rate_plan_code,
+      price: selectedTariff.value.price,
+      title: selectedTariff.value.title || "",
+    };
+  });
+
+  // Преобразуем selectedEntry в формат для BookingSummary
+  const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+    const entry = selectedEntry.value;
+    if (!entry) return {} as Record<number, SelectedEntry>;
+    return { 0: entry };
+  });
+
+  const bookingTotal = computed(() => {
+    if (!selectedTariff.value?.price) return 0;
+    const roomTotal = selectedTariff.value.price * nights.value;
+    const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
+    return roomTotal + servicesTotal;
+  });
 
   onMounted(() => {
     bookingStore.setLoading(false);
     bookingStore.isServerRequest = false;
+
+    // Проверяем наличие необходимых данных для отображения страницы
+    if (!selectedRoom.value) {
+      toast.add({
+        severity: "warn",
+        summary: "Ошибка",
+        detail: "Номер не выбран",
+        life: 3000,
+      });
+      router.push("/rooms");
+      return;
+    }
+    if (!selectedTariff.value) {
+      toast.add({
+        severity: "warn",
+        summary: "Ошибка",
+        detail: "Тариф не выбран",
+        life: 3000,
+      });
+      router.push("/rooms");
+    }
   });
 </script>
 
@@ -424,7 +447,18 @@
                   :key="field.key"
                   :class="$style.inputItem"
                 >
+                  <BookingCountrySelect
+                    v-if="field.key === 'citizenship'"
+                    v-model="formData.mainGuest[field.key]"
+                    :placeholder="field.placeholder"
+                    :error="errors.mainGuest[field.key]"
+                    :class="[
+                      $style.inputt,
+                      errors.mainGuest[field.key] && $style.inputError,
+                    ]"
+                  />
                   <InputText
+                    v-else
                     v-model="formData.mainGuest[field.key]"
                     :type="field.type"
                     :placeholder="field.placeholder"
@@ -435,7 +469,7 @@
                     unstyled
                   />
                   <Message
-                    v-if="errors.mainGuest[field.key]"
+                    v-if="errors.mainGuest[field.key] && field.key !== 'citizenship'"
                     severity="error"
                     size="small"
                     variant="simple"
@@ -467,7 +501,19 @@
                   :key="field.key"
                   :class="$style.inputItem"
                 >
+                  <BookingCountrySelect
+                    v-if="field.key === 'citizenship'"
+                    v-model="guest[field.key]"
+                    :placeholder="field.placeholder"
+                    :error="errors.additionalGuests[index]?.[field.key]"
+                    :class="[
+                      $style.inputSelect,
+                      errors.additionalGuests[index]?.[field.key] &&
+                        $style.inputError,
+                    ]"
+                  />
                   <InputText
+                    v-else
                     v-model="guest[field.key]"
                     :type="field.type"
                     :placeholder="field.placeholder"
@@ -479,7 +525,7 @@
                     unstyled
                   />
                   <Message
-                    v-if="errors.additionalGuests[index]?.[field.key]"
+                    v-if="errors.additionalGuests[index]?.[field.key] && field.key !== 'citizenship'"
                     severity="error"
                     size="small"
                     variant="simple"
@@ -591,10 +637,16 @@
               </div>
             </div>
           </div>
-          <BookingAsideInfo
-            :booking-details="bookingDetails"
-            @submit="onFormSubmit"
-          />
+          <div :class="$style.summaryWrapper">
+            <BookingSummary
+              v-if="selectedEntry"
+              :selected-entries="selectedByRoomIdx"
+              :date="date"
+              :nights="nights"
+              :booking-total="bookingTotal"
+              @continue="onFormSubmit"
+            />
+          </div>
         </div>
       </form>
     </section>
@@ -626,6 +678,11 @@
     flex-direction: column;
     width: 100%;
     padding: rem(12) rem(20);
+
+    @media (min-width: #{size.$desktopMedium}) {
+      max-width: #{size.$desktop};
+      margin: 0 auto;
+    }
   }
 
   .return {
@@ -705,7 +762,7 @@
     gap: rem(32);
     @media (min-width: #{size.$desktopMin}) {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 2fr 1fr;
       gap: rem(40);
       align-items: start;
     }
@@ -717,6 +774,14 @@
     gap: rem(32);
     @media (min-width: #{size.$desktopMin}) {
       gap: rem(32);
+    }
+  }
+
+  .summaryWrapper {
+    display: flex;
+    width: 100%;
+    @media (min-width: #{size.$desktopMin}) {
+      width: 100%;
     }
   }
 
@@ -782,7 +847,7 @@
 
   .input {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
     height: rem(54);
@@ -803,6 +868,11 @@
     &::placeholder {
       color: var(--a-text-light);
     }
+  }
+
+  .inputSelect {
+    display: flex;
+    justify-content: space-between
   }
 
   .inputError {

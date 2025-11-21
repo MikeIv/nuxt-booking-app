@@ -121,6 +121,8 @@
     Object.values(selectedEntries.value).sort((a, b) => a.roomIdx - b.roomIdx),
   );
 
+  const hasRoomEntries = computed(() => roomEntries.value.length > 0);
+
   const handleContinue = () => {
     emit("continue");
   };
@@ -190,7 +192,7 @@
         </div>
       </div>
 
-      <div :class="$style.pageSummaryList">
+      <div v-if="hasRoomEntries" :class="$style.pageSummaryList">
         <div
           v-for="entry in roomEntries"
           :key="entry.roomIdx + '-' + entry.ratePlanCode"
@@ -328,7 +330,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       position: static;
-      width: calc(100% / 3);
+      width: 100%;
       margin: 0;
       padding: 0;
       box-shadow: none;

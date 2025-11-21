@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import { useToast as usePrimeToast } from "primevue/usetoast";
   import type { Room, RoomTariff } from "~/types/room";
 
   interface SelectedEntry {
@@ -15,7 +16,7 @@
   });
 
   const router = useRouter();
-  const toast = useToast();
+  const toast = usePrimeToast();
   const bookingStore = useBookingStore();
   const { selectedRoomType, selectedTariff: selectedTariffStore, roomTariffs, date, selectedServices } =
     storeToRefs(bookingStore);
@@ -138,7 +139,6 @@
             @close="closePopup"
           />
 
-          <!-- Карточки услуг -->
           <section :class="$style.servicesList">
             <BookingServiceCard
               v-for="service in services"
@@ -150,15 +150,16 @@
           </section>
         </div>
 
-        <!-- Summary блок -->
-        <BookingSummary
-          v-if="selectedEntry"
-          :selected-entries="selectedByRoomIdx"
-          :date="date"
-          :nights="nights"
-          :booking-total="bookingTotal"
-          @continue="handleContinue"
-        />
+        <div :class="$style.summaryWrapper">
+          <BookingSummary
+            v-if="selectedEntry"
+            :selected-entries="selectedByRoomIdx"
+            :date="date"
+            :nights="nights"
+            :booking-total="bookingTotal"
+            @continue="handleContinue"
+          />
+        </div>
       </div>
 
       <div v-else :class="$style.noRoom">
@@ -226,6 +227,15 @@
     @media (min-width: #{size.$desktopMin}) {
       width: 66.6667%;
       margin-bottom: 0;
+    }
+  }
+
+  .summaryWrapper {
+    display: flex;
+    width: 100%;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(100% / 3);
     }
   }
 
