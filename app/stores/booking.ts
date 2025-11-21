@@ -480,20 +480,39 @@ export const useBookingStore = defineStore(
       setLoading(true, "Создаём бронирование...");
 
       try {
-        const processedData = { ...bookingData };
+        // Данные уже отформатированы в personal.vue, но убеждаемся в правильном формате
+        const processedData: BookingData = {
+          ...bookingData,
+          // Убеждаемся, что даты в формате YYYY-MM-DD
+          start_at: bookingData.start_at
+            ? typeof bookingData.start_at === "string"
+              ? bookingData.start_at
+              : formatDate(bookingData.start_at)
+            : "",
+          end_at: bookingData.end_at
+            ? typeof bookingData.end_at === "string"
+              ? bookingData.end_at
+              : formatDate(bookingData.end_at)
+            : "",
+          // Очищаем additional от null значений, если они не нужны
+          additional: {
+            start_at: bookingData.additional.start_at || null,
+            end_at: bookingData.additional.end_at || null,
+            comment: bookingData.additional.comment || null,
+          },
+        };
 
-        if (processedData.order?.start_at) {
-          processedData.order.start_at = formatDate(
-            processedData.order.start_at,
+        // Логируем данные для отладки
+        if (import.meta?.env?.DEV) {
+          console.log(
+            "📤 Отправка данных бронирования:",
+            JSON.stringify(processedData, null, 2),
           );
-        }
-        if (processedData.order?.end_at) {
-          processedData.order.end_at = formatDate(processedData.order.end_at);
         }
 
         isServerRequest.value = true;
         const response = await post<{ booking: unknown }>(
-          "/v1/booking",
+          "/booking",
           processedData,
           { signal: AbortSignal.timeout(10000) },
         );

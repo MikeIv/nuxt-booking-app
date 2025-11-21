@@ -22,33 +22,30 @@ interface SearchResponse {
 }
 
 interface BookingData {
-  guests: {
-    name: string;
-    surname: string;
-    middle_name: string | null;
-    phone: string;
-    email: string;
-    country: string;
-  }[];
-  subscribe_newsletter: boolean;
-  payment_method: string;
   for_self: boolean;
-  order: {
-    start_at: string;
-    end_at: string;
-    adults: number;
-    childs: number[];
-    promocode: string | null;
-    room_type_code: string;
-    rate_plan_code: string | null;
-    packages: string[];
-  };
-  sms_confirmation: boolean;
+  start_at: string;
+  end_at: string;
+  payment: string;
+  agreements: boolean;
   additional: {
     start_at: string | null;
     end_at: string | null;
     comment: string | null;
   };
+  rooms: {
+    room_type_code: string;
+    rate_type_code: string;
+    guests: {
+      surname: string;
+      name: string;
+      middle_name: string | null;
+      phone: string;
+      email: string;
+      nationality: string;
+      sms_confirmation: boolean;
+      email_subscribe: boolean;
+    }[];
+  }[];
 }
 
 export type { SearchResponse, BookingData, SearchFilters, SearchFilter };
