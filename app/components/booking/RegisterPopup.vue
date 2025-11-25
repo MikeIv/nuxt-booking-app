@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { RegisterData } from "~/types/auth";
+  import { countriesRu } from "~/utils/countries";
 
   const props = defineProps<{
     visible: boolean;
@@ -204,9 +205,12 @@
         </div>
 
         <div :class="$style.inputBlock">
-          <BookingCountrySelect
+          <BookingSelect
             v-model="formData.country"
+            :options="countriesRu"
             :error="errors.country"
+            :searchable="true"
+            search-placeholder="Поиск страны..."
           />
         </div>
 

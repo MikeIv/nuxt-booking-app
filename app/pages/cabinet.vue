@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useAuthStore } from "~/stores/auth";
   import { useBookingStore } from "~/stores/booking";
+  import { countriesRu } from "~/utils/countries";
 
   const router = useRouter();
   const authStore = useAuthStore();
@@ -234,8 +235,11 @@
 
           <div :class="$style.field">
             <label :class="$style.label">Гражданство</label>
-            <BookingCountrySelect
+            <BookingSelect
               v-model="formData.country"
+              :options="countriesRu"
+              :searchable="true"
+              search-placeholder="Поиск страны..."
               :class="$style.input"
               @update:model-value="checkChanges"
             />
