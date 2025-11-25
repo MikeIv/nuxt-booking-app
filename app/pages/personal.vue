@@ -1,8 +1,15 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { useToast as usePrimeToast } from "primevue/usetoast";
   import { storeToRefs } from "pinia";
-  import type { BookingData } from "~/types/booking";
+  import type {
+    PersonalFormData,
+    FormErrors,
+    GuestData,
+  } from "~/composables/usePersonalForm";
+  import {
+    usePersonalForm,
+    type FormField,
+  } from "~/composables/usePersonalForm";
 
   definePageMeta({
     layout: "steps",
@@ -17,133 +24,29 @@
     date,
     selectedServices,
   } = storeToRefs(bookingStore);
-  const toast = usePrimeToast();
+  const toast = useToast();
 
-  interface GuestData {
-    lastName: string;
-    firstName: string;
-    middleName: string;
-    phone: string;
-    email: string;
-    citizenship: string;
-  }
+  const {
+    formFields,
+    paymentMethods,
+    checkboxOptions,
+    additionalFields,
+    createFormData,
+    initialGuestData,
+    validateForm: validatePersonalForm,
+    prepareBookingData,
+  } = usePersonalForm();
 
-  interface FormData {
-    mainGuest: GuestData;
-    additionalGuests: GuestData[];
-    smsConfirmation: boolean;
-    specialOffers: boolean;
-    checkInTime: string;
-    checkOutTime: string;
-    comment: string;
-    paymentMethod: string;
-    agreement: boolean;
-    forSelf: boolean;
-  }
+  const formData = reactive<PersonalFormData>(createFormData());
 
-  const formData = reactive<FormData>({
-    mainGuest: {
-      lastName: "",
-      firstName: "",
-      middleName: "",
-      phone: "",
-      email: "",
-      citizenship: "",
-    },
-    additionalGuests: [],
-    smsConfirmation: false,
-    specialOffers: false,
-    checkInTime: "",
-    checkOutTime: "",
-    comment: "",
-    paymentMethod: "",
-    agreement: false,
-    forSelf: true,
-  });
-
-  const { validateRegisterForm } = useFormValidation();
-
-  const errors = reactive<{
-    mainGuest: Partial<GuestData>;
-    additionalGuests: Array<Partial<GuestData>>;
-    agreement: string;
-  }>({
+  const errors = reactive<FormErrors>({
     mainGuest: {},
     additionalGuests: [],
     agreement: "",
   });
 
-  const paymentMethods = [
-    { label: "Банковской картой", value: "card" },
-    { label: "Наличными при заселении", value: "cash" },
-    { label: "Банковским переводом", value: "transfer" },
-  ];
-
-  const guestToRegisterData = (guest: GuestData) => ({
-    surname: guest.lastName,
-    name: guest.firstName,
-    middle_name: guest.middleName || null,
-    phone: guest.phone,
-    email: guest.email,
-    country: guest.citizenship,
-    password: "dummy_password",
-    password_confirmation: "dummy_password",
-  });
-
-  const validateGuest = (guest: GuestData): Partial<GuestData> => {
-    const guestErrors: Partial<GuestData> = {};
-    const registerData = guestToRegisterData(guest);
-    const guestValidation = validateRegisterForm(registerData, true);
-    if (guestValidation.surname) guestErrors.lastName = guestValidation.surname;
-    if (guestValidation.name) guestErrors.firstName = guestValidation.name;
-    if (guestValidation.middle_name)
-      guestErrors.middleName = guestValidation.middle_name;
-    if (guestValidation.phone) guestErrors.phone = guestValidation.phone;
-    if (guestValidation.email) guestErrors.email = guestValidation.email;
-    if (guestValidation.country)
-      guestErrors.citizenship = guestValidation.country;
-    return guestErrors;
-  };
-
   const validateForm = (): boolean => {
-    let isValid = true;
-    errors.mainGuest = {};
-    errors.additionalGuests = [];
-    errors.agreement = "";
-    const mainGuestErrors = validateGuest(formData.mainGuest);
-    if (Object.keys(mainGuestErrors).length > 0) {
-      errors.mainGuest = mainGuestErrors;
-      isValid = false;
-    }
-    formData.additionalGuests.forEach((guest, index) => {
-      const guestErrors = validateGuest(guest);
-      if (Object.keys(guestErrors).length > 0) {
-        if (!errors.additionalGuests[index]) {
-          errors.additionalGuests[index] = {};
-        }
-        Object.assign(errors.additionalGuests[index], guestErrors);
-        isValid = false;
-      }
-    });
-    if (!formData.agreement) {
-      errors.agreement = "Необходимо согласие с правилами бронирования.";
-      isValid = false;
-    }
-    return isValid;
-  };
-
-  const formatDateTime = (date: Date, time: string): string | null => {
-    if (!date || !time) return null;
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
-    if (!timeRegex.test(time)) {
-      console.warn(`Неверный формат времени: ${time}. Ожидается HH:mm.`);
-      return null;
-    }
-    const [hours, minutes] = time.split(":").map(Number);
-    if (hours === undefined || minutes === undefined) return null;
-    const dateTime = new Date(date);
-    dateTime.setHours(hours, minutes, 0, 0);
-    return dateTime.toISOString();
+    return validatePersonalForm(formData, errors);
   };
 
   const onFormSubmit = async () => {
@@ -165,56 +68,22 @@
       return;
     }
 
-    const allGuests = [
-      {
-        name: formData.mainGuest.firstName,
-        surname: formData.mainGuest.lastName,
-        middle_name: formData.mainGuest.middleName || null,
-        phone: formData.mainGuest.phone,
-        email: formData.mainGuest.email,
-        nationality: formData.mainGuest.citizenship,
-        sms_confirmation: formData.smsConfirmation,
-        email_subscribe: formData.specialOffers,
-      },
-      ...formData.additionalGuests.map((guest) => ({
-        name: guest.firstName,
-        surname: guest.lastName,
-        middle_name: guest.middleName || null,
-        phone: guest.phone,
-        email: guest.email,
-        nationality: guest.citizenship,
-        sms_confirmation: false,
-        email_subscribe: false,
-      })),
-    ];
+    const bookingData = prepareBookingData(
+      formData,
+      date.value,
+      selectedRoomType.value,
+      selectedTariff.value,
+      bookingStore.formatDate,
+    );
 
-    const bookingData: BookingData = {
-      for_self: formData.forSelf,
-      start_at: date.value?.[0]
-        ? bookingStore.formatDate(date.value[0])
-        : "",
-      end_at: date.value?.[1] ? bookingStore.formatDate(date.value[1]) : "",
-      payment: formData.paymentMethod || "",
-      agreements: formData.agreement,
-      additional: {
-        start_at:
-          date.value?.[0] && formData.checkInTime
-            ? formatDateTime(date.value[0], formData.checkInTime)
-            : null,
-        end_at:
-          date.value?.[1] && formData.checkOutTime
-            ? formatDateTime(date.value[1], formData.checkOutTime)
-            : null,
-        comment: formData.comment || null,
-      },
-      rooms: [
-        {
-          room_type_code: selectedRoomType.value!,
-          rate_type_code: selectedTariff.value!.rate_plan_code,
-          guests: allGuests,
-        },
-      ],
-    };
+    if (!bookingData) {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка при подготовке данных бронирования.",
+        life: 3000,
+      });
+      return;
+    }
 
     try {
       bookingStore.setLoading(true, "Создаём бронирование...");
@@ -226,7 +95,7 @@
       });
       router.push("/confirmation");
     } catch (error) {
-      console.log("error:", error);
+      console.error("Ошибка при создании бронирования:", error);
       toast.add({
         severity: "error",
         summary: "Ошибка при создании бронирования.",
@@ -240,14 +109,7 @@
   };
 
   const addAdditionalGuest = () => {
-    formData.additionalGuests.push({
-      lastName: "",
-      firstName: "",
-      middleName: "",
-      phone: "",
-      email: "",
-      citizenship: "",
-    });
+    formData.additionalGuests.push(initialGuestData());
     errors.additionalGuests.push({});
   };
 
@@ -256,75 +118,13 @@
     errors.additionalGuests.splice(index, 1);
   };
 
-  const formFields = [
-    {
-      key: "lastName" as const,
-      placeholder: "Фамилия",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "firstName" as const,
-      placeholder: "Имя",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "middleName" as const,
-      placeholder: "Отчество",
-      type: "text",
-      required: false,
-    },
-    {
-      key: "phone" as const,
-      placeholder: "Номер телефона",
-      type: "tel",
-      required: true,
-    },
-    {
-      key: "email" as const,
-      placeholder: "Почта",
-      type: "email",
-      required: true,
-    },
-    {
-      key: "citizenship" as const,
-      placeholder: "Гражданство",
-      type: "text",
-      required: false,
-    },
-  ];
+  const updateMainGuest = (guest: GuestData) => {
+    formData.mainGuest = guest;
+  };
 
-  const checkboxOptions = [
-    {
-      id: "sms",
-      key: "smsConfirmation" as const,
-      label: "Пришлите SMS-подтверждение",
-    },
-    {
-      id: "information",
-      key: "specialOffers" as const,
-      label: "Я хочу узнавать о специальных предложениях и новостях",
-    },
-  ];
-
-  const additionalFields = [
-    {
-      key: "checkInTime" as const,
-      placeholder: "Время заезда",
-      type: "text",
-    },
-    {
-      key: "checkOutTime" as const,
-      placeholder: "Время выезда",
-      type: "text",
-    },
-    {
-      key: "comment" as const,
-      placeholder: "Комментарий",
-      type: "text",
-    },
-  ];
+  const updateAdditionalGuest = (index: number, guest: GuestData) => {
+    formData.additionalGuests[index] = guest;
+  };
 
   // Получаем выбранный номер
   const selectedRoom = computed(() => {
@@ -440,102 +240,24 @@
           <div :class="$style.formMain">
             <div :class="$style.formItem">
               <h3 :class="$style.sectionHeader">Данные гостей</h3>
-              <div :class="$style.guestBlock">
-                <h4 :class="$style.guestTitle">Основной гость</h4>
-                <div
-                  v-for="field in formFields"
-                  :key="field.key"
-                  :class="$style.inputItem"
-                >
-                  <BookingCountrySelect
-                    v-if="field.key === 'citizenship'"
-                    v-model="formData.mainGuest[field.key]"
-                    :placeholder="field.placeholder"
-                    :error="errors.mainGuest[field.key]"
-                    :class="[
-                      $style.inputt,
-                      errors.mainGuest[field.key] && $style.inputError,
-                    ]"
-                  />
-                  <InputText
-                    v-else
-                    v-model="formData.mainGuest[field.key]"
-                    :type="field.type"
-                    :placeholder="field.placeholder"
-                    :class="[
-                      $style.input,
-                      errors.mainGuest[field.key] && $style.inputError,
-                    ]"
-                    unstyled
-                  />
-                  <Message
-                    v-if="errors.mainGuest[field.key] && field.key !== 'citizenship'"
-                    severity="error"
-                    size="small"
-                    variant="simple"
-                    unstyled
-                    :class="$style.errorMessage"
-                  >
-                    {{ errors.mainGuest[field.key] }}
-                  </Message>
-                </div>
-              </div>
-              <div
+              <BookingGuestFormFields
+                :guest="formData.mainGuest"
+                :fields="formFields"
+                :errors="errors.mainGuest"
+                guest-title="Основной гость"
+                @update:guest="updateMainGuest"
+              />
+              <BookingGuestFormFields
                 v-for="(guest, index) in formData.additionalGuests"
                 :key="index"
-                :class="$style.guestBlock"
-              >
-                <div :class="$style.guestHeader">
-                  <h4 :class="$style.guestTitle">Гость {{ index + 2 }}</h4>
-                  <Button
-                    type="button"
-                    unstyled
-                    :class="$style.removeButton"
-                    @click="removeAdditionalGuest(index)"
-                  >
-                    <UIcon name="i-close" :class="$style.icon" />
-                  </Button>
-                </div>
-                <div
-                  v-for="field in formFields"
-                  :key="field.key"
-                  :class="$style.inputItem"
-                >
-                  <BookingCountrySelect
-                    v-if="field.key === 'citizenship'"
-                    v-model="guest[field.key]"
-                    :placeholder="field.placeholder"
-                    :error="errors.additionalGuests[index]?.[field.key]"
-                    :class="[
-                      $style.inputSelect,
-                      errors.additionalGuests[index]?.[field.key] &&
-                        $style.inputError,
-                    ]"
-                  />
-                  <InputText
-                    v-else
-                    v-model="guest[field.key]"
-                    :type="field.type"
-                    :placeholder="field.placeholder"
-                    :class="[
-                      $style.input,
-                      errors.additionalGuests[index]?.[field.key] &&
-                        $style.inputError,
-                    ]"
-                    unstyled
-                  />
-                  <Message
-                    v-if="errors.additionalGuests[index]?.[field.key] && field.key !== 'citizenship'"
-                    severity="error"
-                    size="small"
-                    variant="simple"
-                    unstyled
-                    :class="$style.errorMessage"
-                  >
-                    {{ errors.additionalGuests[index]?.[field.key] }}
-                  </Message>
-                </div>
-              </div>
+                :guest="guest"
+                :fields="formFields"
+                :errors="errors.additionalGuests[index]"
+                :guest-title="`Гость ${index + 2}`"
+                :show-remove="true"
+                @update:guest="updateAdditionalGuest(index, $event)"
+                @remove="removeAdditionalGuest(index)"
+              />
               <Button
                 type="button"
                 label="+ Добавить гостя"
@@ -583,14 +305,11 @@
               <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
               <div :class="$style.paymentBlock">
                 <div :class="$style.inputItem">
-                  <Select
+                  <BookingSelect
                     v-model="formData.paymentMethod"
                     :options="paymentMethods"
-                    option-label="label"
-                    option-value="value"
                     placeholder="Банковской картой"
-                    :class="$style.dropdown"
-                    unstyled
+                    :class="$style.inputSelect"
                   />
                 </div>
                 <div :class="$style.agreementBlock">
@@ -785,64 +504,10 @@
     }
   }
 
-  .guestBlock {
-    display: flex;
-    flex-direction: column;
-    gap: rem(24);
-    padding: rem(24);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: var(--a-borderR--input);
-    background: var(--a-whiteBg);
-    @media (min-width: #{size.$desktopMedium}) {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-  }
-
-  .guestHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-bottom: rem(16);
-  }
-
-  .guestTitle {
-    width: 100%;
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    font-weight: 600;
-    color: var(--a-text-dark);
-    margin: 0;
-  }
-
-  .removeButton {
-    width: rem(24);
-    height: rem(24);
-    min-width: rem(24);
-    border-radius: 50%;
-    cursor: pointer;
-    &:hover {
-      background-color: var(--a-btnAccentBg);
-      .icon {
-        color: var(--a-text-white);
-      }
-    }
-  }
-
-  .icon {
-    width: rem(24);
-    height: rem(24);
-    color: var(--a-text-accent);
-  }
-
   .inputItem {
     display: flex;
     flex-direction: column;
     width: 100%;
-    @media (min-width: #{size.$desktopMedium}) {
-      width: 45%;
-    }
   }
 
   .input {
@@ -872,15 +537,7 @@
 
   .inputSelect {
     display: flex;
-    justify-content: space-between
-  }
-
-  .inputError {
-    border-color: var(--a-border-accent) !important;
-    &:focus {
-      border-color: var(--a-error);
-      box-shadow: 0 0 0 2px rgba(var(--a-btnAccentBg), 0.1);
-    }
+    justify-content: space-between;
   }
 
   .errorMessage {
@@ -889,6 +546,7 @@
     font-size: rem(14);
     color: var(--a-text-accent);
   }
+
 
   .addGuestButton {
     display: flex;
