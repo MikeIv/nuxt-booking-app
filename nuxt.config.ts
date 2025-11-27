@@ -2,7 +2,7 @@ import svgLoader from "vite-svg-loader";
 
 const API_BASE_URL =
   process.env.NUXT_PUBLIC_API_BASE ||
-  "https://varvarka-api.grandfs-develop.ru/api/v1";
+  "https://varvarka-api.grandfs-develop.ru/api";
 const IS_DEV = process.env.NODE_ENV === "development";
 
 export default defineNuxtConfig({
@@ -132,7 +132,7 @@ export default defineNuxtConfig({
     public: {
       apiBase:
         process.env.NUXT_PUBLIC_API_BASE ||
-        "https://varvarka-api.grandfs-develop.ru/api/v1",
+        "https://varvarka-api.grandfs-develop.ru/api",
       isDev: IS_DEV,
     },
   },

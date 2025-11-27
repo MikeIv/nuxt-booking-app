@@ -11,7 +11,11 @@ import type {
   RoomView,
   RoomFamily,
 } from "~/types/room";
-import type { SearchResponse, BookingData } from "~/types/booking";
+import type {
+  SearchResponse,
+  BookingData,
+  BookingResponse,
+} from "~/types/booking";
 
 interface GuestInfo {
   rooms: number;
@@ -59,6 +63,7 @@ export const useBookingStore = defineStore(
     const userProfiles = ref<Record<string, UserProfileData>>({});
 
     const selectedServices = ref<SelectedService[]>([]);
+    const createdBooking = ref<BookingResponse | null>(null);
 
     function addService(service: SelectedService) {
       if (!selectedServices.value.find((s) => s.id === service.id)) {
@@ -448,9 +453,13 @@ export const useBookingStore = defineStore(
         const { searchData, groupedByBed } = prepareSearchData();
 
         isServerRequest.value = true;
-        const response = await post<ApiSearchPayload>("/search", searchData, {
-          signal: AbortSignal.timeout(10000),
-        });
+        const response = await post<ApiSearchPayload>(
+          "/v1/search",
+          searchData,
+          {
+            signal: AbortSignal.timeout(10000),
+          },
+        );
 
         if (response.success) {
           const normalized = normalizeSearchPayload(
@@ -511,14 +520,15 @@ export const useBookingStore = defineStore(
         }
 
         isServerRequest.value = true;
-        const response = await post<{ booking: unknown }>(
-          "/booking",
+        const response = await post<{ payload: BookingResponse }>(
+          "/v1/booking",
           processedData,
           { signal: AbortSignal.timeout(10000) },
         );
 
         if (response.success && response.payload) {
-          return response.payload.booking;
+          createdBooking.value = response.payload;
+          return response.payload;
         } else {
           throw new Error(response.message || "Ошибка при создании брони");
         }
@@ -539,7 +549,7 @@ export const useBookingStore = defineStore(
 
       try {
         isServerRequest.value = true;
-        const response = await get<{ booking: unknown }>(`/${bookingId}`, {
+        const response = await get<{ booking: unknown }>(`/v1/${bookingId}`, {
           signal: AbortSignal.timeout(10000),
         });
 
@@ -573,9 +583,13 @@ export const useBookingStore = defineStore(
         const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
 
         isServerRequest.value = true;
-        const response = await post<ApiSearchPayload>("/search", searchData, {
-          signal: AbortSignal.timeout(10000),
-        });
+        const response = await post<ApiSearchPayload>(
+          "/v1/search",
+          searchData,
+          {
+            signal: AbortSignal.timeout(10000),
+          },
+        );
 
         if (response.success) {
           const normalized = normalizeSearchPayload(
@@ -610,6 +624,7 @@ export const useBookingStore = defineStore(
       selectedRoomType.value = null;
       roomTariffs.value = [];
       selectedServices.value = [];
+      createdBooking.value = null;
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -647,6 +662,7 @@ export const useBookingStore = defineStore(
       addService,
       removeService,
       isServiceSelected,
+      createdBooking,
     };
   },
   {

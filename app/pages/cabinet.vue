@@ -80,7 +80,7 @@
       console.log("📡 Отправка запроса на выход...");
 
       const { post } = useApi();
-      const response = await post("/auth/logout");
+      const response = await post("/v1/auth/logout");
 
       console.log("📨 Ответ сервера:", response);
 

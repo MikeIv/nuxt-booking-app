@@ -20,7 +20,10 @@ export const useApi = () => {
   const config = useRuntimeConfig();
 
   // Всегда используем прямой URL, проксирование убрано
-  const baseURL = config.public.apiBase;
+  // Нормализуем baseURL: убираем /v1 из конца, если он там есть
+  let baseURL = config.public.apiBase;
+  // Убираем завершающий слэш и /v1 если есть
+  baseURL = baseURL.replace(/\/v1\/?$/, "").replace(/\/$/, "");
 
   const defaultOptions: FetchOptions = {
     baseURL,

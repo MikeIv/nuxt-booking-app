@@ -1,14 +1,11 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import { storeToRefs } from "pinia";
-  import type {
-    PersonalFormData,
-    FormErrors,
-    GuestData,
-  } from "~/composables/usePersonalForm";
   import {
     usePersonalForm,
-    type FormField,
+    type PersonalFormData,
+    type FormErrors,
+    type GuestData,
   } from "~/composables/usePersonalForm";
 
   definePageMeta({
