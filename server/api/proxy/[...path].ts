@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
   // ФОРМИРУЕМ ПРАВИЛЬНЫЙ URL ДЛЯ БЭКЕНДА
   const backendPath = `/${path.join("/")}`;
-  const targetUrl = `https://varvarka-api.grandfs-develop.ru${backendPath}`;
+  const targetUrl = `https://varvarka-api.grandfs-develop.ru/api/v1${backendPath}`;
 
   console.log("🌐 Making request to BACKEND:", targetUrl);
   console.log("Method:", method);

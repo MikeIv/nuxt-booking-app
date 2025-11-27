@@ -25,6 +25,7 @@
     selectedServices,
     loading,
     isServerRequest,
+    createdBooking,
   } = storeToRefs(bookingStore);
 
   const nights = useNights(date);
@@ -46,27 +47,17 @@
   });
 
   const isBookingCreated = computed(() => {
-    return !!(selectedRoom.value && selectedTariff.value);
+    return !!createdBooking.value;
   });
 
-  const bookingNumber = ref<string | null>(null);
-  
-  watch(
-    isBookingCreated,
-    (created) => {
-      if (created && !bookingNumber.value) {
-        bookingNumber.value = `BR-${Date.now().toString().slice(-8)}`;
-      } else if (!created) {
-        bookingNumber.value = null;
-      }
-    },
-    { immediate: true },
-  );
+  // Получаем номер бронирования из ответа API
+  const bookingNumber = computed(() => {
+    return createdBooking.value?.id?.toString() || null;
+  });
 
-  // Получаем email из формы (в реальном приложении это должно приходить из ответа API)
-  // TODO: Заменить на реальные данные из API после создания бронирования
+  // Получаем email из ответа API (из данных отеля)
   const guestEmail = computed(() => {
-    return "mail@mail.ru";
+    return createdBooking.value?.hotel?.email || "";
   });
 
   const selectedEntry = computed<SelectedEntry | null>(() => {

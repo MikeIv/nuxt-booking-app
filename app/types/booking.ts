@@ -48,4 +48,31 @@ interface BookingData {
   }[];
 }
 
-export type { SearchResponse, BookingData, SearchFilters, SearchFilter };
+interface HotelInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+}
+
+interface OrderInfo {
+  start_at: string;
+  end_at: string;
+  nights: number;
+}
+
+interface BookingResponse {
+  id: number;
+  uuid: string;
+  hotel: HotelInfo;
+  order: OrderInfo;
+  rooms: unknown[];
+}
+
+export type {
+  SearchResponse,
+  BookingData,
+  BookingResponse,
+  SearchFilters,
+  SearchFilter,
+};

@@ -68,7 +68,7 @@
       console.log("📡 Отправка запроса на регистрацию...");
 
       const { post } = useApi();
-      const response = await post("/auth/register", formData.value);
+      const response = await post("/v1/auth/register", formData.value);
 
       console.log("📨 Ответ сервера:", response);
 

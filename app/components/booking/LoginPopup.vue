@@ -70,7 +70,7 @@
       console.log("📡 Отправка запроса на вход...");
 
       const { post } = useApi();
-      const response = await post("/auth/login", formData.value);
+      const response = await post("/v1/auth/login", formData.value);
 
       console.log("📨 Ответ сервера:", response);
 
