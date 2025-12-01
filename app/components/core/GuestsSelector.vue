@@ -1,21 +1,25 @@
 <script setup lang="ts">
-  interface RoomGuests {
-    adults: number;
-    children: number;
-    childrenAges: number[];
-  }
-  interface GuestsValue {
-    rooms: number;
-    roomList: RoomGuests[];
-  }
+import { AGE_MIN, AGE_MAX } from "~/utils/age";
+import { declension } from "~/utils/declension";
 
-  const MAX_ROOMS = 5;
-  const AGE_MIN = 0;
-  const AGE_MAX = 12;
-  const AGE_OPTIONS = Array.from(
-    { length: AGE_MAX - AGE_MIN + 1 },
-    (_, i) => i + AGE_MIN,
-  );
+export interface RoomGuests {
+  adults: number;
+  children: number;
+  childrenAges: number[];
+}
+
+interface GuestsValue {
+  rooms: number;
+  roomList: RoomGuests[];
+}
+
+interface LegacyGuestsValue {
+  rooms: number;
+  adults: number;
+  children: number;
+}
+
+const MAX_ROOMS = 5;
 
   const props = defineProps<{
     modelValue:
@@ -37,23 +41,26 @@
         Array.isArray(props.modelValue.roomList)
       ) {
         const normalized = (props.modelValue as GuestsValue).roomList.map(
-          (r) => ({
-            adults: r.adults,
-            children: r.children,
-            childrenAges: Array.isArray((r as unknown).childrenAges)
-              ? (r as unknown).childrenAges.slice(0, r.children).concat(
-                  Array.from(
-                    {
-                      length: Math.max(
-                        0,
-                        r.children - ((r as unknown).childrenAges?.length ?? 0),
-                      ),
-                    },
-                    () => AGE_MIN,
-                  ),
-                )
-              : Array.from({ length: r.children }, () => AGE_MIN),
-          }),
+          (r) => {
+            const room = r as RoomGuests & { childrenAges?: number[] };
+            return {
+              adults: room.adults,
+              children: room.children,
+              childrenAges: Array.isArray(room.childrenAges)
+                ? room.childrenAges.slice(0, room.children).concat(
+                    Array.from(
+                      {
+                        length: Math.max(
+                          0,
+                          room.children - (room.childrenAges?.length ?? 0),
+                        ),
+                      },
+                      () => AGE_MIN,
+                    ),
+                  )
+                : Array.from({ length: room.children }, () => AGE_MIN),
+            };
+          },
         );
         return {
           rooms: (props.modelValue as GuestsValue).rooms,
@@ -61,15 +68,16 @@
         };
       }
       const rooms = props.modelValue.rooms ?? 1;
+      const legacyValue = props.modelValue as LegacyGuestsValue;
       return {
         rooms,
         roomList: Array.from({ length: rooms }).map((_, idx) =>
           idx === 0
             ? {
-                adults: (props.modelValue as unknown).adults ?? 1,
-                children: (props.modelValue as unknown).children ?? 0,
+                adults: legacyValue.adults ?? 1,
+                children: legacyValue.children ?? 0,
                 childrenAges: Array.from(
-                  { length: (props.modelValue as unknown).children ?? 0 },
+                  { length: legacyValue.children ?? 0 },
                   () => AGE_MIN,
                 ),
               }
@@ -80,48 +88,49 @@
     set: (val) => emit("update:modelValue", val),
   });
 
-  const overlayRef = ref();
+  const overlayRef = ref<{
+    toggle: (event: Event) => void;
+    hide: (event: Event) => void;
+  }>();
 
   function openOverlay(event: Event) {
     overlayRef.value?.toggle(event);
   }
 
-  function updateRooms(delta: number) {
-    let nextRooms = guests.value.rooms + delta;
-    nextRooms = Math.max(1, Math.min(MAX_ROOMS, nextRooms));
+  function updateRooms(value: number) {
+    const nextRooms = Math.max(1, Math.min(MAX_ROOMS, value));
+    if (nextRooms === guests.value.rooms) return;
+    
     const roomList = guests.value.roomList.slice(0, nextRooms);
-    for (let i = roomList.length; i < nextRooms; i++)
+    for (let i = roomList.length; i < nextRooms; i++) {
       roomList.push({ adults: 1, children: 0, childrenAges: [] });
+    }
     guests.value = { rooms: nextRooms, roomList };
   }
 
-  function updateRoomGuests(
-    roomIdx: number,
-    key: keyof Omit<RoomGuests, "childrenAges">,
-    delta: number,
-  ) {
+  function deleteRoom(roomIdx: number) {
+    if (guests.value.rooms <= 1) return;
+    const roomList = guests.value.roomList.filter((_, idx) => idx !== roomIdx);
+    guests.value = { rooms: guests.value.rooms - 1, roomList };
+  }
+
+  function updateRoomAdults(roomIdx: number, value: number) {
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
-      const next = {
-        ...room,
-        [key]: Math.max(key === "adults" ? 1 : 0, room[key] + delta),
-      } as RoomGuests;
-      if (key === "children") {
-        const count = next.children;
-        const ages = room.childrenAges?.slice(0, count) ?? [];
-        while (ages.length < count) ages.push(AGE_MIN);
-        next.childrenAges = ages;
-      }
-      return next;
+      return { ...room, adults: Math.max(1, value) };
     });
     guests.value = { ...guests.value, roomList };
   }
 
-  function childAgeLabel(totalChildren: number, index1Based: number): string {
-    if (totalChildren === 1) return "Возраст ребенка";
-    if (index1Based === 1) return "Возраст 1-го ребенка";
-    if (index1Based === 2) return "Возраст 2-го ребенка";
-    return `Возраст ${index1Based}-го ребенка`;
+  function updateRoomChildren(roomIdx: number, value: number) {
+    const roomList = guests.value.roomList.map((room, idx) => {
+      if (idx !== roomIdx) return room;
+      const count = Math.max(0, value);
+      const ages = room.childrenAges?.slice(0, count) ?? [];
+      while (ages.length < count) ages.push(AGE_MIN);
+      return { ...room, children: count, childrenAges: ages };
+    });
+    guests.value = { ...guests.value, roomList };
   }
 
   function updateChildAge(roomIdx: number, childIdx: number, age: number) {
@@ -134,18 +143,12 @@
     guests.value = { ...guests.value, roomList };
   }
 
-  function getAgeLabel(age: number): string {
-    if (age === 0) return "лет";
-    if (age === 1) return "год";
-    if (age >= 2 && age <= 4) return "года";
-    return "лет";
-  }
-
   const summaryString = computed(() => {
     const roomList = guests.value.roomList;
     const totalAdults = roomList.reduce((sum, r) => sum + r.adults, 0);
     const totalChildren = roomList.reduce((sum, r) => sum + r.children, 0);
-    return `${guests.value.rooms} номер${guests.value.rooms > 1 ? "а" : ""}, ${totalAdults} взр., ${totalChildren} дет.`;
+    const roomsWord = declension(guests.value.rooms, "room");
+    return `${guests.value.rooms} ${roomsWord}, ${totalAdults} взр., ${totalChildren} дет.`;
   });
 
   function applyChanges(event: Event) {
@@ -177,120 +180,25 @@
       <div :class="$style.guestsDropdownContent">
         <div :class="$style.guestOption">
           <span :class="$style.roomsTitle">Номера</span>
-          <div :class="$style.counter">
-            <Button
-              type="button"
-              unstyled
-              :class="$style.setButton"
-              :disabled="guests.rooms <= 1"
-              @click="updateRooms(-1)"
-              >-</Button
-            >
-            <span :class="$style.count">{{ guests.rooms }}</span>
-            <Button
-              type="button"
-              unstyled
-              :class="$style.setButton"
-              :disabled="guests.rooms >= MAX_ROOMS"
-              @click="updateRooms(1)"
-              >+</Button
-            >
-          </div>
+          <CoreCounter
+            :model-value="guests.rooms"
+            :min="1"
+            :max="MAX_ROOMS"
+            @update:model-value="(val: number) => updateRooms(val)"
+          />
         </div>
 
-        <div
+        <CoreRoomBlock
           v-for="(room, idx) in guests.roomList"
-          :key="idx"
-          :class="$style.roomGroup"
-        >
-          <div v-if="guests.rooms > 1" :class="$style.roomTitle">
-            Номер {{ idx + 1 }}
-          </div>
-
-          <div :class="$style.guestOption">
-            <span :class="$style.name">Количество взрослых</span>
-            <div :class="$style.counter">
-              <Button
-                type="button"
-                unstyled
-                :class="$style.setButton"
-                :disabled="room.adults <= 1"
-                @click="updateRoomGuests(idx, 'adults', -1)"
-                >-</Button
-              >
-              <span :class="$style.count">{{ room.adults }}</span>
-              <Button
-                type="button"
-                unstyled
-                :class="$style.setButton"
-                @click="updateRoomGuests(idx, 'adults', 1)"
-                >+</Button
-              >
-            </div>
-          </div>
-
-          <hr v-if="guests.rooms > 1" :class="$style.line" >
-
-          <div :class="$style.guestOption">
-            <div :class="$style.nameBlock">
-              <span :class="$style.name">Количество детей</span>
-              <span :class="[$style.name, $style.subName]">Младше 13 лет</span>
-            </div>
-            <div :class="$style.counter">
-              <Button
-                type="button"
-                unstyled
-                :class="$style.setButton"
-                :disabled="room.children <= 0"
-                @click="updateRoomGuests(idx, 'children', -1)"
-                >-</Button
-              >
-              <span :class="$style.count">{{ room.children }}</span>
-              <Button
-                type="button"
-                unstyled
-                :class="$style.setButton"
-                @click="updateRoomGuests(idx, 'children', 1)"
-                >+</Button
-              >
-            </div>
-          </div>
-
-          <div v-if="room.children > 0" :class="$style.childrenAgesWrapper">
-            <div
-              v-for="childIdx in room.children"
-              :key="childIdx"
-              :class="$style.childAgeRow"
-            >
-              <span :class="$style.name">
-                {{ childAgeLabel(room.children, childIdx) }}
-              </span>
-              <div :class="$style.selectBlock">
-                <Select
-                  :class="$style.ageSelect"
-                  :model-value="room.childrenAges[childIdx - 1]"
-                  :options="
-                    AGE_OPTIONS.map((age) => ({
-                      value: age,
-                      label: `${age} ${getAgeLabel(age)}`,
-                    }))
-                  "
-                  option-label="label"
-                  option-value="value"
-                  placeholder="Возраст"
-                  :pt="{
-                    root: { class: $style.ageSelect },
-                    item: { class: $style.ageOption },
-                    panel: { class: $style.selectPanel },
-                  }"
-                  @update:model-value="
-                    (val) => updateChildAge(idx, childIdx - 1, val)
-                  "
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+          :key="`room-${idx}-${guests.rooms}`"
+          :room="room"
+          :room-index="idx"
+          :total-rooms="guests.rooms"
+          @update:adults="(val: number) => updateRoomAdults(idx, val)"
+          @update:children="(val: number) => updateRoomChildren(idx, val)"
+          @update:child-age="(childIdx: number, age: number) => updateChildAge(idx, childIdx, age)"
+          @delete="deleteRoom(idx)"
+        />
 
         <Button
           class="btn__bs"
@@ -405,12 +313,6 @@
     }
   }
 
-  .roomGroup {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: rem(16);
-  }
-
   .guestOption {
     display: flex;
     justify-content: space-between;
@@ -423,96 +325,6 @@
     font-size: rem(24);
     font-weight: 600;
     color: var(--a-black);
-  }
-
-  .roomTitle {
-    margin: 0 rem(-16) rem(8) rem(-16);
-    padding: rem(2) rem(16);
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    color: var(--a-black);
-    background-color: var(--a-accentLightBg);
-
-    @media (min-width: #{size.$desktopMin}) {
-      margin: 0 rem(-24) rem(12) rem(-24);
-      padding: rem(2) rem(24);
-    }
-  }
-
-  .nameBlock {
-    display: flex;
-    flex-direction: column;
-    gap: rem(2);
-  }
-
-  .name {
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    color: var(--a-text-dark);
-    text-wrap: wrap;
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(22);
-    }
-  }
-
-  .subName {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    color: var(--a-text-primary);
-  }
-
-  .line {
-    border: none;
-    border-top: rem(1) solid var(--a-border-primary);
-    margin: rem(8) 0 rem(8);
-  }
-
-  .setButton {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: rem(34);
-    height: rem(34);
-    font-size: rem(24);
-    color: var(--a-white);
-    background-color: var(--a-accentLightBg);
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-
-    &:hover {
-      background-color: var(--a-accentBg);
-    }
-
-    &:disabled {
-      background-color: var(--a-accentLightBg);
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    &:focus-visible {
-      outline: none;
-      background-color: var(--a-accentBg);
-    }
-  }
-
-  .count {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: rem(40);
-    height: rem(40);
-    font-size: rem(24);
-    color: var(--a-black);
-  }
-
-  .counter {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: rem(124);
-    margin-left: rem(20);
   }
 
   .applyButton {
@@ -531,68 +343,5 @@
     &:hover {
       background-color: var(--a-text-dark);
     }
-  }
-
-  .childrenAgesWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-    margin-top: rem(8);
-  }
-
-  .childAgeRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .selectBlock {
-    display: flex;
-    align-items: center;
-
-    :global {
-      .p-select {
-        display: flex;
-        align-items: center;
-        padding: 0 rem(16);
-        font-size: rem(16);
-        color: var(--a-text-dark);
-        background-color: var(--a-whiteBg);
-        border-radius: var(--a-borderR--input);
-        transition: border-color 0.3s ease;
-        border: rem(1) solid var(--a-border-primary);
-      }
-
-      .p-select-label.p-placeholder {
-        color: var(--a-text-light);
-      }
-    }
-  }
-
-  .ageSelect {
-    width: rem(120);
-    height: rem(36);
-    font-size: rem(16);
-    font-family: "Inter", sans-serif;
-    background-color: var(--a-whiteBg);
-    border: rem(1) solid var(--a-border-primary);
-    border-radius: var(--a-borderR--input);
-    color: var(--a-text-dark);
-    cursor: pointer;
-
-    @media (min-width: #{size.$desktopMin}) {
-      width: rem(148);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--a-accentBg);
-    }
-  }
-
-  .ageOption {
-    padding: rem(8);
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
   }
 </style>
