@@ -187,7 +187,9 @@ export const useBookingStore = defineStore(
       min_price: number;
       price_for_register?: number;
       photos: string[];
-      room_type_codes: ApiRoomType[];
+      // Сервер может возвращать варианты как "beds" или "room_type_codes"
+      beds?: ApiRoomType[];
+      room_type_codes?: ApiRoomType[];
     }
 
     interface ApiUngroupedPayload {
@@ -199,7 +201,7 @@ export const useBookingStore = defineStore(
     type ApiSearchPayload = ApiGroupedRoom[] | ApiUngroupedPayload | undefined;
 
     const ensureChildAges = (count: number, ages: number[]): number[] => {
-      if (count === 0) return [0];
+      if (count === 0) return [];
       if (ages.length === count) return ages;
       return Array.from({ length: count }, (_, index) => ages[index] ?? 0);
     };
@@ -249,17 +251,29 @@ export const useBookingStore = defineStore(
     };
 
     const mapGroupedRoom = (group: ApiGroupedRoom): Room => {
-      const variants =
-        group.room_type_codes?.map((variant) => mapRoom(variant, group)) ?? [];
+      // Сервер может возвращать варианты как "beds" или "room_type_codes"
+      const variantsSource = group.beds ?? group.room_type_codes ?? [];
+      const variants = variantsSource.map((variant) => mapRoom(variant, group));
 
       const primaryVariant = variants[0];
 
+      // Критически важно: room_type_code должен быть кодом, а не названием
+      // Используем код из первого варианта, если он есть и валидный
+      const firstVariant = variantsSource[0];
+      const roomTypeCode =
+        primaryVariant?.room_type_code &&
+        primaryVariant.room_type_code.trim() !== "" &&
+        primaryVariant.room_type_code !== group.title
+          ? primaryVariant.room_type_code
+          : firstVariant?.room_type_code &&
+              firstVariant.room_type_code.trim() !== "" &&
+              firstVariant.room_type_code !== group.title
+            ? firstVariant.room_type_code
+            : "";
+
       const baseRoom: Room = {
         id: primaryVariant?.id ?? group.title,
-        room_type_code:
-          primaryVariant?.room_type_code ??
-          group.room_type_codes?.[0]?.room_type_code ??
-          group.title,
+        room_type_code: roomTypeCode,
         title: group.title ?? primaryVariant?.title ?? "",
         description: group.description ?? primaryVariant?.description ?? null,
         max_occupancy:
@@ -309,9 +323,11 @@ export const useBookingStore = defineStore(
         payload.forEach((group, index) => {
           const room = mapGroupedRoom(group);
 
+          // Сервер может возвращать варианты как "beds" или "room_type_codes"
+          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
           const key =
-            group.room_type_codes?.[0]?.family?.id?.toString() ??
-            group.room_type_codes?.[0]?.family?.title ??
+            firstVariant?.family?.id?.toString() ??
+            firstVariant?.family?.title ??
             group.title ??
             room.room_type_code ??
             `group-${index}`;
@@ -420,20 +436,17 @@ export const useBookingStore = defineStore(
           ];
 
       const groupedByBed = guestsPayload.length === 1;
+      const multiBookingMode = guestsPayload.length > 1;
 
       const searchData: Record<string, unknown> = {
         start_at: formatDate(startDate),
         end_at: formatDate(endDate),
         promocode: promoCode.value || null,
-        step: 1,
+        multi_booking_mode: multiBookingMode,
         grouped_by_bed: groupedByBed,
         room_type_code: roomTypeCode ?? null,
         guests: guestsPayload,
       };
-
-      if (roomTypeCode) {
-        searchData.with_packages = true;
-      }
 
       return { searchData, groupedByBed };
     }

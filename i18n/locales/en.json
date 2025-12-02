@@ -5,5 +5,11 @@
   "services": "Services",
   "gallery": "Gallery",
   "construction": "Construction",
-  "contacts": "Contacts"
+  "contacts": "Contacts",
+  "datepicker": {
+    "checkInOut": "Check-in — Check-out",
+    "selectDates": "Select dates",
+    "cancel": "Cancel",
+    "select": "Select"
+  }
 }

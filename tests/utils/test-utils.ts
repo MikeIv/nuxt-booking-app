@@ -21,6 +21,7 @@ export function mountComponent<T extends Component>(
 ): VueWrapper<InstanceType<T>> {
   return mount(component, {
     global: {
+      plugins: options?.global?.plugins || [],
       stubs: {
         // Заглушки для Nuxt UI компонентов
         UButton: {
@@ -66,6 +67,78 @@ export function mountComponent<T extends Component>(
         // Заглушка для Booking
         Booking: {
           template: '<div data-testid="booking-component"></div>',
+        },
+        // Заглушки для компонентов календаря
+        CoreDatePickerInput: {
+          template: `
+            <div data-testid="date-picker-input" role="button" @click="$emit('toggle')">
+              <slot name="label"></slot>
+              <slot name="display"></slot>
+            </div>
+          `,
+          props: ["id", "displayValue", "placeholder", "isOpen"],
+          emits: ["toggle"],
+        },
+        CoreCalendarHeader: {
+          template: `
+            <nav data-testid="calendar-header">
+              <button @click="$emit('prevMonth')" :disabled="!canGoToPrevMonth">Prev</button>
+              <span>{{ monthName }} {{ currentYear }}</span>
+              <button @click="$emit('nextMonth')">Next</button>
+            </nav>
+          `,
+          props: [
+            "currentMonth",
+            "currentYear",
+            "monthName",
+            "canGoToPrevMonth",
+          ],
+          emits: ["prevMonth", "nextMonth"],
+        },
+        CoreCalendarGrid: {
+          template: `
+            <div data-testid="calendar-grid" role="grid">
+              <div v-for="day in calendarDays" :key="day.key" @click="$emit('dayClick', day)" data-day>
+                {{ day.day }}
+              </div>
+            </div>
+          `,
+          props: [
+            "calendarDays",
+            "weekDays",
+            "currentMonthYearLabel",
+            "pricesLoading",
+          ],
+          emits: ["dayClick"],
+        },
+        CoreCalendarDay: {
+          template: `
+            <button @click="$emit('click', day)">
+              {{ day.day }}
+            </button>
+          `,
+          props: [
+            "day",
+            "pricesLoading",
+            "formatPrice",
+            "formatDateForDateTime",
+            "getMonthName",
+          ],
+          emits: ["click"],
+        },
+        CoreCalendarFooter: {
+          template: `
+            <div data-testid="calendar-footer">
+              <button @click="$emit('cancel')">Cancel</button>
+              <button @click="$emit('select')" :disabled="!canSelect">Select</button>
+            </div>
+          `,
+          props: ["canSelect", "displayValue", "cancelLabel", "selectLabel"],
+          emits: ["cancel", "select"],
+        },
+        UIcon: {
+          template: "<span></span>",
+          props: ["name"],
         },
         ...options?.global?.stubs,
       },
