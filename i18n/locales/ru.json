@@ -5,5 +5,11 @@
   "services": "Сервисы",
   "gallery": "Галерея",
   "construction": "Этапы строительства",
-  "contacts": "Контакты"
+  "contacts": "Контакты",
+  "datepicker": {
+    "checkInOut": "Заезд — выезд",
+    "selectDates": "Выберите даты",
+    "cancel": "Отмена",
+    "select": "Выбрать"
+  }
 }

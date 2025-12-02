@@ -152,7 +152,75 @@
 
     try {
       const roomData = currentRoom.value;
-      bookingStore.setSelectedRoomType(roomData.room_type_code);
+      const variants = availableRoomVariants.value;
+      
+      // Критически важно: всегда использовать правильный room_type_code (код, а не название)
+      // В ответе сервера room_type_code должен быть сокращенным кодом (например, "DLT")
+      let roomTypeCode: string | null = null;
+      
+      // Если есть варианты (room_type_codes), используем код из варианта
+      // Если вариантов нет (плоский формат), используем код из props.room
+      if (variants.length > 0 && variants[0] !== props.room) {
+        // Есть варианты - используем код из выбранного или первого варианта
+        const selectedVariant = roomData !== props.room ? roomData : variants[0];
+        
+        // Проверяем, что код валидный (не пустой и не равен названию)
+        if (selectedVariant.room_type_code && 
+            selectedVariant.room_type_code.trim() !== "" && 
+            selectedVariant.room_type_code !== selectedVariant.title) {
+          roomTypeCode = selectedVariant.room_type_code;
+        } else {
+          // Ищем первый вариант с валидным кодом
+          const validVariant = variants.find(
+            (v) => v.room_type_code && 
+                   v.room_type_code.trim() !== "" && 
+                   v.room_type_code !== v.title
+          );
+          roomTypeCode = validVariant?.room_type_code ?? variants[0]?.room_type_code ?? null;
+        }
+      } else {
+        // Нет вариантов (плоский формат) - используем код напрямую из props.room
+        // Но проверяем, что это действительно код, а не название
+        if (props.room.room_type_code && 
+            props.room.room_type_code.trim() !== "" && 
+            props.room.room_type_code !== props.room.title) {
+          roomTypeCode = props.room.room_type_code;
+        } else {
+          // Если код равен названию или пустой - это ошибка данных
+          if (import.meta?.env?.DEV) {
+            console.error("room_type_code равен названию или пустой в props.room", {
+              room_type_code: props.room.room_type_code,
+              title: props.room.title,
+            });
+          }
+          return;
+        }
+      }
+      
+      // Финальная проверка: код не должен быть пустым или равным названию
+      if (!roomTypeCode || roomTypeCode.trim() === "" || roomTypeCode === roomData.title) {
+        if (import.meta?.env?.DEV) {
+          console.error("Не удалось определить валидный код типа номера", {
+            roomTypeCode,
+            roomData: {
+              room_type_code: roomData.room_type_code,
+              title: roomData.title,
+            },
+            propsRoom: {
+              room_type_code: props.room.room_type_code,
+              title: props.room.title,
+            },
+            variants: variants.map(v => ({
+              room_type_code: v.room_type_code,
+              title: v.title,
+            })),
+            selectedBedType: selectedBedType.value
+          });
+        }
+        return;
+      }
+      
+      bookingStore.setSelectedRoomType(roomTypeCode);
 
       const roomsCount = bookingStore.guests?.roomList
         ? bookingStore.guests.roomList.length

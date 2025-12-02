@@ -28,8 +28,49 @@ vi.stubGlobal("storeToRefs", storeToRefs);
 // Мокируем definePageMeta для Nuxt страниц
 vi.stubGlobal("definePageMeta", vi.fn());
 
+// Мокируем useMemoize из @vueuse/core (просто возвращает функцию как есть)
+vi.stubGlobal(
+  "useMemoize",
+  <T extends (...args: unknown[]) => unknown>(fn: T): T => fn,
+);
+
+// Мокируем composables, которые используются в компонентах
+vi.stubGlobal("useCalendarPrices", () => ({
+  fetchCalendarPrices: vi.fn().mockResolvedValue(undefined),
+  getPriceForDate: vi.fn().mockReturnValue(null),
+  formatPrice: vi.fn((price: number) => `${price.toLocaleString("ru-RU")} ₽`),
+  loading: { value: false },
+}));
+
+vi.stubGlobal("useDateLocale", () => ({
+  monthNames: {
+    value: [
+      "Январь",
+      "Февраль",
+      "Март",
+      "Апрель",
+      "Май",
+      "Июнь",
+      "Июль",
+      "Август",
+      "Сентябрь",
+      "Октябрь",
+      "Ноябрь",
+      "Декабрь",
+    ],
+  },
+  weekDays: { value: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"] },
+  formatDate: vi.fn((date: Date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  }),
+}));
+
 // Делаем Vue composables доступными глобально (как в Nuxt auto-imports)
 vi.stubGlobal("ref", Vue.ref);
+vi.stubGlobal("shallowRef", Vue.shallowRef);
 vi.stubGlobal("computed", Vue.computed);
 vi.stubGlobal("reactive", Vue.reactive);
 vi.stubGlobal("readonly", Vue.readonly);

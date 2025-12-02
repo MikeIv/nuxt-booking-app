@@ -82,7 +82,7 @@
 <template>
   <section :class="$style.wrapper">
     <div :class="$style.form">
-      <CoreDatePicker v-model="date" />
+      <CoreDatePickerWithPrices v-model="date" />
       <CoreGuestsSelector v-model="guests" />
       <CorePromoCodeInput v-model="promoCode" />
 
