@@ -140,6 +140,32 @@ export function mountComponent<T extends Component>(
           template: "<span></span>",
           props: ["name"],
         },
+        // Заглушки для компонентов Card.vue
+        BookingCarousel: {
+          template: '<div data-testid="booking-carousel"></div>',
+          props: ["images", "altPrefix", "altText", "height"],
+        },
+        BookingRoomPopup: {
+          template:
+            '<div v-if="isOpen" data-testid="booking-room-popup"></div>',
+          props: ["room", "isOpen"],
+          emits: ["close"],
+        },
+        Button: {
+          template:
+            '<button @click="$attrs.onClick" :disabled="disabled" :class="$attrs.class"><slot /></button>',
+          props: ["disabled", "unstyled"],
+        },
+        ProgressSpinner: {
+          template: '<div data-testid="progress-spinner"></div>',
+          props: [
+            "style",
+            "strokeWidth",
+            "fill",
+            "animationDuration",
+            "ariaLabel",
+          ],
+        },
         ...options?.global?.stubs,
       },
     },

@@ -11,13 +11,15 @@ import type { SearchResponse } from "~/types/booking";
 export function createMockBookingStore() {
   const isServerRequestRef = ref(false);
   const searchResultsRef = ref<SearchResponse | null>(null);
+  const guestsRef = ref({
+    rooms: 1,
+    roomList: [{ adults: 1, children: 0, childrenAges: [] }],
+  });
 
   return {
     date: ref<[Date, Date] | null>(null),
-    guests: ref({
-      rooms: 1,
-      roomList: [{ adults: 1, children: 0, childrenAges: [] }],
-    }),
+    // guests должен быть ref для работы с storeToRefs
+    guests: guestsRef,
     promoCode: ref(""),
     loading: ref(false),
     searchResults: searchResultsRef,
@@ -30,6 +32,7 @@ export function createMockBookingStore() {
     },
     setLoading: vi.fn(),
     search: vi.fn().mockResolvedValue({}),
+    setSelectedRoomType: vi.fn(),
   };
 }
 
@@ -40,6 +43,7 @@ export function resetMockBookingStore(
   store: ReturnType<typeof createMockBookingStore>,
 ) {
   store.date.value = null;
+  // guests теперь ref, поэтому используем .value
   store.guests.value = {
     rooms: 1,
     roomList: [{ adults: 1, children: 0, childrenAges: [] }],
@@ -51,4 +55,5 @@ export function resetMockBookingStore(
   store.isServerRequest = false;
   store.setLoading.mockClear();
   store.search.mockResolvedValue({});
+  (store.setSelectedRoomType as ReturnType<typeof vi.fn>).mockClear();
 }

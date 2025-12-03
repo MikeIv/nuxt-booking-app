@@ -61,7 +61,7 @@ export interface Room {
   bed?: RoomBed | null;
   view?: RoomView | null;
   family?: RoomFamily | null;
-  min_price: number;
+  min_price: number | null;
   price_for_register?: number;
   photos: string[];
   tariffs: RoomTariff[];
