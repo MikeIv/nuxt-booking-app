@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import type { PackageResource } from "~/types/room";
+  import type { PackageResource, RoomTariff } from "~/types/room";
   import ArrowBack from "~/assets/icons/arrow-back.svg";
 
   definePageMeta({
@@ -42,6 +42,26 @@
   const toggleExpand = (roomTitle: string) => {
     expandedRooms.value[roomTitle] = !expandedRooms.value[roomTitle];
   };
+
+  // Фильтруем тарифы для выбранного типа номера
+  const filteredRoomTariffs = computed(() => {
+    if (!selectedRoomType.value || !roomTariffs.value?.length) {
+      return roomTariffs.value || [];
+    }
+    
+    // Фильтруем номера по выбранному типу
+    const filtered = roomTariffs.value.filter(
+      (room) => room.room_type_code === selectedRoomType.value,
+    );
+    
+    // Если нашли номера с тарифами, возвращаем их
+    if (filtered.length > 0) {
+      return filtered;
+    }
+    
+    // Если не нашли, возвращаем все номера (на случай, если код не совпадает)
+    return roomTariffs.value;
+  });
 
   const handleTariff = async (tariff: RoomTariff) => {
     if (!selectedRoomType.value) {
@@ -107,9 +127,78 @@
       return;
     }
 
+    // Проверяем, есть ли уже загруженные данные для выбранного типа номера
+    const hasValidData =
+      roomTariffs.value?.length > 0 &&
+      roomTariffs.value.some(
+        (room) =>
+          room.room_type_code === selectedRoomType.value &&
+          room.tariffs &&
+          room.tariffs.length > 0,
+      );
+
+    if (hasValidData) {
+      // Данные уже загружены, просто скрываем загрузку
+      loading.value = false;
+      if (import.meta?.env?.DEV) {
+        console.log("✅ Данные тарифов уже загружены:", {
+          roomTariffs: roomTariffs.value,
+          selectedRoomType: selectedRoomType.value,
+        });
+      }
+      return;
+    }
+
     try {
       loading.value = true;
-      await bookingStore.searchWithRoomType(selectedRoomType.value);
+      const result = await bookingStore.searchWithRoomType(selectedRoomType.value);
+      
+      // Ждем обновления DOM после загрузки данных
+      await nextTick();
+      
+      if (import.meta?.env?.DEV) {
+        console.log("📥 Результат загрузки тарифов:", {
+          result,
+          roomTariffs: roomTariffs.value,
+          roomTariffsLength: roomTariffs.value?.length,
+          searchResults: searchResults.value,
+          normalizedRooms: result?.rooms,
+        });
+        
+        // Детальная проверка структуры данных
+        if (roomTariffs.value && roomTariffs.value.length > 0) {
+          roomTariffs.value.forEach((room, idx) => {
+            console.log(`Комната ${idx}:`, {
+              title: room.title,
+              room_type_code: room.room_type_code,
+              tariffsCount: room.tariffs?.length || 0,
+              tariffs: room.tariffs,
+            });
+          });
+        }
+      }
+
+      // Проверяем, что данные действительно загружены
+      if (!roomTariffs.value || roomTariffs.value.length === 0) {
+        console.warn("⚠️ Данные тарифов не загружены после запроса");
+        if (import.meta?.env?.DEV) {
+          console.warn("Проверка searchResults:", searchResults.value);
+        }
+      } else {
+        // Проверяем, что у номеров есть тарифы
+        const roomsWithTariffs = roomTariffs.value.filter(
+          (room) => room.tariffs && room.tariffs.length > 0,
+        );
+        if (roomsWithTariffs.length === 0) {
+          console.warn("⚠️ Номера загружены, но тарифы отсутствуют");
+          if (import.meta?.env?.DEV) {
+            console.warn("Структура номеров:", roomTariffs.value.map(r => ({
+              title: r.title,
+              tariffs: r.tariffs,
+            })));
+          }
+        }
+      }
     } catch (err: unknown) {
       error.value = err as Error;
       toast.add({
@@ -150,10 +239,10 @@
       <template v-else>
         <h2 :class="$style.tariffTitle">Выберите тариф к номеру</h2>
 
-        <div v-if="roomTariffs?.length > 0" :class="$style.tariffs">
+        <div v-if="filteredRoomTariffs?.length > 0" :class="$style.tariffs">
           <div
-            v-for="(room, index) in roomTariffs"
-            :key="index"
+            v-for="(room, index) in filteredRoomTariffs"
+            :key="`room-${room.room_type_code || room.id || index}`"
             :class="$style.tariffCard"
           >
             <BookingRoomInfoCard
@@ -190,6 +279,10 @@
           :class="$style.noResults"
         >
           <p>К сожалению, на выбранные даты нет доступных номеров.</p>
+        </div>
+
+        <div v-else :class="$style.noResults">
+          <p>Тарифы не найдены. Проверьте выбранные параметры.</p>
         </div>
       </template>
     </section>

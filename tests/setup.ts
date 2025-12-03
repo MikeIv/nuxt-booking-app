@@ -5,6 +5,7 @@
 import { beforeEach, vi } from "vitest";
 import { storeToRefs } from "pinia";
 import * as Vue from "vue";
+import type { Ref } from "vue";
 import { mockRouterPush, mockRoute, mockToastAdd } from "./mocks/nuxt";
 import { setupComponentMocks } from "./mocks/components";
 
@@ -25,6 +26,23 @@ vi.stubGlobal("useToast", () => ({
 // storeToRefs из Pinia должен быть доступен глобально
 vi.stubGlobal("storeToRefs", storeToRefs);
 
+// Мокируем useBookingStore (будет переопределен в тестах через vi.mock, если нужно)
+// Базовый мок для компонентов, которые не мокируют store явно
+vi.stubGlobal("useBookingStore", () => {
+  return {
+    date: ref(null),
+    guests: ref({
+      rooms: 1,
+      roomList: [{ adults: 1, children: 0, childrenAges: [] }],
+    }),
+    setSelectedRoomType: vi.fn(),
+    setLoading: vi.fn(),
+    search: vi.fn().mockResolvedValue({}),
+    loading: ref(false),
+    isServerRequest: ref(false),
+  };
+});
+
 // Мокируем definePageMeta для Nuxt страниц
 vi.stubGlobal("definePageMeta", vi.fn());
 
@@ -40,6 +58,29 @@ vi.stubGlobal("useCalendarPrices", () => ({
   getPriceForDate: vi.fn().mockReturnValue(null),
   formatPrice: vi.fn((price: number) => `${price.toLocaleString("ru-RU")} ₽`),
   loading: { value: false },
+}));
+
+// Мокируем useNights - должен быть функцией, принимающей dateRange
+vi.stubGlobal("useNights", (dateRange: Ref<[Date, Date] | null>) => {
+  const nights = Vue.computed(() => {
+    if (!dateRange || !dateRange.value || dateRange.value.length < 2) return 0;
+    const start = new Date(dateRange.value[0]);
+    const end = new Date(dateRange.value[1]);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    const diffTime = end.getTime() - start.getTime();
+    if (diffTime <= 0) return 0;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  });
+  return nights;
+});
+
+// Мокируем useRoomCarousel
+vi.stubGlobal("useRoomCarousel", () => ({
+  carouselImages: Vue.computed(() => [
+    "photo1.jpg",
+    "photo2.jpg",
+    { placeholder: true, label: "Room Photo" },
+  ]),
 }));
 
 vi.stubGlobal("useDateLocale", () => ({

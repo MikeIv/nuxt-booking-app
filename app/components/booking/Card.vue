@@ -1,5 +1,8 @@
 <script setup lang="ts">
+  import { ref, computed, watch } from "vue";
   import { formatCount } from "~/utils/declension";
+  import { useNights } from "~/composables/useNights";
+  import { useRoomCarousel } from "~/composables/useRoomCarousel";
   import type { Room } from "~/types/room";
 
   interface Props {
@@ -142,6 +145,11 @@
     CAROUSEL_PLACEHOLDER_LABEL,
   );
 
+  const formattedMinPrice = computed(() => {
+    const price = currentRoom.value.min_price;
+    return price !== null && price !== undefined ? `${price} руб.` : null;
+  });
+
   const handleTariff = async () => {
     if (!isValidDateRange.value) {
       console.error("Не выбраны даты бронирования");
@@ -164,8 +172,9 @@
         // Есть варианты - используем код из выбранного или первого варианта
         const selectedVariant = roomData !== props.room ? roomData : variants[0];
         
-        // Проверяем, что код валидный (не пустой и не равен названию)
-        if (selectedVariant.room_type_code && 
+        // Проверяем, что selectedVariant существует и код валидный (не пустой и не равен названию)
+        if (selectedVariant && 
+            selectedVariant.room_type_code && 
             selectedVariant.room_type_code.trim() !== "" && 
             selectedVariant.room_type_code !== selectedVariant.title) {
           roomTypeCode = selectedVariant.room_type_code;
@@ -222,9 +231,9 @@
       
       bookingStore.setSelectedRoomType(roomTypeCode);
 
-      const roomsCount = bookingStore.guests?.roomList
-        ? bookingStore.guests.roomList.length
-        : bookingStore.guests?.rooms || 1;
+      const roomsCount = guests.value?.roomList
+        ? guests.value.roomList.length
+        : guests.value?.rooms || 1;
 
       const target = roomsCount > 1 ? "/multi-rooms" : "/rooms/tariff";
       await router.push(target);
@@ -299,11 +308,12 @@
             За регистрацию {{ currentRoom.price_for_register }} ₽
           </p>
           <data
+            v-if="currentRoom.min_price !== null && currentRoom.min_price !== undefined"
             :class="$style.price"
             :value="currentRoom.min_price"
             itemprop="price"
           >
-            От {{ currentRoom.min_price }} руб.
+            От {{ formattedMinPrice }}
           </data>
           <p :class="$style.guestInfo">
             {{ formatCount(totalAdults, "guest") }} /
