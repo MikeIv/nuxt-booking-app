@@ -1,9 +1,29 @@
 <script setup lang="ts">
-  defineProps({
-    anchorId: {
-      type: String,
-      default: "",
-    },
+  interface FooterProps {
+    anchorId?: string;
+  }
+
+  const props = withDefaults(defineProps<FooterProps>(), {
+    anchorId: "",
+  });
+
+  const { contacts, loading, fetchContacts } = useContacts();
+
+  onMounted(async () => {
+    await fetchContacts();
+  });
+
+  const DEFAULT_ADDRESS = "109012, РОССИЯ, Г. МОСКВА УЛ. ВАРВАРКА, Д.14, СТР. 1, 2";
+  const DEFAULT_PHONE = "+7 (495) 274-99-99";
+  const DEFAULT_EMAIL = "mail@mail.ru";
+
+  const address = computed<string>(() => contacts.value?.address || DEFAULT_ADDRESS);
+  const phone = computed<string>(() => contacts.value?.phone || DEFAULT_PHONE);
+  const email = computed<string>(() => contacts.value?.email || DEFAULT_EMAIL);
+  
+  const phoneHref = computed<string>(() => {
+    const phoneNumber = phone.value.replace(/\D/g, "");
+    return `tel:+${phoneNumber}`;
   });
 </script>
 
@@ -16,7 +36,7 @@
   >
     <template #left-column>
       <section :class="$style.footerInfo">
-        <nav :class="$style.mainLinks1">
+        <nav :class="$style.mainLinks1" aria-label="Основная навигация">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
               <NuxtLink to="/" :class="$style.navLink">ГЛАВНАЯ</NuxtLink>
@@ -26,6 +46,7 @@
                 href="http://varvarkan.grandfs.ru/about.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >О ПРОЕКТЕ</a
               >
             </li>
@@ -34,6 +55,7 @@
                 href="http://varvarkan.grandfs.ru/hotel.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >ОТЕЛЬ</a
               >
             </li>
@@ -42,18 +64,20 @@
                 href="http://varvarkan.grandfs.ru/service.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >СЕРВИСЫ</a
               >
             </li>
           </ul>
         </nav>
-        <nav :class="$style.mainLinks2">
+        <nav :class="$style.mainLinks2" aria-label="Дополнительная навигация">
           <ul :class="$style.navList">
             <li :class="$style.navItem">
               <a
                 href="http://varvarkan.grandfs.ru/gallery.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >ГАЛЕРЕЯ</a
               >
             </li>
@@ -62,6 +86,7 @@
                 href="http://varvarkan.grandfs.ru/construction-progress.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >ЭТАПЫ СТРОИТЕЛЬСТВА</a
               >
             </li>
@@ -70,48 +95,64 @@
                 href="http://varvarkan.grandfs.ru/contacts.php"
                 :class="$style.navLink"
                 target="_blank"
+                rel="noopener noreferrer"
                 >КОНТАКТЫ</a
               >
             </li>
           </ul>
         </nav>
-        <div :class="$style.cellForm">
-          <p :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</p>
-          <div :class="$style.email">
-            <input :class="$style.emailInput" placeholder="E-MAIL" >
-          </div>
-          <div :class="$style.agreement">
-            <UCheckbox
-              size="lg"
-              :ui="{
-                indicator: $style.checkboxIndicator,
-                icon: $style.checkboxIcon,
-              }"
-            />
-            <p :class="$style.agreementText">
-              Даю согласие на обработку
-              <a href="#" :class="$style.agreementTextLink">
-                персональных данных
-              </a>
-            </p>
-          </div>
-          <UButton label="ПОДПИСАТЬСЯ" :class="$style.subscribeBtn" />
-        </div>
-        <div :class="$style.adress">
-          <p>109012, РОССИЯ, Г. МОСКВА УЛ. ВАРВАРКА, Д.14, СТР. 1, 2</p>
+        <section :class="$style.cellForm">
+          <h2 :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</h2>
+          <form :class="$style.subscribeForm" @submit.prevent>
+            <fieldset :class="$style.emailFieldset">
+              <label :class="$style.emailLabel" for="footer-email">
+                <span class="sr-only">E-mail для подписки</span>
+                <input
+                  id="footer-email"
+                  type="email"
+                  name="email"
+                  :class="$style.emailInput"
+                  placeholder="E-MAIL"
+                  autocomplete="email"
+                >
+              </label>
+            </fieldset>
+            <div :class="$style.agreement">
+              <UCheckbox
+                size="lg"
+                :ui="{
+                  indicator: $style.checkboxIndicator,
+                  icon: $style.checkboxIcon,
+                }"
+              />
+              <p :class="$style.agreementText">
+                Даю согласие на обработку
+                <a href="#" :class="$style.agreementTextLink">
+                  персональных данных
+                </a>
+              </p>
+            </div>
+            <UButton label="ПОДПИСАТЬСЯ" :class="$style.subscribeBtn" type="submit" />
+          </form>
+        </section>
+        <address :class="$style.adress">
+          <p v-if="loading" :class="$style.loading">Загрузка...</p>
+          <p v-else>{{ address }}</p>
           <div :class="$style.adressBox">
-            <a href="tel:+74952749999">+7 (495) 274-99-99</a>
-            <a href="mailto:">mail@mail.ru</a>
+            <a :href="phoneHref" aria-label="Телефон">{{ phone }}</a>
+            <a :href="`mailto:${email}`" aria-label="Email">{{ email }}</a>
           </div>
-        </div>
-        <div :class="$style.socialMedia">
+        </address>
+        <section :class="$style.socialMedia" aria-label="Социальные сети">
           <div :class="$style.socialMediaItem">
             <a
               :class="$style.socialMediaItemLink"
               href="https://t.me/"
               target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
             >
-              <div :class="$style.iconBox">
+              <div :class="$style.iconBox" aria-hidden="true">
                 <UIcon name="i-telegram" :class="$style.telegramIcon" />
               </div>
               <span :class="$style.socialMediaText"> Russia_Hotel </span>
@@ -122,20 +163,22 @@
               :class="$style.socialMediaItemLink"
               href="https://vk.com/"
               target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ВКонтакте"
             >
-              <div :class="$style.iconBox">
+              <div :class="$style.iconBox" aria-hidden="true">
                 <UIcon name="i-vk" :class="$style.vkIcon" />
               </div>
               <span :class="$style.socialMediaText"> Russia_Hotel </span>
             </a>
           </div>
-        </div>
-        <div :class="$style.qr">
+        </section>
+        <aside :class="$style.qr" aria-label="QR-код для перехода на сайт">
           <div :class="$style.qrImg">
             <img
               src="/images/footer/qr.svg"
               srcset="/images/footer/qr.svg 1x, /images/footer/qr.svg 2x"
-              alt="карта"
+              alt="QR-код для перехода на сайт"
               :class="$style.qrImgItem"
             >
           </div>
@@ -146,19 +189,19 @@
             <br >
             на сайт
           </div>
-        </div>
-        <div :class="$style.copyright">
+        </aside>
+        <footer :class="$style.copyright">
           <UButton
             icon="i-pdf"
             size="xl"
             label="ПРАВИЛА ПАРКОВКИ"
             :class="$style.copyrightBtn"
           />
-          <a href="#" target="_blank" :class="$style.copyrightText"
+          <a href="#" target="_blank" :class="$style.copyrightText" rel="noopener noreferrer"
             >Политика конфиденциальности</a
           >
           <p :class="$style.copyrightText">© 2022 ООО «МФК», Москва</p>
-        </div>
+        </footer>
       </section>
     </template>
     <template #right-column>
@@ -248,6 +291,24 @@
     }
   }
 
+  .subscribeForm {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .emailFieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .emailLabel {
+    display: block;
+    height: rem(40);
+    max-width: rem(290);
+  }
+
   .email {
     height: rem(40);
     max-width: rem(290);
@@ -259,6 +320,8 @@
     padding: rem(6) rem(12) rem(6) 0;
     border-bottom: rem(1) solid #686062;
     line-height: 1.5;
+    border: none;
+    background: transparent;
 
     &::placeholder {
       color: var(--secondary);
@@ -267,6 +330,10 @@
     &:hover {
       box-shadow: none;
       outline: none;
+    }
+    &:focus {
+      outline: none;
+      border-bottom-color: var(--primary);
     }
   }
 
@@ -295,6 +362,20 @@
     font-weight: 600;
     opacity: 75%;
     margin-bottom: rem(10);
+    font-size: inherit;
+    margin-top: 0;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 
   .footerInfo {
@@ -348,6 +429,11 @@
       .adressBox {
         display: flex;
         flex-direction: column;
+      }
+
+      .loading {
+        opacity: 50%;
+        font-style: italic;
       }
     }
 
@@ -473,6 +559,7 @@
 
         .text,
         .email,
+        .emailLabel,
         .emailInput {
           width: 100%;
         }
@@ -602,7 +689,8 @@
       .cellForm {
         width: rem(206);
 
-        .email {
+        .email,
+        .emailLabel {
           width: 100%;
         }
 
@@ -634,7 +722,8 @@
       .cellForm {
         width: rem(300);
 
-        .email {
+        .email,
+        .emailLabel {
           width: 100%;
         }
       }

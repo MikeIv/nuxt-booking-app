@@ -22,6 +22,7 @@ yarn-error.log
 .vscode
 .cursor
 .cursorrules
+CURSOR_RULES_EXPORT.md
 *.swp
 *.swo
 *~
