@@ -3,6 +3,12 @@
   import { useToast as usePrimeToast } from "primevue/usetoast";
   import type { Room, RoomTariff } from "~/types/room";
 
+  const { getBannersByVisibility } = useBanners();
+
+  const servicesBanners = computed(() => {
+    return getBannersByVisibility("booking");
+  });
+
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
@@ -121,6 +127,9 @@
 <template>
   <div :class="$style.container">
     <h1 :class="$style.header">Выбор услуг</h1>
+    <div v-if="servicesBanners.length > 0" :class="$style.bannersWrapper">
+      <CommonBannersList :banners="servicesBanners" />
+    </div>
 
     <section :class="$style.block">
       <div v-if="selectedRoom" :class="$style.twoCols">
@@ -193,6 +202,17 @@
     font-size: rem(28);
     font-weight: 600;
     color: var(--a-black);
+  }
+
+  .bannersWrapper {
+    margin-bottom: rem(20);
+    width: 100%;
+
+    @media (min-width: #{size.$desktopMedium}) {
+      max-width: #{size.$desktop};
+      margin-left: auto;
+      margin-right: auto;
+    }
   }
 
   .block {

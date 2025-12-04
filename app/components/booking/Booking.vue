@@ -9,6 +9,27 @@
   const router = useRouter();
   const route = useRoute();
 
+  const { getBannersByVisibility } = useBanners();
+
+  const bookingBanners = computed(() => {
+    const result = getBannersByVisibility("booking");
+    
+    if (import.meta?.env?.DEV) {
+      console.log("🔍 bookingBanners computed:", {
+        type: typeof result,
+        isArray: Array.isArray(result),
+        result,
+      });
+    }
+    
+    // Убеждаемся, что возвращается массив
+    if (!Array.isArray(result)) {
+      console.warn("Booking: getBannersByVisibility вернул не массив:", typeof result, result);
+      return [];
+    }
+    return result;
+  });
+
   const validateForm = () => {
     if (!date.value) {
       toast.add({
@@ -98,6 +119,9 @@
         {{ loading ? "Поиск..." : "Поиск" }}
       </UButton>
     </div>
+    <div v-if="bookingBanners.length > 0" :class="$style.bannersWrapper">
+      <CommonBannersList :banners="bookingBanners" />
+    </div>
   </section>
 </template>
 
@@ -107,6 +131,7 @@
   .wrapper {
     position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -178,5 +203,13 @@
       flex-grow: 1;
       max-width: rem(280);
     }
+  }
+
+  .bannersWrapper {
+    margin-top: rem(20);
+    width: 100%;
+    max-width: size.$desktop;
+    display: flex;
+    justify-content: center;
   }
 </style>
