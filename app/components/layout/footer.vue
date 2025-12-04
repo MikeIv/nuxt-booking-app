@@ -3,7 +3,7 @@
     anchorId?: string;
   }
 
-  const props = withDefaults(defineProps<FooterProps>(), {
+  const _props = withDefaults(defineProps<FooterProps>(), {
     anchorId: "",
   });
 
