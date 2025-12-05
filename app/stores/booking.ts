@@ -199,10 +199,16 @@ export const useBookingStore = defineStore(
       room_type_codes?: ApiRoomType[];
     }
 
+    // Grouped формат с фильтрами (новый формат ответа)
+    interface ApiGroupedPayload {
+      rooms: ApiGroupedRoom[];
+      filters: SearchResponse["filters"];
+    }
+
     interface ApiUngroupedPayload {
       rooms: ApiRoomType[];
       packages?: PackageResource[];
-      filters?: SearchResponse["filters"];
+      filters: SearchResponse["filters"];
     }
 
     // Новый формат ответа для тарифов конкретного номера
@@ -213,6 +219,7 @@ export const useBookingStore = defineStore(
 
     type ApiSearchPayload =
       | ApiGroupedRoom[]
+      | ApiGroupedPayload
       | ApiUngroupedPayload
       | ApiRoomTariffPayload
       | undefined;
@@ -357,6 +364,11 @@ export const useBookingStore = defineStore(
           available: false,
           rooms: [],
           packages: [],
+          filters: {
+            beds: [],
+            views: [],
+            balconies: [],
+          },
           groupedByBed,
           rawPayload: payload,
         };
@@ -370,7 +382,115 @@ export const useBookingStore = defineStore(
           available: true,
           rooms: [room],
           packages: roomPayload.packages ?? [],
+          filters: {
+            beds: [],
+            views: [],
+            balconies: [],
+          },
           groupedByBed: false,
+          rawPayload: payload,
+        };
+      }
+
+      // Обработка нового формата: объект с rooms и filters
+      if (
+        !Array.isArray(payload) &&
+        "rooms" in payload &&
+        Array.isArray(payload.rooms) &&
+        "filters" in payload
+      ) {
+        const groupedPayload = payload as ApiGroupedPayload;
+        const groupedRooms = new Map<string, Room>();
+
+        groupedPayload.rooms.forEach((group, index) => {
+          const room = mapGroupedRoom(group);
+
+          // Сервер может возвращать варианты как "beds" или "room_type_codes"
+          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
+          const key =
+            firstVariant?.family?.id?.toString() ??
+            firstVariant?.family?.title ??
+            group.title ??
+            room.room_type_code ??
+            `group-${index}`;
+
+          const existing = groupedRooms.get(key);
+
+          if (existing) {
+            const existingVariants = existing.room_type_codes ?? [];
+            const newVariants = room.room_type_codes ?? [];
+
+            const variantMap = new Map<string, Room>();
+
+            existingVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            newVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-new-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            existing.room_type_codes = Array.from(variantMap.values());
+
+            // Обновляем min_price с учетом null значений
+            if (existing.min_price === null) {
+              existing.min_price = room.min_price;
+            } else if (room.min_price !== null) {
+              existing.min_price = Math.min(existing.min_price, room.min_price);
+            }
+
+            if (
+              existing.price_for_register === undefined ||
+              (room.price_for_register !== undefined &&
+                room.price_for_register < existing.price_for_register)
+            ) {
+              existing.price_for_register = room.price_for_register;
+            }
+
+            if (
+              (!existing.photos || existing.photos.length === 0) &&
+              room.photos &&
+              room.photos.length > 0
+            ) {
+              existing.photos = room.photos;
+            }
+
+            if (
+              (!existing.amenities || existing.amenities.length === 0) &&
+              room.amenities &&
+              room.amenities.length > 0
+            ) {
+              existing.amenities = room.amenities;
+            }
+          } else {
+            groupedRooms.set(key, room);
+          }
+        });
+
+        const rooms = Array.from(groupedRooms.values());
+
+        return {
+          available: rooms.length > 0,
+          rooms,
+          packages: [],
+          filters: groupedPayload.filters ?? {
+            beds: [],
+            views: [],
+            balconies: [],
+          },
+          groupedByBed: true,
           rawPayload: payload,
         };
       }
@@ -461,6 +581,11 @@ export const useBookingStore = defineStore(
           available: rooms.length > 0,
           rooms,
           packages: [],
+          filters: {
+            beds: [],
+            views: [],
+            balconies: [],
+          },
           groupedByBed: true,
           rawPayload: payload,
         };
@@ -474,7 +599,11 @@ export const useBookingStore = defineStore(
         available: rooms.length > 0,
         rooms,
         packages: ungroupedPayload.packages ?? [],
-        filters: ungroupedPayload.filters,
+        filters: ungroupedPayload.filters ?? {
+          beds: [],
+          views: [],
+          balconies: [],
+        },
         groupedByBed,
         rawPayload: payload,
       };
@@ -567,26 +696,33 @@ export const useBookingStore = defineStore(
       setLoading(true, "Создаём бронирование...");
 
       try {
-        // Данные уже отформатированы в personal.vue, но убеждаемся в правильном формате
+        // Данные уже правильно отформатированы в prepareBookingData
+        // Убеждаемся только в правильном формате дат и структуре
         const processedData: BookingData = {
-          ...bookingData,
-          // Убеждаемся, что даты в формате YYYY-MM-DD
-          start_at: bookingData.start_at
-            ? typeof bookingData.start_at === "string"
-              ? bookingData.start_at
-              : formatDate(bookingData.start_at)
-            : "",
-          end_at: bookingData.end_at
-            ? typeof bookingData.end_at === "string"
-              ? bookingData.end_at
-              : formatDate(bookingData.end_at)
-            : "",
-          // Очищаем additional от null значений, если они не нужны
+          for_self: bookingData.for_self,
+          start_at: bookingData.start_at || "",
+          end_at: bookingData.end_at || "",
+          payment: bookingData.payment || "",
+          agreements: bookingData.agreements,
           additional: {
-            start_at: bookingData.additional.start_at || null,
-            end_at: bookingData.additional.end_at || null,
-            comment: bookingData.additional.comment || null,
+            start_at: bookingData.additional?.start_at || null,
+            end_at: bookingData.additional?.end_at || null,
+            comment: bookingData.additional?.comment || null,
           },
+          rooms: bookingData.rooms.map((room) => ({
+            room_type_code: room.room_type_code,
+            rate_type_code: room.rate_type_code,
+            guests: room.guests.map((guest) => ({
+              surname: guest.surname,
+              name: guest.name,
+              middle_name: guest.middle_name || null,
+              phone: guest.phone,
+              email: guest.email,
+              nationality: guest.nationality || "",
+              sms_confirmation: guest.sms_confirmation || false,
+              email_subscribe: guest.email_subscribe || false,
+            })),
+          })),
         };
 
         // Логируем данные для отладки

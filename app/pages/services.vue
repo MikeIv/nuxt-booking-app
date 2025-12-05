@@ -243,10 +243,12 @@
     flex-direction: column;
     gap: rem(32);
     margin-bottom: rem(40);
+    padding-bottom: rem(120);
 
     @media (min-width: #{size.$desktopMin}) {
       width: 66.6667%;
       margin-bottom: 0;
+      padding-bottom: 0;
     }
   }
 
@@ -265,6 +267,10 @@
     gap: rem(20);
     width: 100%;
     padding: 0 rem(4) rem(40) rem(4);
+
+    @media (max-width: calc(#{size.$desktopMin} - 1px)) {
+      padding-bottom: rem(20);
+    }
 
     @media (min-width: #{size.$tabletMin}) {
       grid-template-columns: repeat(2, 1fr);

@@ -30,37 +30,89 @@
   const selectedView = ref<number>(0);
   const selectedBalcony = ref<number>(0);
 
-  const viewOptions = computed(() => VIEW_OPTIONS);
-  const balconyOptions = computed(() => BALCONY_OPTIONS);
+  // Общая функция для добавления опции "Все" к фильтрам
+  const addAllOption = <T extends { id: number; title: string }>(
+    serverFilters: T[] | undefined,
+    defaultOptions: T[],
+    allOptionTitle: string,
+  ): T[] => {
+    if (!serverFilters || serverFilters.length === 0) {
+      return defaultOptions;
+    }
+
+    // Проверяем наличие опции "Все" (id: 0)
+    const hasAllOption = serverFilters[0]?.id === 0;
+    if (hasAllOption) {
+      return serverFilters;
+    }
+
+    return [{ id: 0, title: allOptionTitle } as T, ...serverFilters];
+  };
+
+  const viewOptions = computed(() => {
+    const serverFilters = searchResults.value?.filters?.views;
+    return addAllOption(serverFilters, VIEW_OPTIONS, "Вид из окна");
+  });
+
+  const balconyOptions = computed(() => {
+    const serverFilters = searchResults.value?.filters?.balconies;
+    return addAllOption(serverFilters, BALCONY_OPTIONS, "Балкон");
+  });
 
   const totalAdults = computed(() => {
     if (!guests.value?.roomList) return 0;
     return guests.value.roomList.reduce((sum, r) => sum + r.adults, 0);
   });
 
+  // Мемоизированная проверка наличия балкона для комнаты
   const hasBalconyAmenity = (room: Room): boolean => {
-    const hasInMainAmenities = room.amenities?.some(
-      (amenity) => amenity.title && BALCONY_REGEX.test(amenity.title),
-    );
+    // Проверяем основные amenities комнаты
+    if (room.amenities?.length) {
+      for (const amenity of room.amenities) {
+        if (amenity.title && BALCONY_REGEX.test(amenity.title)) {
+          return true;
+        }
+      }
+    }
 
-    if (hasInMainAmenities) return true;
+    // Проверяем варианты комнаты (если есть)
+    const variants = room.room_type_codes;
+    if (!variants || variants.length === 0) {
+      return false;
+    }
 
-    return (
-      room.room_type_codes?.some((variant) =>
-        variant.amenities?.some(
-          (amenity) => amenity.title && BALCONY_REGEX.test(amenity.title),
-        ),
-      ) ?? false
-    );
+    for (const variant of variants) {
+      if (!variant.amenities?.length) continue;
+      for (const amenity of variant.amenities) {
+        if (amenity.title && BALCONY_REGEX.test(amenity.title)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   };
 
+  // Оптимизированная проверка наличия выбранного вида
   const hasSelectedView = (room: Room, viewId: number): boolean => {
-    if (room.view?.id === viewId) return true;
+    // Проверяем основной вид комнаты
+    if (room.view?.id === viewId) {
+      return true;
+    }
 
-    return (
-      room.room_type_codes?.some((variant) => variant.view?.id === viewId) ??
-      false
-    );
+    // Проверяем варианты комнаты (если есть)
+    const variants = room.room_type_codes;
+    if (!variants || variants.length === 0) {
+      return false;
+    }
+
+    for (const variant of variants) {
+      if (variant.view?.id === viewId) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   const filteredRooms = computed(() => {
@@ -70,17 +122,23 @@
     const activeView = selectedView.value;
     const activeBalcony = selectedBalcony.value;
 
+    // Если фильтры не выбраны, возвращаем все комнаты
     if (!activeView && !activeBalcony) {
       return rooms;
     }
 
+    // Оптимизированная фильтрация с ранним выходом
     return rooms.filter((room) => {
+      // Фильтр по виду
       if (activeView && !hasSelectedView(room, activeView)) {
         return false;
       }
 
+      // Фильтр по балкону
       if (activeBalcony) {
         const hasBalcony = hasBalconyAmenity(room);
+        // activeBalcony === 1: "Есть балкон"
+        // activeBalcony === 2: "Нет балкона"
         if (activeBalcony === 1 && !hasBalcony) return false;
         if (activeBalcony === 2 && hasBalcony) return false;
       }
@@ -92,6 +150,34 @@
   const hasSearchResults = computed(() => {
     return (searchResults.value?.rooms?.length ?? 0) > 0;
   });
+
+  // Валидация выбранных фильтров при изменении данных с сервера
+  // Используем watch с проверкой только при изменении searchResults
+  watch(
+    () => searchResults.value?.filters,
+    () => {
+      // Проверяем, существует ли выбранный вид
+      if (selectedView.value !== 0) {
+        const viewExists = viewOptions.value.some(
+          (option) => option.id === selectedView.value,
+        );
+        if (!viewExists) {
+          selectedView.value = 0;
+        }
+      }
+
+      // Проверяем, существует ли выбранный балкон
+      if (selectedBalcony.value !== 0) {
+        const balconyExists = balconyOptions.value.some(
+          (option) => option.id === selectedBalcony.value,
+        );
+        if (!balconyExists) {
+          selectedBalcony.value = 0;
+        }
+      }
+    },
+    { immediate: false },
+  );
 
   onMounted(async () => {
     if (!date.value || totalAdults.value === 0) {

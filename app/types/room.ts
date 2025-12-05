@@ -49,6 +49,15 @@ export interface RoomFamily {
   title: string;
 }
 
+export interface BalconyResource {
+  id: number;
+  title: string;
+}
+
+// Алиасы для совместимости с API
+export type BedResource = RoomBed;
+export type ViewResource = RoomView;
+
 export interface Room {
   id?: string | number;
   room_type_code: string;

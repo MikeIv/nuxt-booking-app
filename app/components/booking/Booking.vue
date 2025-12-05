@@ -161,7 +161,7 @@
     padding: rem(14) rem(12);
     font-family: "Inter", sans-serif;
     background-color: var(--primary);
-    border-radius: rem(16);
+    border-radius: var(--a-borderR--x30);
 
     @media (min-width: #{size.$desktopMin}) {
       padding: rem(32) rem(24);

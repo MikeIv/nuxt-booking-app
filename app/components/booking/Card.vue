@@ -47,6 +47,7 @@
 
   const availableRoomVariants = computed<Room[]>(() => {
     const variants = props.room.room_type_codes ?? [];
+    console.log(variants);
     return variants.length > 0 ? variants : [props.room];
   });
 
@@ -66,6 +67,23 @@
   watch(
     availableRoomVariants,
     (variants) => {
+      // Если вариантов нет, сбрасываем выбор
+      if (variants.length === 0) {
+        selectedBedType.value = null;
+        return;
+      }
+
+      // Проверяем, существует ли текущий выбранный вариант
+      const hasCurrentSelection = variants.some(
+        (variant) => variant.room_type_code === selectedBedType.value,
+      );
+
+      // Если текущий выбор валиден, ничего не меняем
+      if (hasCurrentSelection) {
+        return;
+      }
+
+      // Ищем fallback вариант
       const fallbackFromProps = props.room.room_type_code;
       let fallbackVariant: Room | null = null;
 
@@ -89,34 +107,43 @@
 
       const fallback = fallbackVariant?.room_type_code ?? fallbackFromProps;
 
-      if (!fallback) {
-        selectedBedType.value = null;
-        return;
-      }
-
-      const hasCurrentSelection = variants.some(
-        (variant) => variant.room_type_code === selectedBedType.value,
-      );
-
-      if (!hasCurrentSelection) {
+      if (fallback) {
         selectedBedType.value = fallback;
+      } else {
+        selectedBedType.value = null;
       }
     },
     { immediate: true },
   );
 
   const bedOptions = computed(() => {
+    const variants = availableRoomVariants.value;
+    if (variants.length === 0) return [];
+
+    // Оптимальный подход: обрабатываем массив вариантов напрямую
+    // Это гарантирует актуальность данных и отсутствие рассинхронизации
+    const seenBedIds = new Set<number>();
     const seenTitles = new Set<string>();
     const options: { id: string; title: string }[] = [];
 
-    for (const variant of availableRoomVariants.value) {
-      const bedTitle = variant.bed?.title?.trim();
-      if (!bedTitle || seenTitles.has(bedTitle)) continue;
+    for (const variant of variants) {
+      const bed = variant.bed;
+      
+      // Пропускаем варианты без кровати
+      if (!bed?.title?.trim()) continue;
+      
+      // Пропускаем дубликаты по ID или title
+      if (bed.id !== undefined && bed.id !== null) {
+        if (seenBedIds.has(bed.id)) continue;
+        seenBedIds.add(bed.id);
+      } else {
+        if (seenTitles.has(bed.title.trim())) continue;
+        seenTitles.add(bed.title.trim());
+      }
 
-      seenTitles.add(bedTitle);
       options.push({
         id: variant.room_type_code || String(options.length),
-        title: bedTitle,
+        title: bed.title.trim(),
       });
     }
 
