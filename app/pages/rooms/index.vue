@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { Room } from "~/types/room";
+  import { useNotificationToast } from "~/composables/useToast";
 
   definePageMeta({
     layout: "steps",
@@ -24,7 +25,7 @@
 
   const bookingStore = useBookingStore();
   const { searchResults, date, guests, loading } = storeToRefs(bookingStore);
-  const toast = useToast();
+  const toast = useNotificationToast();
   const router = useRouter();
 
   const selectedView = ref<number>(0);

@@ -2,13 +2,14 @@
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource, RoomTariff } from "~/types/room";
   import ArrowBack from "~/assets/icons/arrow-back.svg";
+  import { useNotificationToast } from "~/composables/useToast";
 
   definePageMeta({
     layout: "steps",
   });
 
   const router = useRouter();
-  const toast = useToast();
+  const toast = useNotificationToast();
   const bookingStore = useBookingStore();
   const { searchResults, selectedRoomType, roomTariffs, date, guests } =
     storeToRefs(bookingStore);

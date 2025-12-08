@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
-  import { useToast as usePrimeToast } from "primevue/usetoast";
+  import { useNotificationToast } from "~/composables/useToast";
   import type { Room, RoomTariff } from "~/types/room";
 
   const { getBannersByVisibility } = useBanners();
@@ -22,7 +22,7 @@
   });
 
   const router = useRouter();
-  const toast = usePrimeToast();
+  const toast = useNotificationToast();
   const bookingStore = useBookingStore();
   const { selectedRoomType, selectedTariff: selectedTariffStore, roomTariffs, date, selectedServices } =
     storeToRefs(bookingStore);

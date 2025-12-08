@@ -2,11 +2,12 @@
   import { useAuthStore } from "~/stores/auth";
   import { useBookingStore } from "~/stores/booking";
   import { countriesRu } from "~/utils/countries";
+  import { useNotificationToast } from "~/composables/useToast";
 
   const router = useRouter();
   const authStore = useAuthStore();
   const bookingStore = useBookingStore();
-  const toast = useToast();
+  const toast = useNotificationToast();
 
   const activeSection = ref("personal");
   const hasChanges = ref(false);
