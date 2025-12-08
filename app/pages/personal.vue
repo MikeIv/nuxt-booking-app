@@ -7,6 +7,7 @@
     type FormErrors,
     type GuestData,
   } from "~/composables/usePersonalForm";
+  import { useNotificationToast } from "~/composables/useToast";
 
   definePageMeta({
     layout: "steps",
@@ -21,7 +22,7 @@
     date,
     selectedServices,
   } = storeToRefs(bookingStore);
-  const toast = useToast();
+  const toast = useNotificationToast();
 
   const {
     formFields,

@@ -2,8 +2,9 @@
   import { useBookingStore } from "~/stores/booking";
   import type { ApiError } from "~/composables/useApi";
   import { getRequestErrorContent } from "~/components/common/RequestErrorMessage.vue";
+  import { useNotificationToast } from "~/composables/useToast";
 
-  const toast = useToast();
+  const toast = useNotificationToast();
   const bookingStore = useBookingStore();
   const { date, guests, promoCode, loading } = storeToRefs(bookingStore);
   const router = useRouter();

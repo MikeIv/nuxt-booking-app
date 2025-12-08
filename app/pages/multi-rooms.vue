@@ -1,13 +1,14 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource } from "~/types/room";
+  import { useNotificationToast } from "~/composables/useToast";
 
   definePageMeta({
     layout: "steps",
   });
 
   const router = useRouter();
-  const toast = useToast();
+  const toast = useNotificationToast();
   const bookingStore = useBookingStore();
   const { searchResults, roomTariffs, date, guests, selectedServices } =
     storeToRefs(bookingStore);

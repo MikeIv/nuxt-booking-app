@@ -9,12 +9,22 @@
       <!-- Глобальное уведомление для изменения маршрута -->
       <NuxtRouteAnnouncer />
     </NuxtLayout>
-    <Toast />
+    
+    <!-- Компоненты вне layout, но внутри UApp для правильного контекста provide/inject -->
+    <NotificationToast :notifications="notifications" :on-remove="remove" />
     <BookingLoadingOverlay />
   </UApp>
 </template>
 
-<script setup>
+<script setup lang="ts">
+  import { computed } from "vue";
+  import { useNotifications } from "~/composables/useNotifications";
+
+  const { notifications: notificationsRef, remove } = useNotifications();
+  
+  // Преобразуем readonly ref в массив для передачи в компонент
+  const notifications = computed(() => notificationsRef.value);
+
   useHead({
     titleTemplate: (title) => (title ? `${title} | Varvarka` : "Varvarka"),
     meta: [

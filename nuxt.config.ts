@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    // Локальные composables должны быть загружены первыми
     "@nuxt/ui",
     "@nuxt/image",
     "@nuxtjs/i18n",
@@ -67,11 +68,7 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  components: [
-    { path: "~/components/core", prefix: "Core" },
-    { path: "~/components/modules", prefix: "Module" },
-    "~/components",
-  ],
+  components: [{ path: "~/components/core", prefix: "Core" }, "~/components"],
 
   imports: {
     dirs: [
@@ -79,6 +76,11 @@ export default defineNuxtConfig({
       "composables/*/index.{ts,js,mjs,mts}",
       "composables/**",
       "server/utils",
+    ],
+    exclude: [
+      // Исключаем useToast из PrimeVue и @nuxt/ui
+      /primevue\/usetoast/,
+      /@nuxt\/ui.*useToast/,
     ],
   },
 
@@ -94,7 +96,11 @@ export default defineNuxtConfig({
       ripple: true,
     },
     components: {
-      include: ["Button", "InputText", "Message", "Toast", "Select", "Popover"],
+      include: ["Button", "InputText", "Message", "Select", "Popover"],
+    },
+    composables: {
+      // Отключаем все composables PrimeVue, так как используем кастомные
+      include: [],
     },
   },
 
