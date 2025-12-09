@@ -51,7 +51,8 @@
       if (isLast) {
         if (typeof window !== "undefined") {
           const h1 = document.querySelector("h1");
-          name = h1?.textContent?.trim() || getDefaultTitle(currentPath);
+          // Сначала проверяем data-breadcrumb атрибут, затем textContent
+          name = h1?.getAttribute("data-breadcrumb") || h1?.textContent?.trim() || getDefaultTitle(currentPath);
         } else {
           name = getDefaultTitle(currentPath);
         }

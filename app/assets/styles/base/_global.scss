@@ -76,6 +76,14 @@ ul {
     }
   }
 
+  &.danger {
+    background-color: var(--a-btnAccentBg);
+
+    &:hover {
+      background-color: var(--a-blackBg);
+    }
+  }
+
   &.round {
     border-radius: var(--a-borderR--dialog);
   }
