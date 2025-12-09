@@ -136,10 +136,10 @@
 </script>
 
 <template>
-  <div :class="$style.cabinet">
+  <main :class="$style.cabinet">
     <h1 :class="$style.header">Личный кабинет</h1>
     <div :class="$style.container">
-      <div :class="$style.navBlock">
+      <nav :class="$style.navBlock" aria-label="Навигация личного кабинета">
         <Button
           unstyled
           label="Личные данные"
@@ -149,6 +149,7 @@
               ? $style.navBtnActive
               : $style.navBtnInactive,
           ]"
+          :aria-current="activeSection === 'personal' ? 'page' : undefined"
           @click="activeSection = 'personal'"
         />
 
@@ -161,6 +162,7 @@
               ? $style.navBtnActive
               : $style.navBtnInactive,
           ]"
+          :aria-current="activeSection === 'bookings' ? 'page' : undefined"
           @click="activeSection = 'bookings'"
         />
         <Button
@@ -172,6 +174,7 @@
               ? $style.navBtnActive
               : $style.navBtnInactive,
           ]"
+          :aria-current="activeSection === 'new' ? 'page' : undefined"
           @click="activeSection = 'new'"
         />
         <Button
@@ -181,11 +184,12 @@
           :class="$style.navBtnExit"
           @click="handleLogout"
         />
-      </div>
+      </nav>
 
       <!-- Личные данные -->
-      <div v-if="activeSection === 'personal'" :class="$style.content">
-        <div :class="$style.form">
+      <section v-if="activeSection === 'personal'" :class="$style.content" aria-labelledby="personal-heading">
+        <h2 id="personal-heading" class="visually-hidden">Личные данные</h2>
+        <form :class="$style.form" @submit.prevent="saveChanges">
           <div :class="$style.field">
             <label :for="'name'" :class="$style.label">Имя</label>
             <input
@@ -248,30 +252,42 @@
 
           <Button
             label="Изменить"
+            type="submit"
             unstyled
             class="btn__bs dark"
             :class="[$style.saveBtn, hasChanges ? $style.active : '']"
             :disabled="!hasChanges"
-            @click="saveChanges"
           />
-        </div>
-      </div>
+        </form>
+      </section>
 
-      <div v-if="activeSection === 'bookings'" :class="$style.content">
-        <h2>Мои бронирования</h2>
-        <div :class="$style.bookingCard">
+      <section v-if="activeSection === 'bookings'" :class="$style.content" aria-labelledby="bookings-heading">
+        <h2 id="bookings-heading">Мои бронирования</h2>
+        <article :class="$style.bookingCard">
           <div :class="$style.bookingTitle">Ваше бронирование № 0001</div>
           <div :class="$style.bookingDates">24.11.2025 - 24.11.2025</div>
           <div :class="$style.bookingRooms">Количество номеров: 1</div>
           <Button unstyled label="Подробнее" :class="$style.moreBtn" />
-        </div>
-      </div>
+        </article>
+      </section>
     </div>
-  </div>
+  </main>
 </template>
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
+
+  :global(.visually-hidden) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   .cabinet {
     display: flex;

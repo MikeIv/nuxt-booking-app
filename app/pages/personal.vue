@@ -175,6 +175,32 @@
     return roomTotal + servicesTotal;
   });
 
+  const guestComposition = computed(() => {
+    const room = bookingStore.guests.roomList[0];
+    if (!room) return { adults: 0, children: 0 };
+    return {
+      adults: room.adults || 0,
+      children: room.children || 0,
+    };
+  });
+
+  const guestCompositionText = computed(() => {
+    const { adults, children } = guestComposition.value;
+    const parts: string[] = [];
+
+    if (adults > 0) {
+      const adultWord = adults === 1 ? 'взрослый' : 'взрослых';
+      parts.push(`${adults} ${adultWord} на основном месте`);
+    }
+
+    if (children > 0) {
+      const childWord = children === 1 ? 'ребенок' : children > 1 && children < 5 ? 'ребенка' : 'детей';
+      parts.push(`${children} ${childWord} на дополнительном месте`);
+    }
+
+    return parts.join(', ');
+  });
+
   onMounted(() => {
     bookingStore.setLoading(false);
     bookingStore.isServerRequest = false;
@@ -237,31 +263,54 @@
         <div :class="$style.formContent">
           <div :class="$style.formMain">
             <div :class="$style.formItem">
-              <h3 :class="$style.sectionHeader">Данные гостей</h3>
+              <div :class="$style.guestCompositionBlock">
+                <div :class="$style.guestComposition">
+                  <div :class="$style.guestIcons">
+                    <!-- Взрослые на основном месте -->
+                    <UIcon
+                      v-for="n in guestComposition.adults"
+                      :key="'adult-' + n"
+                      name="i-icon-man"
+                      :class="$style.guestIconAdult"
+                      aria-hidden="true"
+                    />
+                    <!-- Разделитель если есть дети на дополнительном месте -->
+                    <UIcon
+                      v-if="guestComposition.children > 0"
+                      name="i-icon-plus-person"
+                      :class="$style.guestIconPlus"
+                      aria-hidden="true"
+                    />
+                    <!-- Дети на дополнительном месте -->
+                    <UIcon
+                      v-for="n in guestComposition.children"
+                      :key="'child-' + n"
+                      name="i-icon-child"
+                      :class="$style.guestIconChild"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <p :class="$style.guestCompositionText">
+                    {{ guestCompositionText }}
+                  </p>
+                </div>
+                <div :class="$style.mainGuestInfo">
+                  <UIcon
+                    name="i-icon-man"
+                    :class="$style.mainGuestIcon"
+                    aria-hidden="true"
+                  />
+                  <p :class="$style.mainGuestText">
+                    Заполните данные основного гостя*
+                  </p>
+                </div>
+              </div>
               <BookingGuestFormFields
                 :guest="formData.mainGuest"
                 :fields="formFields"
                 :errors="errors.mainGuest"
                 guest-title="Основной гость"
                 @update:guest="updateMainGuest"
-              />
-              <BookingGuestFormFields
-                v-for="(guest, index) in formData.additionalGuests"
-                :key="index"
-                :guest="guest"
-                :fields="formFields"
-                :errors="errors.additionalGuests[index]"
-                :guest-title="`Гость ${index + 2}`"
-                :show-remove="true"
-                @update:guest="updateAdditionalGuest(index, $event)"
-                @remove="removeAdditionalGuest(index)"
-              />
-              <Button
-                type="button"
-                label="+ Добавить гостя"
-                :class="$style.addGuestButton"
-                unstyled
-                @click="addAdditionalGuest"
               />
               <div :class="$style.checkInformBlock">
                 <div
@@ -280,6 +329,30 @@
                   </label>
                 </div>
               </div>
+              <BookingGuestFormFields
+                v-for="(guest, index) in formData.additionalGuests"
+                :key="index"
+                :guest="guest"
+                :fields="formFields"
+                :errors="errors.additionalGuests[index]"
+                :guest-title="`Гость ${index + 2}`"
+                :show-remove="true"
+                @update:guest="updateAdditionalGuest(index, $event)"
+                @remove="removeAdditionalGuest(index)"
+              />
+              <Button
+                type="button"
+                :class="$style.addGuestButton"
+                unstyled
+                @click="addAdditionalGuest"
+              >
+                <UIcon
+                  name="i-icon-plus-person"
+                  :class="$style.addGuestIcon"
+                  aria-hidden="true"
+                />
+                <span>Добавить гостя (необязательно)</span>
+              </Button>
             </div>
             <div :class="$style.formItem">
               <h3 :class="$style.sectionHeader">Дополнительно</h3>
@@ -546,10 +619,81 @@
   }
 
 
+  .guestCompositionBlock {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+    margin-bottom: rem(24);
+  }
+
+  .guestComposition {
+    display: flex;
+    align-items: center;
+    gap: rem(16);
+  }
+
+  .guestIcons {
+    display: flex;
+    align-items: center;
+    gap: rem(2);
+  }
+
+  .guestIconAdult {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-text-light);
+    flex-shrink: 0;
+  }
+
+  .guestIconChild {
+    width: rem(13);
+    height: rem(13);
+    color: var(--a-text-light);
+    flex-shrink: 0;
+  }
+
+  .guestIconPlus {
+    width: rem(12);
+    height: rem(12);
+    color: var(--a-text-light);
+    flex-shrink: 0;
+    margin: 0 rem(3);
+  }
+
+  .guestCompositionText {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    color: var(--a-text-light);
+    margin: 0;
+  }
+
+  .mainGuestInfo {
+    display: flex;
+    align-items: center;
+    gap: rem(12);
+  }
+
+  .mainGuestIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-text-dark);
+    flex-shrink: 0;
+  }
+
+  .mainGuestText {
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 600;
+    color: var(--a-text-dark);
+    margin: 0;
+  }
+
   .addGuestButton {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: rem(12);
     width: 100%;
     height: rem(54);
     padding: 0 rem(16);
@@ -573,6 +717,13 @@
       border-color: var(--a-border-primary);
       box-shadow: 0 0 0 2px rgba(var(--a-border-primary), 0.1);
     }
+  }
+
+  .addGuestIcon {
+    width: rem(18);
+    height: rem(18);
+    color: var(--a-text-light);
+    flex-shrink: 0;
   }
 
   .checkInformBlock {
