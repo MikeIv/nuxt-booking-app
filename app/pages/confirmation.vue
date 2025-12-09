@@ -136,31 +136,42 @@
 
 <template>
   <div :class="$style.container">
-    <h1 :class="$style.header">Ваше бронирование</h1>
+    <h1 :class="$style.header" data-breadcrumb="Ваше бронирование">Ваше бронирование подтверждено!</h1>
     <section :class="$style.contentBlock">
       <div :class="$style.contentWrapper">
         <div :class="$style.mainContent">
           <div :class="$style.section">
-            <h2 :class="$style.sectionTitle">Номер бронирования</h2>
-            <div v-if="isBookingCreated && bookingNumber" :class="$style.bookingNumber">
-              {{ bookingNumber }}
-            </div>
-            <div v-else :class="$style.bookingMessage">
-              Обновите бронирование
-            </div>
-            <div v-if="isBookingCreated" :class="$style.actionButtons">
-              <Button
-                label="Скачать подтверждение"
-                class="btn__bs ghost"
-                unstyled
-                @click="handleDownload"
-              />
-              <Button
-                label="Распечатать"
-                class="btn__bs ghost"
-                unstyled
-                @click="handlePrint"
-              />
+            <h2 :class="$style.sectionTitle">Номер Вашего бронирования:</h2>
+            <div :class="$style.bookingInfo">
+              <div :class="$style.bookingLeft">
+                <div v-if="isBookingCreated && bookingNumber" :class="$style.bookingNumber">
+                  № {{ bookingNumber }}
+                </div>
+                <div v-else :class="$style.bookingMessage">
+                  Обновите бронирование
+                </div>
+                <div v-if="isBookingCreated" :class="$style.actionButtons">
+                  <Button
+                    label="Скачать подтверждение"
+                    class="btn__bs danger"
+                    unstyled
+                    @click="handleDownload"
+                  />
+                  <Button
+                    label="Распечатать"
+                    class="btn__bs dark"
+                    unstyled
+                    @click="handlePrint"
+                  />
+                </div>
+              </div>
+              <div v-if="isBookingCreated" :class="$style.qrCode">
+                <!-- QR-код будет здесь -->
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="120" height="120" fill="white"/>
+                  <rect x="10" y="10" width="100" height="100" fill="black"/>
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -183,25 +194,25 @@
             <div :class="$style.managementButtons">
               <Button
                 label="Изменить даты"
-                class="btn__bs ghost"
+                class="btn__bs dark"
                 unstyled
                 @click="handleChangeDates"
               />
               <Button
                 label="Изменить номер"
-                class="btn__bs ghost"
+                class="btn__bs dark"
                 unstyled
                 @click="handleChangeRoom"
               />
               <Button
                 label="Изменить услуги"
-                class="btn__bs ghost"
+                class="btn__bs dark"
                 unstyled
                 @click="handleChangeServices"
               />
               <Button
                 label="Изменить контакты"
-                class="btn__bs ghost"
+                class="btn__bs dark"
                 unstyled
                 @click="handleChangeContacts"
               />
@@ -214,13 +225,13 @@
             <div :class="$style.finalButtons">
               <Button
                 label="Отменить бронирование"
-                class="btn__bs ghost"
+                class="btn__bs danger"
                 unstyled
                 @click="handleCancelBooking"
               />
               <Button
                 label="Новое бронирование"
-                class="btn__bs dark"
+                class="btn__bs danger"
                 unstyled
                 @click="handleNewBooking"
               />
@@ -254,18 +265,38 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: rem(40) 0;
+    text-align: center;
+    margin: rem(24) rem(16);
     font-family: "Lora", serif;
-    font-size: rem(34);
+    font-size: rem(24);
     font-weight: 600;
+    line-height: 1.3;
     color: var(--a-black);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(30);
+      margin: rem(32) 0;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(34);
+      margin: rem(40) 0;
+    }
   }
 
   .contentBlock {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: rem(12) rem(20);
+    padding: rem(16) rem(16);
+
+    @media (min-width: #{size.$tablet}) {
+      padding: rem(16) rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      padding: rem(20) rem(32);
+    }
 
     @media (min-width: #{size.$desktopMedium}) {
       max-width: #{size.$desktop};
@@ -301,23 +332,88 @@
   .section {
     display: flex;
     flex-direction: column;
-    gap: rem(24);
+    gap: rem(16);
     padding: rem(24) 0;
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(20);
+      padding: rem(28) 0;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      gap: rem(24);
+      padding: rem(32) 0;
+    }
+
+    &:first-child {
+      padding-top: 0;
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+    }
   }
 
   .sectionTitle {
     font-family: "Lora", serif;
-    font-size: rem(24);
-    font-weight: 600;
+    font-size: rem(18);
+    font-weight: 500;
     color: var(--a-text-dark);
     margin: 0;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(20);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(22);
+    }
+  }
+
+  .bookingInfo {
+    display: flex;
+    flex-direction: column;
+    gap: rem(20);
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: rem(32);
+    }
+  }
+
+  .bookingLeft {
+    display: flex;
+    flex-direction: column;
+    gap: rem(20);
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      flex: 1;
+    }
   }
 
   .bookingNumber {
     font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: 600;
+    font-size: rem(20);
+    font-weight: 500;
     color: var(--a-text-dark);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(22);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(24);
+    }
   }
 
   .bookingMessage {
@@ -328,48 +424,106 @@
     padding: rem(16) 0;
   }
 
+  .qrCode {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    order: 2;
+    
+    @media (min-width: #{size.$desktopMin}) {
+      order: 0;
+      justify-content: flex-end;
+    }
+
+    svg {
+      border: rem(1) solid var(--a-black);
+      width: rem(100);
+      height: rem(100);
+
+      @media (min-width: #{size.$tablet}) {
+        width: rem(120);
+        height: rem(120);
+      }
+
+      @media (min-width: #{size.$desktopMin}) {
+        width: rem(140);
+        height: rem(140);
+      }
+    }
+  }
+
   .actionButtons {
     display: flex;
     flex-direction: column;
-    gap: rem(16);
+    gap: rem(12);
+    order: 1;
+
     @media (min-width: #{size.$tablet}) {
       flex-direction: row;
+      gap: rem(16);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      order: 0;
     }
   }
 
   .confirmationText {
     font-family: "Inter", sans-serif;
-    font-size: rem(16);
+    font-size: rem(14);
     font-weight: 400;
     color: var(--a-text-dark);
     line-height: 1.5;
     margin: 0;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(16);
+    }
   }
 
   .managementText {
     font-family: "Inter", sans-serif;
-    font-size: rem(16);
+    font-size: rem(14);
     font-weight: 400;
     color: var(--a-text-dark);
     line-height: 1.5;
     margin: 0;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(16);
+    }
   }
 
   .managementButtons {
     display: grid;
     grid-template-columns: 1fr;
-    gap: rem(16);
+    gap: rem(12);
+
     @media (min-width: #{size.$tablet}) {
       grid-template-columns: repeat(2, 1fr);
+      gap: rem(16);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    // Запрет переноса текста в кнопках
+    :global(.btn__bs) {
+      white-space: nowrap;
+      min-width: 0; // Позволяет кнопке сжиматься при необходимости
     }
   }
 
   .finalButtons {
     display: flex;
     flex-direction: column;
-    gap: rem(16);
+    gap: rem(12);
+
     @media (min-width: #{size.$tablet}) {
       flex-direction: row;
+      justify-content: space-between;
+      gap: rem(16);
     }
   }
 
