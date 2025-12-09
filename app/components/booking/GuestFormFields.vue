@@ -23,15 +23,15 @@
 
   const emit = defineEmits<Emits>();
 
-  const updateField = (key: keyof GuestData, value: string) => {
-    emit("update:guest", { ...props.guest, [key]: value });
+  const updateField = (key: keyof GuestData, value: string | undefined) => {
+    emit("update:guest", { ...props.guest, [key]: value ?? "" });
   };
 </script>
 
 <template>
   <div :class="$style.guestBlock">
     <div v-if="showRemove" :class="$style.guestHeader">
-      <h4 :class="$style.guestTitle">{{ guestTitle }}</h4>
+      <span :class="$style.guestTitle">{{ guestTitle }}</span>
       <Button
         type="button"
         unstyled
@@ -41,7 +41,6 @@
         <UIcon name="i-close" :class="$style.icon" />
       </Button>
     </div>
-    <h4 v-else :class="$style.guestTitle">{{ guestTitle }}</h4>
     <div
       v-for="field in fields"
       :key="field.key"
@@ -49,7 +48,7 @@
     >
       <BookingSelect
         v-if="field.key === 'citizenship'"
-        :model-value="guest[field.key]"
+        :model-value="guest[field.key] ?? ''"
         :options="countriesRu"
         :placeholder="field.placeholder"
         :error="errors[field.key]"
@@ -63,7 +62,7 @@
       />
       <InputText
         v-else
-        :model-value="guest[field.key]"
+        :model-value="guest[field.key] ?? ''"
         :type="field.type"
         :placeholder="field.placeholder"
         :class="[
@@ -94,10 +93,7 @@
     display: flex;
     flex-direction: column;
     gap: rem(24);
-    padding: rem(24);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: var(--a-borderR--input);
-    background: var(--a-whiteBg);
+    margin: 0;
     @media (min-width: #{size.$desktopMedium}) {
       flex-direction: row;
       flex-wrap: wrap;
@@ -113,7 +109,7 @@
   }
 
   .guestTitle {
-    width: 100%;
+    padding: 0;
     font-family: "Inter", sans-serif;
     font-size: rem(18);
     font-weight: 600;
@@ -168,7 +164,7 @@
     &:focus {
       outline: none;
       border-color: var(--a-border-primary);
-      box-shadow: 0 0 0 2px rgba(var(--a-border-primary), 0.1);
+      box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
     }
     &::placeholder {
       color: var(--a-text-light);
@@ -183,8 +179,8 @@
   .inputError {
     border-color: var(--a-border-accent) !important;
     &:focus {
-      border-color: var(--a-error);
-      box-shadow: 0 0 0 2px rgba(var(--a-btnAccentBg), 0.1);
+      border-color: var(--a-border-accent);
+      box-shadow: 0 0 0 2px rgba(160, 37, 37, 0.1);
     }
   }
 
