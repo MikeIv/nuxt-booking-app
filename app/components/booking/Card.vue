@@ -3,6 +3,7 @@
   import { formatCount } from "~/utils/declension";
   import { useNights } from "~/composables/useNights";
   import { useRoomCarousel } from "~/composables/useRoomCarousel";
+  import { useStructuredData } from "~/composables/useStructuredData";
   import type { Room } from "~/types/room";
 
   interface Props {
@@ -15,6 +16,7 @@
   const { date, guests } = storeToRefs(bookingStore);
   const loading = ref(false);
   const isPopupOpen = ref(false);
+  const { generateHotelRoomSchema, setStructuredData } = useStructuredData();
 
   const CAROUSEL_MIN_PHOTOS = 2;
   const CAROUSEL_TARGET_ITEMS = 3;
@@ -172,6 +174,18 @@
     CAROUSEL_PLACEHOLDER_LABEL,
   );
 
+  // Генерация структурированных данных (JSON-LD) для SEO
+  watch(
+    [currentRoom, carouselImages],
+    ([room, images]) => {
+      // Фильтруем только реальные URL изображений (строки), исключая плейсхолдеры
+      const imageUrls = images.filter((img): img is string => typeof img === "string");
+      const schema = generateHotelRoomSchema(room, imageUrls);
+      setStructuredData(schema);
+    },
+    { immediate: true }
+  );
+
   const formattedMinPrice = computed(() => {
     const price = currentRoom.value.min_price;
     return price !== null && price !== undefined ? `${price} руб.` : null;
@@ -313,7 +327,9 @@
             <dt :class="$style.itemTerm">
               <UIcon name="i-square" :class="$style.icon" aria-hidden="true" />
             </dt>
-            <dd :class="$style.itemTitle">{{ currentRoom.square }} м²</dd>
+            <dd :class="$style.itemTitle">
+              {{ currentRoom.square }} м²
+            </dd>
           </div>
           <div :class="$style.item">
             <dt :class="$style.itemTerm">
@@ -334,14 +350,12 @@
             <UIcon name="i-gift-line" :class="$style.icon" aria-hidden="true" />
             За регистрацию {{ currentRoom.price_for_register }} ₽
           </p>
-          <data
+          <p
             v-if="currentRoom.min_price !== null && currentRoom.min_price !== undefined"
             :class="$style.price"
-            :value="currentRoom.min_price"
-            itemprop="price"
           >
             От {{ formattedMinPrice }}
-          </data>
+          </p>
           <p :class="$style.guestInfo">
             {{ formatCount(totalAdults, "guest") }} /
             {{ formatCount(nightsCount, "night") }}

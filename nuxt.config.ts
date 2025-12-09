@@ -77,11 +77,6 @@ export default defineNuxtConfig({
       "composables/**",
       "server/utils",
     ],
-    exclude: [
-      // Исключаем useToast из PrimeVue и @nuxt/ui
-      /primevue\/usetoast/,
-      /@nuxt\/ui.*useToast/,
-    ],
   },
 
   devtools: {
@@ -96,7 +91,14 @@ export default defineNuxtConfig({
       ripple: true,
     },
     components: {
-      include: ["Button", "InputText", "Message", "Select", "Popover"],
+      include: [
+        "Button",
+        "InputText",
+        "Message",
+        "Select",
+        "Popover",
+        "ProgressSpinner",
+      ],
     },
     composables: {
       // Отключаем все composables PrimeVue, так как используем кастомные
