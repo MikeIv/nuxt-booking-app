@@ -65,7 +65,21 @@
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      await bookingStore.search(true);
+      const result = await bookingStore.search(true);
+      
+      // Проверяем, что сервер вернул данные о номерах
+      if (!result || !result.rooms || result.rooms.length === 0) {
+        toast.add({
+          severity: "warn",
+          summary: "Повторите запрос позже",
+          detail: "Временные неполадки. Повторите запрос немного позже",
+          life: 5000,
+        });
+        bookingStore.setLoading(false);
+        bookingStore.isServerRequest = false;
+        return;
+      }
+
       const roomsCount = guests.value?.roomList
         ? guests.value.roomList.length
         : guests.value?.rooms || 1;
