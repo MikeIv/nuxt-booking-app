@@ -440,8 +440,8 @@ if (import.meta?.env?.DEV) {
 }
 
 .notification-message {
-  font-size: var(--notification-message-font-size, 0.875rem);
-  font-weight: var(--notification-message-font-weight, 500);
+  font-size: var(--notification-message-font-size, 0.8125rem);
+  font-weight: var(--notification-message-font-weight, 400);
   overflow-wrap: break-word;
   white-space: pre-line;
 }
