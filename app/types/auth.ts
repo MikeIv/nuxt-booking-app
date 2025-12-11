@@ -18,3 +18,31 @@ export interface AuthResponse {
   message: string;
   payload: RegisterResponse;
 }
+
+// Профиль пользователя
+export interface UserProfile {
+  name: string;
+  surname: string;
+  middle_name: string;
+  phone: string;
+  email: string;
+  country: string;
+}
+
+export interface ProfileResponse {
+  success: boolean;
+  message: string;
+  payload: {
+    name: string;
+    surname: string;
+    middle_name: string;
+    phone: string;
+    country: string;
+  };
+}
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  message: string;
+  payload: Record<string, unknown>;
+}

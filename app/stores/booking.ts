@@ -26,6 +26,7 @@ interface GuestInfo {
 export interface UserProfileData {
   name: string;
   surname: string;
+  middle_name: string;
   phone: string;
   email: string;
   country: string;
