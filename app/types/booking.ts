@@ -69,4 +69,30 @@ interface BookingResponse {
   rooms: unknown[];
 }
 
-export type { SearchResponse, BookingData, BookingResponse, SearchFilters };
+// История бронирований
+interface BookingHistoryItem {
+  id?: number | string;
+  uuid?: string;
+  booking_number?: string;
+  start_at?: string;
+  end_at?: string;
+  rooms_count?: number;
+  status?: string;
+  created_at?: string;
+  [key: string]: unknown; // Для дополнительных полей, которые могут прийти
+}
+
+interface BookingHistoryResponse {
+  success: boolean;
+  message: string;
+  payload: BookingHistoryItem[];
+}
+
+export type {
+  SearchResponse,
+  BookingData,
+  BookingResponse,
+  SearchFilters,
+  BookingHistoryItem,
+  BookingHistoryResponse,
+};

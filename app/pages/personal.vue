@@ -124,7 +124,6 @@
     formData.additionalGuests[index] = guest;
   };
 
-  // Получаем выбранный номер
   const selectedRoom = computed(() => {
     if (!roomTariffs.value?.length) return null;
     return (
@@ -205,7 +204,6 @@
     bookingStore.setLoading(false);
     bookingStore.isServerRequest = false;
 
-    // Проверяем наличие необходимых данных для отображения страницы
     if (!selectedRoom.value) {
       toast.add({
         severity: "warn",
@@ -231,7 +229,6 @@
 <template>
   <div :class="$style.container">
     <h1 :class="$style.header">Личные данные</h1>
-    <Booking />
     <section :class="$style.personalBlock">
       <NuxtLink to="/rooms/tariff" :class="$style.return"
         >Назад к тарифам</NuxtLink

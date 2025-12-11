@@ -25,6 +25,70 @@ export const useApi = () => {
   // Убираем завершающий слэш и /v1 если есть
   baseURL = baseURL.replace(/\/v1\/?$/, "").replace(/\/$/, "");
 
+  if (import.meta.dev) {
+    console.log("🔧 useApi initialized with baseURL:", baseURL);
+  }
+
+  // Флаг для предотвращения множественных попыток обновления токена
+  let isRefreshing = false;
+  let refreshPromise: Promise<string> | null = null;
+
+  // Функция для обновления токена
+  const refreshToken = async (): Promise<string> => {
+    if (isRefreshing && refreshPromise) {
+      return refreshPromise;
+    }
+
+    isRefreshing = true;
+
+    refreshPromise = (async () => {
+      try {
+        if (import.meta.dev) {
+          console.log("🔄 Обновление токена...");
+        }
+
+        const authStore = useAuthStore();
+        const response = await $fetch<ApiResponse<{ token: string }>>(
+          "/v1/auth/refresh",
+          {
+            method: "POST",
+            baseURL,
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (response.success && response.payload?.token) {
+          const newToken = response.payload.token;
+          authStore.setToken(newToken);
+
+          if (import.meta.dev) {
+            console.log("✅ Токен успешно обновлен");
+          }
+
+          return newToken;
+        } else {
+          throw new Error("Failed to refresh token");
+        }
+      } catch (error) {
+        if (import.meta.dev) {
+          console.error("❌ Ошибка обновления токена:", error);
+        }
+        const authStore = useAuthStore();
+        authStore.logout();
+        throw error;
+      } finally {
+        isRefreshing = false;
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
+  };
+
   const defaultOptions: FetchOptions = {
     baseURL,
     credentials: "include",
@@ -32,56 +96,98 @@ export const useApi = () => {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-
-    onRequest({ options }) {
-      // Добавляем заголовки авторизации
-      try {
-        const authStore = useAuthStore();
-        const token = authStore.token;
-
-        if (token) {
-          options.headers = {
-            ...options.headers,
-            Authorization: `Bearer ${token}`,
-          };
-        }
-      } catch (error) {
-        console.warn("Auth store not available:", error);
-      }
-    },
     onResponseError({ response }) {
-      console.error("API Response error:", response);
+      if (import.meta.dev) {
+        console.error("API Response error:", response);
+      }
     },
   };
 
   const fetchApi = async <T = unknown>(
     request: NitroFetchRequest,
     options: FetchOptions = {},
+    retryCount = 0,
   ): Promise<ApiResponse<T>> => {
     try {
+      // Получаем токен для заголовка
+      const authStore = useAuthStore();
+      const token = authStore.token;
+
+      if (import.meta.dev) {
+        console.log(
+          "🔐 Token status:",
+          token ? `Present (${token.substring(0, 20)}...)` : "Missing",
+        );
+      }
+
       const mergedOptions: FetchOptions = {
         ...defaultOptions,
         ...options,
+        baseURL, // Явно добавляем baseURL
         headers: {
           ...defaultOptions.headers,
           ...options.headers,
+          // Добавляем Authorization заголовок, если токен есть
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       };
 
-      console.log("🔄 API Request:", {
-        fullUrl: baseURL + request,
-        baseURL,
-        request,
-      });
+      if (import.meta.dev) {
+        console.log("🔄 API Request:", {
+          fullUrl: baseURL + request,
+          baseURL,
+          request,
+          retry: retryCount,
+          hasToken: !!token,
+          headers: mergedOptions.headers,
+        });
+      }
 
       const response = await $fetch<ApiResponse<T>>(request, mergedOptions);
       return response;
     } catch (error: unknown) {
+      const status = (error as { status?: number }).status;
+
+      // Если ошибка 401/302 и это не запрос на refresh, пробуем обновить токен
+      if (
+        (status === 401 || status === 302) &&
+        !request.toString().includes("/auth/refresh") &&
+        retryCount === 0
+      ) {
+        if (import.meta.dev) {
+          console.log(`⚠️ Получен статус ${status}, пробуем обновить токен...`);
+        }
+
+        try {
+          // Обновляем токен
+          await refreshToken();
+
+          // Повторяем запрос с обновленным токеном
+          if (import.meta.dev) {
+            console.log("🔁 Повторяем запрос с новым токеном...");
+          }
+
+          return await fetchApi<T>(request, options, retryCount + 1);
+        } catch {
+          if (import.meta.dev) {
+            console.error(
+              "❌ Не удалось обновить токен, перенаправляем на логин",
+            );
+          }
+          // Если обновление токена не удалось, можно перенаправить на страницу входа
+          const router = useRouter();
+          router.push("/");
+        }
+      }
+
       const apiError: ApiError = {
-        message: error.data?.message || error.message || "Произошла ошибка",
-        status: error.status,
-        statusText: error.statusText,
-        data: error.data,
+        message:
+          (error as { data?: { message?: string } }).data?.message ||
+          (error as { message?: string }).message ||
+          "Произошла ошибка",
+        status: status,
+        statusText: (error as { statusText?: string }).statusText,
+        data: (error as { data?: unknown }).data,
       };
 
       throw apiError;
