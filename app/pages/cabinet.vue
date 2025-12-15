@@ -63,9 +63,9 @@
     () => authStore.user,
     (user) => {
       if (!user) return;
-      // Используем email как уникальный идентификатор, если id пустой
-      const userId = user.id || user.email;
-      const saved = bookingStore.getUserProfile(userId);
+      
+      // Если есть id, пытаемся загрузить сохраненный профиль
+      const saved = user.id ? bookingStore.getUserProfile(user.id) : null;
       
       const source = saved || {
         name: user.name || "",
@@ -79,6 +79,7 @@
       Object.assign(formData, originalData);
       hasChanges.value = false;
     },
+    { immediate: true },
   );
 
   const checkChanges = () => {
@@ -115,16 +116,16 @@
         const updatedUser = { ...authStore.user, ...formData };
         authStore.setUser(updatedUser);
 
-        // Используем email как уникальный идентификатор, если id пустой
-        const userId = authStore.user.id || authStore.user.email;
-        bookingStore.saveUserProfile(userId, {
-          name: formData.name,
-          surname: formData.surname,
-          middle_name: formData.middle_name,
-          phone: formData.phone,
-          email: formData.email,
-          country: formData.country,
-        });
+        if (authStore.user?.id) {
+          bookingStore.saveUserProfile(authStore.user.id, {
+            name: formData.name,
+            surname: formData.surname,
+            middle_name: formData.middle_name,
+            phone: formData.phone,
+            email: formData.email,
+            country: formData.country,
+          });
+        }
 
         Object.assign(originalData, formData);
         hasChanges.value = false;
@@ -175,11 +176,21 @@
       }
 
       if (response.success && response.payload) {
-        // Используем email как уникальный идентификатор, если id пустой
-        const userId = authStore.user.id || authStore.user.email;
+        // Обновляем пользователя в authStore с данными из API (включая id)
+        const updatedUser = {
+          ...authStore.user,
+          id: response.payload.id,
+          name: response.payload.name || authStore.user?.name || "",
+          surname: response.payload.surname || authStore.user?.surname || "",
+          middle_name: response.payload.middle_name || (authStore.user as { middle_name?: string })?.middle_name || "",
+          email: response.payload.email || authStore.user?.email || "",
+          phone: response.payload.phone || authStore.user?.phone || "",
+          country: response.payload.country || authStore.user?.country || "",
+        };
+        authStore.setUser(updatedUser);
         
         // Проверяем, есть ли уже сохраненный профиль в bookingStore
-        const savedProfile = bookingStore.getUserProfile(userId);
+        const savedProfile = bookingStore.getUserProfile(response.payload.id);
         
         // Если есть сохраненный профиль, используем его вместо данных с API
         const profileData = savedProfile || {
@@ -187,7 +198,7 @@
           surname: response.payload.surname || "",
           middle_name: response.payload.middle_name || "",
           phone: response.payload.phone || "",
-          email: authStore.user.email || "",
+          email: response.payload.email || "",
           country: response.payload.country || "",
         };
 
@@ -197,11 +208,12 @@
 
         // Сохраняем профиль в store только если его там еще нет
         if (!savedProfile) {
-          bookingStore.saveUserProfile(userId, profileData);
+          bookingStore.saveUserProfile(response.payload.id, profileData);
         }
 
         if (import.meta.dev) {
           console.log("✅ Профиль загружен:", profileData);
+          console.log("✅ Пользователь обновлен в authStore с id:", response.payload.id);
         }
       } else {
         if (import.meta.dev) {
@@ -283,15 +295,15 @@
     }
   };
 
-  const toggleBookingsType = (isActual: boolean) => {
+  const toggleBookingsType = async (isActual: boolean) => {
     isActualBookings.value = isActual;
-    fetchBookingHistory(true);
+    await fetchBookingHistory(true);
   };
 
-  const goToPage = (page: number) => {
+  const goToPage = async (page: number) => {
     if (page >= 1 && page <= totalPages.value && !isLoadingBookings.value) {
       currentPage.value = page;
-      fetchBookingHistory();
+      await fetchBookingHistory();
     }
   };
 
@@ -308,14 +320,14 @@
     }
   };
 
-  const handleNewBooking = () => {
-    router.push("/");
+  const handleNewBooking = async () => {
+    await router.push("/");
   };
 
-  const handleSectionChange = (section: string) => {
+  const handleSectionChange = async (section: string) => {
     activeSection.value = section;
     if (section === "bookings" && !bookingsLoaded.value) {
-      fetchBookingHistory(true);
+      await fetchBookingHistory(true);
     }
   };
 
@@ -344,7 +356,7 @@
           console.log("✅ Успешный выход");
         }
         authStore.logout();
-        router.push("/");
+        await router.push("/");
       } else {
         if (import.meta.dev) {
           console.log("❌ Ошибка в ответе:", response.message);
@@ -357,12 +369,12 @@
             response.message || "Не удалось выполнить выход. Попробуйте позже.",
           life: 5000,
         });
-        router.push("/");
+        await router.push("/");
       }
     } catch (err: unknown) {
       authStore.logout();
       handleError(err, "Не удалось выполнить выход. Попробуйте позже.", "Ошибка выхода");
-      router.push("/");
+      await router.push("/");
     } finally {
       authStore.setLoading(false);
     }
