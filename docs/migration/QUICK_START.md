@@ -38,8 +38,8 @@ const fetchCalendarPrices = async (month: number, year: number) => {
 };
 
 // Вариант 2: Axios
-import axios from 'axios';
-const response = await axios.get('/api/calendar', { params: { month, year } });
+import axios from "axios";
+const response = await axios.get("/api/calendar", { params: { month, year } });
 
 // Вариант 3: Ваш API клиент
 const response = await yourApiClient.getCalendar(month, year);
@@ -54,7 +54,7 @@ const response = await yourApiClient.getCalendar(month, year);
 const { locale } = useI18n();
 
 // На:
-const locale = ref('ru'); // или 'en'
+const locale = ref("ru"); // или 'en'
 ```
 
 ## Шаг 5: Замените UIcon
@@ -79,14 +79,13 @@ const locale = ref('ru'); // или 'en'
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import DatePickerWithPrices from '@/components/calendar/DatePickerWithPrices.vue';
+import { ref } from "vue";
+import DatePickerWithPrices from "@/components/calendar/DatePickerWithPrices.vue";
 
-const dates = ref<[Date, Date] | null>(null);
+const dates = (ref < [Date, Date]) | (null > null);
 </script>
 ```
 
 ## ✅ Готово!
 
 Подробная документация: [CalendarWithPrices.md](./CalendarWithPrices.md)
-

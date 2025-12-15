@@ -1,5 +1,7 @@
 <script setup lang="ts">
-  import { ref, computed } from "vue";
+  import { ref, computed, nextTick } from "vue";
+  import type { LoginResponse } from "~/types/auth";
+  import type { ApiError } from "~/composables/useApi";
 
   const props = defineProps<{
     visible: boolean;
@@ -70,7 +72,7 @@
       console.log("📡 Отправка запроса на вход...");
 
       const { post } = useApi();
-      const response = await post("/v1/auth/login", formData.value);
+      const response = await post<LoginResponse>("/v1/auth/login", formData.value);
 
       console.log("📨 Ответ сервера:", response);
 
@@ -80,7 +82,7 @@
         authStore.setToken(response.payload.accessToken);
 
         const userData = {
-          id: response.payload.user?.id || "",
+          id: response.payload.user?.id || 0,
           email: formData.value.email,
           name: response.payload.user?.name || "",
           surname: response.payload.user?.surname || "",
@@ -93,7 +95,7 @@
 
         emit("login-success");
         emit("close");
-        router.push("/cabinet");
+        await router.push("/cabinet");
       } else {
         console.log("❌ Ошибка в ответе:", response.message);
 
@@ -119,8 +121,10 @@
       }
     } catch (err: unknown) {
       console.error("💥 Ошибка при входе:", err);
+      const apiErr = err as ApiError;
+      const errorData = apiErr.data as { message?: string } | undefined;
       const errorMessage =
-        err.data?.message || err.message || "Произошла ошибка при входе";
+        errorData?.message || apiErr.message || "Произошла ошибка при входе";
       apiError.value = errorMessage;
       authStore.setError(errorMessage);
     } finally {
@@ -143,8 +147,21 @@
   watch(
     () => props.visible,
     (visible) => {
+      console.log("📋 Popup visible changed:", visible);
       if (visible) {
-        resetForm();
+        console.log("🔧 LoginPopup opened, autofilling test data BEFORE resetForm...");
+        
+        // Заполняем ПОСЛЕ nextTick чтобы resetForm успел выполниться
+        nextTick(() => {
+          resetForm();
+          
+          // 🔧 ТЕСТОВОЕ АВТОЗАПОЛНЕНИЕ - убрать после отладки
+          nextTick(() => {
+            formData.value.email = "test@test.ru";
+            formData.value.password = "1234567890";
+            console.log("✅ Test data filled:", formData.value);
+          });
+        });
       }
     },
   );
@@ -192,12 +209,10 @@
             <button
               type="button"
               :class="$style.togglePassword"
+              :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               @click="showPassword = !showPassword"
             >
-              <UIcon
-                :name="showPassword ? 'i-eye-slash' : 'i-eye'"
-                :class="$style.eyeIcon"
-              />
+              {{ showPassword ? '🙈' : '👁️' }}
             </button>
           </div>
           <small v-if="passwordError" :class="$style.errorText">{{
@@ -396,7 +411,8 @@
     }
   }
 
-  // Стили для автозаполнения
+  // Стили для автозаполнения браузера
+  // Примечание: !important требуется для переопределения встроенных стилей браузера
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
