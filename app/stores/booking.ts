@@ -105,14 +105,14 @@ export const useBookingStore = defineStore(
       childrenAges.value = ages;
     }
 
-    function saveUserProfile(userId: string, profile: UserProfileData) {
+    function saveUserProfile(userId: number, profile: UserProfileData) {
       userProfiles.value = {
         ...userProfiles.value,
         [userId]: { ...profile },
       };
     }
 
-    function getUserProfile(userId: string): UserProfileData | null {
+    function getUserProfile(userId: number): UserProfileData | null {
       return userProfiles.value[userId] || null;
     }
 

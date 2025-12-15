@@ -33,9 +33,11 @@ export interface ProfileResponse {
   success: boolean;
   message: string;
   payload: {
+    id: number;
     name: string;
     surname: string;
     middle_name: string;
+    email: string;
     phone: string;
     country: string;
   };
