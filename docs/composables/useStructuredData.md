@@ -21,6 +21,7 @@ Composable для генерации структурированных данн
 Генерирует JSON-LD разметку для номера отеля.
 
 **Параметры:**
+
 - `room: Room` - данные о номере
 - `images?: string[]` - массив URL изображений (опционально)
 
@@ -31,6 +32,7 @@ Composable для генерации структурированных данн
 Вставляет JSON-LD script в `<head>` страницы через `useHead`.
 
 **Параметры:**
+
 - `schema: HotelRoomStructuredData` - объект структурированных данных
 
 ## Пример использования
@@ -76,10 +78,7 @@ watch(
     "unitText": "квадратный метр",
     "unitCode": "MTK"
   },
-  "image": [
-    "https://example.com/room1.jpg",
-    "https://example.com/room2.jpg"
-  ],
+  "image": ["https://example.com/room1.jpg", "https://example.com/room2.jpg"],
   "offers": {
     "@type": "Offer",
     "price": 5000,
@@ -98,11 +97,13 @@ watch(
 watch(
   [currentRoom, carouselImages],
   ([room, images]) => {
-    const imageUrls = images.filter((img): img is string => typeof img === "string");
+    const imageUrls = images.filter(
+      (img): img is string => typeof img === "string",
+    );
     const schema = generateHotelRoomSchema(room, imageUrls);
     setStructuredData(schema);
   },
-  { immediate: true }
+  { immediate: true },
 );
 ```
 
@@ -135,4 +136,3 @@ const generateHotelSchema = (hotel: Hotel) => {
 - [Schema.org HotelRoom](https://schema.org/HotelRoom)
 - [Google Structured Data Guidelines](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data)
 - [JSON-LD Specification](https://json-ld.org/)
-

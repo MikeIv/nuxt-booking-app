@@ -13,6 +13,17 @@ export interface RegisterResponse {
   accessToken: string;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+  user?: {
+    id: number;
+    name?: string;
+    surname?: string;
+    phone?: string;
+    country?: string;
+  };
+}
+
 export interface AuthResponse {
   success: boolean;
   message: string;

@@ -13,13 +13,13 @@ module.exports = {
   arrowParens: "always",
 
   semi: false,
-  endOfLine: "lf",
+  endOfLine: "auto",
   htmlWhitespaceSensitivity: "css",
 
   singleAttributePerLine: false,
 
   proseWrap: "preserve",
-  
+
   // Vue файлы полностью исключены через .prettierignore
   // Vue файлы форматируются только через ESLint и Stylelint
   // Не добавляем overrides для Vue файлов, чтобы избежать конфликтов

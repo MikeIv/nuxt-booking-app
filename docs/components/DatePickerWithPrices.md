@@ -85,6 +85,7 @@ app/components/core/DatePickerWithPrices.vue
 Форматированное отображение выбранного диапазона дат.
 
 **Возвращает:**
+
 - Строку вида "ДД.ММ.ГГГГ - ДД.ММ.ГГГГ" если выбраны обе даты
 - Пустую строку если даты не выбраны
 
@@ -103,22 +104,24 @@ app/components/core/DatePickerWithPrices.vue
 Массив объектов дней для отображения в календаре.
 
 **Структура объекта дня:**
+
 ```typescript
 {
-  date: Date;              // Дата без времени
-  day: number;              // Число дня
-  isCurrentMonth: boolean;  // Принадлежит ли текущему месяцу
-  isToday: boolean;         // Является ли сегодняшним днем
-  isStartDate: boolean;     // Является ли датой заезда
-  isEndDate: boolean;        // Является ли датой выезда
-  isInRange: boolean;       // Находится ли в выбранном диапазоне
-  isPast: boolean;          // Прошедшая дата
-  price: number | null;     // Цена на дату
-  key: string;              // Уникальный ключ для оптимизации рендеринга
+  date: Date; // Дата без времени
+  day: number; // Число дня
+  isCurrentMonth: boolean; // Принадлежит ли текущему месяцу
+  isToday: boolean; // Является ли сегодняшним днем
+  isStartDate: boolean; // Является ли датой заезда
+  isEndDate: boolean; // Является ли датой выезда
+  isInRange: boolean; // Находится ли в выбранном диапазоне
+  isPast: boolean; // Прошедшая дата
+  price: number | null; // Цена на дату
+  key: string; // Уникальный ключ для оптимизации рендеринга
 }
 ```
 
 **Алгоритм генерации:**
+
 1. Добавляются дни предыдущего месяца для заполнения первой недели
 2. Добавляются все дни текущего месяца
 3. Добавляются дни следующего месяца до заполнения 35 дней (5 недель)
@@ -160,6 +163,7 @@ app/components/core/DatePickerWithPrices.vue
 Асинхронно загружает цены для текущего, предыдущего и следующего месяцев.
 
 **Алгоритм:**
+
 1. Вычисляет предыдущий и следующий месяцы
 2. Параллельно загружает цены для всех трех месяцев через `Promise.all`
 
@@ -168,6 +172,7 @@ app/components/core/DatePickerWithPrices.vue
 Обрабатывает клик по дню календаря.
 
 **Алгоритм:**
+
 1. Если дата прошедшая (`isPast`), игнорирует клик
 2. Если нет выбранной начальной даты или обе даты выбраны:
    - Устанавливает начальную дату
@@ -209,6 +214,7 @@ app/components/core/DatePickerWithPrices.vue
 Обрабатывает клик вне компонента для закрытия календаря.
 
 **Алгоритм:**
+
 - Проверяет, что клик был вне `datepickerRef`
 - Закрывает календарь если условие выполнено
 
@@ -227,12 +233,13 @@ app/components/core/DatePickerWithPrices.vue
 Определяет состояние даты относительно выбранного диапазона.
 
 **Возвращает:**
+
 ```typescript
 {
-  isStartDate: boolean;  // Является ли датой заезда
-  isEndDate: boolean;   // Является ли датой выезда
-  isInRange: boolean;   // Находится ли в диапазоне
-  isPast: boolean;      // Прошедшая дата
+  isStartDate: boolean; // Является ли датой заезда
+  isEndDate: boolean; // Является ли датой выезда
+  isInRange: boolean; // Находится ли в диапазоне
+  isPast: boolean; // Прошедшая дата
 }
 ```
 
@@ -332,6 +339,7 @@ app/components/core/DatePickerWithPrices.vue
 ```
 
 **Структура:**
+
 - `div.datepickerWithPrices` - основная обертка компонента
 - `CoreDatePickerInput` - поле ввода с выбранными датами
 - `Transition.calendar` - анимация появления/исчезновения календаря
@@ -367,8 +375,8 @@ const selectedDates = ref<[Date, Date] | null>(null);
 
 <script setup lang="ts">
 const selectedDates = ref<[Date, Date] | null>([
-  new Date('2024-12-01'),
-  new Date('2024-12-05'),
+  new Date("2024-12-01"),
+  new Date("2024-12-05"),
 ]);
 </script>
 ```
@@ -377,7 +385,7 @@ const selectedDates = ref<[Date, Date] | null>([
 
 ```vue
 <template>
-  <CoreDatePickerWithPrices 
+  <CoreDatePickerWithPrices
     v-model="selectedDates"
     @update:modelValue="handleDateChange"
   />
@@ -388,10 +396,10 @@ const selectedDates = ref<[Date, Date] | null>(null);
 
 const handleDateChange = (dates: [Date, Date] | null) => {
   if (dates) {
-    console.log('Заезд:', dates[0]);
-    console.log('Выезд:', dates[1]);
+    console.log("Заезд:", dates[0]);
+    console.log("Выезд:", dates[1]);
   } else {
-    console.log('Даты сброшены');
+    console.log("Даты сброшены");
   }
 };
 </script>
@@ -402,6 +410,7 @@ const handleDateChange = (dates: [Date, Date] | null) => {
 ### Состояние открытия/закрытия
 
 Календарь управляется через:
+
 - `isOpen` - реактивное состояние
 - `toggleCalendar()` - переключение состояния
 - `closeCalendar()` - закрытие календаря
@@ -410,6 +419,7 @@ const handleDateChange = (dates: [Date, Date] | null) => {
 ### Состояние загрузки цен
 
 Компонент отображает оверлей загрузки при:
+
 - `pricesLoading === true` (из `useCalendarPrices`)
 - Оверлей появляется с анимацией fade-in/fade-out
 - Отображается спиннер в центре календаря
@@ -434,12 +444,14 @@ const handleDateChange = (dates: [Date, Date] | null) => {
 ### Загрузка цен
 
 Цены загружаются автоматически:
+
 1. При открытии календаря - для текущего, предыдущего и следующего месяцев
 2. При изменении месяца/года - для новых видимых месяцев
 
 ### Кэширование
 
 Composable `useCalendarPrices` кэширует загруженные цены:
+
 - Не загружает повторно уже загруженные месяцы
 - Дедуплицирует параллельные запросы для одного месяца
 - Хранит цены в `Map<string, number>` (ключ: дата в формате ISO)
@@ -475,6 +487,7 @@ Composable `useCalendarPrices` кэширует загруженные цены:
 ### Мемоизация
 
 Компонент использует `useMemoize` для:
+
 - `getPrevMonth` / `getNextMonth` - вычисление соседних месяцев
 - `formatDateForDateTime` - форматирование дат для атрибутов
 - `getMonthName` - получение названий месяцев
@@ -483,6 +496,7 @@ Composable `useCalendarPrices` кэширует загруженные цены:
 ### Shallow Refs
 
 Используются `shallowRef` для:
+
 - `currentMonth` - простые числовые значения
 - `currentYear` - простые числовые значения
 
@@ -535,6 +549,7 @@ Composable `useCalendarPrices` кэширует загруженные цены:
 ### Адаптивность
 
 Компонент адаптивен для разных размеров экранов:
+
 - Мобильные устройства: полная ширина с отступами
 - Планшеты: фиксированная ширина 420px
 - Десктоп: фиксированная ширина 500px
@@ -562,12 +577,7 @@ const bookingDates = ref<[Date, Date] | null>(null);
 <template>
   <div>
     <CoreDatePickerWithPrices v-model="dates" />
-    <button 
-      :disabled="!dates"
-      @click="handleSubmit"
-    >
-      Продолжить
-    </button>
+    <button :disabled="!dates" @click="handleSubmit">Продолжить</button>
   </div>
 </template>
 
@@ -577,8 +587,8 @@ const dates = ref<[Date, Date] | null>(null);
 const handleSubmit = () => {
   if (dates.value) {
     // Обработка выбранных дат
-    console.log('Заезд:', dates.value[0]);
-    console.log('Выезд:', dates.value[1]);
+    console.log("Заезд:", dates.value[0]);
+    console.log("Выезд:", dates.value[1]);
   }
 };
 </script>
@@ -610,4 +620,3 @@ const handleSubmit = () => {
 
 - `/booking` - страница бронирования (использует компонент)
 - `/rooms` - страница выбора номеров (использует компонент)
-

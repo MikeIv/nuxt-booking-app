@@ -11,18 +11,22 @@
 ## Основные возможности
 
 ### 1. Автоматическая авторизация
+
 - Добавляет `Authorization: Bearer {token}` ко всем запросам
 - Читает токен из `authStore`
 - Отправляет cookies для работы с refresh token
 
 ### 2. Автоматическое обновление токена
+
 При получении ответов **401** или **302**:
+
 - Автоматически запрашивает новый токен через `/v1/auth/refresh`
 - Обновляет токен в `authStore`
 - Повторяет исходный запрос с новым токеном
 - При неудаче перенаправляет на главную страницу
 
 ### 3. Предотвращение дублирования
+
 - Блокирует множественные одновременные запросы на refresh
 - Использует единый Promise для всех параллельных попыток обновления
 
@@ -52,9 +56,11 @@ const response = await del<DataType>("/v1/endpoint");
 ### Методы
 
 #### `get<T>(url: string, params?: Record<string, unknown>, options?: FetchOptions)`
+
 Выполняет GET запрос.
 
 **Параметры:**
+
 - `url` - относительный путь к endpoint (например, `/v1/users/profile`)
 - `params` - query параметры (необязательно)
 - `options` - дополнительные опции fetch (необязательно)
@@ -62,9 +68,11 @@ const response = await del<DataType>("/v1/endpoint");
 **Возвращает:** `Promise<ApiResponse<T>>`
 
 #### `post<T>(url: string, body?: unknown, options?: FetchOptions)`
+
 Выполняет POST запрос.
 
 **Параметры:**
+
 - `url` - относительный путь к endpoint
 - `body` - тело запроса (необязательно)
 - `options` - дополнительные опции fetch (необязательно)
@@ -72,17 +80,21 @@ const response = await del<DataType>("/v1/endpoint");
 **Возвращает:** `Promise<ApiResponse<T>>`
 
 #### `put<T>(url: string, body?: unknown, options?: FetchOptions)`
+
 Выполняет PUT запрос.
 
 #### `patch<T>(url: string, body?: unknown, options?: FetchOptions)`
+
 Выполняет PATCH запрос.
 
 #### `delete<T>(url: string, options?: FetchOptions)`
+
 Выполняет DELETE запрос.
 
 ## Типы
 
 ### ApiResponse<T>
+
 ```typescript
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -93,6 +105,7 @@ interface ApiResponse<T = unknown> {
 ```
 
 ### ApiError
+
 ```typescript
 interface ApiError {
   message: string;
@@ -105,16 +118,19 @@ interface ApiError {
 ## Конфигурация
 
 ### Base URL
+
 Берется из `nuxt.config.ts`:
+
 ```typescript
 runtimeConfig: {
   public: {
-    apiBase: "https://varvarka-api.grandfs-develop.ru/api"
+    apiBase: "https://varvarka-api.grandfs-develop.ru/api";
   }
 }
 ```
 
 ### Заголовки по умолчанию
+
 ```typescript
 {
   "Accept": "application/json",
@@ -124,18 +140,21 @@ runtimeConfig: {
 ```
 
 ### Credentials
+
 ```typescript
-credentials: "include" // Для работы с cookies (refresh token)
+credentials: "include"; // Для работы с cookies (refresh token)
 ```
 
 ## Логирование (режим разработки)
 
 ### При инициализации
+
 ```
 🔧 useApi initialized with baseURL: https://varvarka-api.grandfs-develop.ru/api
 ```
 
 ### При выполнении запроса
+
 ```
 🔐 Token status: Present (eyJhbGciOiJIUzI1NiIsI...)
 🔄 API Request: {
@@ -147,6 +166,7 @@ credentials: "include" // Для работы с cookies (refresh token)
 ```
 
 ### При обновлении токена
+
 ```
 ⚠️ Получен статус 401, пробуем обновить токен...
 🔄 Обновление токена...
@@ -155,6 +175,7 @@ credentials: "include" // Для работы с cookies (refresh token)
 ```
 
 ### При ошибке обновления токена
+
 ```
 ❌ Ошибка обновления токена: {...}
 ❌ Не удалось обновить токен, перенаправляем на логин
@@ -163,10 +184,12 @@ credentials: "include" // Для работы с cookies (refresh token)
 ## Обработка ошибок
 
 ### Автоматическая обработка
+
 - **401/302** - Автоматическое обновление токена и повтор запроса
 - **Другие ошибки** - Бросает `ApiError`
 
 ### Ручная обработка
+
 ```typescript
 try {
   const response = await get("/v1/endpoint");
@@ -185,12 +208,13 @@ try {
 ## Примеры использования
 
 ### Загрузка профиля пользователя
+
 ```typescript
 const fetchProfile = async () => {
   try {
     const { get } = useApi();
     const response = await get<ProfileData>("/v1/users/profile");
-    
+
     if (response.success && response.payload) {
       return response.payload;
     }
@@ -201,12 +225,13 @@ const fetchProfile = async () => {
 ```
 
 ### Обновление данных
+
 ```typescript
 const updateProfile = async (data: ProfileData) => {
   try {
     const { put } = useApi();
     const response = await put<ProfileData>("/v1/users/profile", data);
-    
+
     if (response.success) {
       console.log("Профиль обновлен");
     }
@@ -217,6 +242,7 @@ const updateProfile = async (data: ProfileData) => {
 ```
 
 ### Загрузка с параметрами
+
 ```typescript
 const searchRooms = async (dateFrom: string, dateTo: string) => {
   try {
@@ -225,7 +251,7 @@ const searchRooms = async (dateFrom: string, dateTo: string) => {
       date_from: dateFrom,
       date_to: dateTo,
     });
-    
+
     return response.payload;
   } catch (error) {
     console.error("Ошибка поиска:", error);
@@ -243,6 +269,7 @@ const searchRooms = async (dateFrom: string, dateTo: string) => {
 ## Интеграция с authStore
 
 Composable автоматически работает с `authStore`:
+
 - Читает токен: `authStore.token`
 - Обновляет токен: `authStore.setToken(newToken)`
 - Выполняет logout: `authStore.logout()`
@@ -253,4 +280,3 @@ Composable автоматически работает с `authStore`:
 - `ofetch` / `$fetch` - для выполнения запросов
 - `pinia` - для работы с authStore
 - `vue-router` - для перенаправлений
-

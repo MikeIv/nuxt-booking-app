@@ -17,10 +17,8 @@ module.exports = {
       "always",
       {
         except: ["first-nested"],
-        ignore: ["after-comment"]
-      }
+        ignore: ["after-comment"],
+      },
     ],
-  }
+  },
 };
-
-

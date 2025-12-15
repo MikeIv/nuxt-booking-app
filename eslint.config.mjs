@@ -5,7 +5,7 @@ import prettierConfig from "eslint-config-prettier";
 export default withNuxt([
   {
     plugins: {
-      prettier: prettierPlugin
+      prettier: prettierPlugin,
     },
     rules: {
       "vue/no-v-html": "off",
@@ -13,16 +13,16 @@ export default withNuxt([
         "warn",
         {
           html: {
-            void: "never"
-          }
-        }
+            void: "never",
+          },
+        },
       ],
       // Запрещаем использование any
       "@typescript-eslint/no-explicit-any": "error",
       // Используем настройки из .prettierrc.cjs
-      "prettier/prettier": "error"
+      "prettier/prettier": "error",
     },
-    files: ["**/*.{js,ts}"]
+    files: ["**/*.{js,ts}"],
   },
   {
     files: ["**/*.vue"],
@@ -33,9 +33,9 @@ export default withNuxt([
         "warn",
         {
           html: {
-            void: "never"
-          }
-        }
+            void: "never",
+          },
+        },
       ],
       // Запрещаем использование any
       "@typescript-eslint/no-explicit-any": "error",
@@ -44,11 +44,11 @@ export default withNuxt([
         "error",
         {
           "ts-nocheck": "allow-with-description",
-          "ts-ignore": "allow-with-description"
-        }
-      ]
-    }
+          "ts-ignore": "allow-with-description",
+        },
+      ],
+    },
   },
   // Отключаем правила ESLint, которые конфликтуют с Prettier
-  prettierConfig
+  prettierConfig,
 ]);

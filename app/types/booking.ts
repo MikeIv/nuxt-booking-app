@@ -71,15 +71,43 @@ interface BookingResponse {
 
 // История бронирований
 interface BookingHistoryItem {
-  id?: number | string;
-  uuid?: string;
-  booking_number?: string;
-  start_at?: string;
-  end_at?: string;
-  rooms_count?: number;
-  status?: string;
-  created_at?: string;
-  [key: string]: unknown; // Для дополнительных полей, которые могут прийти
+  id: string;
+  confirmation_number: string | null;
+  status: string;
+  order: {
+    name: string;
+    surname: string;
+    nationality: string;
+    comment: string | null;
+    payment_method: string;
+    payment_cancelled: string;
+    start_at: string;
+    end_at: string;
+    nights: number;
+    pdf: string;
+  };
+  room_count: number;
+  rooms: Array<{
+    id: number;
+    title: string;
+    tariff: {
+      title: string;
+      price: string;
+    };
+    guests: {
+      main: {
+        name: string;
+        surname: string;
+        email: string;
+      };
+      adults: number;
+      children: number;
+      total: number;
+    };
+    services: unknown[];
+    total: number;
+  }>;
+  total_price: number;
 }
 
 interface BookingHistoryResponse {

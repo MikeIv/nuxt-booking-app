@@ -38,7 +38,7 @@ your-project/
     "vue": "^3.5.0",
     "@vueuse/core": "^13.0.0",
     "@vueuse/nuxt": "^13.0.0",
-    "vue-i18n": "^9.0.0"  // или другой i18n
+    "vue-i18n": "^9.0.0" // или другой i18n
   }
 }
 ```
@@ -63,14 +63,14 @@ export const useCalendarPrices = () => {
   // const api = useYourApi();
   // или
   // const api = useFetch(); // если используете Nuxt useFetch
-  
+
   const fetchCalendarPrices = async (month: number, year: number) => {
     // Адаптируйте под ваш API endpoint
-    const response = await api.get('/v1/search/calendar', {
+    const response = await api.get("/v1/search/calendar", {
       month,
       year,
     });
-    
+
     // Адаптируйте обработку ответа под формат вашего API
     if (response.success && response.payload) {
       response.payload.forEach((item) => {
@@ -78,7 +78,7 @@ export const useCalendarPrices = () => {
       });
     }
   };
-  
+
   // ... остальной код
 };
 ```
@@ -92,12 +92,12 @@ export const useCalendarPricesAdapter = (apiClient: YourApiClient) => {
     // Используйте ваш API клиент
     const data = await apiClient.getCalendarPrices(month, year);
     // Преобразуйте в нужный формат
-    return data.map(item => ({
+    return data.map((item) => ({
       date_at: item.date,
-      min_price: item.price
+      min_price: item.price,
     }));
   };
-  
+
   return { fetchCalendarPrices };
 };
 ```
@@ -111,13 +111,13 @@ export const useCalendarPricesAdapter = (apiClient: YourApiClient) => {
 ```typescript
 // composables/useDateLocale.ts
 export const useDateLocale = () => {
-  const locale = ref('ru'); // или 'en'
-  
+  const locale = ref("ru"); // или 'en'
+
   const monthNames = computed(() => {
-    const localeKey = locale.value === 'ru' ? 'ru-RU' : 'en-US';
+    const localeKey = locale.value === "ru" ? "ru-RU" : "en-US";
     // ... остальной код без изменений
   });
-  
+
   // ... остальной код
 };
 ```
@@ -126,7 +126,7 @@ export const useDateLocale = () => {
 
 ```typescript
 // composables/useDateLocale.ts
-import { useI18n as useYourI18n } from 'your-i18n-library';
+import { useI18n as useYourI18n } from "your-i18n-library";
 
 export const useDateLocale = () => {
   const { locale } = useYourI18n();
@@ -141,6 +141,7 @@ export const useDateLocale = () => {
 Если у вас нет `@nuxt/ui`, замените `UIcon` на свой компонент:
 
 **В DatePickerInput.vue:**
+
 ```vue
 <!-- Было -->
 <UIcon name="i-calendar" :class="$style.calendarIcon" />
@@ -152,12 +153,16 @@ export const useDateLocale = () => {
 ```
 
 **В Header.vue:**
+
 ```vue
 <!-- Было -->
 <UIcon name="i-arrow-back" :class="[$style.navIcon, $style.navIconPrev]" />
 
 <!-- Стало -->
-<YourIconComponent name="arrow-back" :class="[$style.navIcon, $style.navIconPrev]" />
+<YourIconComponent
+  name="arrow-back"
+  :class="[$style.navIcon, $style.navIconPrev]"
+/>
 ```
 
 ### 4. Адаптация стилей
@@ -165,12 +170,10 @@ export const useDateLocale = () => {
 Компоненты используют CSS модули (`$style`). Убедитесь, что ваш проект поддерживает это, или адаптируйте:
 
 **Если используете обычные классы:**
+
 ```vue
 <!-- Было -->
-<div :class="$style.datepickerWithPrices">
-
-<!-- Стало -->
-<div class="datepicker-with-prices">
+<div :class="$style.datepickerWithPrices"></div>
 ```
 
 И перенесите стили в глобальный CSS или используйте scoped styles.
@@ -178,21 +181,24 @@ export const useDateLocale = () => {
 ### 5. Адаптация под другую структуру проекта
 
 #### Для Nuxt 3/4 (как в текущем проекте)
+
 - Файлы в `components/` и `composables/` автоматически импортируются
 - Используйте как есть
 
 #### Для Vue 3 (без Nuxt)
+
 - Импортируйте компоненты и composables явно:
 
 ```vue
 <script setup>
-import DatePickerWithPrices from '@/components/calendar/DatePickerWithPrices.vue';
-import { useCalendarPrices } from '@/composables/useCalendarPrices';
-import { useDateLocale } from '@/composables/useDateLocale';
+import DatePickerWithPrices from "@/components/calendar/DatePickerWithPrices.vue";
+import { useCalendarPrices } from "@/composables/useCalendarPrices";
+import { useDateLocale } from "@/composables/useDateLocale";
 </script>
 ```
 
 #### Для других фреймворков
+
 - Адаптируйте под структуру вашего проекта
 - Убедитесь, что Vue 3 API доступен (`ref`, `computed`, `watch`, и т.д.)
 
@@ -206,10 +212,10 @@ import { useDateLocale } from '@/composables/useDateLocale';
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import DatePickerWithPrices from '@/components/calendar/DatePickerWithPrices.vue';
+import { ref } from "vue";
+import DatePickerWithPrices from "@/components/calendar/DatePickerWithPrices.vue";
 
-const selectedDates = ref<[Date, Date] | null>(null);
+const selectedDates = (ref < [Date, Date]) | (null > null);
 </script>
 ```
 
@@ -217,7 +223,7 @@ const selectedDates = ref<[Date, Date] | null>(null);
 
 ```vue
 <template>
-  <DatePickerWithPrices 
+  <DatePickerWithPrices
     v-model="selectedDates"
     @update:modelValue="handleDateChange"
   />
@@ -289,11 +295,13 @@ const handleDateChange = (dates: [Date, Date] | null) => {
 ## ⚠️ Важные замечания
 
 1. **API формат**: Убедитесь, что ваш API возвращает данные в формате:
+
    ```typescript
    {
-     date_at: string;  // "2024-01-15"
+     date_at: string; // "2024-01-15"
      min_price: number;
-   }[]
+   }
+   [];
    ```
 
 2. **Производительность**: Компонент оптимизирован с мемоизацией. Не удаляйте оптимизации без необходимости.
@@ -326,4 +334,3 @@ const handleDateChange = (dates: [Date, Date] | null) => {
 - [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq.html)
 - [VueUse Documentation](https://vueuse.org/)
 - [Vue i18n](https://vue-i18n.intlify.dev/)
-
