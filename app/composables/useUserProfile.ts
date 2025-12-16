@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from "vue";
+import { reactive, ref, watch, nextTick } from "vue";
 import type {
   UserProfile,
   ProfileResponse,
@@ -59,9 +59,13 @@ export const useUserProfile = () => {
     (user) => {
       if (!user) return;
 
-      const saved = user.id ? bookingStore.getUserProfile(user.id) : null;
+      // Не обновляем данные во время сохранения или обновления с сервера
+      if (isSaving.value) {
+        return;
+      }
 
-      const source = saved || {
+      // Используем данные из authStore.user как приоритетные (данные с сервера)
+      const source = {
         name: user.name || "",
         surname: user.surname || "",
         middle_name: (user as { middle_name?: string }).middle_name || "",
@@ -69,9 +73,40 @@ export const useUserProfile = () => {
         email: user.email || "",
         country: user.country || "",
       };
-      Object.assign(originalData, source);
-      Object.assign(formData, originalData);
-      hasChanges.value = false;
+
+      // Проверяем, изменились ли данные в originalData, чтобы не перезаписывать formData без необходимости
+      const hasOriginalDataChanged =
+        originalData.name !== source.name ||
+        originalData.surname !== source.surname ||
+        originalData.middle_name !== source.middle_name ||
+        originalData.phone !== source.phone ||
+        originalData.email !== source.email ||
+        originalData.country !== source.country;
+
+      if (hasOriginalDataChanged) {
+        // Обновляем originalData
+        Object.assign(originalData, source);
+
+        // Проверяем, есть ли несохраненные изменения в formData
+        const hasUnsavedChanges =
+          formData.name !== originalData.name ||
+          formData.surname !== originalData.surname ||
+          formData.middle_name !== originalData.middle_name ||
+          formData.phone !== originalData.phone ||
+          formData.email !== originalData.email ||
+          formData.country !== originalData.country;
+
+        // Перезаписываем formData только если нет несохраненных изменений
+        // или если это первая загрузка данных (originalData был пустым)
+        const wasOriginalDataEmpty =
+          !originalData.name && !originalData.surname && !originalData.email;
+
+        if (!hasUnsavedChanges || wasOriginalDataEmpty) {
+          Object.assign(formData, source);
+          hasChanges.value = false;
+        }
+        // Если есть несохраненные изменения, сохраняем их и только обновляем originalData
+      }
     },
     { immediate: true },
   );
@@ -105,23 +140,67 @@ export const useUserProfile = () => {
         console.log("📨 Ответ сервера (обновление профиля):", response);
       }
 
-      if (response.success) {
-        const updatedUser = { ...authStore.user, ...formData };
-        authStore.setUser(updatedUser);
+      if (response.success && response.payload) {
+        // Проверяем, что payload - это объект, а не массив
+        // Если payload - массив или не объект, используем данные из формы
+        let payloadData: UpdateProfileResponse["payload"];
 
-        if (authStore.user?.id) {
-          bookingStore.saveUserProfile(authStore.user.id, {
+        if (Array.isArray(response.payload)) {
+          // Если payload - массив, это ошибка API, используем данные из формы
+          if (import.meta.dev) {
+            console.warn(
+              "⚠️ API вернул массив вместо объекта, используем данные из формы",
+            );
+          }
+          payloadData = {
+            id: authStore.user?.id || 0,
             name: formData.name,
             surname: formData.surname,
             middle_name: formData.middle_name,
             phone: formData.phone,
             email: formData.email,
             country: formData.country,
-          });
+          };
+        } else {
+          payloadData = response.payload as UpdateProfileResponse["payload"];
         }
 
-        Object.assign(originalData, formData);
+        // Используем данные из ответа сервера, а не из формы
+        const serverData = {
+          name: payloadData.name || "",
+          surname: payloadData.surname || "",
+          middle_name: payloadData.middle_name || "",
+          phone: payloadData.phone || "",
+          email: payloadData.email || "",
+          country: payloadData.country || "",
+        };
+
+        // Сначала обновляем originalData и formData данными с сервера
+        // Это нужно сделать ДО обновления authStore, чтобы watcher не перезаписал данные
+        Object.assign(originalData, serverData);
+        Object.assign(formData, serverData);
         hasChanges.value = false;
+
+        // Затем обновляем пользователя в authStore данными с сервера
+        // Используем nextTick, чтобы гарантировать, что обновления formData и originalData завершены
+        await nextTick();
+        const updatedUser = {
+          ...authStore.user,
+          id: payloadData.id,
+          name: serverData.name,
+          surname: serverData.surname,
+          middle_name: serverData.middle_name,
+          phone: serverData.phone,
+          email: serverData.email,
+          country: serverData.country,
+        };
+
+        authStore.setUser(updatedUser);
+
+        // Сохраняем данные в bookingStore
+        if (payloadData.id) {
+          bookingStore.saveUserProfile(payloadData.id, serverData);
+        }
 
         toast.add({
           severity: "success",
@@ -131,7 +210,10 @@ export const useUserProfile = () => {
         });
 
         if (import.meta.dev) {
-          console.log("✅ Данные профиля обновлены:", updatedUser);
+          console.log(
+            "✅ Данные профиля обновлены из ответа сервера:",
+            updatedUser,
+          );
         }
       } else {
         if (import.meta.dev) {
@@ -169,26 +251,8 @@ export const useUserProfile = () => {
       }
 
       if (response.success && response.payload) {
-        const updatedUser = {
-          ...authStore.user,
-          id: response.payload.id,
-          name: response.payload.name || authStore.user?.name || "",
-          surname: response.payload.surname || authStore.user?.surname || "",
-          middle_name:
-            response.payload.middle_name ||
-            (authStore.user as { middle_name?: string })?.middle_name ||
-            "",
-          email: response.payload.email || authStore.user?.email || "",
-          phone: response.payload.phone || authStore.user?.phone || "",
-          country: response.payload.country || authStore.user?.country || "",
-        };
-        authStore.setUser(updatedUser);
-
-        // Проверяем, есть ли уже сохраненный профиль в bookingStore
-        const savedProfile = bookingStore.getUserProfile(response.payload.id);
-
-        // Если есть сохраненный профиль, используем его вместо данных с API
-        const profileData = savedProfile || {
+        // Используем данные из ответа сервера как приоритетные
+        const profileData = {
           name: response.payload.name || "",
           surname: response.payload.surname || "",
           middle_name: response.payload.middle_name || "",
@@ -197,11 +261,29 @@ export const useUserProfile = () => {
           country: response.payload.country || "",
         };
 
+        // Сначала обновляем originalData и formData, чтобы watcher не перезаписал их старыми данными
         Object.assign(originalData, profileData);
         Object.assign(formData, profileData);
         hasChanges.value = false;
 
-        if (!savedProfile) {
+        // Затем обновляем пользователя в authStore данными с сервера
+        // Используем nextTick, чтобы гарантировать, что обновления formData и originalData завершены
+        const updatedUser = {
+          ...authStore.user,
+          id: response.payload.id,
+          name: profileData.name,
+          surname: profileData.surname,
+          middle_name: profileData.middle_name,
+          phone: profileData.phone,
+          email: profileData.email,
+          country: profileData.country,
+        };
+
+        await nextTick();
+        authStore.setUser(updatedUser);
+
+        // Сохраняем актуальные данные в bookingStore для использования в других местах
+        if (response.payload.id) {
           bookingStore.saveUserProfile(response.payload.id, profileData);
         }
 
@@ -239,5 +321,8 @@ export const useUserProfile = () => {
     checkChanges,
     saveChanges,
     fetchUserProfile,
+    updateFormData: (data: Partial<UserProfile>) => {
+      Object.assign(formData, data);
+    },
   };
 };

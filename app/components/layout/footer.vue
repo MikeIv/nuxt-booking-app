@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { HOTEL_INFO } from "~/utils/hotel";
+
   interface FooterProps {
     anchorId?: string;
   }
@@ -13,13 +15,9 @@
     await fetchContacts();
   });
 
-  const DEFAULT_ADDRESS = "109012, РОССИЯ, Г. МОСКВА УЛ. ВАРВАРКА, Д.14, СТР. 1, 2";
-  const DEFAULT_PHONE = "+7 (495) 274-99-99";
-  const DEFAULT_EMAIL = "mail@mail.ru";
-
-  const address = computed<string>(() => contacts.value?.address || DEFAULT_ADDRESS);
-  const phone = computed<string>(() => contacts.value?.phone || DEFAULT_PHONE);
-  const email = computed<string>(() => contacts.value?.email || DEFAULT_EMAIL);
+  const address = computed<string>(() => contacts.value?.address || HOTEL_INFO.address);
+  const phone = computed<string>(() => contacts.value?.phone || HOTEL_INFO.phone);
+  const email = computed<string>(() => contacts.value?.email || HOTEL_INFO.email);
   
   const phoneHref = computed<string>(() => {
     const phoneNumber = phone.value.replace(/\D/g, "");

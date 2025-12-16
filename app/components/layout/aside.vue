@@ -116,19 +116,21 @@
 
         <Button
           v-if="!authStore.isAuthenticated"
-          label="Войти"
           class="btn__bs dark"
           unstyled
           @click="showAuthDialog('login')"
-        />
+        >
+          Войти
+        </Button>
         <Button
           v-else
-          label="Личный кабинет"
           class="btn__bs dark"
           :class="$style.cabinetButton"
           unstyled
           @click="$router.push('/cabinet')"
-        />
+        >
+          Личный кабинет
+        </Button>
 
         <button :class="$style.langButton" @click="toggleLanguage">
           {{ locale === "ru" ? "ENG" : "RU" }}

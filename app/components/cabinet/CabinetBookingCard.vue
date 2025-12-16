@@ -52,8 +52,8 @@
     </div>
 
     <footer :class="$style.bookingFooter">
-      <div v-if="booking.room_count" :class="$style.bookingRooms">
-        Количество номеров: {{ booking.room_count }}
+      <div v-if="booking.rooms && booking.rooms.length > 0" :class="$style.bookingRooms">
+        Количество номеров: {{ booking.rooms.length }}
       </div>
 
       <Button
