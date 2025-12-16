@@ -4,6 +4,7 @@
 import { ref } from "vue";
 import { vi } from "vitest";
 import type { SearchResponse } from "~/types/booking";
+import type { UserProfile } from "~/types/auth";
 
 /**
  * Создает мок для booking store
@@ -56,4 +57,34 @@ export function resetMockBookingStore(
   store.setLoading.mockClear();
   store.search.mockResolvedValue({});
   (store.setSelectedRoomType as ReturnType<typeof vi.fn>).mockClear();
+}
+
+/**
+ * Создает мок для auth store
+ */
+export function createMockAuthStore() {
+  return {
+    user: null as UserProfile | null,
+    loading: ref(false),
+    error: ref(null),
+    setUser: vi.fn(),
+    setLoading: vi.fn(),
+    setError: vi.fn(),
+    logout: vi.fn(),
+  };
+}
+
+/**
+ * Сбрасывает мок auth store к начальным значениям
+ */
+export function resetMockAuthStore(
+  store: ReturnType<typeof createMockAuthStore>,
+) {
+  store.user = null;
+  store.loading.value = false;
+  store.error.value = null;
+  store.setUser.mockClear();
+  store.setLoading.mockClear();
+  store.setError.mockClear();
+  store.logout.mockClear();
 }

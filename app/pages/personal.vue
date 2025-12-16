@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import {
     usePersonalForm,
@@ -8,6 +9,7 @@
     type GuestData,
   } from "~/composables/usePersonalForm";
   import { useNotificationToast } from "~/composables/useToast";
+  import { useUserProfile } from "~/composables/useUserProfile";
 
   definePageMeta({
     layout: "steps",
@@ -15,6 +17,7 @@
 
   const router = useRouter();
   const bookingStore = useBookingStore();
+  const authStore = useAuthStore();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -34,6 +37,8 @@
     validateForm: validatePersonalForm,
     prepareBookingData,
   } = usePersonalForm();
+
+  const { formData: userProfileData, fetchUserProfile } = useUserProfile();
 
   const formData = reactive<PersonalFormData>(createFormData());
 
@@ -200,7 +205,85 @@
     return parts.join(', ');
   });
 
-  onMounted(() => {
+  /**
+   * Преобразует данные пользователя из профиля в формат GuestData
+   */
+  const userToGuestData = (user: {
+    name?: string;
+    surname?: string;
+    middle_name?: string;
+    phone?: string;
+    email?: string;
+    country?: string;
+  }): GuestData => {
+    return {
+      firstName: user.name || "",
+      lastName: user.surname || "",
+      middleName: user.middle_name || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      citizenship: user.country || "",
+    };
+  };
+
+  /**
+   * Проверяет, заполнена ли форма основного гостя
+   */
+  const isMainGuestFormFilled = (guest: GuestData): boolean => {
+    return !!(
+      guest.firstName ||
+      guest.lastName ||
+      guest.phone ||
+      guest.email
+    );
+  };
+
+  /**
+   * Заполняет форму данными пользователя, если он авторизован
+   */
+  const fillFormWithUserData = async () => {
+    if (!authStore.isAuthenticated || !authStore.user) {
+      return;
+    }
+
+    if (isMainGuestFormFilled(formData.mainGuest)) {
+      return;
+    }
+
+    try {
+      await fetchUserProfile();
+
+      const userData =
+        userProfileData.name || userProfileData.surname
+          ? userProfileData
+          : authStore.user;
+
+      const guestData = userToGuestData(userData);
+
+      if (
+        guestData.firstName ||
+        guestData.lastName ||
+        guestData.phone ||
+        guestData.email
+      ) {
+        formData.mainGuest = guestData;
+      }
+    } catch {
+      if (authStore.user) {
+        const guestData = userToGuestData(authStore.user);
+        if (
+          guestData.firstName ||
+          guestData.lastName ||
+          guestData.phone ||
+          guestData.email
+        ) {
+          formData.mainGuest = guestData;
+        }
+      }
+    }
+  };
+
+  onMounted(async () => {
     bookingStore.setLoading(false);
     bookingStore.isServerRequest = false;
 
@@ -222,7 +305,10 @@
         life: 3000,
       });
       router.push("/rooms");
+      return;
     }
+
+    await fillFormWithUserData();
   });
 </script>
 

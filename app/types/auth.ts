@@ -57,5 +57,13 @@ export interface ProfileResponse {
 export interface UpdateProfileResponse {
   success: boolean;
   message: string;
-  payload: Record<string, unknown>;
+  payload: {
+    id: number;
+    name: string;
+    surname: string;
+    middle_name: string | null;
+    email: string;
+    phone: string;
+    country: string;
+  };
 }

@@ -59,6 +59,7 @@ interface OrderInfo {
   start_at: string;
   end_at: string;
   nights: number;
+  phone?: string;
 }
 
 interface BookingResponse {
@@ -71,13 +72,15 @@ interface BookingResponse {
 
 // История бронирований
 interface BookingHistoryItem {
-  id: string;
+  id: string | number;
+  uuid?: string;
   confirmation_number: string | null;
   status: string;
   order: {
     name: string;
     surname: string;
     nationality: string;
+    phone?: string;
     comment: string | null;
     payment_method: string;
     payment_cancelled: string;
@@ -86,25 +89,25 @@ interface BookingHistoryItem {
     nights: number;
     pdf: string;
   };
-  room_count: number;
   rooms: Array<{
     id: number;
     title: string;
     tariff: {
       title: string;
-      price: string;
+      price: string | number;
     };
     guests: {
       main: {
         name: string;
         surname: string;
         email: string;
+        phone?: string;
       };
       adults: number;
       children: number;
       total: number;
     };
-    services: unknown[];
+    services: string[];
     total: number;
   }>;
   total_price: number;

@@ -15,6 +15,7 @@ import type {
   SearchResponse,
   BookingData,
   BookingResponse,
+  BookingHistoryItem,
 } from "~/types/booking";
 
 interface GuestInfo {
@@ -65,6 +66,7 @@ export const useBookingStore = defineStore(
 
     const selectedServices = ref<SelectedService[]>([]);
     const createdBooking = ref<BookingResponse | null>(null);
+    const currentBookingDetails = ref<BookingHistoryItem | null>(null);
 
     function addService(service: SelectedService) {
       if (!selectedServices.value.find((s) => s.id === service.id)) {
@@ -81,6 +83,10 @@ export const useBookingStore = defineStore(
 
     function isServiceSelected(serviceId: number): boolean {
       return selectedServices.value.some((s) => s.id === serviceId);
+    }
+
+    function setCurrentBookingDetails(booking: BookingHistoryItem | null) {
+      currentBookingDetails.value = booking;
     }
 
     const totalGuests = computed(() => {
@@ -757,19 +763,25 @@ export const useBookingStore = defineStore(
       }
     }
 
-    async function getBookingDetails(bookingId: string) {
+    async function getBookingDetails(bookingId: string | number) {
       const { get } = useApi();
 
       setLoading(true, "Загружаем детали брони...");
 
       try {
         isServerRequest.value = true;
-        const response = await get<{ booking: unknown }>(`/v1/${bookingId}`, {
-          signal: AbortSignal.timeout(10000),
-        });
+        const response = await get<BookingHistoryItem>(
+          `/v1/users/bookings/${bookingId}`,
+          {},
+          {
+            signal: AbortSignal.timeout(10000),
+          },
+        );
 
         if (response.success && response.payload) {
-          return response.payload.booking;
+          const bookingDetails = response.payload;
+          setCurrentBookingDetails(bookingDetails);
+          return bookingDetails;
         } else {
           throw new Error(
             response.message || "Ошибка при получении данных брони",
@@ -840,6 +852,7 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
       selectedServices.value = [];
       createdBooking.value = null;
+      currentBookingDetails.value = null;
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -878,6 +891,8 @@ export const useBookingStore = defineStore(
       removeService,
       isServiceSelected,
       createdBooking,
+      currentBookingDetails,
+      setCurrentBookingDetails,
     };
   },
   {

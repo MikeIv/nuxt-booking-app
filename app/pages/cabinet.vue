@@ -60,7 +60,18 @@
   };
 
   const viewBookingDetails = async (bookingId: string | number) => {
-    await router.push(`/booking-details?id=${bookingId}`);
+    // Ищем бронирование по ID (сравниваем как строки для универсальности)
+    const booking = bookingHistory.value.find((b) =>
+      String(b.id) === String(bookingId)
+    );
+
+    if (booking) {
+      bookingStore.setCurrentBookingDetails(booking);
+    } else {
+      bookingStore.setCurrentBookingDetails(null);
+    }
+
+    await router.push(`/booking-details?id=${encodeURIComponent(String(bookingId))}`);
   };
 
   const handleFormDataUpdate = (updatedData: typeof formData) => {
@@ -69,40 +80,25 @@
 
   const handleLogout = async () => {
     if (import.meta.dev) {
-      console.log("🔄 Начало выхода...");
+      console.log("🔄 Выход из системы...");
     }
 
     authStore.setLoading(true);
     authStore.setError(null);
 
     try {
-      if (import.meta.dev) {
-        console.log("📡 Отправка запроса на выход...");
-      }
-
       const { post } = useApi();
       const response = await post("/v1/auth/logout");
 
-      if (import.meta.dev) {
-        console.log("📨 Ответ сервера:", response);
-      }
-
       if (response.success) {
-        if (import.meta.dev) {
-          console.log("✅ Успешный выход");
-        }
         authStore.logout();
         await router.push("/");
       } else {
-        if (import.meta.dev) {
-          console.log("❌ Ошибка в ответе:", response.message);
-        }
         authStore.logout();
         toast.add({
           severity: "error",
           summary: "Ошибка выхода",
-          detail:
-            response.message || "Не удалось выполнить выход. Попробуйте позже.",
+          detail: response.message || "Не удалось выполнить выход. Попробуйте позже.",
           life: 5000,
         });
         await router.push("/");
