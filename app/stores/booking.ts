@@ -18,12 +18,6 @@ import type {
   BookingHistoryItem,
 } from "~/types/booking";
 
-interface GuestInfo {
-  rooms: number;
-  adults: number;
-  children: number;
-}
-
 export interface UserProfileData {
   name: string;
   surname: string;
@@ -56,17 +50,16 @@ export const useBookingStore = defineStore(
     const isServerRequest = ref(false);
     const error = ref<string | null>(null);
     const searchResults = ref<SearchResponse | null>(null);
-    const childrenAges = ref<number[]>([]);
     const selectedRoomType = ref<string | null>(null);
     const selectedTariff = ref<RoomTariff | null>(null);
     const roomTariffs = ref<Room[]>([]);
     const loadingMessage = ref("Загружаем данные о номерах...");
-    const roomList = ref<GuestInfo[]>([]);
     const userProfiles = ref<Record<string, UserProfileData>>({});
 
     const selectedServices = ref<SelectedService[]>([]);
     const createdBooking = ref<BookingResponse | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
+    const packages = ref<PackageResource[]>([]);
 
     function addService(service: SelectedService) {
       if (!selectedServices.value.find((s) => s.id === service.id)) {
@@ -102,14 +95,6 @@ export const useBookingStore = defineStore(
         loadingMessage.value = message;
       }
     };
-
-    function updateRoomList(list: GuestInfo[]) {
-      roomList.value = list;
-    }
-
-    function updateChildrenAges(ages: number[]) {
-      childrenAges.value = ages;
-    }
 
     function saveUserProfile(userId: number, profile: UserProfileData) {
       userProfiles.value = {
@@ -157,12 +142,12 @@ export const useBookingStore = defineStore(
     interface ApiRoomTariff {
       rate_plan_code: string;
       title: string;
-      price: number | string; // Может приходить как строка из API
+      price: number | string;
       price_for_register?: number;
       packages?: TariffPackage[];
       has_food?: boolean;
       cancellation_free?: boolean;
-      cancellation_description?: string | null; // Описание отмены может приходить отдельно
+      cancellation_description?: string | null;
       payment_types?: string[];
       description?: string | null;
       group?: {
@@ -185,7 +170,7 @@ export const useBookingStore = defineStore(
       bed?: RoomBed | null;
       view?: RoomView | null;
       family?: RoomFamily | null;
-      min_price?: number | string | null; // Может приходить как строка из API
+      min_price?: number | string | null;
       price_for_register?: number;
       photos?: string[];
       tariffs?: ApiRoomTariff[];
@@ -198,7 +183,7 @@ export const useBookingStore = defineStore(
       square: number;
       rooms: number;
       amenities: RoomAmenity[];
-      min_price: number | string | null; // Может приходить как строка из API
+      min_price: number | string | null;
       price_for_register?: number;
       photos: string[];
       // Сервер может возвращать варианты как "beds" или "room_type_codes"
@@ -237,6 +222,19 @@ export const useBookingStore = defineStore(
       return Array.from({ length: count }, (_, index) => ages[index] ?? 0);
     };
 
+    const normalizeMinPrice = (
+      price: number | string | null | undefined,
+    ): number | null => {
+      if (price === null || price === undefined) return null;
+      if (typeof price === "string") {
+        const trimmed = price.trim();
+        if (trimmed === "") return null;
+        const parsed = Number(trimmed);
+        return Number.isNaN(parsed) ? null : parsed;
+      }
+      return price;
+    };
+
     const mapTariffs = (tariffs?: ApiRoomTariff[]): RoomTariff[] => {
       if (!tariffs || tariffs.length === 0) return [];
       return tariffs.map((tariff) => ({
@@ -273,11 +271,7 @@ export const useBookingStore = defineStore(
         bed: room.bed ?? null,
         view: room.view ?? null,
         family: room.family ?? null,
-        min_price: (() => {
-          const price = room.min_price ?? group?.min_price ?? null;
-          if (price === null || price === undefined) return null;
-          return typeof price === "string" ? Number(price) : price;
-        })(),
+        min_price: normalizeMinPrice(room.min_price ?? group?.min_price),
         price_for_register:
           room.price_for_register ?? group?.price_for_register ?? undefined,
         photos:
@@ -342,11 +336,9 @@ export const useBookingStore = defineStore(
         bed: primaryVariant?.bed ?? null,
         view: primaryVariant?.view ?? null,
         family: primaryVariant?.family ?? null,
-        min_price: (() => {
-          const price = group.min_price ?? primaryVariant?.min_price ?? null;
-          if (price === null || price === undefined) return null;
-          return typeof price === "string" ? Number(price) : price;
-        })(),
+        min_price: normalizeMinPrice(
+          group.min_price ?? primaryVariant?.min_price,
+        ),
         price_for_register:
           group.price_for_register ?? primaryVariant?.price_for_register,
         photos:
@@ -399,6 +391,110 @@ export const useBookingStore = defineStore(
         };
       }
 
+      // Общая функция для обработки grouped rooms
+      const processGroupedRooms = (
+        groups: ApiGroupedRoom[],
+        filters?: SearchResponse["filters"],
+      ): SearchResponse => {
+        const groupedRooms = new Map<string, Room>();
+
+        groups.forEach((group, index) => {
+          const room = mapGroupedRoom(group);
+
+          // Сервер может возвращать варианты как "beds" или "room_type_codes"
+          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
+          const key =
+            firstVariant?.family?.id?.toString() ??
+            firstVariant?.family?.title ??
+            group.title ??
+            room.room_type_code ??
+            `group-${index}`;
+
+          const existing = groupedRooms.get(key);
+
+          if (existing) {
+            const existingVariants = existing.room_type_codes ?? [];
+            const newVariants = room.room_type_codes ?? [];
+
+            const variantMap = new Map<string, Room>();
+
+            existingVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            newVariants.forEach((variant, variantIndex) => {
+              const variantKey =
+                variant.room_type_code ??
+                (typeof variant.id === "string"
+                  ? variant.id
+                  : variant.id?.toString()) ??
+                `variant-${key}-new-${variantIndex}`;
+              variantMap.set(variantKey, variant);
+            });
+
+            existing.room_type_codes = Array.from(variantMap.values());
+
+            // Обновляем min_price с учетом null значений
+            const normalizedRoomPrice = normalizeMinPrice(room.min_price);
+            if (existing.min_price === null) {
+              existing.min_price = normalizedRoomPrice;
+            } else if (normalizedRoomPrice !== null) {
+              existing.min_price = Math.min(
+                existing.min_price,
+                normalizedRoomPrice,
+              );
+            }
+
+            if (
+              existing.price_for_register === undefined ||
+              (room.price_for_register !== undefined &&
+                room.price_for_register < existing.price_for_register)
+            ) {
+              existing.price_for_register = room.price_for_register;
+            }
+
+            if (
+              (!existing.photos || existing.photos.length === 0) &&
+              room.photos &&
+              room.photos.length > 0
+            ) {
+              existing.photos = room.photos;
+            }
+
+            if (
+              (!existing.amenities || existing.amenities.length === 0) &&
+              room.amenities &&
+              room.amenities.length > 0
+            ) {
+              existing.amenities = room.amenities;
+            }
+          } else {
+            groupedRooms.set(key, room);
+          }
+        });
+
+        const rooms = Array.from(groupedRooms.values());
+
+        return {
+          available: rooms.length > 0,
+          rooms,
+          packages: [],
+          filters: filters ?? {
+            beds: [],
+            views: [],
+            balconies: [],
+          },
+          groupedByBed: true,
+          rawPayload: payload,
+        };
+      };
+
       // Обработка нового формата: объект с rooms и filters
       if (
         !Array.isArray(payload) &&
@@ -407,195 +503,14 @@ export const useBookingStore = defineStore(
         "filters" in payload
       ) {
         const groupedPayload = payload as ApiGroupedPayload;
-        const groupedRooms = new Map<string, Room>();
-
-        groupedPayload.rooms.forEach((group, index) => {
-          const room = mapGroupedRoom(group);
-
-          // Сервер может возвращать варианты как "beds" или "room_type_codes"
-          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
-          const key =
-            firstVariant?.family?.id?.toString() ??
-            firstVariant?.family?.title ??
-            group.title ??
-            room.room_type_code ??
-            `group-${index}`;
-
-          const existing = groupedRooms.get(key);
-
-          if (existing) {
-            const existingVariants = existing.room_type_codes ?? [];
-            const newVariants = room.room_type_codes ?? [];
-
-            const variantMap = new Map<string, Room>();
-
-            existingVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            newVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-new-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            existing.room_type_codes = Array.from(variantMap.values());
-
-            // Обновляем min_price с учетом null значений
-            if (existing.min_price === null) {
-              existing.min_price = room.min_price;
-            } else if (room.min_price !== null) {
-              existing.min_price = Math.min(existing.min_price, room.min_price);
-            }
-
-            if (
-              existing.price_for_register === undefined ||
-              (room.price_for_register !== undefined &&
-                room.price_for_register < existing.price_for_register)
-            ) {
-              existing.price_for_register = room.price_for_register;
-            }
-
-            if (
-              (!existing.photos || existing.photos.length === 0) &&
-              room.photos &&
-              room.photos.length > 0
-            ) {
-              existing.photos = room.photos;
-            }
-
-            if (
-              (!existing.amenities || existing.amenities.length === 0) &&
-              room.amenities &&
-              room.amenities.length > 0
-            ) {
-              existing.amenities = room.amenities;
-            }
-          } else {
-            groupedRooms.set(key, room);
-          }
-        });
-
-        const rooms = Array.from(groupedRooms.values());
-
-        return {
-          available: rooms.length > 0,
-          rooms,
-          packages: [],
-          filters: groupedPayload.filters ?? {
-            beds: [],
-            views: [],
-            balconies: [],
-          },
-          groupedByBed: true,
-          rawPayload: payload,
-        };
+        return processGroupedRooms(
+          groupedPayload.rooms,
+          groupedPayload.filters,
+        );
       }
 
       if (Array.isArray(payload)) {
-        const groupedRooms = new Map<string, Room>();
-
-        payload.forEach((group, index) => {
-          const room = mapGroupedRoom(group);
-
-          // Сервер может возвращать варианты как "beds" или "room_type_codes"
-          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
-          const key =
-            firstVariant?.family?.id?.toString() ??
-            firstVariant?.family?.title ??
-            group.title ??
-            room.room_type_code ??
-            `group-${index}`;
-
-          const existing = groupedRooms.get(key);
-
-          if (existing) {
-            const existingVariants = existing.room_type_codes ?? [];
-            const newVariants = room.room_type_codes ?? [];
-
-            const variantMap = new Map<string, Room>();
-
-            existingVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            newVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-new-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            existing.room_type_codes = Array.from(variantMap.values());
-
-            // Обновляем min_price с учетом null значений
-            if (existing.min_price === null) {
-              existing.min_price = room.min_price;
-            } else if (room.min_price !== null) {
-              existing.min_price = Math.min(existing.min_price, room.min_price);
-            }
-
-            if (
-              existing.price_for_register === undefined ||
-              (room.price_for_register !== undefined &&
-                room.price_for_register < existing.price_for_register)
-            ) {
-              existing.price_for_register = room.price_for_register;
-            }
-
-            if (
-              (!existing.photos || existing.photos.length === 0) &&
-              room.photos &&
-              room.photos.length > 0
-            ) {
-              existing.photos = room.photos;
-            }
-
-            if (
-              (!existing.amenities || existing.amenities.length === 0) &&
-              room.amenities &&
-              room.amenities.length > 0
-            ) {
-              existing.amenities = room.amenities;
-            }
-          } else {
-            groupedRooms.set(key, room);
-          }
-        });
-
-        const rooms = Array.from(groupedRooms.values());
-
-        return {
-          available: rooms.length > 0,
-          rooms,
-          packages: [],
-          filters: {
-            beds: [],
-            views: [],
-            balconies: [],
-          },
-          groupedByBed: true,
-          rawPayload: payload,
-        };
+        return processGroupedRooms(payload);
       }
 
       // Обработка формата ApiUngroupedPayload
@@ -620,21 +535,10 @@ export const useBookingStore = defineStore(
       const [startDate, endDate] = date.value!;
 
       const list = guests.value.roomList ?? [];
-      const totalAdults = list.reduce((sum, room) => sum + room.adults, 0);
-      const guestsPayload = list.length
-        ? list.map((room) => ({
-            adults: room.adults,
-            childs: ensureChildAges(room.children, room.childrenAges ?? []),
-          }))
-        : [
-            {
-              adults: totalAdults > 0 ? totalAdults : 1,
-              childs: ensureChildAges(
-                childrenAges.value.length,
-                childrenAges.value,
-              ),
-            },
-          ];
+      const guestsPayload = list.map((room) => ({
+        adults: room.adults,
+        childs: ensureChildAges(room.children, room.childrenAges ?? []),
+      }));
 
       const groupedByBed = guestsPayload.length === 1;
       const multiBookingMode = guestsPayload.length > 1;
@@ -657,14 +561,24 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
     }
 
-    async function search(skipReset = false): Promise<SearchResponse> {
+    async function search(options?: {
+      roomTypeCode?: string;
+      skipReset?: boolean;
+    }): Promise<SearchResponse> {
       validateSearchParams();
       setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
 
+      const roomTypeCode = options?.roomTypeCode;
+      const skipReset = options?.skipReset ?? false;
+
+      if (roomTypeCode) {
+        selectedRoomType.value = roomTypeCode;
+      }
+
       try {
         const { post } = useApi();
-        const { searchData, groupedByBed } = prepareSearchData();
+        const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
 
         isServerRequest.value = true;
         const response = await post<ApiSearchPayload>(
@@ -703,8 +617,6 @@ export const useBookingStore = defineStore(
       setLoading(true, "Создаём бронирование...");
 
       try {
-        // Данные уже правильно отформатированы в prepareBookingData
-        // Убеждаемся только в правильном формате дат и структуре
         const processedData: BookingData = {
           for_self: bookingData.for_self,
           start_at: bookingData.start_at || "",
@@ -732,7 +644,6 @@ export const useBookingStore = defineStore(
           })),
         };
 
-        // Логируем данные для отладки
         if (import.meta?.env?.DEV) {
           console.log(
             "📤 Отправка данных бронирования:",
@@ -797,44 +708,46 @@ export const useBookingStore = defineStore(
       }
     }
 
-    async function searchWithRoomType(
-      roomTypeCode: string,
-    ): Promise<SearchResponse> {
+    async function searchPackages(): Promise<PackageResource[]> {
       validateSearchParams();
-      setLoading(true, "Загружаем данные о номерах...");
       error.value = null;
-      selectedRoomType.value = roomTypeCode;
 
       try {
         const { post } = useApi();
-        const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
+        const { searchData } = prepareSearchData(
+          selectedRoomType.value ?? undefined,
+        );
+
+        // Добавляем rate_plan_code если выбран тариф
+        const packagesSearchData: Record<string, unknown> = {
+          ...searchData,
+          ...(selectedTariff.value?.rate_plan_code
+            ? { rate_plan_code: selectedTariff.value.rate_plan_code }
+            : {}),
+        };
 
         isServerRequest.value = true;
-        const response = await post<ApiSearchPayload>(
-          "/v1/search",
-          searchData,
+        const response = await post<PackageResource[]>(
+          "/v1/search/packages",
+          packagesSearchData,
           {
             signal: AbortSignal.timeout(10000),
           },
         );
 
-        if (response.success) {
-          const normalized = normalizeSearchPayload(
-            response.payload,
-            groupedByBed,
-          );
-          searchResults.value = normalized;
-          roomTariffs.value = normalized.rooms;
-          return normalized;
+        if (response.success && response.payload) {
+          packages.value = response.payload;
+          return response.payload;
         }
 
-        throw new Error(response.message || "Ошибка при поиске номеров");
+        throw new Error(response.message || "Ошибка при получении услуг");
       } catch (err: unknown) {
-        error.value = (err as Error).message || "Произошла ошибка при поиске";
+        error.value =
+          (err as Error).message || "Произошла ошибка при загрузке услуг";
+        packages.value = [];
         throw err;
       } finally {
         isServerRequest.value = false;
-        setLoading(false);
       }
     }
 
@@ -847,7 +760,6 @@ export const useBookingStore = defineStore(
       promoCode.value = "";
       error.value = null;
       searchResults.value = null;
-      childrenAges.value = [];
       selectedRoomType.value = null;
       roomTariffs.value = [];
       selectedServices.value = [];
@@ -867,22 +779,17 @@ export const useBookingStore = defineStore(
       error,
       searchResults,
       totalGuests,
-      childrenAges,
       selectedRoomType,
       selectedTariff,
       roomTariffs,
       loadingMessage,
       forceReset,
-      updateChildrenAges,
       setSelectedRoomType,
       setLoading,
       search,
       createBooking,
       getBookingDetails,
-      searchWithRoomType,
       formatDate,
-      roomList,
-      updateRoomList,
       userProfiles,
       saveUserProfile,
       getUserProfile,
@@ -893,6 +800,8 @@ export const useBookingStore = defineStore(
       createdBooking,
       currentBookingDetails,
       setCurrentBookingDetails,
+      packages,
+      searchPackages,
     };
   },
   {
@@ -902,12 +811,10 @@ export const useBookingStore = defineStore(
         "date",
         "guests",
         "promoCode",
-        "childrenAges",
         "searchResults",
         "selectedRoomType",
         "selectedTariff",
         "roomTariffs",
-        "roomList",
         "userProfiles",
         "selectedServices",
       ],

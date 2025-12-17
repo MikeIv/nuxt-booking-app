@@ -60,6 +60,11 @@
     return createdBooking.value?.hotel?.email || "";
   });
 
+  // Получаем ссылку на PDF из ответа API
+  const pdfUrl = computed(() => {
+    return createdBooking.value?.order?.pdf || null;
+  });
+
   const selectedEntry = computed<SelectedEntry | null>(() => {
     if (!selectedRoom.value || !selectedTariff.value) return null;
     
@@ -97,9 +102,38 @@
     }
   });
 
-  const handleDownload = () => {
-    // Логика скачивания подтверждения
-    console.log("Скачать подтверждение");
+  const handleDownload = async () => {
+    const url = pdfUrl.value;
+    if (!url) {
+      console.warn("PDF ссылка недоступна");
+      return;
+    }
+
+    try {
+      // Используем fetch для получения файла как blob
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки PDF: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Создаем временную ссылку для скачивания
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `booking-confirmation-${bookingNumber.value || 'document'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Очищаем временные объекты
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Ошибка при скачивании PDF:", error);
+      // Если fetch не работает (например, из-за CORS), пробуем открыть ссылку напрямую
+      window.open(url, "_blank");
+    }
   };
 
   const handlePrint = () => {
@@ -152,6 +186,7 @@
                 </div>
                 <div v-if="isBookingCreated" :class="$style.actionButtons">
                   <Button
+                    v-if="pdfUrl"
                     label="Скачать подтверждение"
                     class="btn__bs danger"
                     unstyled

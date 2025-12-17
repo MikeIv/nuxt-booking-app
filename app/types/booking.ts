@@ -60,6 +60,7 @@ interface OrderInfo {
   end_at: string;
   nights: number;
   phone?: string;
+  pdf?: string;
 }
 
 interface BookingResponse {

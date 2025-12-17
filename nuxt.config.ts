@@ -232,6 +232,26 @@ export default defineNuxtConfig({
         "vue/attribute-hyphenation": ["warn", "always"],
         "vue/prop-name-casing": ["warn", "camelCase"],
         "vue/v-on-event-hyphenation": "warn",
+        // Порядок атрибутов в Vue компонентах: v-for должен идти перед v-if/v-else/v-else-if
+        "vue/attributes-order": [
+          "warn",
+          {
+            order: [
+              "DEFINITION",
+              "LIST_RENDERING",
+              "CONDITIONALS",
+              "RENDER_MODIFIERS",
+              "GLOBAL",
+              ["UNIQUE", "SLOT"],
+              "TWO_WAY_BINDING",
+              "OTHER_DIRECTIVES",
+              "OTHER_ATTR",
+              "EVENTS",
+              "CONTENT",
+            ],
+            alphabetical: false,
+          },
+        ],
         // Разрешаем @ts-nocheck для файлов, где Vue преобразует kebab-case в camelCase
         "@typescript-eslint/ban-ts-comment": [
           "error",
