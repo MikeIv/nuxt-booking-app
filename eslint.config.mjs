@@ -37,6 +37,26 @@ export default withNuxt([
           },
         },
       ],
+      // Порядок атрибутов в Vue компонентах
+      "vue/attributes-order": [
+        "warn",
+        {
+          order: [
+            "DEFINITION",
+            "LIST_RENDERING",
+            "CONDITIONALS",
+            "RENDER_MODIFIERS",
+            "GLOBAL",
+            ["UNIQUE", "SLOT"],
+            "TWO_WAY_BINDING",
+            "OTHER_DIRECTIVES",
+            "OTHER_ATTR",
+            "EVENTS",
+            "CONTENT",
+          ],
+          alphabetical: false,
+        },
+      ],
       // Запрещаем использование any
       "@typescript-eslint/no-explicit-any": "error",
       // Разрешаем @ts-nocheck для файлов, где Vue преобразует kebab-case в camelCase

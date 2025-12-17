@@ -65,7 +65,7 @@
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
 
     try {
-      const result = await bookingStore.search(true);
+      const result = await bookingStore.search({ skipReset: true });
       
       // Проверяем, что сервер вернул данные о номерах
       if (!result || !result.rooms || result.rooms.length === 0) {

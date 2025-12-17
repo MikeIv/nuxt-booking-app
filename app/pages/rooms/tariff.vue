@@ -152,7 +152,7 @@
 
     try {
       loading.value = true;
-      const result = await bookingStore.searchWithRoomType(selectedRoomType.value);
+      const result = await bookingStore.search({ roomTypeCode: selectedRoomType.value });
       
       // Ждем обновления DOM после загрузки данных
       await nextTick();

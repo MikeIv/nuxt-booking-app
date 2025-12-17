@@ -24,10 +24,16 @@
   const router = useRouter();
   const toast = useNotificationToast();
   const bookingStore = useBookingStore();
-  const { selectedRoomType, selectedTariff: selectedTariffStore, roomTariffs, date, selectedServices } =
-    storeToRefs(bookingStore);
+  const {
+    selectedRoomType,
+    selectedTariff: selectedTariffStore,
+    roomTariffs,
+    date,
+    selectedServices,
+    packages,
+    isServerRequest,
+  } = storeToRefs(bookingStore);
 
-  // Получаем выбранный номер
   const selectedRoom = computed<Room | null>(() => {
     if (!roomTariffs.value?.length) return null;
     return (
@@ -43,7 +49,6 @@
     return selectedRoom.value.tariffs[0] || null;
   });
 
-  // Вычисляем количество ночей
   const nights = useNights(date);
 
   const bookingTotal = computed(() => {
@@ -64,21 +69,35 @@
     };
   });
 
-  // Преобразуем selectedEntry в формат для BookingSummary
-  // Используется только когда selectedEntry не null (проверка в template)
   const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
     const entry = selectedEntry.value;
     if (!entry) return {} as Record<number, SelectedEntry>;
     return { 0: entry };
   });
 
-  // Статичные данные для услуг (временно)
-  const services = [
-    { id: 1, title: "VIP - трансфер", price: 2500 },
-    { id: 2, title: "Поздний выезд", price: 1500 },
-    { id: 3, title: "Доступ в фитнес-зал", price: 800 },
-    { id: 4, title: "Парковка", price: 500 },
-  ];
+  // Функция для создания числового ID из строки package_code
+  const hashStringToNumber = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  };
+
+  // Преобразуем PackageResource в формат для ServiceCard
+  const services = computed(() => {
+    return packages.value.map((pkg) => ({
+      id: hashStringToNumber(pkg.package_code),
+      packageCode: pkg.package_code,
+      title: pkg.title,
+      price: Number(pkg.price) || 0,
+      description: pkg.description,
+      photos: pkg.photos,
+      calculationRateTitle: pkg.calculation_rate_title,
+    }));
+  });
 
   const isPopupOpen = ref(false);
   const expandedRoom = ref(false);
@@ -100,8 +119,7 @@
     router.push("/personal");
   };
 
-  onMounted(() => {
-    // Проверяем наличие необходимых данных для отображения страницы
+  onMounted(async () => {
     if (!selectedRoom.value) {
       toast.add({
         severity: "warn",
@@ -109,7 +127,7 @@
         detail: "Номер не выбран",
         life: 3000,
       });
-      router.push("/rooms");
+      await router.push("/rooms");
       return;
     }
     if (!selectedTariff.value) {
@@ -119,7 +137,20 @@
         detail: "Тариф не выбран",
         life: 3000,
       });
-      router.push("/rooms");
+      await router.push("/rooms");
+      return;
+    }
+
+    // Загружаем услуги из API
+    try {
+      await bookingStore.searchPackages();
+    } catch (err: unknown) {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: (err as Error).message || "Не удалось загрузить услуги",
+        life: 5000,
+      });
     }
   });
 </script>
@@ -149,10 +180,17 @@
           />
 
           <section :class="$style.servicesList">
+            <div v-if="isServerRequest" :class="$style.loading">
+              Загрузка услуг...
+            </div>
+            <div v-else-if="services.length === 0" :class="$style.noServices">
+              Услуги не найдены
+            </div>
             <BookingServiceCard
               v-for="service in services"
+              v-else
               :id="service.id"
-              :key="service.id"
+              :key="service.packageCode"
               :title="service.title"
               :price="service.price"
             />
@@ -286,6 +324,17 @@
   }
 
   .noRoom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: rem(40);
+    font-size: rem(18);
+    color: var(--a-text-accent);
+    text-align: center;
+  }
+
+  .loading,
+  .noServices {
     display: flex;
     justify-content: center;
     align-items: center;
