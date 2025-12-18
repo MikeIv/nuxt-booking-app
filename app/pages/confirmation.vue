@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
+  import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import { useNights } from "~/composables/useNights";
 
@@ -17,6 +18,7 @@
 
   const router = useRouter();
   const bookingStore = useBookingStore();
+  const authStore = useAuthStore();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -95,10 +97,35 @@
     return roomTotal + servicesTotal;
   });
 
+  // Устанавливаем флаг в sessionStorage при создании бронирования
+  watch(
+    () => isBookingCreated.value,
+    (isCreated) => {
+      if (
+        isCreated &&
+        !authStore.isAuthenticated &&
+        typeof window !== "undefined"
+      ) {
+        sessionStorage.setItem("hasUnauthenticatedBooking", "true");
+      }
+    },
+    { immediate: true },
+  );
+
   onMounted(() => {
     if (loading.value && isServerRequest.value) {
       bookingStore.setLoading(false);
       bookingStore.isServerRequest = false;
+    }
+
+    // Если бронирование успешно создано и пользователь неавторизован,
+    // сохраняем флаг в sessionStorage для отображения кнопки "Моё бронирование"
+    if (
+      isBookingCreated.value &&
+      !authStore.isAuthenticated &&
+      typeof window !== "undefined"
+    ) {
+      sessionStorage.setItem("hasUnauthenticatedBooking", "true");
     }
   });
 

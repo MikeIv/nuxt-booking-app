@@ -11,6 +11,47 @@
 
   const authDialogType = ref<"login" | "register" | "recovery" | null>(null);
   const recoveryEmail = ref("");
+  const showMyBookingPopup = ref(false);
+
+  // Проверяем наличие успешного бронирования неавторизованного пользователя
+  const hasUnauthenticatedBooking = ref(false);
+
+  // Проверка флага в sessionStorage
+  const checkUnauthenticatedBooking = () => {
+    if (typeof window !== "undefined") {
+      hasUnauthenticatedBooking.value =
+        sessionStorage.getItem("hasUnauthenticatedBooking") === "true";
+    }
+  };
+
+  const route = useRoute();
+
+  // Проверяем при монтировании и при изменении статуса аутентификации
+  onMounted(() => {
+    checkUnauthenticatedBooking();
+  });
+
+  // Проверяем флаг при изменении маршрута (например, при переходе на /confirmation)
+  watch(
+    () => route.path,
+    () => {
+      checkUnauthenticatedBooking();
+    },
+  );
+
+  watch(
+    () => authStore.isAuthenticated,
+    () => {
+      checkUnauthenticatedBooking();
+      // Если пользователь авторизовался, скрываем попап и очищаем флаг
+      if (authStore.isAuthenticated) {
+        showMyBookingPopup.value = false;
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("hasUnauthenticatedBooking");
+        }
+      }
+    },
+  );
 
   const toggleMenu = () => {
     isMenuOpen.value = !isMenuOpen.value;
@@ -29,11 +70,30 @@
 
     const currentIndex = localeCodes.indexOf(locale.value);
     const nextIndex = (currentIndex + 1) % localeCodes.length;
-    setLocale(localeCodes[nextIndex]);
+    const nextLocale = localeCodes[nextIndex];
+    if (typeof nextLocale === "string" && (nextLocale === "ru" || nextLocale === "en")) {
+      setLocale(nextLocale as "ru" | "en");
+    }
   };
 
   const goToContacts = () => {
     window.open("http://varvarkan.grandfs.ru/contacts.php", "_blank");
+  };
+
+  const showMyBookingDialog = () => {
+    showMyBookingPopup.value = true;
+  };
+
+  const hideMyBookingDialog = () => {
+    showMyBookingPopup.value = false;
+  };
+
+  const handleMyBookingLoginSuccess = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("hasUnauthenticatedBooking");
+    }
+    hasUnauthenticatedBooking.value = false;
+    hideMyBookingDialog();
   };
 
   const showAuthDialog = (
@@ -104,19 +164,18 @@
         <Logo :class="$style.logo" />
       </button>
 
-      <div :class="$style.rightGroup">
-        <!--      <UButton-->
-        <!--        color="bgAccent"-->
-        <!--        class="text-white px-4 py-2"-->
-        <!--        size="sm"-->
-        <!--        :class="$style.show"-->
-        <!--      >-->
-        <!--        Забронировать-->
-        <!--      </UButton>-->
-
+      <div :class="$style.buttonsGroup">
+        <Button
+          v-if="!authStore.isAuthenticated && hasUnauthenticatedBooking"
+          :class="$style.headerButton"
+          unstyled
+          @click="showMyBookingDialog"
+        >
+          Моё бронирование
+        </Button>
         <Button
           v-if="!authStore.isAuthenticated"
-          class="btn__bs dark"
+          :class="$style.headerButton"
           unstyled
           @click="showAuthDialog('login')"
         >
@@ -124,14 +183,15 @@
         </Button>
         <Button
           v-else
-          class="btn__bs dark"
-          :class="$style.cabinetButton"
+          :class="$style.headerButton"
           unstyled
           @click="$router.push('/cabinet')"
         >
           Личный кабинет
         </Button>
+      </div>
 
+      <div :class="$style.rightGroup">
         <button :class="$style.langButton" @click="toggleLanguage">
           {{ locale === "ru" ? "ENG" : "RU" }}
         </button>
@@ -170,6 +230,12 @@
     @close="hideAuthDialog"
     @switch-to-login="switchAuthDialog('login')"
   />
+
+  <BookingMyBookingPopup
+    :visible="showMyBookingPopup"
+    @close="hideMyBookingDialog"
+    @login-success="handleMyBookingLoginSuccess"
+  />
 </template>
 
 <style module lang="scss">
@@ -186,31 +252,66 @@
   }
 
   .wrapper {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-rows: auto auto;
     align-items: center;
     width: 100%;
     max-width: #{size.$desktopMax};
-    height: clamp(60px, 8vw, 95px);
+    min-height: clamp(60px, 8vw, 95px);
     margin: 0 auto;
     padding: rem(16);
+    gap: rem(16);
+
+    @media (max-width: #{size.$desktopMin - 1px}) {
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto auto;
+      padding-bottom: rem(12);
+    }
   }
 
   .leftGroup {
-    width: clamp(60px, 8vw, 120px);
     display: flex;
     justify-content: flex-start;
+    align-items: center;
+    width: clamp(60px, 8vw, 120px);
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: start;
   }
 
   .logoButton {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: clamp(60px, 8vw, 120px);
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  .buttonsGroup {
+    display: flex;
+    gap: rem(16);
+    align-items: center;
+    justify-content: center;
+
+    @media (max-width: #{size.$desktopMin - 1px}) {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      width: 100%;
+      justify-self: center;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      grid-row: 1;
+      grid-column: 3;
+      justify-self: end;
+    }
   }
 
   .rightGroup {
@@ -218,14 +319,41 @@
     justify-content: flex-end;
     align-items: center;
     gap: rem(16);
+    grid-row: 1;
+    justify-self: end;
+
+    @media (max-width: #{size.$desktopMin - 1px}) {
+      grid-column: 3;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      grid-column: 4;
+    }
   }
 
-  .cabinetButton {
-    padding: 0 rem(16);
+  .headerButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: rem(44);
+    padding: rem(12) rem(24);
+    font-family: Inter, sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    line-height: 1;
+    background-color: var(--a-whiteBg);
+    color: var(--a-text-dark);
+    border: rem(1) solid var(--a-border-dark);
+    border-radius: var(--a-borderR--btn);
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
 
-    @media (min-width: #{size.$tabletMin}) {
-      padding: rem(12) rem(44);
+    &:hover {
+      background-color: var(--a-mainBg);
     }
+
   }
 
   .logo {
