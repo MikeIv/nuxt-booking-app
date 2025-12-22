@@ -61,8 +61,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: rem(20);
+    gap: rem(24);
     width: 100%;
+    max-width: rem(440);
 
     @media (min-width: #{size.$desktopMax}) {
       max-width: rem(700);
@@ -74,12 +75,11 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: rem(440);
     min-height: rem(44);
     padding: rem(10) rem(16);
     font-family: "Inter", sans-serif;
     font-size: rem(18);
-    line-height: 1.2;
+    line-height: 1;
     border-radius: var(--a-borderR--btn);
     transition:
       background-color 0.2s ease,
@@ -96,20 +96,24 @@
   }
 
   .navBtnActive {
-    background-color: #000;
-    color: #fff;
-    border-color: #000;
+    background-color: var(--a-blackBg);
+    color: var(--a-text-white);
+    border-color: var(--a-border-dark);
   }
 
   .navBtnInactive {
-    background-color: #fff;
-    color: #000;
-    border-color: #000;
+    background-color: var(--a-whiteBg);
+    color: var(--a-text-dark);
+    border-color: var(--a-border-dark);
   }
 
   .navBtnExit {
     width: 100%;
-    max-width: rem(440);
+    background-color: var(--a-primaryBg);
+
+    &:hover {
+      background-color: var(--a-blackBg);
+    }
   }
 </style>
 

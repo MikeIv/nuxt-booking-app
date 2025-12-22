@@ -167,19 +167,18 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin: 0 auto rem(40);
-    padding: rem(20);
+    max-width: #{size.$desktopMax};
+    margin: rem(40) auto rem(40);
+    padding: 0 rem(20);
 
     @media (min-width: #{size.$desktopMax}) {
-      max-width: #{size.$desktopMax};
+      padding: rem(20);
     }
   }
 
   .header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     margin: rem(40) 0;
+    padding: 0;
     text-align: center;
     font-family: "Lora", serif;
     font-size: rem(28);
@@ -194,15 +193,15 @@
   .container {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: rem(40);
+    width: 100%;
 
     @media (min-width: #{size.$desktopMin}) {
       flex-direction: row;
-      max-width: #{size.$desktopMax};
-    }
-
-    @media (min-width: #{size.$desktopMax}) {
-      justify-content: flex-start;
+      align-items: flex-start;
+      justify-content: center;
+      gap: rem(40);
     }
   }
 </style>

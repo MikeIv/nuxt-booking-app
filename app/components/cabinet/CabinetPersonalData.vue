@@ -193,7 +193,7 @@
   .form {
     display: flex;
     flex-direction: column;
-    gap: rem(20);
+    gap: rem(24);
     width: 100%;
   }
 
@@ -201,6 +201,57 @@
     display: flex;
     flex-direction: column;
     gap: rem(5);
+
+    // Стили для BookingSelect в мобильной версии - должны соответствовать стилям инпутов
+    :global(.selectRoot) {
+      height: rem(58);
+      padding: 0 rem(27) 0 rem(38);
+      font-size: rem(20);
+      border: rem(0.5) solid var(--a-black);
+      border-radius: var(--a-borderR--card);
+      box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1);
+      transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+
+      @media (min-width: #{size.$tablet}) {
+        height: rem(54);
+        padding: 0 rem(16);
+        font-size: rem(16);
+        border: rem(1) solid var(--a-border-light);
+        border-radius: var(--a-borderR--input);
+        box-shadow: none;
+      }
+
+      &:hover {
+        border-color: var(--a-black);
+
+        @media (min-width: #{size.$tablet}) {
+          border-color: var(--a-border-primary);
+        }
+      }
+
+      &:focus,
+      &.isOpen {
+        outline: none;
+        border-color: var(--a-border-primary);
+        box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1),
+          0 0 0 2px rgba(191, 157, 124, 0.1);
+
+        @media (min-width: #{size.$tablet}) {
+          border-color: var(--a-border-primary);
+          box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
+        }
+      }
+    }
+
+    :global(.chevronIcon) {
+      @media (max-width: #{size.$tablet - 1px}) {
+        width: rem(8);
+        height: rem(21);
+        margin-right: rem(27);
+      }
+    }
   }
 
   .label {
@@ -210,21 +261,35 @@
   .input {
     width: 100%;
     height: rem(58);
-    padding: 0 rem(16);
-    font-size: rem(16);
+    padding: 0 rem(27) 0 rem(38);
+    font-size: rem(20);
     color: var(--a-text-dark);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: var(--a-borderR--input);
+    border: rem(0.5) solid var(--a-black);
+    border-radius: var(--a-borderR--card);
     background-color: var(--a-whiteBg);
     font-family: "Inter", sans-serif;
+    box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1);
     transition:
       border-color 0.3s ease,
       box-shadow 0.3s ease;
 
+    @media (min-width: #{size.$tablet}) {
+      padding: 0 rem(16);
+      font-size: rem(16);
+      border: rem(1) solid var(--a-border-light);
+      border-radius: var(--a-borderR--input);
+      box-shadow: none;
+    }
+
     &:focus {
       outline: none;
       border-color: var(--a-border-primary);
-      box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
+      box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1),
+        0 0 0 2px rgba(191, 157, 124, 0.1);
+
+      @media (min-width: #{size.$tablet}) {
+        box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
+      }
     }
 
     &::placeholder {
@@ -237,9 +302,8 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    max-width: rem(320);
     min-height: rem(44);
-    margin: rem(20) 0 0 auto;
+    margin: rem(20) 0 0 0;
     padding: rem(12) rem(44);
     font-family: Inter, sans-serif;
     font-size: rem(18);
@@ -252,6 +316,11 @@
     opacity: 0.6;
     transition: all 0.3s ease;
 
+    @media (min-width: #{size.$tablet}) {
+      max-width: rem(320);
+      margin: rem(20) 0 0 auto;
+    }
+
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
@@ -259,12 +328,12 @@
   }
 
   .active {
-    background-color: var(--a-btnAccentBg);
+    background-color: var(--a-blackBg);
     opacity: 1;
     cursor: pointer;
 
     &:hover {
-      background-color: var(--a-blackBg);
+      background-color: var(--a-btnAccentBg);
     }
   }
 </style>
