@@ -73,13 +73,31 @@ export const useApi = () => {
         } else {
           throw new Error("Failed to refresh token");
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        const status = (error as { status?: number }).status;
+
         if (import.meta.dev) {
           console.error("❌ Ошибка обновления токена:", error);
+          if (status === 401) {
+            console.error(
+              "⚠️ Refresh token истек или недействителен. Требуется повторная авторизация.",
+            );
+          }
         }
+
         const authStore = useAuthStore();
         authStore.logout();
-        throw error;
+
+        // Создаем специальную ошибку для случая, когда refresh token недействителен
+        const refreshError = new Error(
+          status === 401
+            ? "Refresh token expired or invalid"
+            : "Failed to refresh token",
+        ) as Error & { status?: number; isRefreshError?: boolean };
+        refreshError.status = status;
+        refreshError.isRefreshError = true;
+
+        throw refreshError;
       } finally {
         isRefreshing = false;
         refreshPromise = null;
@@ -168,15 +186,46 @@ export const useApi = () => {
           }
 
           return await fetchApi<T>(request, options, retryCount + 1);
-        } catch {
+        } catch (refreshError: unknown) {
+          const refreshStatus = (refreshError as { status?: number }).status;
+          const isRefreshError = (refreshError as { isRefreshError?: boolean })
+            .isRefreshError;
+
           if (import.meta.dev) {
-            console.error(
-              "❌ Не удалось обновить токен, перенаправляем на логин",
-            );
+            if (refreshStatus === 401 || isRefreshError) {
+              console.error(
+                "❌ Refresh token истек или недействителен. Требуется повторная авторизация.",
+              );
+            } else {
+              console.error(
+                "❌ Не удалось обновить токен, перенаправляем на логин",
+              );
+            }
           }
-          // Если обновление токена не удалось, можно перенаправить на страницу входа
-          const router = useRouter();
-          router.push("/");
+
+          // Если refresh token тоже недействителен (401), не пробуем повторять запрос
+          // Просто выбрасываем ошибку, чтобы вызывающий код мог обработать её
+          if (refreshStatus === 401 || isRefreshError) {
+            // Создаем ошибку, указывающую на необходимость повторной авторизации
+            const authError: ApiError = {
+              message: "Сессия истекла. Требуется повторная авторизация.",
+              status: 401,
+              statusText: "Unauthorized",
+              data: { requiresReauth: true },
+            };
+            throw authError;
+          }
+
+          // Для других ошибок обновления токена также выбрасываем ошибку
+          const apiError: ApiError = {
+            message:
+              (refreshError as { message?: string })?.message ||
+              "Не удалось обновить токен",
+            status: refreshStatus || 401,
+            statusText: "Token refresh failed",
+            data: refreshError,
+          };
+          throw apiError;
         }
       }
 

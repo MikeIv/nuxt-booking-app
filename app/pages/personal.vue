@@ -71,12 +71,27 @@
       return;
     }
 
+    const roomGuests = bookingStore.guests.roomList[0];
+    const guestsData = roomGuests
+      ? {
+          adults: roomGuests.adults || 1,
+          children: roomGuests.children || 0,
+          childrenAges: roomGuests.childrenAges || [],
+        }
+      : { adults: 1, children: 0, childrenAges: [] };
+
+    // Получаем package_code из selectedServices, если они есть
+    // Пока оставляем пустым, так как selectedServices содержит только id, title, price
+    const packages: string[] = [];
+
     const bookingData = prepareBookingData(
       formData,
       date.value,
       selectedRoomType.value,
       selectedTariff.value,
       bookingStore.formatDate,
+      guestsData,
+      packages.length > 0 ? packages : undefined,
     );
 
     if (!bookingData) {

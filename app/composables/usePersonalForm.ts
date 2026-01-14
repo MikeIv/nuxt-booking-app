@@ -219,6 +219,12 @@ export const usePersonalForm = () => {
     selectedRoomType: string | null,
     selectedTariff: { rate_plan_code: string } | null,
     formatDate: (date: Date) => string,
+    guestsData?: {
+      adults: number;
+      children: number;
+      childrenAges: number[];
+    },
+    packages?: string[],
   ): BookingData | null => {
     if (!date || !selectedRoomType || !selectedTariff) return null;
 
@@ -245,12 +251,19 @@ export const usePersonalForm = () => {
       })),
     ];
 
+    const adults = guestsData?.adults ?? 1;
+    const children = guestsData?.children ?? 0;
+    const childrenAges = guestsData?.childrenAges ?? [];
+
     return {
       for_self: formData.forSelf,
       start_at: formatDate(date[0]),
       end_at: formatDate(date[1]),
+      adults,
+      children,
       payment: formData.paymentMethod || "",
       agreements: formData.agreement,
+      children_ages: childrenAges,
       additional: {
         start_at: formData.checkInTime
           ? formatDateTime(date[0], formData.checkInTime)
@@ -264,6 +277,7 @@ export const usePersonalForm = () => {
         {
           room_type_code: selectedRoomType,
           rate_type_code: selectedTariff.rate_plan_code,
+          packages: packages && packages.length > 0 ? packages : undefined,
           guests: allGuests,
         },
       ],

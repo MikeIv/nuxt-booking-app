@@ -25,8 +25,11 @@ interface BookingData {
   for_self: boolean;
   start_at: string;
   end_at: string;
+  adults: number;
+  children: number;
   payment: string;
   agreements: boolean;
+  children_ages: number[];
   additional: {
     start_at: string | null;
     end_at: string | null;
@@ -35,6 +38,7 @@ interface BookingData {
   rooms: {
     room_type_code: string;
     rate_type_code: string;
+    packages?: string[];
     guests: {
       surname: string;
       name: string;

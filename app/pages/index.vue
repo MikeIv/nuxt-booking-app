@@ -2,6 +2,14 @@
   definePageMeta({
     layout: "main",
   });
+
+  const bookingStore = useBookingStore();
+
+  // Сбрасываем состояние загрузки при монтировании главной страницы
+  onMounted(() => {
+    bookingStore.setLoading(false);
+    bookingStore.isServerRequest = false;
+  });
 </script>
 
 <template>

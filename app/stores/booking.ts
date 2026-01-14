@@ -625,8 +625,11 @@ export const useBookingStore = defineStore(
           for_self: bookingData.for_self,
           start_at: bookingData.start_at || "",
           end_at: bookingData.end_at || "",
+          adults: bookingData.adults ?? 1,
+          children: bookingData.children ?? 0,
           payment: bookingData.payment || "",
           agreements: bookingData.agreements,
+          children_ages: bookingData.children_ages || [],
           additional: {
             start_at: bookingData.additional?.start_at || null,
             end_at: bookingData.additional?.end_at || null,
@@ -635,6 +638,7 @@ export const useBookingStore = defineStore(
           rooms: bookingData.rooms.map((room) => ({
             room_type_code: room.room_type_code,
             rate_type_code: room.rate_type_code,
+            packages: room.packages,
             guests: room.guests.map((guest) => ({
               surname: guest.surname,
               name: guest.name,

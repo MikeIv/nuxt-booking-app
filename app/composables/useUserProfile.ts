@@ -306,6 +306,20 @@ export const useUserProfile = () => {
         });
       }
     } catch (err: unknown) {
+      const errorStatus = (err as { status?: number }).status;
+      const errorData = (err as { data?: { requiresReauth?: boolean } })?.data;
+
+      // Если сессия истекла (refresh token тоже недействителен), не показываем ошибку
+      // Просто используем данные из authStore.user, которые уже есть
+      if (errorStatus === 401 && errorData?.requiresReauth) {
+        if (import.meta.dev) {
+          console.warn("⚠️ Сессия истекла, используем данные из authStore");
+        }
+        // Не показываем ошибку пользователю, просто используем существующие данные
+        return;
+      }
+
+      // Для других ошибок показываем сообщение
       handleError(err, "Не удалось загрузить данные профиля");
     } finally {
       isLoadingProfile.value = false;
