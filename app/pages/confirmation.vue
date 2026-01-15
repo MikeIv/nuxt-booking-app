@@ -3,6 +3,7 @@
   import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import { useNights } from "~/composables/useNights";
+  import QRCode from "qrcode";
 
   definePageMeta({
     layout: "steps",
@@ -11,6 +12,7 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
@@ -67,12 +69,45 @@
     return createdBooking.value?.order?.pdf || null;
   });
 
+  // Ref для canvas элемента QR-кода
+  const qrCanvas = ref<HTMLCanvasElement | null>(null);
+
+  // Функция генерации QR-кода
+  const generateQRCode = async () => {
+    if (!qrCanvas.value || !pdfUrl.value) {
+      return;
+    }
+
+    try {
+      await QRCode.toCanvas(qrCanvas.value, pdfUrl.value, {
+        width: 140,
+        margin: 1,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      });
+    } catch (error) {
+      console.error("Ошибка при генерации QR-кода:", error);
+    }
+  };
+
+  // Генерируем QR-код при изменении pdfUrl
+  watch(pdfUrl, () => {
+    if (pdfUrl.value) {
+      nextTick(() => {
+        generateQRCode();
+      });
+    }
+  }, { immediate: true });
+
   const selectedEntry = computed<SelectedEntry | null>(() => {
     if (!selectedRoom.value || !selectedTariff.value) return null;
     
     return {
       roomIdx: 0,
       roomTitle: selectedRoom.value.title || "",
+      room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
       price: selectedTariff.value.price,
       title: selectedTariff.value.title || "",
@@ -227,12 +262,8 @@
                   />
                 </div>
               </div>
-              <div v-if="isBookingCreated" :class="$style.qrCode">
-                <!-- QR-код будет здесь -->
-                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="120" height="120" fill="white"/>
-                  <rect x="10" y="10" width="100" height="100" fill="black"/>
-                </svg>
+              <div v-if="isBookingCreated && pdfUrl" :class="$style.qrCode">
+                <canvas ref="qrCanvas" :class="$style.qrCanvas" />
               </div>
             </div>
           </div>
@@ -496,21 +527,21 @@
       order: 0;
       justify-content: flex-end;
     }
+  }
 
-    svg {
-      border: rem(1) solid var(--a-black);
-      width: rem(100);
-      height: rem(100);
+  .qrCanvas {
+    border: rem(1) solid var(--a-black);
+    width: rem(100);
+    height: rem(100);
 
-      @media (min-width: #{size.$tablet}) {
-        width: rem(120);
-        height: rem(120);
-      }
+    @media (min-width: #{size.$tablet}) {
+      width: rem(120);
+      height: rem(120);
+    }
 
-      @media (min-width: #{size.$desktopMin}) {
-        width: rem(140);
-        height: rem(140);
-      }
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(140);
+      height: rem(140);
     }
   }
 

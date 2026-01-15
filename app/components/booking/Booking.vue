@@ -63,6 +63,7 @@
     if (!validateForm()) return;
 
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
+    bookingStore.isServerRequest = true;
 
     try {
       const result = await bookingStore.search({ skipReset: true });
@@ -101,6 +102,10 @@
         detail,
         life: 3000,
       });
+      bookingStore.setLoading(false);
+      bookingStore.isServerRequest = false;
+    } finally {
+      // Дополнительная защита: гарантируем сброс состояния даже при неожиданных ошибках
       bookingStore.setLoading(false);
       bookingStore.isServerRequest = false;
     }

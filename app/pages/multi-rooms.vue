@@ -24,6 +24,7 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
@@ -49,10 +50,11 @@
       return;
     }
 
-    if (tar) {
+    if (tar && room.room_type_code && room.room_type_code.trim() !== "") {
       selectedByRoomIdx.value[roomIdx] = {
         roomIdx,
         roomTitle: room.title,
+        room_type_code: room.room_type_code,
         ratePlanCode: tar.rate_plan_code,
         price: tar.price,
         title: tar.title,
@@ -113,8 +115,9 @@
   };
 
   const handleContinue = () => {
-    // Обработка продолжения бронирования
-    router.push("/personal");
+    // Сохраняем выбранные номера в store перед переходом на страницу услуг
+    bookingStore.setSelectedMultiRooms(selectedByRoomIdx.value);
+    router.push("/services");
   };
 
   onMounted(async () => {
@@ -185,7 +188,7 @@
       />
     </div>
 
-    <section :class="$style.block">
+    <section :class="[$style.block, hasSummary && $style.blockWithSummary]">
       <div v-if="loading" :class="$style.loadingContainer">
         <div :class="$style.spinner" />
         <p>Загрузка тарифов...</p>
@@ -218,13 +221,15 @@
               />
             </div>
 
-            <BookingSummary
-              :selected-entries="selectedByRoomIdx"
-              :date="dateValue"
-              :nights="nights"
-              :booking-total="bookingTotal"
-              @continue="handleContinue"
-            />
+            <div :class="$style.summaryWrapper">
+              <BookingSummary
+                :selected-entries="selectedByRoomIdx"
+                :date="dateValue"
+                :nights="nights"
+                :booking-total="bookingTotal"
+                @continue="handleContinue"
+              />
+            </div>
           </div>
 
           <div v-else :class="$style.cards">
@@ -244,6 +249,16 @@
               :service="selectedService"
               :is-open="isServicePopupOpen"
               @close="closeServicePopup"
+            />
+          </div>
+
+          <div v-if="hasSummary" :class="$style.summaryWrapperMobile">
+            <BookingSummary
+              :selected-entries="selectedByRoomIdx"
+              :date="dateValue"
+              :nights="nights"
+              :booking-total="bookingTotal"
+              @continue="handleContinue"
             />
           </div>
         </div>
@@ -297,6 +312,18 @@
     }
   }
 
+  .blockWithSummary {
+    padding-bottom: rem(300);
+
+    @media (min-width: #{size.$tablet}) {
+      padding-bottom: rem(350);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      padding-bottom: rem(40);
+    }
+  }
+
   .twoCols {
     display: flex;
     flex-direction: column;
@@ -305,6 +332,24 @@
     @media (min-width: #{size.$desktopMin}) {
       flex-direction: row;
       align-items: flex-start;
+    }
+  }
+
+  .summaryWrapper {
+    display: none;
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: flex;
+      width: 33.3333%;
+      flex-shrink: 0;
+    }
+  }
+
+  .summaryWrapperMobile {
+    display: block;
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: none;
     }
   }
 
@@ -352,6 +397,10 @@
     flex-direction: column;
     gap: rem(32);
     margin-bottom: rem(40);
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(32);
+    }
   }
 
   @media (min-width: #{size.$desktopMin}) {

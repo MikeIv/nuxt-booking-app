@@ -24,6 +24,7 @@
     roomTariffs,
     date,
     selectedServices,
+    selectedMultiRooms,
   } = storeToRefs(bookingStore);
   const toast = useNotificationToast();
 
@@ -36,6 +37,7 @@
     initialGuestData,
     validateForm: validatePersonalForm,
     prepareBookingData,
+    prepareMultiBookingData,
   } = usePersonalForm();
 
   const { formData: userProfileData, fetchUserProfile } = useUserProfile();
@@ -52,6 +54,11 @@
     return validatePersonalForm(formData, errors);
   };
 
+  // Проверяем, есть ли выбранные номера из multi-rooms
+  const isMultiRoomsMode = computed(
+    () => Object.keys(selectedMultiRooms.value).length > 0,
+  );
+
   const onFormSubmit = async () => {
     if (!validateForm()) {
       toast.add({
@@ -62,52 +69,124 @@
       return;
     }
 
-    if (!date.value || !selectedRoomType.value || !selectedTariff.value) {
-      toast.add({
-        severity: "error",
-        summary: "Недостаточно данных для бронирования.",
-        life: 3000,
-      });
-      return;
-    }
+    // Проверяем режим мультибронирования
+    if (isMultiRoomsMode.value) {
+      if (!date.value || Object.keys(selectedMultiRooms.value).length === 0) {
+        toast.add({
+          severity: "error",
+          summary: "Недостаточно данных для бронирования.",
+          life: 3000,
+        });
+        return;
+      }
 
-    const bookingData = prepareBookingData(
-      formData,
-      date.value,
-      selectedRoomType.value,
-      selectedTariff.value,
-      bookingStore.formatDate,
-    );
+      // Получаем package_code из selectedServices, если они есть
+      // Пока оставляем пустым, так как selectedServices содержит только id, title, price
+      const packages: string[] = [];
 
-    if (!bookingData) {
-      toast.add({
-        severity: "error",
-        summary: "Ошибка при подготовке данных бронирования.",
-        life: 3000,
-      });
-      return;
-    }
+      const bookingData = prepareMultiBookingData(
+        formData,
+        date.value,
+        selectedMultiRooms.value,
+        bookingStore.formatDate,
+        bookingStore.guests.roomList,
+        packages.length > 0 ? packages : undefined,
+      );
 
-    try {
-      bookingStore.setLoading(true, "Создаём бронирование...");
-      await bookingStore.createBooking(bookingData);
-      toast.add({
-        severity: "success",
-        summary: "Бронирование успешно создано!",
-        life: 3000,
-      });
-      router.push("/confirmation");
-    } catch (error) {
-      console.error("Ошибка при создании бронирования:", error);
-      toast.add({
-        severity: "error",
-        summary: "Ошибка при создании бронирования.",
-        detail: bookingStore.error || "Произошла ошибка.",
-        life: 5000,
-      });
-    } finally {
-      bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      if (!bookingData) {
+        toast.add({
+          severity: "error",
+          summary: "Ошибка при подготовке данных бронирования.",
+          life: 3000,
+        });
+        return;
+      }
+
+      try {
+        bookingStore.setLoading(true, "Создаём бронирование...");
+        await bookingStore.createBooking(bookingData);
+        toast.add({
+          severity: "success",
+          summary: "Бронирование успешно создано!",
+          life: 3000,
+        });
+        await router.push("/confirmation");
+      } catch (error) {
+        console.error("Ошибка при создании бронирования:", error);
+        toast.add({
+          severity: "error",
+          summary: "Ошибка при создании бронирования.",
+          detail: bookingStore.error || "Произошла ошибка.",
+          life: 5000,
+        });
+      } finally {
+        bookingStore.setLoading(false);
+        bookingStore.isServerRequest = false;
+      }
+    } else {
+      // Режим одного номера
+      if (!date.value || !selectedRoomType.value || !selectedTariff.value) {
+        toast.add({
+          severity: "error",
+          summary: "Недостаточно данных для бронирования.",
+          life: 3000,
+        });
+        return;
+      }
+
+      const roomGuests = bookingStore.guests.roomList[0];
+      const guestsData = roomGuests
+        ? {
+            adults: roomGuests.adults || 1,
+            children: roomGuests.children || 0,
+            childrenAges: roomGuests.childrenAges || [],
+          }
+        : { adults: 1, children: 0, childrenAges: [] };
+
+      // Получаем package_code из selectedServices, если они есть
+      // Пока оставляем пустым, так как selectedServices содержит только id, title, price
+      const packages: string[] = [];
+
+      const bookingData = prepareBookingData(
+        formData,
+        date.value,
+        selectedRoomType.value,
+        selectedTariff.value,
+        bookingStore.formatDate,
+        guestsData,
+        packages.length > 0 ? packages : undefined,
+      );
+
+      if (!bookingData) {
+        toast.add({
+          severity: "error",
+          summary: "Ошибка при подготовке данных бронирования.",
+          life: 3000,
+        });
+        return;
+      }
+
+      try {
+        bookingStore.setLoading(true, "Создаём бронирование...");
+        await bookingStore.createBooking(bookingData);
+        toast.add({
+          severity: "success",
+          summary: "Бронирование успешно создано!",
+          life: 3000,
+        });
+        await router.push("/confirmation");
+      } catch (error) {
+        console.error("Ошибка при создании бронирования:", error);
+        toast.add({
+          severity: "error",
+          summary: "Ошибка при создании бронирования.",
+          detail: bookingStore.error || "Произошла ошибка.",
+          life: 5000,
+        });
+      } finally {
+        bookingStore.setLoading(false);
+        bookingStore.isServerRequest = false;
+      }
     }
   };
 
@@ -149,16 +228,22 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
   }
 
   const selectedEntry = computed<SelectedEntry | null>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms не используем selectedEntry
+      return null;
+    }
     if (!selectedRoom.value || !selectedTariff.value) return null;
     return {
       roomIdx: 0,
       roomTitle: selectedRoom.value.title || "",
+      room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
       price: selectedTariff.value.price,
       title: selectedTariff.value.title || "",
@@ -167,12 +252,33 @@
 
   // Преобразуем selectedEntry в формат для BookingSummary
   const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms используем данные из store
+      return selectedMultiRooms.value;
+    }
+    // Для одного номера
     const entry = selectedEntry.value;
     if (!entry) return {} as Record<number, SelectedEntry>;
     return { 0: entry };
   });
 
   const bookingTotal = computed(() => {
+    if (isMultiRoomsMode.value) {
+      // Для multi-rooms считаем сумму всех номеров
+      const roomsTotal = Object.values(selectedMultiRooms.value).reduce(
+        (sum, e) => {
+          const perNight = e.price || 0;
+          return sum + perNight * nights.value;
+        },
+        0,
+      );
+      const servicesTotal = selectedServices.value.reduce(
+        (sum, s) => sum + s.price,
+        0,
+      );
+      return roomsTotal + servicesTotal;
+    }
+    // Для одного номера
     if (!selectedTariff.value?.price) return 0;
     const roomTotal = selectedTariff.value.price * nights.value;
     const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
@@ -287,25 +393,40 @@
     bookingStore.setLoading(false);
     bookingStore.isServerRequest = false;
 
-    if (!selectedRoom.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Номер не выбран",
-        life: 3000,
-      });
-      router.push("/rooms");
-      return;
-    }
-    if (!selectedTariff.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Тариф не выбран",
-        life: 3000,
-      });
-      router.push("/rooms");
-      return;
+    // Проверяем режим мультибронирования
+    if (isMultiRoomsMode.value) {
+      if (Object.keys(selectedMultiRooms.value).length === 0) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Номера не выбраны",
+          life: 3000,
+        });
+        await router.push("/multi-rooms");
+        return;
+      }
+    } else {
+      // Режим одного номера
+      if (!selectedRoom.value) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Номер не выбран",
+          life: 3000,
+        });
+        await router.push("/rooms");
+        return;
+      }
+      if (!selectedTariff.value) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Тариф не выбран",
+          life: 3000,
+        });
+        await router.push("/rooms");
+        return;
+      }
     }
 
     await fillFormWithUserData();
@@ -512,7 +633,7 @@
           </div>
           <div :class="$style.summaryWrapper">
             <BookingSummary
-              v-if="selectedEntry"
+              v-if="selectedEntry || isMultiRoomsMode"
               :selected-entries="selectedByRoomIdx"
               :date="date"
               :nights="nights"
