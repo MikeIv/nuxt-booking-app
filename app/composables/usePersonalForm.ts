@@ -284,6 +284,118 @@ export const usePersonalForm = () => {
     };
   };
 
+  const prepareMultiBookingData = (
+    formData: PersonalFormData,
+    date: [Date, Date] | null,
+    selectedMultiRooms: Record<
+      number,
+      {
+        roomIdx: number;
+        roomTitle: string;
+        room_type_code: string;
+        ratePlanCode: string;
+        price: number | null | undefined;
+        title: string;
+      }
+    >,
+    formatDate: (date: Date) => string,
+    guestsList?: Array<{
+      adults: number;
+      children: number;
+      childrenAges: number[];
+    }>,
+    packages?: string[],
+  ): BookingData | null => {
+    if (!date || Object.keys(selectedMultiRooms).length === 0) return null;
+
+    // Сортируем по roomIdx для корректного порядка
+    const sortedEntries = Object.values(selectedMultiRooms).sort(
+      (a, b) => a.roomIdx - b.roomIdx,
+    );
+
+    // Вычисляем общее количество взрослых и детей
+    const totalAdults = sortedEntries.reduce((sum, entry) => {
+      const roomGuests = guestsList?.[entry.roomIdx];
+      return sum + (roomGuests?.adults || 0);
+    }, 0);
+
+    const totalChildren = sortedEntries.reduce((sum, entry) => {
+      const roomGuests = guestsList?.[entry.roomIdx];
+      return sum + (roomGuests?.children || 0);
+    }, 0);
+
+    const allChildrenAges = sortedEntries.reduce((ages, entry) => {
+      const roomGuests = guestsList?.[entry.roomIdx];
+      return ages.concat(roomGuests?.childrenAges || []);
+    }, [] as number[]);
+
+    // Создаем массив комнат с гостями
+    // Для каждого номера используем основного гостя
+    // Для первого номера также добавляем дополнительных гостей
+    const rooms = sortedEntries.map((entry, index) => {
+      const isFirstRoom = index === 0;
+
+      // Базовый массив гостей: основной гость
+      const baseGuests = [
+        {
+          name: formData.mainGuest.firstName,
+          surname: formData.mainGuest.lastName,
+          middle_name: formData.mainGuest.middleName || null,
+          phone: formData.mainGuest.phone,
+          email: formData.mainGuest.email,
+          nationality: formData.mainGuest.citizenship || "",
+          sms_confirmation: isFirstRoom ? formData.smsConfirmation : false,
+          email_subscribe: isFirstRoom ? formData.specialOffers : false,
+        },
+      ];
+
+      // Для первого номера добавляем дополнительных гостей
+      const additionalGuests = isFirstRoom
+        ? formData.additionalGuests.map((guest) => ({
+            name: guest.firstName,
+            surname: guest.lastName,
+            middle_name: guest.middleName || null,
+            phone: guest.phone,
+            email: guest.email,
+            nationality: guest.citizenship || "",
+            sms_confirmation: false,
+            email_subscribe: false,
+          }))
+        : [];
+
+      // Объединяем гостей
+      const guests = [...baseGuests, ...additionalGuests];
+
+      return {
+        room_type_code: entry.room_type_code,
+        rate_type_code: entry.ratePlanCode,
+        packages: packages && packages.length > 0 ? packages : undefined,
+        guests,
+      };
+    });
+
+    return {
+      for_self: formData.forSelf,
+      start_at: formatDate(date[0]),
+      end_at: formatDate(date[1]),
+      adults: totalAdults,
+      children: totalChildren,
+      payment: formData.paymentMethod || "",
+      agreements: formData.agreement,
+      children_ages: allChildrenAges,
+      additional: {
+        start_at: formData.checkInTime
+          ? formatDateTime(date[0], formData.checkInTime)
+          : null,
+        end_at: formData.checkOutTime
+          ? formatDateTime(date[1], formData.checkOutTime)
+          : null,
+        comment: formData.comment || null,
+      },
+      rooms,
+    };
+  };
+
   return {
     formFields,
     paymentMethods,
@@ -296,5 +408,6 @@ export const usePersonalForm = () => {
     validateForm,
     formatDateTime,
     prepareBookingData,
+    prepareMultiBookingData,
   };
 };

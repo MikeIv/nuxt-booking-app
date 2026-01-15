@@ -8,6 +8,7 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
@@ -321,16 +322,26 @@
     left: 0;
     right: 0;
     bottom: 0;
+    width: calc(100% - #{rem(40)});
+    max-width: 100%;
     margin: 0 rem(20);
-    padding: rem(12) rem(16) rem(16);
+    padding: 0;
     background: var(--a-whiteBg);
-    box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
-    border-radius: var(--a-borderR--card) var(--a-borderR--card) 0 0;
+    box-shadow: 4px 4px 30px rgba(0, 0, 0, 0.1);
+    border-radius: rem(40) rem(40) 0 0;
     z-index: z.z("booking-summary");
+
+    @media (min-width: 769px) {
+      width: rem(687);
+      max-width: rem(687);
+      margin-left: auto;
+      margin-right: auto;
+    }
 
     @media (min-width: #{size.$desktopMin}) {
       position: static;
       width: 100%;
+      max-width: 100%;
       margin: 0;
       padding: 0;
       box-shadow: none;
@@ -342,8 +353,8 @@
   .pageSummaryInner {
     background: var(--a-whiteBg);
     box-shadow: none;
-    border-radius: 0;
-    padding: 0;
+    border-radius: rem(40) rem(40) 0 0;
+    padding: rem(30) rem(30) rem(16);
 
     @media (min-width: #{size.$desktopMin}) {
       position: sticky;
@@ -365,13 +376,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: rem(32);
-    height: rem(32);
+    width: rem(40);
+    height: rem(40);
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
     background: transparent;
     cursor: pointer;
+    flex-shrink: 0;
 
     @media (min-width: #{size.$desktopMin}) {
       display: none;
@@ -394,24 +406,38 @@
     font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(24);
+    }
   }
 
   .pageSummaryDates {
     display: none;
     margin-bottom: rem(12);
     font-family: "Lora", serif;
-    font-size: rem(18);
+    font-size: rem(20);
     font-weight: 600;
     color: var(--a-text-dark);
+    text-align: center;
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: block;
+    }
   }
 
   .pageSummaryDatesMobile {
     display: block;
     margin-bottom: rem(12);
     font-family: "Lora", serif;
-    font-size: rem(18);
+    font-size: rem(20);
     font-weight: 600;
     color: var(--a-text-dark);
+    text-align: center;
 
     @media (min-width: #{size.$desktopMin}) {
       display: none;
@@ -687,38 +713,85 @@
     gap: rem(12);
     margin-bottom: rem(12);
     font-family: "Lora", serif;
-    font-size: rem(20);
+    font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(20);
+    }
   }
 
   .pageSummaryGrandTotal strong {
     font-family: "Lora", serif;
-    font-size: rem(24);
+    font-size: rem(28);
     font-weight: 600;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(36);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(24);
+    }
   }
 
   .pageSummaryFooter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: rem(12);
+    flex-wrap: wrap;
+
+    @media (min-width: #{size.$desktopMin}) {
+      justify-content: space-between;
+    }
   }
 
   .pageSummaryTotal {
-    display: flex;
+    display: none;
     align-items: center;
     gap: rem(8);
     font-family: Inter, sans-serif;
     font-size: rem(16);
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: flex;
+    }
   }
 
   .pageContinueButton {
-    padding: rem(10) rem(16);
-    border-radius: var(--a-borderR--btn);
+    width: rem(275) !important;
+    height: rem(67) !important;
+    min-width: rem(275) !important;
+    max-width: rem(275) !important;
+    padding: 0 !important;
+    border-radius: rem(20);
     background-color: var(--a-blackBg);
     color: var(--a-white);
     border: none;
     cursor: pointer;
+    font-family: Inter, sans-serif;
+    font-size: rem(24);
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(275) !important;
+      height: rem(67) !important;
+      min-width: rem(275) !important;
+      max-width: rem(275) !important;
+      padding: 0 !important;
+      border-radius: rem(20);
+      font-size: rem(24);
+    }
   }
 </style>

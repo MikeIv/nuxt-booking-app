@@ -42,6 +42,27 @@
     return cheapestTariff.value ? [cheapestTariff.value] : [];
   });
 
+  const hasTariffs = computed(() => {
+    return (props.room.tariffs?.length || 0) > 0;
+  });
+
+  // Отладочная информация (только в dev режиме)
+  if (import.meta?.env?.DEV) {
+    watch(
+      () => [props.room.tariffs, visibleTariffs.value, hasTariffs.value],
+      ([tariffs, visible, has]) => {
+        console.log("MultiCard tariffs debug:", {
+          roomTitle: props.room.title,
+          tariffsCount: tariffs?.length || 0,
+          visibleCount: visible?.length || 0,
+          hasTariffs: has,
+          showAllTariffs: showAllTariffs.value,
+        });
+      },
+      { immediate: true },
+    );
+  }
+
   const roomsCount = computed(() => {
     return guests.value?.roomList
       ? guests.value.roomList.length
@@ -137,69 +158,75 @@
 
 <template>
   <section :class="$style.card">
-    <header :class="$style.carouselWrapper">
-      <BookingCarousel
-        :images="room.photos || []"
-        :alt-prefix="'Фото номера'"
-        :alt-text="room.title"
-        height="326px"
-      />
-    </header>
+    <div :class="$style.cardContent">
+      <div :class="$style.topSection">
+        <header :class="$style.carouselWrapper">
+          <BookingCarousel
+            :images="room.photos || []"
+            :alt-prefix="'Фото номера'"
+            :alt-text="room.title"
+            height="326px"
+          />
+        </header>
 
-    <main :class="$style.cardDetails">
-      <div :class="$style.wrapperInfoBlock">
-        <div :class="$style.roomInfo">
-          <span :class="$style.title">{{ room.title }}</span>
-          <Button
-            unstyled
-            :class="$style.infoButton"
-            data-popup-button
-            @click="openPopup($event)"
-          >
-            <UIcon
-              name="i-heroicons-chevron-down-20-solid"
-              :class="$style.chevronIcon"
-            />
-          </Button>
-        </div>
+        <main :class="$style.cardDetails">
+          <div :class="$style.cardDetailsTop">
+            <div :class="$style.wrapperInfoBlock">
+              <div :class="$style.roomInfo">
+                <span :class="$style.title">{{ room.title }}</span>
+                <Button
+                  unstyled
+                  :class="$style.infoButton"
+                  data-popup-button
+                  @click="openPopup($event)"
+                >
+                  <UIcon
+                    name="i-heroicons-chevron-down-20-solid"
+                    :class="$style.chevronIcon"
+                  />
+                </Button>
+              </div>
 
-        <div :class="$style.description">
-          <div :class="$style.item">
-            <UIcon name="i-persons" :class="$style.icon" />
-            <span :class="$style.itemTitle"
-              >До {{ formatCount(room.max_occupancy, "capacity") }}</span
+              <div :class="$style.description">
+                <div :class="$style.item">
+                  <UIcon name="i-persons" :class="$style.icon" />
+                  <span :class="$style.itemTitle"
+                    >До {{ formatCount(room.max_occupancy, "capacity") }}</span
+                  >
+                </div>
+                <div :class="$style.item">
+                  <UIcon name="i-square" :class="$style.icon" />
+                  <span :class="$style.itemTitle">{{ room.square }} м²</span>
+                </div>
+                <div :class="$style.item">
+                  <UIcon name="i-dash-square" :class="$style.icon" />
+                  <span :class="$style.itemTitle">{{
+                    formatCount(room.rooms, "chamber")
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div :class="$style.amenitiesSection">
+          <ul :class="$style.amenitiesList">
+            <li
+              v-for="(amenity, index) in visibleAmenities"
+              :key="index"
+              :class="$style.amenityItem"
             >
+              <span>{{ amenity.title }}</span>
+            </li>
+            <button
+              v-if="!expanded && (room.amenities?.length || 0) > 4"
+              :class="$style.amenitiesListShow"
+              @click="_toggleExpand"
+            >
+              + ещё {{ (room.amenities?.length || 0) - 4 }}
+            </button>
+            </ul>
           </div>
-          <div :class="$style.item">
-            <UIcon name="i-square" :class="$style.icon" />
-            <span :class="$style.itemTitle">{{ room.square }} м²</span>
           </div>
-          <div :class="$style.item">
-            <UIcon name="i-dash-square" :class="$style.icon" />
-            <span :class="$style.itemTitle">{{
-              formatCount(room.rooms, "chamber")
-            }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div :class="$style.amenitiesSection">
-        <ul :class="$style.amenitiesList">
-          <li
-            v-for="(amenity, index) in visibleAmenities"
-            :key="index"
-            :class="$style.amenityItem"
-          >
-            <span>{{ amenity.title }}</span>
-          </li>
-          <button
-            v-if="!expanded && (room.amenities?.length || 0) > 4"
-            :class="$style.amenitiesListShow"
-            @click="_toggleExpand"
-          >
-            + ещё {{ (room.amenities?.length || 0) - 4 }}
-          </button>
-        </ul>
+        </main>
       </div>
 
       <div :class="$style.tariffBlock">
@@ -211,7 +238,7 @@
           />
         </div>
 
-        <section v-if="visibleTariffs.length" :class="$style.tariffsList">
+        <section v-if="hasTariffs && visibleTariffs.length > 0" :class="$style.tariffsList">
           <div v-for="tar in visibleTariffs" :key="tar.rate_plan_code">
             <div :class="$style.otherTariffInfo">
               <span :class="$style.tariffName">{{ tar.title }}</span>
@@ -224,6 +251,54 @@
               </BookingInfoButtonWithPopover>
             </div>
 
+            <div :class="$style.tariffDetails">
+              <div :class="$style.tariffDetailItem">
+                <UIcon
+                  name="i-fork-knife"
+                  :class="[
+                    $style.tariffDetailIcon,
+                    { [$style.tariffDetailIconPenalty]: !tar.has_food },
+                  ]"
+                />
+                <span :class="$style.tariffDetailText">
+                  {{ tar.has_food ? "Питание включено" : "Питание не включено" }}
+                </span>
+              </div>
+              <div :class="$style.tariffDetailItem">
+                <UIcon
+                  name="i-cancellation"
+                  :class="[
+                    $style.tariffDetailIcon,
+                    { [$style.tariffDetailIconPenalty]: !tar.cancellation_free },
+                  ]"
+                />
+                <span :class="$style.tariffDetailText">
+                  {{ tar.cancellation_free ? "Бесплатная отмена" : "Отмена со штрафом" }}
+                </span>
+                <BookingInfoButtonWithPopover
+                  v-if="tar.cancellation_free"
+                  :popover-id="`cancellation-${tar.rate_plan_code}`"
+                  size="small"
+                  :aria-label="`Информация об отмене тарифа ${tar.title}`"
+                >
+                  <BookingCancellationPopoverContent
+                    :title="tar.cancellation_popover?.title"
+                    :description="tar.cancellation_popover?.description"
+                  />
+                </BookingInfoButtonWithPopover>
+              </div>
+              <div v-if="tar.payment_types && tar.payment_types.length > 0" :class="$style.tariffDetailItem">
+                <UIcon name="i-payment" :class="$style.tariffDetailIcon" />
+                <span :class="$style.tariffDetailText">
+                  {{ tar.payment_types.join(", ") }}
+                </span>
+              </div>
+            </div>
+
+            <div :class="$style.averagePriceSection">
+              <span :class="$style.averagePriceLabel">Средняя стоимость за 1 ночь</span>
+            </div>
+
             <div :class="$style.confirmList">
               <div
                 v-for="idx in roomsCount"
@@ -233,7 +308,31 @@
                 <div :class="$style.confirmLeft">
                   <div :class="$style.confirmText">
                     <div :class="$style.confirmTitle">Номер {{ idx }}</div>
-                    <div :class="$style.confirmPrice">{{ tar.price }} ₽</div>
+                    <div :class="$style.confirmPriceWrapper">
+                      <div :class="$style.confirmGuestsIcons">
+                        <UIcon
+                          v-for="n in getRoomGuests(idx - 1).adults"
+                          :key="`adult-${idx}-${n}`"
+                          name="i-icon-man"
+                          :class="$style.confirmGuestIcon"
+                          aria-hidden="true"
+                        />
+                        <UIcon
+                          v-if="getRoomGuests(idx - 1).children > 0"
+                          name="i-icon-plus-person"
+                          :class="$style.confirmGuestIconPlus"
+                          aria-hidden="true"
+                        />
+                        <UIcon
+                          v-for="n in getRoomGuests(idx - 1).children"
+                          :key="`child-${idx}-${n}`"
+                          name="i-icon-child"
+                          :class="$style.confirmGuestIcon"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div :class="$style.confirmPrice">{{ tar.price?.toLocaleString("ru-RU") || 0 }} ₽</div>
+                    </div>
                   </div>
                   <BookingInfoButtonWithPopover
                     :popover-id="`${idx - 1}-${tar.rate_plan_code}`"
@@ -301,7 +400,7 @@
                       isSelected(idx - 1, tar) && $style.selectButtonActive,
                     ]"
                     @click="onSelectTariff(idx - 1, tar)"
-                    >Выбрать</Button
+                    >{{ isSelected(idx - 1, tar) ? "Выбрано" : "Выбрать" }}</Button
                   >
                 </div>
               </div>
@@ -329,7 +428,7 @@
           </Button>
         </div>
       </div>
-    </main>
+    </div>
     <BookingRoomPopup :room="room" :is-open="isPopupOpen" @close="closePopup" />
   </section>
 </template>
@@ -342,24 +441,73 @@
     display: flex;
     flex-direction: column;
     min-width: rem(200);
-    padding: rem(18) rem(14);
-    box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
-    border-radius: var(--a-borderR--card);
+    padding: 0;
+    background: var(--a-whiteBg);
+    box-shadow: 4px 4px 30px rgba(0, 0, 0, 0.1);
+    border-radius: rem(22);
     overflow: hidden;
+  }
+
+  .cardContent {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topSection {
+    display: flex;
+    flex-direction: column;
+
+    @media (min-width: 1025px) {
+      flex-direction: row;
+      align-items: flex-start;
+    }
   }
 
   .carouselWrapper {
     display: flex;
     width: 100%;
     height: 100%;
-    margin-bottom: rem(20);
-    min-height: rem(326);
+    margin-bottom: 0;
+    min-height: rem(202);
+
+    @media (min-width: #{size.$tablet}) {
+      min-height: rem(281);
+    }
+
+    @media (min-width: 1025px) {
+      width: rem(557);
+      flex-shrink: 0;
+      min-height: rem(281);
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      width: rem(452);
+      min-height: rem(281);
+    }
   }
 
   .cardDetails {
     display: flex;
     flex-direction: column;
     width: 100%;
+
+    @media (min-width: 1025px) {
+      flex: 1;
+      flex-direction: column;
+      padding: rem(22) 0 0 rem(22);
+    }
+  }
+
+  .cardDetailsTop {
+    display: flex;
+    flex-direction: column;
+
+    @media (min-width: 1025px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      padding: 0 rem(22) 0 0;
+    }
   }
 
   .wrapperInfoBlock {
@@ -367,7 +515,18 @@
     display: flex;
     flex-direction: column;
     gap: rem(16);
-    padding: 0 rem(16);
+    padding: rem(22) rem(22) 0;
+
+    @media (min-width: #{size.$tablet}) {
+      padding: rem(22) rem(22) 0;
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      flex: 0 0 auto;
+      padding: 0;
+      gap: rem(16);
+      min-width: rem(181);
+    }
   }
 
   .roomInfo {
@@ -386,6 +545,11 @@
     @media (min-width: #{size.$tablet}) {
       font-size: rem(24);
     }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(24);
+      line-height: 1.2;
+    }
   }
 
   .infoButton {
@@ -393,13 +557,23 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    width: rem(32);
-    height: rem(32);
+    width: rem(34);
+    height: rem(34);
     padding: 0;
     border: rem(1) solid var(--a-border-dark);
     border-radius: 50%;
     background: transparent;
     cursor: pointer;
+
+    @media (min-width: #{size.$tablet}) {
+      width: rem(40.75);
+      height: rem(41);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(32);
+      height: rem(32);
+    }
   }
 
   .chevronIcon {
@@ -411,7 +585,15 @@
   .description {
     display: flex;
     flex-wrap: wrap;
-    gap: rem(12);
+    gap: rem(10);
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(10);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      gap: rem(10) rem(25);
+    }
   }
 
   .item {
@@ -439,7 +621,17 @@
     flex-direction: column;
     gap: rem(16);
     margin-top: rem(20);
-    padding: 0 rem(16) rem(8);
+    padding: 0 rem(22) rem(20);
+
+    @media (min-width: #{size.$tablet}) {
+      padding: 0 rem(22) rem(20);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      margin-top: rem(20);
+      padding: rem(22);
+      border-top: 1px solid var(--a-border-primary);
+    }
   }
 
   .tariffTitle {
@@ -466,6 +658,14 @@
     font-size: rem(20);
     font-weight: 600;
     color: var(--a-text-dark);
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(24);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(24);
+    }
   }
 
   .tariffPrice {
@@ -490,7 +690,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: rem(12) 0;
+    padding: rem(16) 0;
+    border-bottom: 1px solid var(--a-border-primary);
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 
   .confirmLeft {
@@ -503,12 +708,38 @@
   .confirmText {
     display: flex;
     flex-direction: column;
+    gap: rem(8);
   }
 
   .confirmTitle {
     font-family: Inter, sans-serif;
     font-size: rem(12);
     color: var(--a-text-accent);
+  }
+
+  .confirmPriceWrapper {
+    display: flex;
+    align-items: center;
+    gap: rem(12);
+  }
+
+  .confirmGuestsIcons {
+    display: flex;
+    align-items: center;
+    gap: rem(4);
+  }
+
+  .confirmGuestIcon {
+    width: rem(20);
+    height: rem(20);
+    color: var(--a-text-dark);
+  }
+
+  .confirmGuestIconPlus {
+    width: rem(16);
+    height: rem(16);
+    color: var(--a-text-light);
+    margin: 0 rem(2);
   }
 
   .confirmPrice {
@@ -538,16 +769,29 @@
   }
 
   .selectButton {
-    padding: rem(8) rem(14);
+    padding: rem(8) rem(16);
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
     color: var(--a-white);
     border: none;
     cursor: pointer;
+    font-family: Inter, sans-serif;
+    font-size: rem(14);
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--a-btnAccentBg);
+    }
   }
 
   .selectButtonActive {
     background-color: var(--a-btnAccentBg);
+    color: var(--a-white);
+
+    &:hover {
+      background-color: var(--a-blackBg);
+    }
   }
 
   .allTariffs {
@@ -619,16 +863,94 @@
     margin-bottom: rem(20);
   }
 
+  .tariffDetails {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+    margin-bottom: rem(20);
+    padding-bottom: rem(20);
+    border-bottom: 1px solid var(--a-border-primary);
+  }
+
+  .tariffDetailItem {
+    display: flex;
+    align-items: center;
+    gap: rem(12);
+  }
+
+  .tariffDetailIcon {
+    width: rem(20);
+    height: rem(20);
+    flex-shrink: 0;
+    color: #178b08;
+  }
+
+  .tariffDetailIconPenalty {
+    color: #9ca3af;
+  }
+
+  .tariffDetailText {
+    font-family: Inter, sans-serif;
+    font-size: rem(16);
+    color: var(--a-text-dark);
+    flex: 1;
+
+    @media (min-width: #{size.$tablet}) {
+      font-size: rem(18);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      font-size: rem(18);
+    }
+  }
+
+  .averagePriceSection {
+    margin-bottom: rem(12);
+  }
+
+  .averagePriceLabel {
+    font-family: Inter, sans-serif;
+    font-size: rem(12);
+    font-weight: 500;
+    color: var(--a-text-light);
+  }
+
   .amenitiesSection {
     margin: rem(20) 0 0 0;
-    padding: 0 rem(16) rem(20);
+    padding: 0 rem(22) rem(20);
     border-bottom: 1px solid var(--a-border-primary);
+
+    @media (min-width: #{size.$tablet}) {
+      padding: 0 rem(22) rem(20);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      flex: 1;
+      margin: 0;
+      padding: 0 0 0 rem(16);
+      border-bottom: none;
+      align-self: flex-start;
+    }
   }
 
   .amenitiesList {
     display: flex;
     flex-wrap: wrap;
-    gap: rem(12);
+    gap: rem(10) rem(16);
+
+    @media (min-width: #{size.$tablet}) {
+      gap: rem(16);
+    }
+
+    @media (min-width: #{size.$desktopMin}) {
+      gap: rem(8) rem(16);
+      max-width: rem(263);
+      align-content: flex-start;
+    }
+
+    @media (min-width: #{size.$desktopMedium}) {
+      max-width: rem(263);
+    }
   }
 
   .amenitiesListShow {

@@ -33,6 +33,15 @@ export interface SelectedService {
   price: number;
 }
 
+export interface SelectedMultiRoomEntry {
+  roomIdx: number;
+  roomTitle: string;
+  room_type_code: string;
+  ratePlanCode: string;
+  price: number | null | undefined;
+  title: string;
+}
+
 export const useBookingStore = defineStore(
   "booking",
   () => {
@@ -60,6 +69,7 @@ export const useBookingStore = defineStore(
     const createdBooking = ref<BookingResponse | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
+    const selectedMultiRooms = ref<Record<number, SelectedMultiRoomEntry>>({});
 
     function addService(service: SelectedService) {
       if (!selectedServices.value.find((s) => s.id === service.id)) {
@@ -80,6 +90,16 @@ export const useBookingStore = defineStore(
 
     function setCurrentBookingDetails(booking: BookingHistoryItem | null) {
       currentBookingDetails.value = booking;
+    }
+
+    function setSelectedMultiRooms(
+      rooms: Record<number, SelectedMultiRoomEntry>,
+    ) {
+      selectedMultiRooms.value = { ...rooms };
+    }
+
+    function clearSelectedMultiRooms() {
+      selectedMultiRooms.value = {};
     }
 
     const totalGuests = computed(() => {
@@ -154,6 +174,10 @@ export const useBookingStore = defineStore(
       cancellation_description?: string | null;
       payment_types?: string[];
       description?: string | null;
+      cancellation_popover?: {
+        title?: string;
+        description?: string;
+      };
       group?: {
         id: number;
         title: string;
@@ -241,22 +265,42 @@ export const useBookingStore = defineStore(
 
     const mapTariffs = (tariffs?: ApiRoomTariff[]): RoomTariff[] => {
       if (!tariffs || tariffs.length === 0) return [];
-      return tariffs.map((tariff) => ({
-        rate_plan_code: tariff.rate_plan_code,
-        title: tariff.title,
-        price:
-          typeof tariff.price === "string"
-            ? Number(tariff.price)
-            : tariff.price,
-        price_for_register: tariff.price_for_register,
-        packages: tariff.packages ?? [],
-        has_food: tariff.has_food,
-        cancellation_free: tariff.cancellation_free,
-        payment_types: tariff.payment_types ?? [],
-        // Используем cancellation_description, если description не указан
-        description:
-          tariff.description ?? tariff.cancellation_description ?? null,
-      }));
+      return tariffs.map((tariff) => {
+        // Формируем cancellation_popover из cancellation_description, если он есть
+        let cancellation_popover:
+          | { title?: string; description?: string }
+          | undefined;
+        if (tariff.cancellation_popover) {
+          cancellation_popover = tariff.cancellation_popover;
+        } else if (
+          tariff.cancellation_description &&
+          tariff.cancellation_free
+        ) {
+          // Если есть cancellation_description и отмена бесплатная, создаем popover
+          cancellation_popover = {
+            title: "Бесплатная отмена",
+            description: tariff.cancellation_description,
+          };
+        }
+
+        return {
+          rate_plan_code: tariff.rate_plan_code,
+          title: tariff.title,
+          price:
+            typeof tariff.price === "string"
+              ? Number(tariff.price)
+              : tariff.price,
+          price_for_register: tariff.price_for_register,
+          packages: tariff.packages ?? [],
+          has_food: tariff.has_food,
+          cancellation_free: tariff.cancellation_free,
+          payment_types: tariff.payment_types ?? [],
+          // Используем cancellation_description, если description не указан
+          description:
+            tariff.description ?? tariff.cancellation_description ?? null,
+          cancellation_popover,
+        };
+      });
     };
 
     const mapRoom = (room: ApiRoomType, group?: ApiGroupedRoom): Room => {
@@ -506,11 +550,61 @@ export const useBookingStore = defineStore(
         Array.isArray(payload.rooms) &&
         "filters" in payload
       ) {
-        const groupedPayload = payload as ApiGroupedPayload;
-        return processGroupedRooms(
-          groupedPayload.rooms,
-          groupedPayload.filters,
+        // Проверяем, является ли это grouped форматом (есть beds или room_type_codes)
+        // или ungrouped форматом (rooms уже финальные объекты с тарифами)
+        // Для безопасности проверяем первый непустой элемент массива
+        const firstRoom = payload.rooms.find(
+          (room) => room !== null && room !== undefined,
         );
+
+        // Если массив пустой, обрабатываем как ungrouped (безопасный fallback)
+        if (!firstRoom) {
+          const ungroupedPayload = payload as ApiUngroupedPayload;
+          return {
+            available: false,
+            rooms: [],
+            packages: ungroupedPayload.packages ?? [],
+            filters: ungroupedPayload.filters ?? {
+              beds: [],
+              views: [],
+              balconies: [],
+            },
+            groupedByBed: false,
+            rawPayload: payload,
+          };
+        }
+
+        const isGroupedFormat =
+          "beds" in firstRoom || "room_type_codes" in firstRoom;
+
+        if (isGroupedFormat) {
+          // Это grouped формат - обрабатываем как группированные комнаты
+          const groupedPayload = payload as ApiGroupedPayload;
+          return processGroupedRooms(
+            groupedPayload.rooms,
+            groupedPayload.filters,
+          );
+        } else {
+          // Это ungrouped формат - rooms уже финальные объекты с тарифами
+          // Используется для мультибронирования (multi_booking_mode: true)
+          const ungroupedPayload = payload as ApiUngroupedPayload;
+          const rooms = (ungroupedPayload.rooms ?? []).map((room) =>
+            mapRoom(room),
+          );
+
+          return {
+            available: rooms.length > 0,
+            rooms,
+            packages: ungroupedPayload.packages ?? [],
+            filters: ungroupedPayload.filters ?? {
+              beds: [],
+              views: [],
+              balconies: [],
+            },
+            groupedByBed: false, // Для ungrouped формата всегда false
+            rawPayload: payload,
+          };
+        }
       }
 
       if (Array.isArray(payload)) {
@@ -722,9 +816,24 @@ export const useBookingStore = defineStore(
 
       try {
         const { post } = useApi();
-        const { searchData } = prepareSearchData(
-          selectedRoomType.value ?? undefined,
-        );
+
+        // Определяем room_type_code: для multi-rooms используем из selectedMultiRooms
+        let roomTypeCode: string | undefined;
+        const multiRoomsEntries = Object.values(selectedMultiRooms.value);
+        if (multiRoomsEntries.length > 0) {
+          // В режиме multi-rooms используем room_type_code из первого выбранного номера
+          const firstEntry = multiRoomsEntries[0];
+          const code = firstEntry?.room_type_code;
+          // Проверяем, что код не пустой
+          roomTypeCode = code && code.trim() !== "" ? code : undefined;
+        } else {
+          // Для одного номера используем selectedRoomType
+          const code = selectedRoomType.value;
+          // Проверяем, что код не пустой
+          roomTypeCode = code && code.trim() !== "" ? code : undefined;
+        }
+
+        const { searchData } = prepareSearchData(roomTypeCode);
 
         // Добавляем rate_plan_code если выбран тариф
         const packagesSearchData: Record<string, unknown> = {
@@ -773,6 +882,7 @@ export const useBookingStore = defineStore(
       selectedServices.value = [];
       createdBooking.value = null;
       currentBookingDetails.value = null;
+      selectedMultiRooms.value = {};
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -810,6 +920,9 @@ export const useBookingStore = defineStore(
       setCurrentBookingDetails,
       packages,
       searchPackages,
+      selectedMultiRooms,
+      setSelectedMultiRooms,
+      clearSelectedMultiRooms,
     };
   },
   {
@@ -825,6 +938,7 @@ export const useBookingStore = defineStore(
         "roomTariffs",
         "userProfiles",
         "selectedServices",
+        "selectedMultiRooms",
       ],
       serializer: {
         serialize: (state: StateTree) => {

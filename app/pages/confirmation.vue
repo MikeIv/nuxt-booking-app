@@ -12,6 +12,7 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
@@ -106,6 +107,7 @@
     return {
       roomIdx: 0,
       roomTitle: selectedRoom.value.title || "",
+      room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
       price: selectedTariff.value.price,
       title: selectedTariff.value.title || "",

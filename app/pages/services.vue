@@ -12,8 +12,9 @@
   interface SelectedEntry {
     roomIdx: number;
     roomTitle: string;
+    room_type_code: string;
     ratePlanCode: string;
-    price: number;
+    price: number | null | undefined;
     title: string;
   }
 
@@ -32,9 +33,19 @@
     selectedServices,
     packages,
     isServerRequest,
+    selectedMultiRooms,
   } = storeToRefs(bookingStore);
 
+  // Проверяем, есть ли выбранные номера из multi-rooms
+  const isMultiRoomsMode = computed(
+    () => Object.keys(selectedMultiRooms.value).length > 0,
+  );
+
   const selectedRoom = computed<Room | null>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms не используем selectedRoom
+      return null;
+    }
     if (!roomTariffs.value?.length) return null;
     return (
       roomTariffs.value.find(
@@ -44,6 +55,10 @@
   });
 
   const selectedTariff = computed<RoomTariff | null>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms не используем selectedTariff
+      return null;
+    }
     if (selectedTariffStore?.value) return selectedTariffStore.value;
     if (!selectedRoom.value?.tariffs?.length) return null;
     return selectedRoom.value.tariffs[0] || null;
@@ -52,17 +67,41 @@
   const nights = useNights(date);
 
   const bookingTotal = computed(() => {
+    if (isMultiRoomsMode.value) {
+      // Для multi-rooms считаем сумму всех номеров
+      const roomsTotal = Object.values(selectedMultiRooms.value).reduce(
+        (sum, e) => {
+          const perNight = e.price || 0;
+          return sum + perNight * nights.value;
+        },
+        0,
+      );
+      const servicesTotal = selectedServices.value.reduce(
+        (sum, s) => sum + s.price,
+        0,
+      );
+      return roomsTotal + servicesTotal;
+    }
+    // Для одного номера
     if (!selectedTariff.value?.price) return 0;
     const roomTotal = selectedTariff.value.price * nights.value;
-    const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
+    const servicesTotal = selectedServices.value.reduce(
+      (sum, s) => sum + s.price,
+      0,
+    );
     return roomTotal + servicesTotal;
   });
 
   const selectedEntry = computed<SelectedEntry | null>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms не используем selectedEntry
+      return null;
+    }
     if (!selectedRoom.value || !selectedTariff.value) return null;
     return {
       roomIdx: 0,
       roomTitle: selectedRoom.value.title || "",
+      room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
       price: selectedTariff.value.price,
       title: selectedTariff.value.title || "",
@@ -70,6 +109,11 @@
   });
 
   const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms используем данные из store
+      return selectedMultiRooms.value;
+    }
+    // Для одного номера
     const entry = selectedEntry.value;
     if (!entry) return {} as Record<number, SelectedEntry>;
     return { 0: entry };
@@ -120,25 +164,41 @@
   };
 
   onMounted(async () => {
-    if (!selectedRoom.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Номер не выбран",
-        life: 3000,
-      });
-      await router.push("/rooms");
-      return;
-    }
-    if (!selectedTariff.value) {
-      toast.add({
-        severity: "warn",
-        summary: "Ошибка",
-        detail: "Тариф не выбран",
-        life: 3000,
-      });
-      await router.push("/rooms");
-      return;
+    // Проверяем режим multi-rooms
+    if (isMultiRoomsMode.value) {
+      // В режиме multi-rooms проверяем, что есть выбранные номера
+      if (Object.keys(selectedMultiRooms.value).length === 0) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Номера не выбраны",
+          life: 3000,
+        });
+        await router.push("/multi-rooms");
+        return;
+      }
+    } else {
+      // Для одного номера проверяем выбранный номер и тариф
+      if (!selectedRoom.value) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Номер не выбран",
+          life: 3000,
+        });
+        await router.push("/rooms");
+        return;
+      }
+      if (!selectedTariff.value) {
+        toast.add({
+          severity: "warn",
+          summary: "Ошибка",
+          detail: "Тариф не выбран",
+          life: 3000,
+        });
+        await router.push("/rooms");
+        return;
+      }
     }
 
     // Загружаем услуги из API
@@ -163,9 +223,13 @@
     </div>
 
     <section :class="$style.block">
-      <div v-if="selectedRoom" :class="$style.twoCols">
+      <div
+        v-if="selectedRoom || isMultiRoomsMode"
+        :class="$style.twoCols"
+      >
         <div :class="$style.content">
           <BookingRoomInfoCard
+            v-if="selectedRoom"
             :room="selectedRoom"
             :expanded="expandedRoom"
             :hide-description="true"
@@ -174,6 +238,7 @@
           />
 
           <BookingRoomPopup
+            v-if="selectedRoom"
             :room="selectedRoom"
             :is-open="isPopupOpen"
             @close="closePopup"
@@ -199,7 +264,7 @@
 
         <div :class="$style.summaryWrapper">
           <BookingSummary
-            v-if="selectedEntry"
+            v-if="selectedEntry || isMultiRoomsMode"
             :selected-entries="selectedByRoomIdx"
             :date="date"
             :nights="nights"
