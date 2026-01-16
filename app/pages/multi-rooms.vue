@@ -10,7 +10,7 @@
   const router = useRouter();
   const toast = useNotificationToast();
   const bookingStore = useBookingStore();
-  const { searchResults, roomTariffs, date, guests, selectedServices } =
+  const { searchResults, roomTariffs, date, guests, selectedServices, selectedMultiRooms } =
     storeToRefs(bookingStore);
 
   const loading = ref(true);
@@ -31,6 +31,7 @@
     title: string;
   }
   const selectedByRoomIdx = ref<Record<string, SelectedEntry>>({});
+  const isInitialLoad = ref(true);
 
   function handleSelectTariff(
     ratePlanCode: string,
@@ -88,10 +89,6 @@
     return roomsTotal + servicesTotal;
   });
 
-  const hasSummary = computed(
-    () => Object.keys(selectedByRoomIdx.value).length > 0,
-  );
-
   const dateValue = computed(() => date.value);
 
   const viewOptions = computed(() => {
@@ -127,7 +124,29 @@
     router.push("/services");
   };
 
+  // Синхронизация selectedByRoomIdx с store при изменениях
+  watch(
+    selectedByRoomIdx,
+    (newValue) => {
+      // Пропускаем синхронизацию при первой загрузке данных из store
+      if (isInitialLoad.value) {
+        return;
+      }
+      bookingStore.setSelectedMultiRooms(newValue);
+    },
+    { deep: true },
+  );
+
   onMounted(async () => {
+    // Загружаем сохраненные данные из store
+    if (selectedMultiRooms.value && Object.keys(selectedMultiRooms.value).length > 0) {
+      selectedByRoomIdx.value = { ...selectedMultiRooms.value };
+    }
+    
+    // После загрузки данных разрешаем синхронизацию
+    await nextTick();
+    isInitialLoad.value = false;
+
     const roomsCount = guests.value?.roomList
       ? guests.value.roomList.length
       : guests.value?.rooms || 1;
@@ -195,7 +214,7 @@
       />
     </div>
 
-    <section :class="[$style.block, hasSummary && $style.blockWithSummary]">
+    <section :class="[$style.block, $style.blockWithSummary]">
       <div v-if="loading" :class="$style.loadingContainer">
         <ProgressSpinner
           style="width: 50px; height: 50px"
@@ -213,7 +232,7 @@
 
       <template v-else>
         <div v-if="roomTariffs?.length > 0">
-          <div v-if="hasSummary" :class="$style.twoCols">
+          <div :class="$style.twoCols">
             <div :class="$style.cards">
               <BookingMultiCard
                 v-for="(room, idx) in roomTariffs"
@@ -245,27 +264,7 @@
             </div>
           </div>
 
-          <div v-else :class="$style.cards">
-            <BookingMultiCard
-              v-for="(room, idx) in roomTariffs"
-              :key="idx"
-              :room="room"
-              :room-card-idx="idx"
-              :services="searchResults?.packages || []"
-              :selected-codes="selectedCodes"
-              @open-service-popup="openServicePopup"
-              @select-tariff="handleSelectTariff"
-            />
-
-            <BookingServicePopup
-              v-if="selectedService"
-              :service="selectedService"
-              :is-open="isServicePopupOpen"
-              @close="closeServicePopup"
-            />
-          </div>
-
-          <div v-if="hasSummary" :class="$style.summaryWrapperMobile">
+          <div :class="$style.summaryWrapperMobile">
             <BookingSummary
               :selected-entries="selectedByRoomIdx"
               :date="dateValue"
