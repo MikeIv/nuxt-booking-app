@@ -8,6 +8,7 @@
     services?: PackageResource[];
     selectedCodes?: Record<string, string>;
     roomCardIdx?: number;
+    isAllRoomsSelected?: boolean;
   }
 
   const props = defineProps<Props>();
@@ -130,6 +131,15 @@
       selectedTariffsByRoomIdx.value[index]?.rate_plan_code ===
       tariff.rate_plan_code
     );
+  }
+
+  function isButtonDisabled(index: number, tariff: RoomTariff | null) {
+    if (!tariff) return true;
+    // Если все номера выбраны и текущий номер не выбран, блокируем кнопку
+    if (props.isAllRoomsSelected && !isSelected(index, tariff)) {
+      return true;
+    }
+    return false;
   }
 
   const formatDateDisplay = (date: Date | null): string => {
@@ -423,7 +433,9 @@
                     :class="[
                       $style.selectButton,
                       isSelected(idx - 1, tar) && $style.selectButtonActive,
+                      isButtonDisabled(idx - 1, tar) && $style.selectButtonDisabled,
                     ]"
+                    :disabled="isButtonDisabled(idx - 1, tar)"
                     @click="onSelectTariff(idx - 1, tar)"
                     >{{ isSelected(idx - 1, tar) ? "Выбрано" : "Выбрать" }}</Button
                   >
@@ -860,6 +872,17 @@
 
     &:hover {
       background-color: var(--a-btnAccentBg);
+    }
+  }
+
+  .selectButtonDisabled {
+    background-color: var(--a-border-primary);
+    color: var(--a-text-white);
+    cursor: not-allowed;
+    opacity: 0.6;
+
+    &:hover {
+      background-color: var(--a-border-primary);
     }
   }
 
