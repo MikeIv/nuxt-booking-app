@@ -197,8 +197,14 @@
 
     <section :class="[$style.block, hasSummary && $style.blockWithSummary]">
       <div v-if="loading" :class="$style.loadingContainer">
-        <div :class="$style.spinner" />
-        <p>Загрузка тарифов...</p>
+        <ProgressSpinner
+          style="width: 50px; height: 50px"
+          stroke-width="4"
+          fill="transparent"
+          animation-duration="2.5s"
+          aria-label="Загрузка тарифов"
+        />
+        <p :class="$style.loadingText">Загрузка тарифов...</p>
       </div>
 
       <div v-else-if="error" :class="$style.errorContainer">
@@ -478,26 +484,17 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: rem(16);
     padding: rem(40) 0;
   }
 
-  .spinner {
-    width: rem(40);
-    height: rem(40);
-    border: rem(3) solid var(--a-border-light);
-    border-top: rem(3) solid var(--a-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: rem(16);
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+  .loadingText {
+    margin: 0;
+    text-align: center;
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    font-weight: 400;
+    color: var(--a-text-dark);
   }
 
   .errorContainer {
