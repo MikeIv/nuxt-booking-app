@@ -261,12 +261,15 @@
     min-height: clamp(60px, 8vw, 95px);
     margin: 0 auto;
     padding: rem(16);
-    gap: rem(16);
+    column-gap: rem(16);
+    row-gap: 0;
 
     @media (max-width: #{size.$desktopMin - 1px}) {
       grid-template-columns: auto 1fr auto;
       grid-template-rows: auto auto;
       padding-bottom: rem(12);
+      column-gap: rem(16);
+      row-gap: 0;
     }
   }
 
