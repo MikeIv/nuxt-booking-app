@@ -23,13 +23,14 @@
 
   interface SelectedEntry {
     roomIdx: number;
+    roomCardIdx: number;
     roomTitle: string;
     room_type_code: string;
     ratePlanCode: string;
     price: number | null | undefined;
     title: string;
   }
-  const selectedByRoomIdx = ref<Record<number, SelectedEntry>>({});
+  const selectedByRoomIdx = ref<Record<string, SelectedEntry>>({});
 
   function handleSelectTariff(
     ratePlanCode: string,
@@ -44,15 +45,21 @@
     const tar =
       room.tariffs?.find((t) => t.rate_plan_code === ratePlanCode) || null;
 
-    const already = selectedByRoomIdx.value[roomIdx];
+    // Используем составной ключ для уникальной идентификации номера в конкретной карточке
+    const key = roomCardIdx !== undefined 
+      ? `${roomCardIdx}-${roomIdx}` 
+      : `${roomIdx}`;
+    const already = selectedByRoomIdx.value[key];
+    
     if (!ratePlanCode || (already && already.ratePlanCode === ratePlanCode)) {
-      Reflect.deleteProperty(selectedByRoomIdx.value, roomIdx);
+      Reflect.deleteProperty(selectedByRoomIdx.value, key);
       return;
     }
 
     if (tar && room.room_type_code && room.room_type_code.trim() !== "") {
-      selectedByRoomIdx.value[roomIdx] = {
+      selectedByRoomIdx.value[key] = {
         roomIdx,
+        roomCardIdx: cardIdx,
         roomTitle: room.title,
         room_type_code: room.room_type_code,
         ratePlanCode: tar.rate_plan_code,
@@ -62,10 +69,10 @@
     }
   }
 
-  const selectedCodes = computed<Record<number, string>>(() => {
-    const map: Record<number, string> = {};
-    Object.values(selectedByRoomIdx.value).forEach((entry) => {
-      map[entry.roomIdx] = entry.ratePlanCode;
+  const selectedCodes = computed<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    Object.entries(selectedByRoomIdx.value).forEach(([key, entry]) => {
+      map[key] = entry.ratePlanCode;
     });
     return map;
   });

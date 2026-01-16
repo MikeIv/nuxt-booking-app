@@ -7,6 +7,7 @@
 
   interface SelectedEntry {
     roomIdx: number;
+    roomCardIdx: number;
     roomTitle: string;
     room_type_code: string;
     ratePlanCode: string;
@@ -15,7 +16,7 @@
   }
 
   interface Props {
-    selectedEntries: Record<number, SelectedEntry>;
+    selectedEntries: Record<string, SelectedEntry>;
     date: [Date, Date] | null | undefined;
     nights: number;
     bookingTotal: number;

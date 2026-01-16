@@ -32,7 +32,18 @@
     createdBooking,
   } = storeToRefs(bookingStore);
 
-  const nights = useNights(date);
+  // Используем даты из созданного бронирования, если оно есть
+  const bookingDate = computed<[Date, Date] | null>(() => {
+    if (createdBooking.value?.order?.start_at && createdBooking.value?.order?.end_at) {
+      return [
+        new Date(createdBooking.value.order.start_at),
+        new Date(createdBooking.value.order.end_at),
+      ];
+    }
+    return date.value;
+  });
+
+  const nights = useNights(bookingDate);
 
   // Получаем выбранный номер
   const selectedRoom = computed(() => {
@@ -69,6 +80,29 @@
     return createdBooking.value?.order?.pdf || null;
   });
 
+  // Интерфейс для комнаты из API ответа
+  interface BookingRoom {
+    id: number;
+    title: string;
+    tariff: {
+      title: string;
+      price: string | number;
+    };
+    guests: Array<{
+      surname: string;
+      name: string;
+      middle_name: string | null;
+      phone: string;
+      email: string;
+      is_main: boolean;
+    }>;
+    adults: number;
+    children: number;
+    total_guests: number;
+    services: unknown[];
+    total: number;
+  }
+
   // Ref для canvas элемента QR-кода
   const qrCanvas = ref<HTMLCanvasElement | null>(null);
 
@@ -101,25 +135,58 @@
     }
   }, { immediate: true });
 
-  const selectedEntry = computed<SelectedEntry | null>(() => {
-    if (!selectedRoom.value || !selectedTariff.value) return null;
+  // Преобразуем данные из API ответа в формат SelectedEntry
+  const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+    // Если бронирование создано, используем данные из API
+    if (createdBooking.value?.rooms && Array.isArray(createdBooking.value.rooms)) {
+      const rooms = createdBooking.value.rooms as BookingRoom[];
+      const entries: Record<number, SelectedEntry> = {};
+      
+      rooms.forEach((room, index) => {
+        // Используем room.total (общая стоимость за номер) и делим на количество ночей
+        // для получения цены за ночь
+        const pricePerNight = nights.value > 0 
+          ? room.total / nights.value 
+          : room.total;
+        
+        entries[index] = {
+          roomIdx: index,
+          roomTitle: room.title || "",
+          room_type_code: "", // Не доступно в API ответе
+          ratePlanCode: "", // Не доступно в API ответе
+          price: pricePerNight,
+          title: room.tariff.title || "",
+        };
+      });
+      
+      return entries;
+    }
+    
+    // Fallback: используем данные из store (для одного номера)
+    if (!selectedRoom.value || !selectedTariff.value) {
+      return {} as Record<number, SelectedEntry>;
+    }
     
     return {
-      roomIdx: 0,
-      roomTitle: selectedRoom.value.title || "",
-      room_type_code: selectedRoom.value.room_type_code,
-      ratePlanCode: selectedTariff.value.rate_plan_code,
-      price: selectedTariff.value.price,
-      title: selectedTariff.value.title || "",
+      0: {
+        roomIdx: 0,
+        roomTitle: selectedRoom.value.title || "",
+        room_type_code: selectedRoom.value.room_type_code,
+        ratePlanCode: selectedTariff.value.rate_plan_code,
+        price: selectedTariff.value.price,
+        title: selectedTariff.value.title || "",
+      },
     };
   });
 
-  const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
-    const entry = selectedEntry.value;
-    return entry ? { 0: entry } : ({} as Record<number, SelectedEntry>);
-  });
-
   const bookingTotal = computed(() => {
+    // Если бронирование создано, используем total_price из API
+    if (createdBooking.value && 'total_price' in createdBooking.value) {
+      const totalPrice = createdBooking.value.total_price as number;
+      return totalPrice || 0;
+    }
+    
+    // Fallback: считаем из store
     const tariffPrice = selectedTariff.value?.price;
     if (!tariffPrice || nights.value === 0) return 0;
     
@@ -131,6 +198,27 @@
     
     return roomTotal + servicesTotal;
   });
+
+  // Обновляем данные о гостях из созданного бронирования
+  watch(
+    () => createdBooking.value,
+    (booking) => {
+      if (booking?.rooms && Array.isArray(booking.rooms)) {
+        const rooms = booking.rooms as BookingRoom[];
+        const roomList = rooms.map((room) => ({
+          adults: room.adults || 0,
+          children: room.children || 0,
+          childrenAges: [] as number[],
+        }));
+        
+        bookingStore.guests = {
+          rooms: roomList.length,
+          roomList,
+        };
+      }
+    },
+    { immediate: true },
+  );
 
   // Устанавливаем флаг в sessionStorage при создании бронирования
   watch(
@@ -335,7 +423,7 @@
         <div :class="$style.summaryWrapper">
           <BookingSummary
             :selected-entries="selectedByRoomIdx"
-            :date="date"
+            :date="bookingDate"
             :nights="nights"
             :booking-total="bookingTotal"
           />
