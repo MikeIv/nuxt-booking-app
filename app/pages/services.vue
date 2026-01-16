@@ -11,6 +11,7 @@
 
   interface SelectedEntry {
     roomIdx: number;
+    roomCardIdx: number;
     roomTitle: string;
     room_type_code: string;
     ratePlanCode: string;
@@ -108,7 +109,7 @@
     };
   });
 
-  const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+  const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
     if (isMultiRoomsMode.value) {
       // В режиме multi-rooms используем данные из store
       return selectedMultiRooms.value;

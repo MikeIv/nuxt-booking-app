@@ -35,6 +35,7 @@ export interface SelectedService {
 
 export interface SelectedMultiRoomEntry {
   roomIdx: number;
+  roomCardIdx: number;
   roomTitle: string;
   room_type_code: string;
   ratePlanCode: string;
@@ -69,7 +70,7 @@ export const useBookingStore = defineStore(
     const createdBooking = ref<BookingResponse | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
-    const selectedMultiRooms = ref<Record<number, SelectedMultiRoomEntry>>({});
+    const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
 
     function addService(service: SelectedService) {
       if (!selectedServices.value.find((s) => s.id === service.id)) {
@@ -93,7 +94,7 @@ export const useBookingStore = defineStore(
     }
 
     function setSelectedMultiRooms(
-      rooms: Record<number, SelectedMultiRoomEntry>,
+      rooms: Record<string, SelectedMultiRoomEntry>,
     ) {
       selectedMultiRooms.value = { ...rooms };
     }
