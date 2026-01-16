@@ -13,6 +13,8 @@
       return "Выбор номера";
     } else if (path === "/rooms/tariff") {
       return "Выбор тарифа";
+    } else if (path === "/multi-rooms") {
+      return "Выбор номеров и тарифов";
     } else if (path.includes("/rooms") && !path.includes("/tariff")) {
       return "Выбор номера";
     } else if (path.includes("/tariff")) {
