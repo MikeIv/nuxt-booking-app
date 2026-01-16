@@ -2,6 +2,8 @@
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource } from "~/types/room";
   import { useNotificationToast } from "~/composables/useToast";
+  import { formatCount } from "~/utils/declension";
+  import UIPopup from "~/components/ui/Popup.vue";
 
   definePageMeta({
     layout: "steps",
@@ -10,13 +12,14 @@
   const router = useRouter();
   const toast = useNotificationToast();
   const bookingStore = useBookingStore();
-  const { searchResults, roomTariffs, date, guests, selectedServices } =
+  const { searchResults, roomTariffs, date, guests, selectedServices, selectedMultiRooms } =
     storeToRefs(bookingStore);
 
   const loading = ref(true);
   const error = ref<Error | null>(null);
   const isServicePopupOpen = ref(false);
   const selectedService = ref<PackageResource | null>(null);
+  const isWarningPopupOpen = ref(false);
 
   const selectedView = ref<number | undefined>(undefined);
   const selectedBalcony = ref<number | undefined>(undefined);
@@ -31,6 +34,7 @@
     title: string;
   }
   const selectedByRoomIdx = ref<Record<string, SelectedEntry>>({});
+  const isInitialLoad = ref(true);
 
   function handleSelectTariff(
     ratePlanCode: string,
@@ -77,6 +81,20 @@
     return map;
   });
 
+  const requiredRoomsCount = computed(() => {
+    return guests.value?.roomList
+      ? guests.value.roomList.length
+      : guests.value?.rooms || 1;
+  });
+
+  const selectedRoomsCount = computed(() => {
+    return Object.keys(selectedByRoomIdx.value).length;
+  });
+
+  const isAllRoomsSelected = computed(() => {
+    return selectedRoomsCount.value >= requiredRoomsCount.value;
+  });
+
   const nights = useNights(date);
 
   const bookingTotal = computed(() => {
@@ -87,10 +105,6 @@
     const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
     return roomsTotal + servicesTotal;
   });
-
-  const hasSummary = computed(
-    () => Object.keys(selectedByRoomIdx.value).length > 0,
-  );
 
   const dateValue = computed(() => date.value);
 
@@ -122,12 +136,44 @@
   };
 
   const handleContinue = () => {
+    // Проверяем, что выбрано нужное количество номеров
+    if (selectedRoomsCount.value < requiredRoomsCount.value) {
+      isWarningPopupOpen.value = true;
+      return;
+    }
+
     // Сохраняем выбранные номера в store перед переходом на страницу услуг
     bookingStore.setSelectedMultiRooms(selectedByRoomIdx.value);
     router.push("/services");
   };
 
+  const closeWarningPopup = () => {
+    isWarningPopupOpen.value = false;
+  };
+
+  // Синхронизация selectedByRoomIdx с store при изменениях
+  watch(
+    selectedByRoomIdx,
+    (newValue) => {
+      // Пропускаем синхронизацию при первой загрузке данных из store
+      if (isInitialLoad.value) {
+        return;
+      }
+      bookingStore.setSelectedMultiRooms(newValue);
+    },
+    { deep: true },
+  );
+
   onMounted(async () => {
+    // Загружаем сохраненные данные из store
+    if (selectedMultiRooms.value && Object.keys(selectedMultiRooms.value).length > 0) {
+      selectedByRoomIdx.value = { ...selectedMultiRooms.value };
+    }
+    
+    // После загрузки данных разрешаем синхронизацию
+    await nextTick();
+    isInitialLoad.value = false;
+
     const roomsCount = guests.value?.roomList
       ? guests.value.roomList.length
       : guests.value?.rooms || 1;
@@ -195,7 +241,7 @@
       />
     </div>
 
-    <section :class="[$style.block, hasSummary && $style.blockWithSummary]">
+    <section :class="[$style.block, $style.blockWithSummary]">
       <div v-if="loading" :class="$style.loadingContainer">
         <ProgressSpinner
           style="width: 50px; height: 50px"
@@ -213,7 +259,7 @@
 
       <template v-else>
         <div v-if="roomTariffs?.length > 0">
-          <div v-if="hasSummary" :class="$style.twoCols">
+          <div :class="$style.twoCols">
             <div :class="$style.cards">
               <BookingMultiCard
                 v-for="(room, idx) in roomTariffs"
@@ -222,6 +268,7 @@
                 :room-card-idx="idx"
                 :services="searchResults?.packages || []"
                 :selected-codes="selectedCodes"
+                :is-all-rooms-selected="isAllRoomsSelected"
                 @open-service-popup="openServicePopup"
                 @select-tariff="handleSelectTariff"
               />
@@ -234,6 +281,31 @@
               />
             </div>
 
+            <UIPopup
+              :is-open="isWarningPopupOpen"
+              :max-width="'500px'"
+              @close="closeWarningPopup"
+            >
+              <template #content>
+                <div :class="$style.warningContent">
+                  <h2 :class="$style.warningTitle">Не все номера выбраны</h2>
+                  <p :class="$style.warningText">
+                    Для продолжения необходимо выбрать все {{ formatCount(requiredRoomsCount, 'room') }}.
+                    Выбрано: {{ selectedRoomsCount }} из {{ requiredRoomsCount }}.
+                  </p>
+                </div>
+              </template>
+              <template #footer>
+                <Button
+                  unstyled
+                  :class="$style.warningButton"
+                  @click="closeWarningPopup"
+                >
+                  Понятно
+                </Button>
+              </template>
+            </UIPopup>
+
             <div :class="$style.summaryWrapper">
               <BookingSummary
                 :selected-entries="selectedByRoomIdx"
@@ -245,27 +317,7 @@
             </div>
           </div>
 
-          <div v-else :class="$style.cards">
-            <BookingMultiCard
-              v-for="(room, idx) in roomTariffs"
-              :key="idx"
-              :room="room"
-              :room-card-idx="idx"
-              :services="searchResults?.packages || []"
-              :selected-codes="selectedCodes"
-              @open-service-popup="openServicePopup"
-              @select-tariff="handleSelectTariff"
-            />
-
-            <BookingServicePopup
-              v-if="selectedService"
-              :service="selectedService"
-              :is-open="isServicePopupOpen"
-              @close="closeServicePopup"
-            />
-          </div>
-
-          <div v-if="hasSummary" :class="$style.summaryWrapperMobile">
+          <div :class="$style.summaryWrapperMobile">
             <BookingSummary
               :selected-entries="selectedByRoomIdx"
               :date="dateValue"
@@ -504,5 +556,46 @@
     background-color: var(--a-bg-light);
     border-radius: var(--a-borderR--card);
     margin-bottom: rem(40);
+  }
+
+  .warningContent {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+    padding: rem(20);
+    text-align: center;
+  }
+
+  .warningTitle {
+    margin: 0;
+    font-family: "Lora", serif;
+    font-size: rem(24);
+    font-weight: 600;
+    color: var(--a-text-dark);
+  }
+
+  .warningText {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    line-height: 1.5;
+    color: var(--a-text-dark);
+  }
+
+  .warningButton {
+    padding: rem(12) rem(24);
+    border-radius: var(--a-borderR--btn);
+    background-color: var(--a-blackBg);
+    color: var(--a-white);
+    border: none;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--a-btnAccentBg);
+    }
   }
 </style>
