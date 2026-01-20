@@ -156,89 +156,139 @@
         :class="$style.tariffItem"
         role="listitem"
       >
-        <article class="section-shadow">
-          <div :class="$style.otherTariffInfo">
-            <h3 :class="$style.tariffName">{{ tariff.title }}</h3>
-            <Button
-              unstyled
-              :class="[$style.infoButton, $style.infoButton_medium]"
-              :aria-label="`Информация о тарифе ${tariff.title}`"
-              :aria-expanded="openTariffInfo[tariff.rate_plan_code] || false"
-              type="button"
-              @click="toggleTariffInfo(tariff.rate_plan_code)"
-            >
-              <UIcon
-                name="i-heroicons-chevron-down-20-solid"
-                :class="[
-                  $style.chevronIcon,
-                  $style.chevronIcon_medium,
-                  {
-                    [$style.chevronIconRotated]:
-                      openTariffInfo[tariff.rate_plan_code],
-                  },
-                ]"
-              />
-            </Button>
+        <article :class="[$style.tariffCard, 'section-shadow']">
+          <div :class="$style.tariffHeader">
+            <div :class="$style.otherTariffInfo">
+              <h3 :class="$style.tariffName">{{ tariff.title }}</h3>
+              <Button
+                unstyled
+                :class="[$style.infoButton, $style.infoButton_medium]"
+                :aria-label="`Информация о тарифе ${tariff.title}`"
+                :aria-expanded="openTariffInfo[tariff.rate_plan_code] || false"
+                type="button"
+                @click="toggleTariffInfo(tariff.rate_plan_code)"
+              >
+                <UIcon
+                  name="i-heroicons-chevron-down-20-solid"
+                  :class="[
+                    $style.chevronIcon,
+                    $style.chevronIcon_medium,
+                    {
+                      [$style.chevronIconRotated]:
+                        openTariffInfo[tariff.rate_plan_code],
+                    },
+                  ]"
+                />
+              </Button>
+            </div>
+            <div :class="$style.tariffPriceBlock">
+              <data
+                :class="$style.tariffPrice"
+                :value="tariff.price"
+                itemprop="price"
+              >
+                {{ tariff.price }} руб.
+              </data>
+              <span :class="$style.tariffPriceLabel"
+                >Средняя стоимость за 1 ночь
+              </span>
+            </div>
           </div>
 
           <div
             v-if="openTariffInfo[tariff.rate_plan_code]"
             :class="$style.tariffInfoBlock"
           >
-            <p :class="$style.tariffDescription">
-              {{ getTariffDescription(tariff) }}
-            </p>
+            <p :class="$style.tariffDescription" v-html="getTariffDescription(tariff)"></p>
           </div>
 
-          <ul :class="$style.tariffData">
-            <li :class="$style.dataItem">
-              <UIcon
-                name="i-fork-knife"
-                :class="[
-                  $style.dataIcon,
-                  { [$style.dataIconPenalty]: !tariff.has_food },
-                ]"
-              />
-              <span :class="$style.dataText">
-                {{
-                  tariff.has_food ? "Питание включено" : "Питание не включено"
-                }}
-              </span>
-            </li>
-            <li :class="$style.dataItem">
-              <UIcon
-                name="i-cancellation"
-                :class="[
-                  $style.dataIcon,
-                  { [$style.dataIconPenalty]: !tariff.cancellation_free },
-                ]"
-              />
-              <span :class="$style.dataText">
-                {{
-                  tariff.cancellation_free
-                    ? "Отмена без штрафа"
-                    : "Отмена со штрафом"
-                }}
-              </span>
-              <BookingInfoButtonWithPopover
-                :popover-id="`cancellation-${tariff.rate_plan_code}`"
-                size="small"
-                :aria-label="`Информация об отмене для тарифа ${tariff.title}`"
-              >
-                <BookingCancellationPopoverContent
-                  :title="tariff.cancellation_popover?.title"
-                  :description="tariff.cancellation_popover?.description"
+          <div :class="$style.tariffContentRow">
+            <ul :class="$style.tariffData">
+              <li :class="$style.dataItem">
+                <UIcon
+                  name="i-fork-knife"
+                  :class="[
+                    $style.dataIcon,
+                    { [$style.dataIconPenalty]: !tariff.has_food },
+                  ]"
                 />
-              </BookingInfoButtonWithPopover>
-            </li>
-            <li :class="$style.dataItem">
-              <UIcon name="i-payment" :class="$style.dataIcon" />
-              <span :class="$style.dataText">
-                Оплата банковской картой, по QR-коду (СБП), гарантия банковской
-                картой
+                <span :class="$style.dataText">
+                  {{
+                    tariff.has_food ? "Питание включено" : "Питание не включено"
+                  }}
+                </span>
+              </li>
+              <li :class="$style.dataItem">
+                <UIcon
+                  name="i-cancellation"
+                  :class="[
+                    $style.dataIcon,
+                    { [$style.dataIconPenalty]: !tariff.cancellation_free },
+                  ]"
+                />
+                <span :class="$style.dataText">
+                  {{
+                    tariff.cancellation_free
+                      ? "Отмена без штрафа"
+                      : "Отмена со штрафом"
+                  }}
+                </span>
+                <BookingInfoButtonWithPopover
+                  :popover-id="`cancellation-${tariff.rate_plan_code}`"
+                  size="small"
+                  :aria-label="`Информация об отмене для тарифа ${tariff.title}`"
+                >
+                  <BookingCancellationPopoverContent
+                    :title="tariff.cancellation_popover?.title"
+                    :description="tariff.cancellation_popover?.description"
+                  />
+                </BookingInfoButtonWithPopover>
+              </li>
+              <li :class="$style.dataItem">
+                <UIcon name="i-payment" :class="$style.dataIcon" />
+                <span :class="$style.dataText">
+                  Оплата банковской картой, по QR-коду (СБП), гарантия банковской
+                  картой
+                </span>
+              </li>
+            </ul>
+
+            <footer :class="$style.tariffBookingSection">
+              <data
+                :class="$style.tariffPrice"
+                :value="tariff.price"
+                itemprop="price"
+              >
+                {{ tariff.price }} руб.
+              </data>
+              <span :class="$style.tariffPriceLabel"
+                >Средняя стоимость за 1 ночь
               </span>
-            </li>
-          </ul>
+              <Button
+                :class="[
+                  $style.tariffBookingButton,
+                  {
+                    [$style.loading]:
+                      loadingTariffs[tariff.rate_plan_code],
+                  },
+                ]"
+                :disabled="loadingTariffs[tariff.rate_plan_code]"
+                unstyled
+                @click="handleBook(tariff)"
+              >
+                <span :class="$style.buttonText">Забронировать</span>
+                <ProgressSpinner
+                  v-show="loadingTariffs[tariff.rate_plan_code]"
+                  :class="$style.buttonSpinner"
+                  style="width: 16px; height: 16px"
+                  stroke-width="3"
+                  fill="transparent"
+                  animation-duration="1s"
+                  aria-label="Загрузка"
+                />
+              </Button>
+            </footer>
+          </div>
 
           <section
             v-if="tariff.packages?.length"
@@ -255,42 +305,6 @@
               </li>
             </ul>
           </section>
-
-          <footer :class="$style.tariffBookingSection">
-            <data
-              :class="$style.tariffPrice"
-              :value="tariff.price"
-              itemprop="price"
-            >
-              {{ tariff.price }} руб.
-            </data>
-            <span :class="$style.tariffPriceLabel"
-              >Средняя стоимость за 1 ночь
-            </span>
-            <Button
-              :class="[
-                $style.tariffBookingButton,
-                {
-                  [$style.loading]:
-                    loadingTariffs[tariff.rate_plan_code],
-                },
-              ]"
-              :disabled="loadingTariffs[tariff.rate_plan_code]"
-              unstyled
-              @click="handleBook(tariff)"
-            >
-              <span :class="$style.buttonText">Забронировать</span>
-              <ProgressSpinner
-                v-show="loadingTariffs[tariff.rate_plan_code]"
-                :class="$style.buttonSpinner"
-                style="width: 16px; height: 16px"
-                stroke-width="3"
-                fill="transparent"
-                animation-duration="1s"
-                aria-label="Загрузка"
-              />
-            </Button>
-          </footer>
         </article>
       </li>
     </ul>
@@ -397,11 +411,32 @@
     color: var(--a-text-light);
   }
 
+  .tariffCard {
+    position: relative;
+    // Стандартные стили (белый фон, тень, закругления) применяются через класс section-shadow
+  }
+
+  .tariffHeader {
+    display: flex;
+    flex-direction: column;
+    gap: rem(20);
+    margin-bottom: rem(20);
+    height: auto;
+
+    @media (min-width: #{size.$desktopMin}) {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: rem(24);
+      height: auto;
+      margin-bottom: 0;
+    }
+  }
+
   .otherTariffInfo {
     display: flex;
     align-items: center;
     gap: rem(24);
-    margin-bottom: rem(20);
   }
 
   .tariffName {
@@ -454,9 +489,7 @@
   }
 
   .tariffInfoBlock {
-    margin-top: rem(16);
     margin-bottom: rem(24);
-    padding: rem(16);
     background: var(--a-whiteBg);
   }
 
@@ -468,6 +501,17 @@
     margin: 0;
   }
 
+  .tariffContentRow {
+    // На мобильных элементы отображаются последовательно в колонке
+    // На desktop используется flex row для размещения в одной строке
+    @media (min-width: #{size.$desktopMin}) {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: rem(20);
+    }
+  }
+
   .tariffData {
     display: flex;
     flex-direction: column;
@@ -476,6 +520,13 @@
     margin-bottom: rem(24);
     list-style: none;
     padding: 0;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: calc(100% - rem(32));
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 1;
+    }
   }
 
   .dataItem {
@@ -501,28 +552,55 @@
     color: var(--a-text-dark);
   }
 
-  .tariffBookingSection {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
+  .tariffPriceBlock {
+    display: none;
 
-  .tariffPriceLabel {
-    margin-left: auto;
-    margin-bottom: rem(20);
-    font-family: "Inter", sans-serif;
-    font-size: rem(12);
-    font-weight: 500;
-    color: var(--a-text-light);
+    @media (min-width: #{size.$desktopMin}) {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: rem(4);
+      text-align: right;
+    }
   }
 
   .tariffPrice {
-    margin-left: auto;
     font-family: "Lora", serif;
     font-size: rem(34);
     font-weight: 700;
     color: var(--a-text-dark);
     white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .tariffPriceLabel {
+    font-family: "Inter", sans-serif;
+    font-size: rem(12);
+    font-weight: 500;
+    color: var(--a-text-light);
+    margin-left: auto;
+    margin-bottom: rem(20);
+
+    @media (min-width: #{size.$desktopMin}) {
+      margin-bottom: 0;
+    }
+  }
+
+  .tariffBookingSection {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    @media (min-width: #{size.$desktopMin}) {
+      width: fit-content;
+      margin-left: 0;
+      
+      // Скрываем цену в footer на desktop (она отображается в header)
+      .tariffPrice,
+      .tariffPriceLabel {
+        display: none;
+      }
+    }
   }
 
   .tariffBookingButton {
@@ -530,8 +608,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-grow: 1;
-    margin-left: auto;
     width: rem(290);
     height: rem(44);
     font-size: rem(18);
@@ -540,6 +616,11 @@
     border-radius: var(--a-borderR--btn);
     cursor: pointer;
     transition: background-color 0.2s ease;
+
+    @media (max-width: calc(#{size.$desktopMin} - 1px)) {
+      flex-grow: 1;
+      margin-left: auto;
+    }
 
     &:hover:not(:disabled) {
       background-color: var(--a-btnAccentBg);
