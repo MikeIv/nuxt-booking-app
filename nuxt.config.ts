@@ -25,12 +25,15 @@ export default defineNuxtConfig({
     "@primevue/nuxt-module",
   ],
 
-  googleFonts: {
-    families: {
-      "Playfair+Display": [400, 500, 600, 700],
-      Lora: [400, 500, 600, 700],
+  fonts: {
+    // Отключаем все внешние провайдеры - используются только локальные шрифты
+    providers: {
+      google: false,
+      fontshare: false,
+      bunny: false,
+      fontsource: false,
+      adobe: false,
     },
-    display: "swap",
   },
 
   ui: {
