@@ -633,18 +633,21 @@
                   :aria-expanded="isRoomExpanded(entry.roomIdx)"
                   @click="toggleRoomDetails(entry.roomIdx)"
                 >
+                  <span :class="$style.roomButtonGuestsTitle">Данные гостей.</span>
                   <span :class="$style.roomButtonText">
                     Номер {{ entry.roomIdx + 1 }}
                   </span>
-                  <UIcon
-                    name="i-chevron-down"
-                    :class="[
-                      $style.roomButtonIcon,
-                      {
-                        [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
-                      },
-                    ]"
-                  />
+                  <div :class="$style.roomButtonIconWrapper">
+                    <UIcon
+                      name="i-chevron-down"
+                      :class="[
+                        $style.roomButtonIcon,
+                        {
+                          [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
+                        },
+                      ]"
+                    />
+                  </div>
                 </Button>
                 <Transition name="fade">
                   <div
@@ -1361,7 +1364,8 @@
     justify-content: space-between;
     gap: rem(8);
     width: 100%;
-    padding: 0 rem(16);
+    padding: 0 rem(20);
+    height: rem(49);
     margin-bottom: rem(16);
   }
 
@@ -1369,14 +1373,34 @@
     flex: 1;
     text-align: left;
     font-family: "Inter", sans-serif;
-    font-size: rem(14);
+    font-size: rem(20);
+    font-weight: 700;
     color: var(--a-white);
+  }
+
+  .roomButtonGuestsTitle {
+    flex-shrink: 0;
+    font-family: "Inter", sans-serif;
+    font-size: rem(20);
+    font-weight: 700;
+    color: var(--a-white);
+  }
+
+  .roomButtonIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(28);
+    height: rem(28);
+    background: var(--a-white);
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .roomButtonIcon {
     width: rem(16);
     height: rem(16);
-    color: var(--a-white);
+    color: var(--a-text-dark);
     transition: transform 0.3s ease;
     flex-shrink: 0;
   }

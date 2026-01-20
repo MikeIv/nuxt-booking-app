@@ -11,6 +11,7 @@
 
   interface SelectedEntry {
     roomIdx: number;
+    roomCardIdx: number;
     roomTitle: string;
     room_type_code: string;
     ratePlanCode: string;
@@ -136,11 +137,11 @@
   }, { immediate: true });
 
   // Преобразуем данные из API ответа в формат SelectedEntry
-  const selectedByRoomIdx = computed<Record<number, SelectedEntry>>(() => {
+  const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
     // Если бронирование создано, используем данные из API
     if (createdBooking.value?.rooms && Array.isArray(createdBooking.value.rooms)) {
       const rooms = createdBooking.value.rooms as BookingRoom[];
-      const entries: Record<number, SelectedEntry> = {};
+      const entries: Record<string, SelectedEntry> = {};
       
       rooms.forEach((room, index) => {
         // Используем room.total (общая стоимость за номер) и делим на количество ночей
@@ -149,8 +150,9 @@
           ? room.total / nights.value 
           : room.total;
         
-        entries[index] = {
+        entries[index.toString()] = {
           roomIdx: index,
+          roomCardIdx: index,
           roomTitle: room.title || "",
           room_type_code: "", // Не доступно в API ответе
           ratePlanCode: "", // Не доступно в API ответе
@@ -164,12 +166,13 @@
     
     // Fallback: используем данные из store (для одного номера)
     if (!selectedRoom.value || !selectedTariff.value) {
-      return {} as Record<number, SelectedEntry>;
+      return {} as Record<string, SelectedEntry>;
     }
     
     return {
-      0: {
+      "0": {
         roomIdx: 0,
+        roomCardIdx: 0,
         roomTitle: selectedRoom.value.title || "",
         room_type_code: selectedRoom.value.room_type_code,
         ratePlanCode: selectedTariff.value.rate_plan_code,

@@ -39,6 +39,9 @@ interface BookingData {
     room_type_code: string;
     rate_type_code: string;
     packages?: string[];
+    adults?: number;
+    children?: number;
+    children_ages?: number[];
     guests: {
       surname: string;
       name: string;

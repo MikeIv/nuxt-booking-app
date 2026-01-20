@@ -211,15 +211,17 @@
             <span :class="$style.roomButtonText">
               Номер {{ entry.roomIdx + 1 }}
             </span>
-            <UIcon
-              name="i-chevron-down"
-              :class="[
-                $style.roomButtonIcon,
-                {
-                  [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
-                },
-              ]"
-            />
+            <div :class="$style.roomButtonIconWrapper">
+              <UIcon
+                name="i-chevron-down"
+                :class="[
+                  $style.roomButtonIcon,
+                  {
+                    [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
+                  },
+                ]"
+              />
+            </div>
           </Button>
           <Transition name="fade">
             <div
@@ -245,50 +247,41 @@
                 v-if="(roomGuestLines[entry.roomIdx] || []).length > 0"
                 :class="$style.roomDivider"
               />
-              <div v-if="selectedServices.length > 0" :class="$style.servicesSection">
-                <div :class="$style.servicesHeader">Дополнительные услуги:</div>
-                <div :class="$style.servicesList">
-                  <div
-                    v-for="service in selectedServices"
-                    :key="service.id"
-                    :class="$style.serviceItem"
-                  >
-                    <span :class="$style.serviceTitle">{{ service.title }}</span>
-                    <div :class="$style.serviceActions">
-                      <span :class="$style.servicePrice">
-                        {{ service.price.toLocaleString("ru-RU") }} ₽
-                      </span>
-                      <Button
-                        type="button"
-                        unstyled
-                        :class="$style.removeServiceButton"
-                        aria-label="Удалить услугу"
-                        @click="bookingStore.removeService(service.id)"
-                      >
-                        <UIcon name="i-close" :class="$style.removeIcon" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                v-if="selectedServices.length > 0"
-                :class="$style.roomDivider"
-              />
               <div :class="$style.roomTotal">
                 <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
                 <strong>
-                  {{
-                    (
-                      (entry.price || 0) * nights +
-                      selectedServices.reduce((sum, s) => sum + s.price, 0)
-                    ).toLocaleString("ru-RU")
-                  }}
-                  ₽
+                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
                 </strong>
               </div>
             </div>
           </Transition>
+        </div>
+      </div>
+
+      <div v-if="selectedServices.length > 0" :class="$style.servicesSection">
+        <div :class="$style.servicesHeader">Дополнительные услуги:</div>
+        <div :class="$style.servicesList">
+          <div
+            v-for="service in selectedServices"
+            :key="service.id"
+            :class="$style.serviceItem"
+          >
+            <span :class="$style.serviceTitle">{{ service.title }}</span>
+            <div :class="$style.serviceActions">
+              <span :class="$style.servicePrice">
+                {{ service.price.toLocaleString("ru-RU") }} ₽
+              </span>
+              <Button
+                type="button"
+                unstyled
+                :class="$style.removeServiceButton"
+                aria-label="Удалить услугу"
+                @click="bookingStore.removeService(service.id)"
+              >
+                <UIcon name="i-close" :class="$style.removeIcon" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -537,22 +530,34 @@
     display: flex;
     align-items: center;
     gap: rem(8);
-    padding: 0 rem(16);
+    padding: 0 rem(20);
     width: 100%;
+    height: rem(49);
   }
 
   .roomButtonText {
     flex: 1;
     text-align: left;
     font-family: Inter, sans-serif;
-    font-size: rem(14);
+    font-size: rem(20);
+    font-weight: 700;
     color: var(--a-white);
+  }
+
+  .roomButtonIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: rem(28);
+    height: rem(28);
+    background: var(--a-white);
+    border-radius: 50%;
   }
 
   .roomButtonIcon {
     width: rem(16);
     height: rem(16);
-    color: var(--a-white);
+    color: var(--a-text-dark);
     transition: transform 0.3s ease;
   }
 

@@ -9,6 +9,7 @@
     selectedCodes?: Record<string, string>;
     roomCardIdx?: number;
     isAllRoomsSelected?: boolean;
+    disabledRoomIndices?: Set<number>;
   }
 
   const props = defineProps<Props>();
@@ -135,10 +136,17 @@
 
   function isButtonDisabled(index: number, tariff: RoomTariff | null) {
     if (!tariff) return true;
+    
+    // Если номер уже выбран в другой карточке, блокируем кнопку
+    if (props.disabledRoomIndices?.has(index) && !isSelected(index, tariff)) {
+      return true;
+    }
+    
     // Если все номера выбраны и текущий номер не выбран, блокируем кнопку
     if (props.isAllRoomsSelected && !isSelected(index, tariff)) {
       return true;
     }
+    
     return false;
   }
 
