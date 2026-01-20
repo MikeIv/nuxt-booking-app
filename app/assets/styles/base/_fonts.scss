@@ -127,12 +127,92 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-Regular.woff2") format("woff2"),
+    url("/fonts/Lora-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-Italic.woff2") format("woff2"),
+    url("/fonts/Lora-Italic.woff") format("woff");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-Medium.woff2") format("woff2"),
+    url("/fonts/Lora-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-MediumItalic.woff2") format("woff2"),
+    url("/fonts/Lora-MediumItalic.woff") format("woff");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-SemiBold.woff2") format("woff2"),
+    url("/fonts/Lora-SemiBold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-SemiBoldItalic.woff2") format("woff2"),
+    url("/fonts/Lora-SemiBoldItalic.woff") format("woff");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-Bold.woff2") format("woff2"),
+    url("/fonts/Lora-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src:
+    url("/fonts/Lora-BoldItalic.woff2") format("woff2"),
+    url("/fonts/Lora-BoldItalic.woff") format("woff");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
   font-family: "Playfair Display", serif;
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Bold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Bold.woff") format("woff");
@@ -142,7 +222,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Black.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Black.woff") format("woff");
@@ -152,7 +232,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-BlackItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-BlackItalic.woff") format("woff");
@@ -162,7 +242,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Regular.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Regular.woff") format("woff");
@@ -172,7 +252,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Light.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Light.woff") format("woff");
@@ -182,7 +262,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-MediumItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-MediumItalic.woff") format("woff");
@@ -192,7 +272,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-SemiBold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-SemiBold.woff") format("woff");
@@ -202,7 +282,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-LightItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-LightItalic.woff") format("woff");
@@ -212,7 +292,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Italic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Italic.woff") format("woff");
@@ -222,7 +302,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-ExtraBoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraBoldItalic.woff") format("woff");
@@ -232,7 +312,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-BoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-BoldItalic.woff") format("woff");
@@ -242,7 +322,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-ExtraLight.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraLight.woff") format("woff");
@@ -252,7 +332,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-ExtraLightItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraLightItalic.woff") format("woff");
@@ -262,7 +342,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-ExtraBold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraBold.woff") format("woff");
@@ -272,7 +352,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Medium.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Medium.woff") format("woff");
@@ -282,7 +362,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-SemiBoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-SemiBoldItalic.woff") format("woff");
@@ -292,7 +372,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-ThinItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ThinItalic.woff") format("woff");
@@ -302,7 +382,7 @@
 }
 
 @font-face {
-  font-family: "Inter 18pt";
+  font-family: "Inter";
   src:
     url("/fonts/Inter/Inter18pt-Thin.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Thin.woff") format("woff");

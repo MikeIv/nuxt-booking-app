@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
   const headerHeight = ref(95);
+  let resizeObserver: ResizeObserver | null = null;
 
   const updateHeaderHeight = () => {
     if (typeof window === "undefined") return;
@@ -33,7 +34,7 @@
     nextTick(() => {
       updateHeaderHeight();
       
-      const resizeObserver = new ResizeObserver(() => {
+      resizeObserver = new ResizeObserver(() => {
         updateHeaderHeight();
       });
 
@@ -45,12 +46,16 @@
       }
 
       window.addEventListener("resize", updateHeaderHeight);
-
-      onUnmounted(() => {
-        resizeObserver.disconnect();
-        window.removeEventListener("resize", updateHeaderHeight);
-      });
     });
+  });
+
+  onUnmounted(() => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+    if (typeof window !== "undefined") {
+      window.removeEventListener("resize", updateHeaderHeight);
+    }
   });
 </script>
 
