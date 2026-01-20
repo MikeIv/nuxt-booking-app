@@ -10,9 +10,15 @@ export interface GuestData {
   citizenship: string;
 }
 
+export interface RoomGuestData {
+  mainGuest: GuestData;
+  additionalGuests: GuestData[];
+}
+
 export interface PersonalFormData {
   mainGuest: GuestData;
   additionalGuests: GuestData[];
+  roomGuests: Record<number, RoomGuestData>;
   smsConfirmation: boolean;
   specialOffers: boolean;
   checkInTime: string;
@@ -33,6 +39,13 @@ export interface FormField {
 export interface FormErrors {
   mainGuest: Partial<GuestData>;
   additionalGuests: Array<Partial<GuestData>>;
+  roomGuests: Record<
+    number,
+    {
+      mainGuest: Partial<GuestData>;
+      additionalGuests: Array<Partial<GuestData>>;
+    }
+  >;
   agreement: string;
 }
 
@@ -127,6 +140,7 @@ export const usePersonalForm = () => {
   const createFormData = (): PersonalFormData => ({
     mainGuest: initialGuestData(),
     additionalGuests: [],
+    roomGuests: {},
     smsConfirmation: false,
     specialOffers: false,
     checkInTime: "",
@@ -135,6 +149,11 @@ export const usePersonalForm = () => {
     paymentMethod: "",
     agreement: false,
     forSelf: true,
+  });
+
+  const createRoomGuestData = (): RoomGuestData => ({
+    mainGuest: initialGuestData(),
+    additionalGuests: [],
   });
 
   const guestToRegisterData = (guest: GuestData) => ({
@@ -168,28 +187,66 @@ export const usePersonalForm = () => {
   const validateForm = (
     formData: PersonalFormData,
     errors: FormErrors,
+    isMultiRooms: boolean = false,
   ): boolean => {
     let isValid = true;
     errors.mainGuest = {};
     errors.additionalGuests = [];
+    errors.roomGuests = {};
     errors.agreement = "";
 
-    const mainGuestErrors = validateGuest(formData.mainGuest);
-    if (Object.keys(mainGuestErrors).length > 0) {
-      errors.mainGuest = mainGuestErrors;
-      isValid = false;
-    }
+    if (isMultiRooms) {
+      // В режиме мультибронирования валидируем данные по номерам
+      Object.keys(formData.roomGuests).forEach((roomIdxStr) => {
+        const roomIdx = Number(roomIdxStr);
+        const roomData = formData.roomGuests[roomIdx];
 
-    formData.additionalGuests.forEach((guest, index) => {
-      const guestErrors = validateGuest(guest);
-      if (Object.keys(guestErrors).length > 0) {
-        if (!errors.additionalGuests[index]) {
-          errors.additionalGuests[index] = {};
+        if (!errors.roomGuests[roomIdx]) {
+          errors.roomGuests[roomIdx] = {
+            mainGuest: {},
+            additionalGuests: [],
+          };
         }
-        Object.assign(errors.additionalGuests[index], guestErrors);
+
+        const mainGuestErrors = validateGuest(roomData.mainGuest);
+        if (Object.keys(mainGuestErrors).length > 0) {
+          errors.roomGuests[roomIdx].mainGuest = mainGuestErrors;
+          isValid = false;
+        }
+
+        roomData.additionalGuests.forEach((guest, index) => {
+          const guestErrors = validateGuest(guest);
+          if (Object.keys(guestErrors).length > 0) {
+            if (!errors.roomGuests[roomIdx].additionalGuests[index]) {
+              errors.roomGuests[roomIdx].additionalGuests[index] = {};
+            }
+            Object.assign(
+              errors.roomGuests[roomIdx].additionalGuests[index],
+              guestErrors,
+            );
+            isValid = false;
+          }
+        });
+      });
+    } else {
+      // В режиме одного номера валидируем основную форму
+      const mainGuestErrors = validateGuest(formData.mainGuest);
+      if (Object.keys(mainGuestErrors).length > 0) {
+        errors.mainGuest = mainGuestErrors;
         isValid = false;
       }
-    });
+
+      formData.additionalGuests.forEach((guest, index) => {
+        const guestErrors = validateGuest(guest);
+        if (Object.keys(guestErrors).length > 0) {
+          if (!errors.additionalGuests[index]) {
+            errors.additionalGuests[index] = {};
+          }
+          Object.assign(errors.additionalGuests[index], guestErrors);
+          isValid = false;
+        }
+      });
+    }
 
     if (!formData.agreement) {
       errors.agreement = "Необходимо согласие с правилами бронирования.";
@@ -329,42 +386,43 @@ export const usePersonalForm = () => {
       return ages.concat(roomGuests?.childrenAges || []);
     }, [] as number[]);
 
-    // Создаем массив комнат с гостями
-    // Для каждого номера используем основного гостя
-    // Для первого номера также добавляем дополнительных гостей
+    // Создаем массив комнат с гостями из данных по номерам
     const rooms = sortedEntries.map((entry, index) => {
       const isFirstRoom = index === 0;
+      const roomGuestData = formData.roomGuests[entry.roomIdx];
 
-      // Базовый массив гостей: основной гость
+      // Если есть данные для этого номера, используем их, иначе используем основного гостя
+      const mainGuest = roomGuestData?.mainGuest || formData.mainGuest;
+      const additionalGuests = roomGuestData?.additionalGuests || [];
+
+      // Базовый массив гостей: основной гость номера
       const baseGuests = [
         {
-          name: formData.mainGuest.firstName,
-          surname: formData.mainGuest.lastName,
-          middle_name: formData.mainGuest.middleName || null,
-          phone: formData.mainGuest.phone,
-          email: formData.mainGuest.email,
-          nationality: formData.mainGuest.citizenship || "",
+          name: mainGuest.firstName,
+          surname: mainGuest.lastName,
+          middle_name: mainGuest.middleName || null,
+          phone: mainGuest.phone,
+          email: mainGuest.email,
+          nationality: mainGuest.citizenship || "",
           sms_confirmation: isFirstRoom ? formData.smsConfirmation : false,
           email_subscribe: isFirstRoom ? formData.specialOffers : false,
         },
       ];
 
-      // Для первого номера добавляем дополнительных гостей
-      const additionalGuests = isFirstRoom
-        ? formData.additionalGuests.map((guest) => ({
-            name: guest.firstName,
-            surname: guest.lastName,
-            middle_name: guest.middleName || null,
-            phone: guest.phone,
-            email: guest.email,
-            nationality: guest.citizenship || "",
-            sms_confirmation: false,
-            email_subscribe: false,
-          }))
-        : [];
+      // Добавляем дополнительных гостей для этого номера
+      const additionalGuestsData = additionalGuests.map((guest) => ({
+        name: guest.firstName,
+        surname: guest.lastName,
+        middle_name: guest.middleName || null,
+        phone: guest.phone,
+        email: guest.email,
+        nationality: guest.citizenship || "",
+        sms_confirmation: false,
+        email_subscribe: false,
+      }));
 
       // Объединяем гостей
-      const guests = [...baseGuests, ...additionalGuests];
+      const guests = [...baseGuests, ...additionalGuestsData];
 
       return {
         room_type_code: entry.room_type_code,
@@ -403,6 +461,7 @@ export const usePersonalForm = () => {
     additionalFields,
     countriesRu,
     createFormData,
+    createRoomGuestData,
     initialGuestData,
     validateGuest,
     validateForm,
