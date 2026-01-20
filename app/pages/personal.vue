@@ -34,6 +34,7 @@
     checkboxOptions,
     additionalFields,
     createFormData,
+    createRoomGuestData,
     initialGuestData,
     validateForm: validatePersonalForm,
     prepareBookingData,
@@ -47,17 +48,134 @@
   const errors = reactive<FormErrors>({
     mainGuest: {},
     additionalGuests: [],
+    roomGuests: {},
     agreement: "",
   });
 
   const validateForm = (): boolean => {
-    return validatePersonalForm(formData, errors);
+    return validatePersonalForm(formData, errors, isMultiRoomsMode.value);
   };
 
   // Проверяем, есть ли выбранные номера из multi-rooms
   const isMultiRoomsMode = computed(
     () => Object.keys(selectedMultiRooms.value).length > 0,
   );
+
+  // Состояние для отслеживания раскрытых номеров
+  const expandedRooms = ref<Record<number, boolean>>({});
+
+  const toggleRoomDetails = (roomIdx: number) => {
+    expandedRooms.value[roomIdx] = !expandedRooms.value[roomIdx];
+  };
+
+  const isRoomExpanded = (roomIdx: number) => {
+    return !!expandedRooms.value[roomIdx];
+  };
+
+  // Инициализация данных гостей для каждого номера
+  const initializeRoomGuests = () => {
+    if (!isMultiRoomsMode.value) return;
+
+    const sortedEntries = Object.values(selectedMultiRooms.value).sort(
+      (a, b) => a.roomIdx - b.roomIdx,
+    );
+
+    sortedEntries.forEach((entry, index) => {
+      if (!formData.roomGuests[entry.roomIdx]) {
+        formData.roomGuests[entry.roomIdx] = createRoomGuestData();
+      }
+      if (!errors.roomGuests[entry.roomIdx]) {
+        errors.roomGuests[entry.roomIdx] = {
+          mainGuest: {},
+          additionalGuests: [],
+        };
+      }
+      // Автоматически раскрываем первый номер
+      if (index === 0) {
+        expandedRooms.value[entry.roomIdx] = true;
+      }
+    });
+  };
+
+  // Получаем список номеров для отображения
+  const roomEntries = computed(() => {
+    if (!isMultiRoomsMode.value) return [];
+    return Object.values(selectedMultiRooms.value).sort(
+      (a, b) => a.roomIdx - b.roomIdx,
+    );
+  });
+
+  // Получаем состав гостей для конкретного номера
+  const getRoomGuestComposition = (roomIdx: number) => {
+    const room = bookingStore.guests.roomList[roomIdx];
+    if (!room) return { adults: 0, children: 0 };
+    return {
+      adults: room.adults || 0,
+      children: room.children || 0,
+    };
+  };
+
+  // Получаем текст состава гостей для конкретного номера
+  const getRoomGuestCompositionText = (roomIdx: number) => {
+    const { adults, children } = getRoomGuestComposition(roomIdx);
+    const parts: string[] = [];
+
+    if (adults > 0) {
+      const adultWord = adults === 1 ? 'взрослый' : 'взрослых';
+      parts.push(`${adults} ${adultWord} на основном месте`);
+    }
+
+    if (children > 0) {
+      const childWord = children === 1 ? 'ребенок' : children > 1 && children < 5 ? 'ребенка' : 'детей';
+      parts.push(`${children} ${childWord} на дополнительном месте`);
+    }
+
+    return parts.join(', ');
+  };
+
+  // Обновление данных основного гостя для номера
+  const updateRoomMainGuest = (roomIdx: number, guest: GuestData) => {
+    if (!formData.roomGuests[roomIdx]) {
+      formData.roomGuests[roomIdx] = createRoomGuestData();
+    }
+    formData.roomGuests[roomIdx].mainGuest = guest;
+  };
+
+  // Обновление данных дополнительного гостя для номера
+  const updateRoomAdditionalGuest = (
+    roomIdx: number,
+    guestIndex: number,
+    guest: GuestData,
+  ) => {
+    if (!formData.roomGuests[roomIdx]) {
+      formData.roomGuests[roomIdx] = createRoomGuestData();
+    }
+    formData.roomGuests[roomIdx].additionalGuests[guestIndex] = guest;
+  };
+
+  // Добавление дополнительного гостя для номера
+  const addRoomAdditionalGuest = (roomIdx: number) => {
+    if (!formData.roomGuests[roomIdx]) {
+      formData.roomGuests[roomIdx] = createRoomGuestData();
+    }
+    formData.roomGuests[roomIdx].additionalGuests.push(initialGuestData());
+    if (!errors.roomGuests[roomIdx]) {
+      errors.roomGuests[roomIdx] = {
+        mainGuest: {},
+        additionalGuests: [],
+      };
+    }
+    errors.roomGuests[roomIdx].additionalGuests.push({});
+  };
+
+  // Удаление дополнительного гостя для номера
+  const removeRoomAdditionalGuest = (roomIdx: number, guestIndex: number) => {
+    if (!formData.roomGuests[roomIdx]) return;
+    formData.roomGuests[roomIdx].additionalGuests.splice(guestIndex, 1);
+    if (errors.roomGuests[roomIdx]) {
+      errors.roomGuests[roomIdx].additionalGuests.splice(guestIndex, 1);
+    }
+  };
 
   const onFormSubmit = async () => {
     if (!validateForm()) {
@@ -243,6 +361,7 @@
     if (!selectedRoom.value || !selectedTariff.value) return null;
     return {
       roomIdx: 0,
+      roomCardIdx: 0,
       roomTitle: selectedRoom.value.title || "",
       room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
@@ -353,10 +472,6 @@
       return;
     }
 
-    if (isMainGuestFormFilled(formData.mainGuest)) {
-      return;
-    }
-
     try {
       await fetchUserProfile();
 
@@ -373,7 +488,25 @@
         guestData.phone ||
         guestData.email
       ) {
-        formData.mainGuest = guestData;
+        if (isMultiRoomsMode.value) {
+          // В режиме мультибронирования заполняем данные для всех номеров
+          Object.keys(selectedMultiRooms.value).forEach((roomIdxStr) => {
+            const roomIdx = Number(roomIdxStr);
+            if (!formData.roomGuests[roomIdx]) {
+              formData.roomGuests[roomIdx] = createRoomGuestData();
+            }
+            // Заполняем только если форма пустая
+            const roomMainGuest = formData.roomGuests[roomIdx].mainGuest;
+            if (!isMainGuestFormFilled(roomMainGuest)) {
+              formData.roomGuests[roomIdx].mainGuest = guestData;
+            }
+          });
+        } else {
+          // В режиме одного номера заполняем основную форму
+          if (!isMainGuestFormFilled(formData.mainGuest)) {
+            formData.mainGuest = guestData;
+          }
+        }
       }
     } catch {
       if (authStore.user) {
@@ -384,7 +517,24 @@
           guestData.phone ||
           guestData.email
         ) {
-          formData.mainGuest = guestData;
+          if (isMultiRoomsMode.value) {
+            // В режиме мультибронирования заполняем данные для всех номеров
+            Object.keys(selectedMultiRooms.value).forEach((roomIdxStr) => {
+              const roomIdx = Number(roomIdxStr);
+              if (!formData.roomGuests[roomIdx]) {
+                formData.roomGuests[roomIdx] = createRoomGuestData();
+              }
+              const roomMainGuest = formData.roomGuests[roomIdx].mainGuest;
+              if (!isMainGuestFormFilled(roomMainGuest)) {
+                formData.roomGuests[roomIdx].mainGuest = guestData;
+              }
+            });
+          } else {
+            // В режиме одного номера заполняем основную форму
+            if (!isMainGuestFormFilled(formData.mainGuest)) {
+              formData.mainGuest = guestData;
+            }
+          }
         }
       }
     }
@@ -431,6 +581,7 @@
     }
 
     await fillFormWithUserData();
+    initializeRoomGuests();
   });
 </script>
 
@@ -467,98 +618,231 @@
       <form :class="$style.formSection" @submit.prevent="onFormSubmit">
         <div :class="$style.formContent">
           <div :class="$style.formMain">
-            <div :class="$style.formItem">
-              <div :class="$style.guestCompositionBlock">
-                <div :class="$style.guestComposition">
-                  <div :class="$style.guestIcons">
-                    <!-- Взрослые на основном месте -->
-                    <UIcon
-                      v-for="n in guestComposition.adults"
-                      :key="'adult-' + n"
-                      name="i-icon-man"
-                      :class="$style.guestIconAdult"
-                      aria-hidden="true"
-                    />
-                    <!-- Разделитель если есть дети на дополнительном месте -->
-                    <UIcon
-                      v-if="guestComposition.children > 0"
-                      name="i-icon-plus-person"
-                      :class="$style.guestIconPlus"
-                      aria-hidden="true"
-                    />
-                    <!-- Дети на дополнительном месте -->
-                    <UIcon
-                      v-for="n in guestComposition.children"
-                      :key="'child-' + n"
-                      name="i-icon-child"
-                      :class="$style.guestIconChild"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <p :class="$style.guestCompositionText">
-                    {{ guestCompositionText }}
-                  </p>
-                </div>
-                <div :class="$style.mainGuestInfo">
+            <!-- Режим мультибронирования -->
+            <template v-if="isMultiRoomsMode">
+              <div
+                v-for="entry in roomEntries"
+                :key="entry.roomIdx"
+                :class="$style.formItem"
+              >
+                <Button
+                  type="button"
+                  :class="$style.roomButton"
+                  class="btn__bs dark round"
+                  unstyled
+                  :aria-expanded="isRoomExpanded(entry.roomIdx)"
+                  @click="toggleRoomDetails(entry.roomIdx)"
+                >
+                  <span :class="$style.roomButtonText">
+                    Номер {{ entry.roomIdx + 1 }}
+                  </span>
                   <UIcon
-                    name="i-icon-man"
-                    :class="$style.mainGuestIcon"
+                    name="i-chevron-down"
+                    :class="[
+                      $style.roomButtonIcon,
+                      {
+                        [$style.roomButtonIconRotated]: isRoomExpanded(entry.roomIdx),
+                      },
+                    ]"
+                  />
+                </Button>
+                <Transition name="fade">
+                  <div
+                    v-if="isRoomExpanded(entry.roomIdx)"
+                    :class="$style.roomFormContent"
+                  >
+                    <div :class="$style.guestCompositionBlock">
+                      <div :class="$style.guestComposition">
+                        <div :class="$style.guestIcons">
+                          <!-- Взрослые на основном месте -->
+                          <UIcon
+                            v-for="n in getRoomGuestComposition(entry.roomIdx).adults"
+                            :key="'adult-' + n"
+                            name="i-icon-man"
+                            :class="$style.guestIconAdult"
+                            aria-hidden="true"
+                          />
+                          <!-- Разделитель если есть дети на дополнительном месте -->
+                          <UIcon
+                            v-if="getRoomGuestComposition(entry.roomIdx).children > 0"
+                            name="i-icon-plus-person"
+                            :class="$style.guestIconPlus"
+                            aria-hidden="true"
+                          />
+                          <!-- Дети на дополнительном месте -->
+                          <UIcon
+                            v-for="n in getRoomGuestComposition(entry.roomIdx).children"
+                            :key="'child-' + n"
+                            name="i-icon-child"
+                            :class="$style.guestIconChild"
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <p :class="$style.guestCompositionText">
+                          {{ getRoomGuestCompositionText(entry.roomIdx) }}
+                        </p>
+                      </div>
+                      <div :class="$style.mainGuestInfo">
+                        <UIcon
+                          name="i-icon-man"
+                          :class="$style.mainGuestIcon"
+                          aria-hidden="true"
+                        />
+                        <p :class="$style.mainGuestText">
+                          Заполните данные основного гостя*
+                        </p>
+                      </div>
+                    </div>
+                    <BookingGuestFormFields
+                      :guest="formData.roomGuests[entry.roomIdx]?.mainGuest || initialGuestData()"
+                      :fields="formFields"
+                      :errors="errors.roomGuests[entry.roomIdx]?.mainGuest || {}"
+                      guest-title="Основной гость"
+                      @update:guest="updateRoomMainGuest(entry.roomIdx, $event)"
+                    />
+                    <div :class="$style.checkInformBlock">
+                      <div
+                        v-for="checkbox in checkboxOptions"
+                        :key="checkbox.id"
+                        :class="$style.checkItem"
+                      >
+                        <Checkbox
+                          v-model="formData[checkbox.key]"
+                          :input-id="`${checkbox.id}-${entry.roomIdx}`"
+                          :binary="true"
+                          :class="$style.checkbox"
+                        />
+                        <label
+                          :for="`${checkbox.id}-${entry.roomIdx}`"
+                          :class="$style.checkboxLabel"
+                        >
+                          {{ checkbox.label }}
+                        </label>
+                      </div>
+                    </div>
+                    <BookingGuestFormFields
+                      v-for="(guest, index) in formData.roomGuests[entry.roomIdx]?.additionalGuests || []"
+                      :key="index"
+                      :guest="guest"
+                      :fields="formFields"
+                      :errors="errors.roomGuests[entry.roomIdx]?.additionalGuests[index] || {}"
+                      :guest-title="`Гость ${index + 2}`"
+                      :show-remove="true"
+                      @update:guest="updateRoomAdditionalGuest(entry.roomIdx, index, $event)"
+                      @remove="removeRoomAdditionalGuest(entry.roomIdx, index)"
+                    />
+                    <Button
+                      type="button"
+                      :class="$style.addGuestButton"
+                      unstyled
+                      @click="addRoomAdditionalGuest(entry.roomIdx)"
+                    >
+                      <UIcon
+                        name="i-icon-plus-person"
+                        :class="$style.addGuestIcon"
+                        aria-hidden="true"
+                      />
+                      <span>Добавить гостя (необязательно)</span>
+                    </Button>
+                  </div>
+                </Transition>
+              </div>
+            </template>
+            <!-- Режим одного номера -->
+            <template v-else>
+              <div :class="$style.formItem">
+                <div :class="$style.guestCompositionBlock">
+                  <div :class="$style.guestComposition">
+                    <div :class="$style.guestIcons">
+                      <!-- Взрослые на основном месте -->
+                      <UIcon
+                        v-for="n in guestComposition.adults"
+                        :key="'adult-' + n"
+                        name="i-icon-man"
+                        :class="$style.guestIconAdult"
+                        aria-hidden="true"
+                      />
+                      <!-- Разделитель если есть дети на дополнительном месте -->
+                      <UIcon
+                        v-if="guestComposition.children > 0"
+                        name="i-icon-plus-person"
+                        :class="$style.guestIconPlus"
+                        aria-hidden="true"
+                      />
+                      <!-- Дети на дополнительном месте -->
+                      <UIcon
+                        v-for="n in guestComposition.children"
+                        :key="'child-' + n"
+                        name="i-icon-child"
+                        :class="$style.guestIconChild"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <p :class="$style.guestCompositionText">
+                      {{ guestCompositionText }}
+                    </p>
+                  </div>
+                  <div :class="$style.mainGuestInfo">
+                    <UIcon
+                      name="i-icon-man"
+                      :class="$style.mainGuestIcon"
+                      aria-hidden="true"
+                    />
+                    <p :class="$style.mainGuestText">
+                      Заполните данные основного гостя*
+                    </p>
+                  </div>
+                </div>
+                <BookingGuestFormFields
+                  :guest="formData.mainGuest"
+                  :fields="formFields"
+                  :errors="errors.mainGuest"
+                  guest-title="Основной гость"
+                  @update:guest="updateMainGuest"
+                />
+                <div :class="$style.checkInformBlock">
+                  <div
+                    v-for="checkbox in checkboxOptions"
+                    :key="checkbox.id"
+                    :class="$style.checkItem"
+                  >
+                    <Checkbox
+                      v-model="formData[checkbox.key]"
+                      :input-id="checkbox.id"
+                      :binary="true"
+                      :class="$style.checkbox"
+                    />
+                    <label :for="checkbox.id" :class="$style.checkboxLabel">
+                      {{ checkbox.label }}
+                    </label>
+                  </div>
+                </div>
+                <BookingGuestFormFields
+                  v-for="(guest, index) in formData.additionalGuests"
+                  :key="index"
+                  :guest="guest"
+                  :fields="formFields"
+                  :errors="errors.additionalGuests[index]"
+                  :guest-title="`Гость ${index + 2}`"
+                  :show-remove="true"
+                  @update:guest="updateAdditionalGuest(index, $event)"
+                  @remove="removeAdditionalGuest(index)"
+                />
+                <Button
+                  type="button"
+                  :class="$style.addGuestButton"
+                  unstyled
+                  @click="addAdditionalGuest"
+                >
+                  <UIcon
+                    name="i-icon-plus-person"
+                    :class="$style.addGuestIcon"
                     aria-hidden="true"
                   />
-                  <p :class="$style.mainGuestText">
-                    Заполните данные основного гостя*
-                  </p>
-                </div>
+                  <span>Добавить гостя (необязательно)</span>
+                </Button>
               </div>
-              <BookingGuestFormFields
-                :guest="formData.mainGuest"
-                :fields="formFields"
-                :errors="errors.mainGuest"
-                guest-title="Основной гость"
-                @update:guest="updateMainGuest"
-              />
-              <div :class="$style.checkInformBlock">
-                <div
-                  v-for="checkbox in checkboxOptions"
-                  :key="checkbox.id"
-                  :class="$style.checkItem"
-                >
-                  <Checkbox
-                    v-model="formData[checkbox.key]"
-                    :input-id="checkbox.id"
-                    :binary="true"
-                    :class="$style.checkbox"
-                  />
-                  <label :for="checkbox.id" :class="$style.checkboxLabel">
-                    {{ checkbox.label }}
-                  </label>
-                </div>
-              </div>
-              <BookingGuestFormFields
-                v-for="(guest, index) in formData.additionalGuests"
-                :key="index"
-                :guest="guest"
-                :fields="formFields"
-                :errors="errors.additionalGuests[index]"
-                :guest-title="`Гость ${index + 2}`"
-                :show-remove="true"
-                @update:guest="updateAdditionalGuest(index, $event)"
-                @remove="removeAdditionalGuest(index)"
-              />
-              <Button
-                type="button"
-                :class="$style.addGuestButton"
-                unstyled
-                @click="addAdditionalGuest"
-              >
-                <UIcon
-                  name="i-icon-plus-person"
-                  :class="$style.addGuestIcon"
-                  aria-hidden="true"
-                />
-                <span>Добавить гостя (необязательно)</span>
-              </Button>
-            </div>
+            </template>
             <div :class="$style.formItem">
               <h3 :class="$style.sectionHeader">Дополнительно</h3>
               <div :class="$style.additionalBlock">
@@ -1069,5 +1353,43 @@
     line-height: 1.5;
     color: var(--a-text-light);
     margin: 0;
+  }
+
+  .roomButton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: rem(8);
+    width: 100%;
+    padding: 0 rem(16);
+    margin-bottom: rem(16);
+  }
+
+  .roomButtonText {
+    flex: 1;
+    text-align: left;
+    font-family: "Inter", sans-serif;
+    font-size: rem(14);
+    color: var(--a-white);
+  }
+
+  .roomButtonIcon {
+    width: rem(16);
+    height: rem(16);
+    color: var(--a-white);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .roomButtonIconRotated {
+    transform: rotate(180deg);
+  }
+
+  .roomFormContent {
+    display: flex;
+    flex-direction: column;
+    gap: rem(24);
+    padding: rem(16);
+    margin-top: rem(8);
   }
 </style>
