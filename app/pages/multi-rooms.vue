@@ -60,6 +60,23 @@
       return;
     }
 
+    // Проверяем, не выбран ли уже этот номер (roomIdx) в другой карточке
+    // Если выбран, запрещаем выбор
+    const isRoomIdxAlreadySelected = selectedRoomIndices.value.has(roomIdx) && 
+      Object.values(selectedByRoomIdx.value).some(
+        (entry) => entry.roomIdx === roomIdx && entry.roomCardIdx !== cardIdx
+      );
+    
+    if (isRoomIdxAlreadySelected) {
+      toast.add({
+        severity: "warn",
+        summary: "Номер уже выбран",
+        detail: `Номер ${roomIdx + 1} уже выбран в другой карточке. Каждый номер можно выбрать только один раз.`,
+        life: 3000,
+      });
+      return;
+    }
+
     if (tar && room.room_type_code && room.room_type_code.trim() !== "") {
       selectedByRoomIdx.value[key] = {
         roomIdx,
@@ -79,6 +96,15 @@
       map[key] = entry.ratePlanCode;
     });
     return map;
+  });
+
+  // Множество уже выбранных индексов номеров (roomIdx) - для блокировки дубликатов
+  const selectedRoomIndices = computed<Set<number>>(() => {
+    const indices = new Set<number>();
+    Object.values(selectedByRoomIdx.value).forEach((entry) => {
+      indices.add(entry.roomIdx);
+    });
+    return indices;
   });
 
   const requiredRoomsCount = computed(() => {
@@ -269,6 +295,7 @@
                 :services="searchResults?.packages || []"
                 :selected-codes="selectedCodes"
                 :is-all-rooms-selected="isAllRoomsSelected"
+                :disabled-room-indices="selectedRoomIndices"
                 @open-service-popup="openServicePopup"
                 @select-tariff="handleSelectTariff"
               />

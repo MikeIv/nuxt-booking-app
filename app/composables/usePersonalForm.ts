@@ -335,6 +335,9 @@ export const usePersonalForm = () => {
           room_type_code: selectedRoomType,
           rate_type_code: selectedTariff.rate_plan_code,
           packages: packages && packages.length > 0 ? packages : undefined,
+          adults,
+          children,
+          children_ages: childrenAges,
           guests: allGuests,
         },
       ],
@@ -424,10 +427,19 @@ export const usePersonalForm = () => {
       // Объединяем гостей
       const guests = [...baseGuests, ...additionalGuestsData];
 
+      // Получаем состав гостей для этого номера из guestsList
+      const roomGuests = guestsList?.[entry.roomIdx];
+      const roomAdults = roomGuests?.adults || 0;
+      const roomChildren = roomGuests?.children || 0;
+      const roomChildrenAges = roomGuests?.childrenAges || [];
+
       return {
         room_type_code: entry.room_type_code,
         rate_type_code: entry.ratePlanCode,
         packages: packages && packages.length > 0 ? packages : undefined,
+        adults: roomAdults,
+        children: roomChildren,
+        children_ages: roomChildrenAges,
         guests,
       };
     });

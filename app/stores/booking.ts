@@ -734,6 +734,9 @@ export const useBookingStore = defineStore(
             room_type_code: room.room_type_code,
             rate_type_code: room.rate_type_code,
             packages: room.packages,
+            adults: room.adults,
+            children: room.children,
+            children_ages: room.children_ages,
             guests: room.guests.map((guest) => ({
               surname: guest.surname,
               name: guest.name,
