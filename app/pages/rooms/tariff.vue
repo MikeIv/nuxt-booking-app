@@ -80,6 +80,7 @@
 
   const goBackToRooms = async () => {
     bookingStore.setLoading(true, "Загружаем номера...");
+    bookingStore.isServerRequest = true;
     bookingStore.selectedRoomType = null;
     bookingStore.searchResults = null;
     bookingStore.roomTariffs = [];
@@ -87,8 +88,7 @@
       await router.push("/rooms");
       await nextTick();
     } finally {
-      bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      // loading и isServerRequest будут сброшены после загрузки данных на странице /rooms
     }
   };
 

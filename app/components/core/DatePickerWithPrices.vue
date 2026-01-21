@@ -394,7 +394,7 @@
     }
 
     @media (min-width: #{size.$desktopMedium}) {
-      width: auto;
+      flex: 1;
       min-width: rem(340);
     }
   }

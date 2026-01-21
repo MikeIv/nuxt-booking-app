@@ -235,7 +235,7 @@ const MAX_ROOMS = 5;
     }
 
     @media (min-width: #{size.$desktopMedium}) {
-      width: auto;
+      flex: 1;
       min-width: rem(400);
     }
 
