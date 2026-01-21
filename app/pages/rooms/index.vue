@@ -241,7 +241,7 @@
       />
     </div>
 
-    <div v-if="loading" :class="$style.loading" data-testid="loading">Загрузка номеров...</div>
+    <div v-if="loading || bookingStore.isServerRequest" :class="$style.loading" data-testid="loading">Загрузка номеров...</div>
 
     <template v-else-if="hasSearchResults">
       <section :class="$style.roomsList">
@@ -256,7 +256,7 @@
       </section>
     </template>
 
-    <div v-else :class="$style.noResults" data-testid="no-results">
+    <div v-else-if="!loading && !bookingStore.isServerRequest" :class="$style.noResults" data-testid="no-results">
       Нет доступных номеров. Выполните поиск.
     </div>
   </div>

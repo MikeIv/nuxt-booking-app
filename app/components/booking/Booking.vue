@@ -182,6 +182,7 @@
     font-family: "Inter", sans-serif;
     background-color: var(--primary);
     border-radius: var(--a-borderR--x30);
+    box-shadow: 0 rem(4) rem(4)  rgb(0 0 0 / 25%);
 
     @media (min-width: #{size.$desktopMin}) {
       padding: rem(32) rem(24);
@@ -191,6 +192,7 @@
       width: 100%;
       margin: 0 rem(24);
       padding: rem(32) rem(24);
+      justify-content: flex-start;
     }
 
     @media (min-width: #{size.$desktopMax}) {
@@ -205,6 +207,7 @@
     width: 100%;
     height: rem(67);
     font-family: "Inter", sans-serif;
+    font-size: rem(24);
     font-weight: 400;
     border-radius: rem(16);
     cursor: pointer;

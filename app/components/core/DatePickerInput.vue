@@ -77,9 +77,6 @@
       width: auto;
       min-width: rem(340);
     }
-    @media (min-width: #{size.$desktop}) {
-      min-width: rem(500);
-    }
 
     &:hover {
       border-color: var(--a-border-accent);
