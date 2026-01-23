@@ -153,8 +153,26 @@
     formData.roomGuests[roomIdx].additionalGuests[guestIndex] = guest;
   };
 
+  // Получаем максимальное количество дополнительных гостей для номера
+  const getMaxAdditionalGuests = (roomIdx: number): number => {
+    const { adults, children } = getRoomGuestComposition(roomIdx);
+    const totalGuests = adults + children;
+    // Максимальное количество дополнительных гостей = общее количество - 1 (основной гость)
+    return Math.max(0, totalGuests - 1);
+  };
+
+  // Проверяем, можно ли добавить еще гостя для номера
+  const canAddRoomAdditionalGuest = (roomIdx: number): boolean => {
+    const maxGuests = getMaxAdditionalGuests(roomIdx);
+    if (maxGuests === 0) return false;
+    const currentAdditionalGuests = formData.roomGuests[roomIdx]?.additionalGuests?.length || 0;
+    return currentAdditionalGuests < maxGuests;
+  };
+
   // Добавление дополнительного гостя для номера
   const addRoomAdditionalGuest = (roomIdx: number) => {
+    if (!canAddRoomAdditionalGuest(roomIdx)) return;
+    
     if (!formData.roomGuests[roomIdx]) {
       formData.roomGuests[roomIdx] = createRoomGuestData();
     }
@@ -308,7 +326,22 @@
     }
   };
 
+  // Получаем максимальное количество дополнительных гостей для одного номера
+  const maxAdditionalGuests = computed(() => {
+    const { adults, children } = guestComposition.value;
+    const totalGuests = adults + children;
+    // Максимальное количество дополнительных гостей = общее количество - 1 (основной гость)
+    return Math.max(0, totalGuests - 1);
+  });
+
+  // Проверяем, можно ли добавить еще гостя
+  const canAddAdditionalGuest = computed(() => {
+    if (maxAdditionalGuests.value === 0) return false;
+    return formData.additionalGuests.length < maxAdditionalGuests.value;
+  });
+
   const addAdditionalGuest = () => {
+    if (!canAddAdditionalGuest.value) return;
     formData.additionalGuests.push(initialGuestData());
     errors.additionalGuests.push({});
   };
@@ -735,6 +768,7 @@
                       @remove="removeRoomAdditionalGuest(entry.roomIdx, index)"
                     />
                     <Button
+                      v-if="canAddRoomAdditionalGuest(entry.roomIdx)"
                       type="button"
                       :class="$style.addGuestButton"
                       unstyled
@@ -832,6 +866,7 @@
                   @remove="removeAdditionalGuest(index)"
                 />
                 <Button
+                  v-if="canAddAdditionalGuest"
                   type="button"
                   :class="$style.addGuestButton"
                   unstyled
