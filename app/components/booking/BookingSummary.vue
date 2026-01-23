@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, ref, toRefs } from "vue";
+  import { computed, ref, toRefs, watch } from "vue";
   import { storeToRefs } from "pinia";
   import { formatCount } from "~/utils/declension";
   import type { DeclensionRules } from "~/utils/declension";
@@ -125,6 +125,20 @@
 
   const hasRoomEntries = computed(() => roomEntries.value.length > 0);
 
+  // Используется в шаблоне для условного отображения элементов
+  const isSingleRoom = computed(() => roomEntries.value.length === 1);
+
+  // Автоматически раскрываем единственный номер при монтировании
+  watch(
+    () => roomEntries.value.length,
+    (length) => {
+      if (length === 1) {
+        expandedRooms.value[roomEntries.value[0]?.roomIdx] = true;
+      }
+    },
+    { immediate: true },
+  );
+
   const handleContinue = () => {
     emit("continue");
   };
@@ -200,7 +214,9 @@
           :key="entry.roomIdx + '-' + entry.ratePlanCode"
           :class="$style.pageSummaryItem"
         >
+          <!-- Кнопка раскрытия только для мультибронирования -->
           <Button
+            v-if="!isSingleRoom"
             type="button"
             :class="$style.roomButton"
             class="btn__bs dark round"
@@ -223,9 +239,10 @@
               />
             </div>
           </Button>
+          <!-- Детали номера: для одного номера всегда видимы, для нескольких - по раскрытию -->
           <Transition name="fade">
             <div
-              v-if="isRoomExpanded(entry.roomIdx)"
+              v-if="isSingleRoom || isRoomExpanded(entry.roomIdx)"
               :class="$style.roomDetails"
             >
               <div :class="$style.roomDetailsHeader">
@@ -247,7 +264,8 @@
                 v-if="(roomGuestLines[entry.roomIdx] || []).length > 0"
                 :class="$style.roomDivider"
               />
-              <div :class="$style.roomTotal">
+              <!-- Итого за номер показывается только при мультибронировании -->
+              <div v-if="!isSingleRoom" :class="$style.roomTotal">
                 <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
                 <strong>
                   {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
