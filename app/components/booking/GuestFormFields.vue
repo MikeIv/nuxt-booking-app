@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { GuestData, FormField } from "~/composables/usePersonalForm";
   import { countriesRu } from "~/utils/countries";
+  import { usePhoneMask } from "~/composables/usePhoneMask";
 
   interface Props {
     guest: GuestData;
@@ -23,8 +24,45 @@
 
   const emit = defineEmits<Emits>();
 
+  const {
+    handlePhoneInput,
+    handlePhoneKeydown,
+    handlePhonePaste,
+    handlePhoneFocus,
+    handlePhoneBlur,
+    getDisplayValue,
+  } = usePhoneMask();
+
   const updateField = (key: keyof GuestData, value: string | undefined) => {
     emit("update:guest", { ...props.guest, [key]: value ?? "" });
+  };
+
+  // Универсальный обработчик обновления телефона
+  const updatePhone = (value: string) => {
+    updateField("phone", value);
+  };
+
+  // Обработчик ввода для телефона
+  const onPhoneBeforeInput = (event: InputEvent) => {
+    handlePhoneInput(event, updatePhone);
+  };
+
+  const onPhoneKeydown = (event: KeyboardEvent) => {
+    handlePhoneKeydown(event, updatePhone);
+  };
+
+  const onPhonePaste = (event: ClipboardEvent) => {
+    handlePhonePaste(event, updatePhone);
+  };
+
+  // Обработчик фокуса для телефона
+  const onPhoneFocus = (event: Event) => {
+    handlePhoneFocus(event, props.guest.phone || "", updatePhone);
+  };
+
+  // Обработчик потери фокуса для телефона
+  const onPhoneBlur = (event: Event) => {
+    handlePhoneBlur(event, props.guest.phone || "", updatePhone);
   };
 </script>
 
@@ -61,7 +99,7 @@
         @update:model-value="updateField(field.key, $event)"
       />
       <InputText
-        v-else
+        v-else-if="field.key !== 'phone'"
         :model-value="guest[field.key] ?? ''"
         :type="field.type"
         :placeholder="field.placeholder"
@@ -71,6 +109,23 @@
         ]"
         unstyled
         @update:model-value="updateField(field.key, $event)"
+      />
+      <input
+        v-else
+        :value="getDisplayValue(guest.phone)"
+        type="tel"
+        inputmode="numeric"
+        autocomplete="tel"
+        :placeholder="field.placeholder"
+        :class="[
+          $style.input,
+          errors[field.key] && $style.inputError,
+        ]"
+        @beforeinput="onPhoneBeforeInput"
+        @keydown="onPhoneKeydown"
+        @paste="onPhonePaste"
+        @focus="onPhoneFocus"
+        @blur="onPhoneBlur"
       />
       <Message
         v-if="errors[field.key] && field.key !== 'citizenship'"
