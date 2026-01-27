@@ -66,18 +66,12 @@
         <div :class="$style.serviceInfo">
           <h2 :class="$style.title">{{ title }}</h2>
 
-          <button
-            :class="$style.infoButton"
-            data-popup-button
+          <BookingInfoButton
+            icon-name="i-heroicons-chevron-down-20-solid"
             aria-label="Подробнее об услуге"
-            @click="openPopup($event)"
-          >
-            <UIcon
-              name="i-heroicons-chevron-down-20-solid"
-              :class="$style.chevronIcon"
-              aria-hidden="true"
-            />
-          </button>
+            :data-popup-button="true"
+            @click="openPopup"
+          />
         </div>
 
         <dl :class="$style.description">
@@ -191,35 +185,6 @@
     margin: 0;
   }
 
-  .infoButton {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: rem(40);
-    height: rem(40);
-    min-width: auto;
-    padding: 0;
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: var(--a-primaryBg);
-      border: none;
-
-      .chevronIcon {
-        color: var(--a-white);
-      }
-    }
-  }
-
-  .chevronIcon {
-    width: rem(26);
-    height: rem(26);
-    color: var(--a-black);
-  }
 
   .description {
     display: flex;
