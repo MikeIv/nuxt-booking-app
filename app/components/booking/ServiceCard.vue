@@ -5,6 +5,7 @@
     id: number;
     title: string;
     price: number;
+    photos?: string[];
   }
 
   const props = defineProps<Props>();
@@ -20,14 +21,14 @@
     isPopupOpen.value = false;
   };
 
-  // Статичные данные для примера
-  const serviceImages = ref<string[]>([]);
+  // Используем photos из props, если они переданы
+  const serviceImages = computed(() => props.photos || []);
   const CAROUSEL_MIN_PHOTOS = 2;
   const CAROUSEL_TARGET_ITEMS = 3;
   const CAROUSEL_PLACEHOLDER_LABEL = "Service Photo";
 
   const { carouselImages } = useRoomCarousel(
-    computed(() => serviceImages.value),
+    serviceImages,
     CAROUSEL_MIN_PHOTOS,
     CAROUSEL_TARGET_ITEMS,
     CAROUSEL_PLACEHOLDER_LABEL,

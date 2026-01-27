@@ -101,6 +101,7 @@
     if (!selectedRoom.value || !selectedTariff.value) return null;
     return {
       roomIdx: 0,
+      roomCardIdx: 0,
       roomTitle: selectedRoom.value.title || "",
       room_type_code: selectedRoom.value.room_type_code,
       ratePlanCode: selectedTariff.value.rate_plan_code,
@@ -146,6 +147,10 @@
 
   const isPopupOpen = ref(false);
   const expandedRoom = ref(false);
+  const upgradeRoom = ref<Room | null>(null);
+  const upgradeRoomLoading = ref(false);
+  const isUpgradePopupOpen = ref(false);
+  const expandedUpgradeRoom = ref(false);
 
   const openPopup = (event: MouseEvent) => {
     event.stopPropagation();
@@ -156,12 +161,123 @@
     isPopupOpen.value = false;
   };
 
+  const openUpgradePopup = (event: MouseEvent) => {
+    event.stopPropagation();
+    isUpgradePopupOpen.value = true;
+  };
+
+  const closeUpgradePopup = () => {
+    isUpgradePopupOpen.value = false;
+  };
+
   const toggleExpand = () => {
     expandedRoom.value = !expandedRoom.value;
   };
 
+  const toggleUpgradeExpand = () => {
+    expandedUpgradeRoom.value = !expandedUpgradeRoom.value;
+  };
+
   const handleContinue = () => {
     router.push("/personal");
+  };
+
+  // Функция для подготовки данных гостей для запроса upgrade
+  const prepareGuestsForUpgrade = () => {
+    const { guests: guestsStore } = bookingStore;
+    const roomList = guestsStore.roomList ?? [];
+    if (roomList.length === 0) {
+      return { adults: 1, childs: [] };
+    }
+    // Для upgrade берем данные первого номера
+    const firstRoom = roomList[0];
+    if (!firstRoom) {
+      return { adults: 1, childs: [] };
+    }
+    const childs = Array.from(
+      { length: firstRoom.children },
+      (_, index) => firstRoom.childrenAges?.[index] ?? 0,
+    );
+    return {
+      adults: firstRoom.adults,
+      childs,
+    };
+  };
+
+  // Функция для запроса номера повышенного комфорта
+  const fetchUpgradeRoom = async () => {
+    if (!selectedRoom.value || !date.value || isMultiRoomsMode.value) {
+      return;
+    }
+
+    const [startDate, endDate] = date.value;
+    const roomTypeCode = selectedRoom.value.room_type_code;
+    const guests = prepareGuestsForUpgrade();
+
+    if (!roomTypeCode) {
+      return;
+    }
+
+    upgradeRoomLoading.value = true;
+    try {
+      const { post } = useApi();
+      const { formatDate } = bookingStore;
+
+      const upgradeData = {
+        room_type_code: roomTypeCode,
+        start_at: formatDate(startDate),
+        end_at: formatDate(endDate),
+        guests,
+      };
+
+      const response = await post<Room[]>(
+        "/v1/search/upgrade",
+        upgradeData,
+        {
+          signal: AbortSignal.timeout(10000),
+        },
+      );
+
+      if (response.success && response.payload && response.payload.length > 0) {
+        // Преобразуем данные из API в формат Room
+        const apiRoom = response.payload[0]!; // Non-null assertion, так как мы проверили length > 0
+        // Обрабатываем square, который может быть строкой или числом
+        const squareValue =
+          typeof apiRoom.square === "string"
+            ? Number(apiRoom.square) || 0
+            : apiRoom.square ?? 0;
+        upgradeRoom.value = {
+          id: apiRoom.id ?? apiRoom.room_type_code,
+          room_type_code: apiRoom.room_type_code,
+          title: apiRoom.title || "",
+          description: apiRoom.description ?? null,
+          max_occupancy: apiRoom.max_occupancy ?? 0,
+          square: squareValue,
+          rooms: apiRoom.rooms ?? 0,
+          amenities: apiRoom.amenities ?? [],
+          bed: apiRoom.bed ?? null,
+          view: apiRoom.view ?? null,
+          family: apiRoom.family ?? null,
+          min_price:
+            typeof apiRoom.min_price === "string"
+              ? Number(apiRoom.min_price)
+              : apiRoom.min_price ?? null,
+          price_for_register: apiRoom.price_for_register,
+          photos: apiRoom.photos ?? [],
+          tariffs: apiRoom.tariffs ?? [],
+        };
+      } else {
+        upgradeRoom.value = null;
+      }
+    } catch (err: unknown) {
+      // Тихая ошибка - не показываем уведомление, просто не отображаем карточку
+      upgradeRoom.value = null;
+      if (import.meta.dev) {
+        console.error("Ошибка загрузки номера повышенного комфорта:", err);
+      }
+    } finally {
+      upgradeRoomLoading.value = false;
+    }
   };
 
   onMounted(async () => {
@@ -213,6 +329,11 @@
         life: 5000,
       });
     }
+
+    // Загружаем номер повышенного комфорта (только для одного номера)
+    if (!isMultiRoomsMode.value && selectedRoom.value) {
+      await fetchUpgradeRoom();
+    }
   });
 </script>
 
@@ -245,6 +366,24 @@
             @close="closePopup"
           />
 
+          <!-- Карточка номера повышенного комфорта -->
+          <div v-if="upgradeRoom && !isMultiRoomsMode" :class="$style.upgradeRoomCard">
+            <BookingRoomInfoCard
+              :room="upgradeRoom"
+              :expanded="expandedUpgradeRoom"
+              :hide-description="true"
+              @open-popup="openUpgradePopup"
+              @toggle-expand="toggleUpgradeExpand"
+            />
+          </div>
+
+          <BookingRoomPopup
+            v-if="upgradeRoom && !isMultiRoomsMode"
+            :room="upgradeRoom"
+            :is-open="isUpgradePopupOpen"
+            @close="closeUpgradePopup"
+          />
+
           <section :class="$style.servicesList">
             <div v-if="isServerRequest" :class="$style.loading">
               Загрузка услуг...
@@ -259,6 +398,7 @@
               :key="service.packageCode"
               :title="service.title"
               :price="service.price"
+              :photos="service.photos"
             />
           </section>
         </div>
@@ -408,5 +548,11 @@
     font-size: rem(18);
     color: var(--a-text-accent);
     text-align: center;
+  }
+
+  .upgradeRoomCard {
+    :deep(section) {
+      border: 1px solid var(--a-border-primary-accent);
+    }
   }
 </style>
