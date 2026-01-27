@@ -31,10 +31,8 @@
     const width = window.innerWidth;
     // Мобильный: < 768px
     if (width < 768) return "202px";
-    // Планшет: >= 768px и < 1366px
-    if (width < 1366) return "400px";
-    // Десктоп и выше: >= 1366px
-    return "433px";
+    // Планшет и выше: >= 768px - используем 100% для подстройки под высоту блока
+    return "100%";
   });
 
   const { carouselImages } = useRoomCarousel(
@@ -57,16 +55,11 @@
     <div :class="$style.roomInfo">
       <div :class="$style.roomHeader">
         <span :class="$style.title">{{ room.title || "Без названия" }}</span>
-        <button
-          :class="$style.infoButton"
-          data-popup-button
+        <BookingInfoButton
+          icon-name="i-heroicons-chevron-down-20-solid"
+          :data-popup-button="true"
           @click="_openPopup"
-        >
-          <UIcon
-            name="i-heroicons-chevron-down-20-solid"
-            :class="$style.chevronIcon"
-          />
-        </button>
+        />
       </div>
 
       <div
@@ -105,28 +98,118 @@
     flex-direction: column;
     margin-bottom: rem(40);
 
-    @media (min-width: #{size.$desktopMedium}) {
+    @media (min-width: #{size.$tablet}) {
+      min-height: rem(318);
       flex-direction: row;
+      padding: rem(16) rem(22) rem(16) rem(16);
     }
   }
 
   .roomImage {
-    @media (min-width: #{size.$desktopMedium}) {
+    @media (min-width: #{size.$tablet}) {
+      display: flex;
+      align-self: stretch;
       width: 45%;
+      max-width: 45%;
       margin-right: rem(32);
+      height: 100%;
     }
 
     :global(.p-carousel-indicator-list) {
       display: none !important;
     }
+
+    :global(.p-carousel) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-content) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-content-container) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-items-container) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-items-content) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-viewport) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.p-carousel-item) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(.carouselItem) {
+      @media (min-width: #{size.$tablet}) {
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    :global(img) {
+      @media (min-width: #{size.$tablet}) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
   }
 
   .roomInfo {
     margin: rem(16) 0;
+    display: flex;
+    flex-direction: column;
 
-    @media (min-width: #{size.$desktopMedium}) {
+    @media (min-width: #{size.$tablet}) {
       width: 55%;
+      max-width: 55%;
+      margin: 0;
       margin-right: rem(32);
+      flex: 1;
+      align-self: stretch;
     }
   }
 
@@ -147,35 +230,6 @@
     color: var(--a-text-dark);
   }
 
-  .infoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: rem(32);
-    height: rem(32);
-    min-width: auto;
-    padding: 0;
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: var(--a-primaryBg);
-      border: none;
-
-      .chevronIcon {
-        color: var(--a-white);
-      }
-    }
-  }
-
-  .chevronIcon {
-    width: rem(20);
-    height: rem(20);
-    color: var(--a-black);
-  }
 
   .roomDescription {
     margin-bottom: rem(24);

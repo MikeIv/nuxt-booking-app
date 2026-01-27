@@ -149,26 +149,18 @@
     <div :class="$style.pageSummaryInner">
       <div :class="$style.pageSummaryHeader">
         <span :class="$style.pageSummaryTitle">Ваше бронирование</span>
-        <Button
-          type="button"
-          unstyled
-          :class="[
-            $style.infoButton,
-            isDatesDetailsOpen ? $style.infoButtonExpanded : undefined,
-          ]"
-          aria-label="Подробнее о датах проживания"
-          :aria-expanded="isDatesDetailsOpen"
-          @click="toggleDatesDetails"
-        >
-          <UIcon
-            :name="
+        <div :class="$style.infoButtonWrapper">
+          <BookingInfoButton
+            :icon-name="
               isDatesDetailsOpen
                 ? 'i-heroicons-chevron-up-20-solid'
                 : 'i-heroicons-chevron-down-20-solid'
             "
-            :class="$style.infoButtonIcon"
+            aria-label="Подробнее о датах проживания"
+            :aria-expanded="isDatesDetailsOpen"
+            @click="toggleDatesDetails"
           />
-        </Button>
+        </div>
       </div>
       <div v-if="!isDatesDetailsOpen" :class="$style.pageSummaryDatesMobile">
         {{ formatDate(date?.[0] || null) }} -
@@ -384,33 +376,10 @@
     margin-bottom: rem(8);
   }
 
-  .infoButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: rem(40);
-    height: rem(40);
-    padding: 0;
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-
+  .infoButtonWrapper {
     @media (min-width: #{size.$desktopMin}) {
       display: none;
     }
-  }
-
-  .infoButtonIcon {
-    width: rem(20);
-    height: rem(20);
-    color: var(--a-text-dark);
-    transition: transform 0.2s ease;
-  }
-
-  .infoButtonExpanded .infoButtonIcon {
-    transform: rotate(180deg);
   }
 
   .pageSummaryTitle {
