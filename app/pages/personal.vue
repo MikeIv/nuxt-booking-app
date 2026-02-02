@@ -78,7 +78,7 @@ const initializeRoomGuests = () => {
     (a, b) => a.roomIdx - b.roomIdx,
   );
 
-  sortedEntries.forEach((entry, index) => {
+  sortedEntries.forEach((entry) => {
     if (!formData.roomGuests[entry.roomIdx]) {
       formData.roomGuests[entry.roomIdx] = createRoomGuestData();
     }
