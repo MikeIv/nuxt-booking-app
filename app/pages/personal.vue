@@ -88,10 +88,8 @@ const initializeRoomGuests = () => {
         additionalGuests: [],
       };
     }
-    // Автоматически раскрываем первый номер
-    if (index === 0) {
-      expandedRooms.value[entry.roomIdx] = true;
-    }
+    // Все блоки «Данные гостей» открыты по умолчанию
+    expandedRooms.value[entry.roomIdx] = true;
   });
 };
 

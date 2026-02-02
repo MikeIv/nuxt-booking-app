@@ -683,13 +683,16 @@ export const useBookingStore = defineStore(
       try {
         const { post } = useApi();
         const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
+        const multiBookingMode = (searchData.guests as unknown[])?.length > 1;
+        // При мультибронировании бэкенд может обрабатывать запрос дольше — увеличиваем таймаут
+        const searchTimeoutMs = multiBookingMode ? 35000 : 15000;
 
         isServerRequest.value = true;
         const response = await post<ApiSearchPayload>(
           "/v1/search",
           searchData,
           {
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(searchTimeoutMs),
           },
         );
 
@@ -762,11 +765,14 @@ export const useBookingStore = defineStore(
           );
         }
 
+        const multiRoomBooking = processedData.rooms.length > 1;
+        const bookingTimeoutMs = multiRoomBooking ? 35000 : 15000;
+
         isServerRequest.value = true;
         const response = await post<BookingResponse>(
           "/v1/booking",
           processedData,
-          { signal: AbortSignal.timeout(10000) },
+          { signal: AbortSignal.timeout(bookingTimeoutMs) },
         );
 
         if (response.success && response.payload) {
