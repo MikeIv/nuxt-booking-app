@@ -89,10 +89,6 @@
     isPopupOpen.value = false;
   };
 
-  function handleOpenService(ev: MouseEvent, service: PackageResource) {
-    emit("open-service-popup", ev, service);
-  }
-
   function selectTariffFor(index: number, tariff: RoomTariff | null) {
     if (!tariff) return;
     emit("select-tariff", tariff.rate_plan_code, index, props.roomCardIdx);

@@ -148,7 +148,7 @@
   <aside :class="$style.pageSummary">
     <div :class="$style.pageSummaryInner">
       <div :class="$style.pageSummaryHeader">
-        <span :class="$style.pageSummaryTitle">Ваше бронирование</span>
+        <span :class="$style.pageSummaryTitle">Ваше бронирование:</span>
         <div :class="$style.infoButtonWrapper">
           <BookingInfoButton
             :icon-name="
@@ -237,12 +237,13 @@
               v-if="isSingleRoom || isRoomExpanded(entry.roomIdx)"
               :class="$style.roomDetails"
             >
-              <div :class="$style.roomDetailsHeader">
+              <div :class="$style.roomCategoryRow">
                 <span :class="$style.roomType">{{ entry.roomTitle }}</span>
                 <span :class="$style.roomPrice">
-                  {{ (entry.price || 0).toLocaleString("ru-RU") }} ₽/ночь
+                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
                 </span>
               </div>
+              <div :class="$style.roomDivider" />
               <div :class="$style.roomTariff">{{ entry.title }}</div>
               <div :class="$style.roomDivider" />
               <div
@@ -263,35 +264,48 @@
                   {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
                 </strong>
               </div>
+              <!-- Дополнительные услуги: внутри блока номера, один раз (в последнем/единственном номере) -->
+              <template
+                v-if="
+                  isSingleRoom || entry.roomIdx === roomEntries.length - 1
+                "
+              >
+                <div :class="$style.servicesSection">
+                  <div :class="$style.servicesHeader">
+                    Дополнительные услуги:
+                  </div>
+                  <div :class="$style.servicesList">
+                    <div
+                      v-for="service in selectedServices"
+                      :key="service.id"
+                      :class="$style.serviceItem"
+                    >
+                      <span :class="$style.serviceTitle">{{
+                        service.title
+                      }}</span>
+                      <div :class="$style.serviceActions">
+                        <span :class="$style.servicePrice">
+                          {{ service.price.toLocaleString("ru-RU") }} ₽
+                        </span>
+                        <Button
+                          type="button"
+                          unstyled
+                          :class="$style.removeServiceButton"
+                          aria-label="Удалить услугу"
+                          @click="bookingStore.removeService(service.id)"
+                        >
+                          <UIcon
+                            name="i-close"
+                            :class="$style.removeIcon"
+                          />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </Transition>
-        </div>
-      </div>
-
-      <div v-if="selectedServices.length > 0" :class="$style.servicesSection">
-        <div :class="$style.servicesHeader">Дополнительные услуги:</div>
-        <div :class="$style.servicesList">
-          <div
-            v-for="service in selectedServices"
-            :key="service.id"
-            :class="$style.serviceItem"
-          >
-            <span :class="$style.serviceTitle">{{ service.title }}</span>
-            <div :class="$style.serviceActions">
-              <span :class="$style.servicePrice">
-                {{ service.price.toLocaleString("ru-RU") }} ₽
-              </span>
-              <Button
-                type="button"
-                unstyled
-                :class="$style.removeServiceButton"
-                aria-label="Удалить услугу"
-                @click="bookingStore.removeService(service.id)"
-              >
-                <UIcon name="i-close" :class="$style.removeIcon" />
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -301,10 +315,6 @@
         <strong>{{ bookingTotal.toLocaleString("ru-RU") }} ₽</strong>
       </div>
       <div :class="$style.pageSummaryFooter">
-        <div :class="$style.pageSummaryTotal">
-          <span>Итого</span>
-          <strong>{{ bookingTotal.toLocaleString("ru-RU") }} ₽</strong>
-        </div>
         <Button
           unstyled
           :class="$style.pageContinueButton"
@@ -385,7 +395,7 @@
   .pageSummaryTitle {
     font-family: Lora, serif;
     font-size: rem(24);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--a-text-dark);
 
     @media (min-width: #{size.$tablet}) {
@@ -443,31 +453,35 @@
   .roomInfoBlock {
     display: flex;
     flex-direction: column;
-    gap: rem(12);
-    padding: rem(30) rem(20);
+    gap: rem(20);
+    align-items: center;
+    padding: rem(20) rem(24);
     background: var(--a-lightPrimaryBg);
     border-radius: var(--a-borderR--card);
   }
 
   .dateRow {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: rem(8);
+    justify-content: center;
+    gap: rem(15);
   }
 
   .weekdayRow {
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: rem(8);
+    width: 100%;
   }
 
   .bookingDetailLabel {
-    font-family: "Lora", serif;
-    font-size: rem(18);
-    font-weight: 600;
+    font-family: Lora, serif;
+    font-size: rem(20);
+    font-weight: 700;
     color: var(--a-text-dark);
+    white-space: nowrap;
   }
 
   .detailIcon {
@@ -477,27 +491,37 @@
   }
 
   .detailDay {
-    width: calc(100% / 3);
-    font-family: "Lora", serif;
+    flex-shrink: 0;
+    width: rem(52);
+    font-family: Lora, serif;
     font-size: rem(16);
     font-weight: 400;
     color: var(--a-text-dark);
+    text-align: center;
   }
 
   .dayRight {
-    text-align: right;
+    width: rem(62);
+    text-align: center;
   }
 
   .weekday {
-    display: flex;
+    flex-shrink: 0;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: rem(2) rem(18);
-    font-family: "Lora", serif;
-    font-size: rem(14);
+    min-width: rem(161);
+    height: rem(24);
+    padding: rem(4) rem(28);
+    font-family: Lora, serif;
+    font-size: rem(15);
+    font-weight: 400;
     color: var(--a-text-dark);
-    border: rem(1) solid var(--a-border-dark);
+    text-align: center;
+    white-space: nowrap;
+    border: 0.5px solid var(--a-border-dark);
     border-radius: var(--a-borderR--card);
+    box-shadow: 4px 4px 102.5px -10px rgba(0, 0, 0, 0.1);
   }
 
   .pageSummaryList {
@@ -559,33 +583,35 @@
     padding: rem(16);
   }
 
-  .roomDetailsHeader {
+  .roomCategoryRow {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: rem(12);
   }
 
   .roomType {
-    width: 50%;
-    font-family: "Lora", serif;
-    font-size: rem(18);
-    font-weight: 600;
+    flex: 1;
+    font-family: Lora, serif;
+    font-size: rem(24);
+    font-weight: 700;
     color: var(--a-text-dark);
+    line-height: 1.2;
   }
 
   .roomPrice {
-    font-family: "Lora", serif;
-    font-size: rem(16);
-    font-weight: 600;
+    font-family: Lora, serif;
+    font-size: rem(24);
+    font-weight: 700;
     color: var(--a-text-dark);
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .roomTariff {
-    font-family: "Lora", serif;
-    font-size: rem(16);
-    font-weight: 500;
+    font-family: Lora, serif;
+    font-size: rem(18);
+    font-weight: 600;
     color: var(--a-text-dark);
   }
 
@@ -597,8 +623,8 @@
 
   .roomGuestLine {
     font-family: Inter, sans-serif;
-    font-size: rem(14);
-    font-weight: 400;
+    font-size: rem(16);
+    font-weight: 500;
     color: var(--a-text-dark);
   }
 
@@ -623,13 +649,12 @@
     display: flex;
     flex-direction: column;
     gap: rem(12);
-    padding: rem(16) 0;
   }
 
   .servicesHeader {
-    font-family: "Lora", serif;
-    font-size: rem(16);
-    font-weight: 500;
+    font-family: Lora, serif;
+    font-size: rem(18);
+    font-weight: 700;
     color: var(--a-text-dark);
   }
 
@@ -650,8 +675,8 @@
   .serviceTitle {
     flex: 1;
     font-family: Inter, sans-serif;
-    font-size: rem(14);
-    font-weight: 400;
+    font-size: rem(16);
+    font-weight: 500;
     color: var(--a-text-dark);
   }
 
@@ -662,9 +687,9 @@
   }
 
   .servicePrice {
-    font-family: "Lora", serif;
-    font-size: rem(14);
-    font-weight: 500;
+    font-family: Lora, serif;
+    font-size: rem(16);
+    font-weight: 700;
     color: var(--a-text-dark);
     white-space: nowrap;
   }
@@ -694,8 +719,8 @@
 
   .pageSummaryDivider {
     width: 100%;
-    height: rem(1);
-    background-color: #000;
+    height: 1px;
+    background-color: var(--a-border-dark);
     margin: rem(12) 0;
   }
 
@@ -705,9 +730,9 @@
     justify-content: space-between;
     gap: rem(12);
     margin-bottom: rem(12);
-    font-family: "Lora", serif;
+    font-family: Lora, serif;
     font-size: rem(24);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--a-text-dark);
 
     @media (min-width: #{size.$tablet}) {
@@ -715,21 +740,21 @@
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(20);
+      font-size: rem(24);
     }
   }
 
   .pageSummaryGrandTotal strong {
-    font-family: "Lora", serif;
-    font-size: rem(28);
-    font-weight: 600;
+    font-family: Lora, serif;
+    font-size: rem(32);
+    font-weight: 700;
 
     @media (min-width: #{size.$tablet}) {
-      font-size: rem(36);
+      font-size: rem(32);
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
+      font-size: rem(32);
     }
   }
 
@@ -739,22 +764,6 @@
     justify-content: center;
     gap: rem(12);
     flex-wrap: wrap;
-
-    @media (min-width: #{size.$desktopMin}) {
-      justify-content: space-between;
-    }
-  }
-
-  .pageSummaryTotal {
-    display: none;
-    align-items: center;
-    gap: rem(8);
-    font-family: Inter, sans-serif;
-    font-size: rem(16);
-
-    @media (min-width: #{size.$desktopMin}) {
-      display: flex;
-    }
   }
 
   .pageContinueButton {
