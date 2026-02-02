@@ -154,7 +154,12 @@ export const useBookingStore = defineStore(
         throw new Error("Укажите количество гостей");
       }
       const [startDate] = date.value;
-      if (startDate < new Date()) {
+      // Сравниваем по календарному дню: дата заезда «сегодня» допустима
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const startDay = new Date(startDate);
+      startDay.setHours(0, 0, 0, 0);
+      if (startDay < todayStart) {
         searchResults.value = null;
         setLoading(false);
         isServerRequest.value = false;
