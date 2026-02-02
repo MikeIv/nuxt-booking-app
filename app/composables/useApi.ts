@@ -229,13 +229,21 @@ export const useApi = () => {
         }
       }
 
+      const errMessage = (error as { message?: string }).message ?? "";
+      const isAbortOrTimeout =
+        (error as { name?: string }).name === "AbortError" ||
+        /abort|timeout|load response data/i.test(errMessage);
+
       const apiError: ApiError = {
-        message:
-          (error as { data?: { message?: string } }).data?.message ||
-          (error as { message?: string }).message ||
-          "Произошла ошибка",
-        status: status,
-        statusText: (error as { statusText?: string }).statusText,
+        message: isAbortOrTimeout
+          ? "Сервер не ответил вовремя. Проверьте соединение и попробуйте снова."
+          : (error as { data?: { message?: string } }).data?.message ||
+            errMessage ||
+            "Произошла ошибка",
+        status: isAbortOrTimeout ? 408 : status,
+        statusText: isAbortOrTimeout
+          ? "Request Timeout"
+          : (error as { statusText?: string }).statusText,
         data: (error as { data?: unknown }).data,
       };
 

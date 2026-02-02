@@ -268,14 +268,6 @@
       </div>
 
       <div :class="$style.tariffBlock">
-        <div v-if="services?.length" :class="$style.services">
-          <BookingServicesList
-            :services="services"
-            :is-service-popup-open="false"
-            @open-service-popup="handleOpenService"
-          />
-        </div>
-
         <section v-if="hasTariffs && visibleTariffs.length > 0" :class="$style.tariffsList">
           <article
             v-for="tar in visibleTariffs"
@@ -522,13 +514,15 @@
     }
 
     @media (min-width: 1025px) {
-      width: rem(557);
-      flex-shrink: 0;
+      flex: 0 1 60%;
+      max-width: 60%;
+      min-width: rem(320);
       min-height: rem(281);
     }
 
     @media (min-width: #{size.$desktopMedium}) {
-      width: rem(452);
+      flex: 0 1 60%;
+      max-width: 60%;
       min-height: rem(281);
     }
 
@@ -541,17 +535,22 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    min-width: 0;
 
     @media (min-width: 1025px) {
-      flex: 1;
+      flex: 1 1 40%;
+      min-width: rem(240);
       flex-direction: column;
       padding: rem(22) 0 0 rem(22);
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
   }
 
   .cardDetailsTop {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 
     @media (min-width: 1025px) {
       flex-direction: column;
@@ -567,6 +566,7 @@
     flex-direction: column;
     gap: rem(16);
     padding: rem(22) rem(22) 0;
+    min-width: 0;
 
     @media (min-width: #{size.$tablet}) {
       padding: rem(22) rem(22) 0;
@@ -583,15 +583,21 @@
   .roomInfo {
     display: flex;
     align-items: center;
-    gap: rem(12);
+    gap: rem(7);
+    min-height: rem(54);
   }
 
   .title {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
     font-family: Lora, serif;
     font-size: rem(22);
     font-weight: bold;
     color: var(--a-text-dark);
     margin: 0;
+    line-height: normal;
 
     @media (min-width: #{size.$tablet}) {
       font-size: rem(24);
@@ -599,15 +605,14 @@
 
     @media (min-width: #{size.$desktopMin}) {
       font-size: rem(24);
-      line-height: 1.2;
     }
   }
 
   .infoButton {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: none;
     width: rem(34);
     height: rem(34);
     padding: 0;
@@ -623,13 +628,13 @@
     }
 
     @media (min-width: #{size.$tablet}) {
-      width: rem(40.75);
+      width: rem(41);
       height: rem(41);
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      width: rem(32);
-      height: rem(32);
+      width: rem(41);
+      height: rem(41);
     }
   }
 
@@ -651,7 +656,7 @@
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      gap: rem(10) rem(25);
+      gap: rem(10) rem(36);
     }
   }
 
@@ -678,7 +683,7 @@
     font-family: Inter, sans-serif;
     font-size: rem(14);
     font-weight: 500;
-    color: var(--a-text-light);
+    color: var(--a-text-dark);
     margin: 0;
   }
 
@@ -696,7 +701,7 @@
     @media (min-width: #{size.$desktopMin}) {
       margin-top: rem(20);
       padding: rem(22);
-      border-top: 1px solid var(--a-border-primary);
+      border-top: 1px solid var(--a-border-dark);
     }
   }
 
@@ -711,6 +716,11 @@
     display: flex;
     flex-direction: column;
     gap: rem(20);
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--a-border-dark);
+      padding-bottom: rem(20);
+    }
 
     @media (min-width: #{size.$desktopMedium}) {
       flex-direction: row;
@@ -757,10 +767,6 @@
     color: var(--a-text-dark);
   }
 
-  .services {
-    margin-top: rem(8);
-  }
-
   .confirmList {
     display: flex;
     flex-direction: column;
@@ -784,7 +790,7 @@
   .confirmLeft {
     display: flex;
     align-items: flex-end;
-    gap: rem(12);
+    gap: rem(10);
     flex: 1;
     margin-right: rem(20);
   }
@@ -792,19 +798,22 @@
   .confirmText {
     display: flex;
     flex-direction: column;
-    gap: rem(8);
+    gap: rem(4);
   }
 
   .confirmTitle {
     font-family: Inter, sans-serif;
     font-size: rem(12);
+    font-weight: 500;
     color: var(--a-text-accent);
+    letter-spacing: 0;
+    line-height: normal;
   }
 
   .confirmPriceWrapper {
     display: flex;
     align-items: center;
-    gap: rem(12);
+    gap: rem(10);
   }
 
   .confirmGuestsIcons {
@@ -833,8 +842,8 @@
 
   .confirmPrice {
     font-family: Lora, serif;
-    font-size: rem(22);
-    font-weight: 600;
+    font-size: rem(24);
+    font-weight: 700;
     color: var(--a-text-dark);
   }
 
@@ -858,6 +867,7 @@
   }
 
   .selectButton {
+    min-width: rem(121);
     padding: rem(8) rem(16);
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-btnAccentBg);
@@ -904,8 +914,10 @@
     position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: rem(8);
     min-width: rem(250);
+    height: rem(44);
     margin: 0 auto;
     padding-right: rem(40);
     background-color: var(--a-btnAccentBg);
@@ -945,7 +957,7 @@
     flex-direction: column;
     gap: rem(8);
     margin-top: rem(10);
-    border-bottom: 1px solid var(--a-border-primary);
+    border-bottom: 1px solid var(--a-border-dark);
   }
 
   .otherTariff {
@@ -959,15 +971,19 @@
 
   .otherTariffInfo {
     display: flex;
-    align-items: center;
-    gap: rem(12);
+    align-items: flex-start;
+    gap: rem(8);
     margin-bottom: rem(20);
+
+    & > *:last-child {
+      margin-top: rem(6);
+    }
   }
 
   .tariffDetails {
     display: flex;
     flex-direction: column;
-    gap: rem(12);
+    gap: rem(15);
     margin-bottom: rem(20);
     padding-bottom: rem(20);
   }
@@ -975,32 +991,27 @@
   .tariffDetailItem {
     display: flex;
     align-items: center;
-    gap: rem(12);
+    gap: rem(15);
   }
 
   .tariffDetailIcon {
     width: rem(20);
-    height: rem(20);
+    height: rem(16);
     flex-shrink: 0;
-    color: #178b08;
+    color: var(--a-border-primary);
   }
 
   .tariffDetailIconPenalty {
-    color: #9ca3af;
+    color: var(--a-text-light);
   }
 
   .tariffDetailText {
-    font-family: Inter, sans-serif;
-    font-size: rem(16);
+    font-family: Lora, serif;
+    font-size: rem(18);
+    font-weight: 400;
     color: var(--a-text-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(18);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(18);
-    }
+    letter-spacing: 0;
+    line-height: normal;
   }
 
   .averagePriceSection {
@@ -1019,6 +1030,7 @@
     margin: rem(20) 0 0 0;
     padding: 0 rem(22) rem(20);
     border-bottom: 1px solid var(--a-border-primary);
+    min-width: 0;
 
     @media (min-width: #{size.$tablet}) {
       padding: 0 rem(22) rem(20);
@@ -1037,6 +1049,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: rem(10) rem(16);
+    min-width: 0;
 
     @media (min-width: #{size.$tablet}) {
       gap: rem(16);
@@ -1044,7 +1057,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       gap: rem(8) rem(16);
-      max-width: rem(263);
+      max-width: 100%;
       align-content: flex-start;
     }
 
