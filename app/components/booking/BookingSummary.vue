@@ -125,10 +125,8 @@
 
   const hasRoomEntries = computed(() => roomEntries.value.length > 0);
 
-  // Используется в шаблоне для условного отображения элементов
   const isSingleRoom = computed(() => roomEntries.value.length === 1);
 
-  // Автоматически раскрываем единственный номер при монтировании
   watch(
     () => roomEntries.value.length,
     (length) => {
@@ -361,6 +359,8 @@
       box-shadow: none;
       border-radius: 0;
       background: transparent;
+      flex: 1;
+      min-height: 0;
     }
   }
 
@@ -372,7 +372,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       position: sticky;
-      top: rem(20);
+      top: calc(var(--header-height, 95px) + #{rem(20)});
       box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
       border-radius: var(--a-borderR--card);
       padding: rem(16);

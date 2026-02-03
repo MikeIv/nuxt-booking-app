@@ -1,7 +1,13 @@
 <template>
   <div :class="$style.layout">
     <LayoutHeader />
-    <div :class="$style.wrapper" :style="{ marginTop: `${headerHeight}px` }">
+    <div
+      :class="$style.wrapper"
+      :style="{
+        marginTop: `${headerHeight}px`,
+        '--header-height': `${headerHeight}px`,
+      }"
+    >
       <CoreBreadcrumbs />
       <slot />
     </div>
@@ -17,7 +23,6 @@
   const updateHeaderHeight = () => {
     if (typeof window === "undefined") return;
     
-    // Ищем aside элемент внутри header
     const headerSection = document.querySelector("section[class*='section']");
     const headerElement = headerSection?.querySelector("aside");
     
@@ -30,7 +35,6 @@
   };
 
   onMounted(() => {
-    // Ждем следующего тика, чтобы DOM был готов
     nextTick(() => {
       updateHeaderHeight();
       
