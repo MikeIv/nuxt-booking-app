@@ -33,7 +33,6 @@
     createdBooking,
   } = storeToRefs(bookingStore);
 
-  // Используем даты из созданного бронирования, если оно есть
   const bookingDate = computed<[Date, Date] | null>(() => {
     if (createdBooking.value?.order?.start_at && createdBooking.value?.order?.end_at) {
       return [
@@ -46,7 +45,6 @@
 
   const nights = useNights(bookingDate);
 
-  // Получаем выбранный номер
   const selectedRoom = computed(() => {
     if (!roomTariffs.value?.length || !selectedRoomType.value) return null;
     return (
@@ -66,22 +64,18 @@
     return !!createdBooking.value;
   });
 
-  // Получаем номер бронирования из ответа API
   const bookingNumber = computed(() => {
     return createdBooking.value?.id?.toString() || null;
   });
 
-  // Получаем email из ответа API (из данных отеля)
   const guestEmail = computed(() => {
     return createdBooking.value?.hotel?.email || "";
   });
 
-  // Получаем ссылку на PDF из ответа API
   const pdfUrl = computed(() => {
     return createdBooking.value?.order?.pdf || null;
   });
 
-  // Интерфейс для комнаты из API ответа
   interface BookingRoom {
     id: number;
     title: string;
@@ -104,7 +98,6 @@
     total: number;
   }
 
-  // Ref для canvas элемента QR-кода
   const qrCanvas = ref<HTMLCanvasElement | null>(null);
 
   // Функция генерации QR-кода
@@ -279,7 +272,6 @@
       document.body.appendChild(link);
       link.click();
       
-      // Очищаем временные объекты
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
@@ -496,7 +488,7 @@
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: rem(40);
-      align-items: start;
+      align-items: stretch;
     }
   }
 
@@ -509,6 +501,7 @@
     display: flex;
     width: 100%;
     @media (min-width: #{size.$desktopMin}) {
+      flex-direction: column;
       width: 100%;
     }
   }

@@ -640,7 +640,7 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: rem(40);
-    align-items: start;
+    align-items: stretch;
   }
 }
 
@@ -657,6 +657,7 @@ onMounted(async () => {
   display: flex;
   width: 100%;
   @media (min-width: #{size.$desktopMin}) {
+    flex-direction: column;
     width: 100%;
   }
 }

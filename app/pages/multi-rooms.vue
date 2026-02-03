@@ -423,7 +423,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       flex-direction: row;
-      align-items: flex-start;
+      align-items: stretch;
     }
   }
 
@@ -432,6 +432,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       display: flex;
+      flex-direction: column;
       width: 33.3333%;
       flex-shrink: 0;
     }

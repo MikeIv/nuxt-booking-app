@@ -478,7 +478,7 @@
 
     @media (min-width: #{size.$desktopMin}) {
       flex-direction: row;
-      align-items: flex-start;
+      align-items: stretch;
     }
   }
 
@@ -501,6 +501,7 @@
     width: 100%;
 
     @media (min-width: #{size.$desktopMin}) {
+      flex-direction: column;
       width: calc(100% / 3);
     }
   }
