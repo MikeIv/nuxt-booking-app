@@ -5,6 +5,8 @@
   import { formatCount } from "~/utils/declension";
   import UIPopup from "~/components/ui/Popup.vue";
 
+  import type { SelectedEntry } from "~/types/booking";
+
   definePageMeta({
     layout: "steps",
   });
@@ -24,15 +26,6 @@
   const selectedView = ref<number | undefined>(undefined);
   const selectedBalcony = ref<number | undefined>(undefined);
 
-  interface SelectedEntry {
-    roomIdx: number;
-    roomCardIdx: number;
-    roomTitle: string;
-    room_type_code: string;
-    ratePlanCode: string;
-    price: number | null | undefined;
-    title: string;
-  }
   const selectedByRoomIdx = ref<Record<string, SelectedEntry>>({});
   const isInitialLoad = ref(true);
 

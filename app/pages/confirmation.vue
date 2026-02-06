@@ -4,20 +4,11 @@
   import { storeToRefs } from "pinia";
   import { useNights } from "~/composables/useNights";
   import QRCode from "qrcode";
+  import type { SelectedEntry } from "~/types/booking";
 
   definePageMeta({
     layout: "steps",
   });
-
-  interface SelectedEntry {
-    roomIdx: number;
-    roomCardIdx: number;
-    roomTitle: string;
-    room_type_code: string;
-    ratePlanCode: string;
-    price: number | null | undefined;
-    title: string;
-  }
 
   const router = useRouter();
   const bookingStore = useBookingStore();

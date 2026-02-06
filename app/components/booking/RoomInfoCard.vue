@@ -5,6 +5,10 @@
     room: Room;
     expanded?: boolean;
     hideDescription?: boolean;
+    /** Убрать нижний отступ (когда карточка идёт перед блоком «Повысить комфорт») */
+    noMarginBottom?: boolean;
+    /** Показать акцентную обводку (для номера повышенного комфорта) */
+    accentBorder?: boolean;
   }
 
   const props = defineProps<Props>();
@@ -44,7 +48,14 @@
 </script>
 
 <template>
-  <section :class="$style.roomInfoSection" class="section-shadow">
+  <section
+    :class="[
+      $style.roomInfoSection,
+      props.noMarginBottom && $style.roomInfoSectionCompact,
+      props.accentBorder && $style.roomInfoSectionAccent,
+    ]"
+    class="section-shadow"
+  >
     <BookingCarousel
       :images="carouselImages"
       :alt-prefix="'Фото номера'"
@@ -97,6 +108,15 @@
     display: flex;
     flex-direction: column;
     margin-bottom: rem(40);
+
+    &.roomInfoSectionCompact {
+      margin-bottom: 0;
+    }
+
+    &.roomInfoSectionAccent {
+      margin-bottom: 0;
+      border: rem(1) solid var(--a-border-primary-accent);
+    }
 
     @media (min-width: #{size.$tablet}) {
       min-height: rem(318);
