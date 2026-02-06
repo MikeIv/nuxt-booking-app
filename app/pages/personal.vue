@@ -15,6 +15,8 @@ import BookingSingleRoomGuestForm from "~/components/booking/SingleRoomGuestForm
 import BookingAdditionalFieldsSection from "~/components/booking/AdditionalFieldsSection.vue";
 import BookingPaymentSection from "~/components/booking/PaymentSection.vue";
 
+import type { SelectedEntry } from "~/types/booking";
+
 definePageMeta({
   layout: "steps",
 });
@@ -381,16 +383,6 @@ const selectedTariff = computed(() => {
 });
 
 const nights = useNights(date);
-
-interface SelectedEntry {
-  roomIdx: number;
-  roomCardIdx: number;
-  roomTitle: string;
-  room_type_code: string;
-  ratePlanCode: string;
-  price: number | null | undefined;
-  title: string;
-}
 
 const selectedEntry = computed<SelectedEntry | null>(() => {
   if (isMultiRoomsMode.value) {

@@ -127,6 +127,40 @@ interface BookingHistoryResponse {
   payload: BookingHistoryItem[];
 }
 
+/** Тело POST /v1/search/upgrade */
+export interface SearchUpgradeRequest {
+  room_type_code: string;
+  rate_plan_code: string;
+  promocode: string | null;
+  start_at: string;
+  end_at: string;
+  guests: {
+    adults: number;
+    childs: number[] | null;
+  };
+}
+
+/** Ответ API: payload для POST /v1/search/upgrade */
+export interface SearchUpgradePayload {
+  description: string;
+  min_price: string;
+  photos: string[];
+  rate_plan_code: string;
+  room_type_code: string;
+  title: string;
+}
+
+/** Выбранный номер/тариф для корзины и сводки бронирования */
+export interface SelectedEntry {
+  roomIdx: number;
+  roomCardIdx: number;
+  roomTitle: string;
+  room_type_code: string;
+  ratePlanCode: string;
+  price: number | null | undefined;
+  title: string;
+}
+
 export type {
   SearchResponse,
   BookingData,

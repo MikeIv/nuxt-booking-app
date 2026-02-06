@@ -4,16 +4,7 @@
   import { formatCount } from "~/utils/declension";
   import type { DeclensionRules } from "~/utils/declension";
   import { useBookingStore } from "~/stores/booking";
-
-  interface SelectedEntry {
-    roomIdx: number;
-    roomCardIdx: number;
-    roomTitle: string;
-    room_type_code: string;
-    ratePlanCode: string;
-    price: number | null | undefined;
-    title: string;
-  }
+  import type { SelectedEntry } from "~/types/booking";
 
   interface Props {
     selectedEntries: Record<string, SelectedEntry>;
