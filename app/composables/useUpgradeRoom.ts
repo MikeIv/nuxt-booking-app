@@ -1,8 +1,9 @@
 import { useBookingStore } from "~/stores/booking";
-import type { Room, RoomTariff } from "~/types/room";
+import type { Room, RoomTariff, RoomAmenity } from "~/types/room";
 import type {
   SearchUpgradeRequest,
   SearchUpgradePayload,
+  SearchUpgradeRoomItem,
 } from "~/types/booking";
 
 interface UseUpgradeRoomOptions {
@@ -19,19 +20,42 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
   const nights = useNights(date);
 
   // --- State ---
-  const upgradeRoom = shallowRef<Room | null>(null);
+  /** Все варианты номера повышенного комфорта (по типам кроватей) из payload.rooms */
+  const upgradeRooms = shallowRef<Room[]>([]);
+  /** Id выбранного типа кровати (определяет, какой номер показывать в карточке) */
+  const selectedUpgradeBedId = ref<number | null>(null);
   const upgradeRoomLoading = ref(false);
   const isUpgradePopupOpen = ref(false);
+  const isCompareModalOpen = ref(false);
   const expandedUpgradeRoom = ref(false);
 
+  /** Текущий номер для отображения: по selectedUpgradeBedId или первый из списка */
+  const upgradeRoom = computed<Room | null>(() => {
+    const list = upgradeRooms.value;
+    if (!list.length) return null;
+    if (selectedUpgradeBedId.value != null) {
+      const found = list.find((r) => r.bed?.id === selectedUpgradeBedId.value);
+      if (found) return found;
+    }
+    return list[0] ?? null;
+  });
+
+  const setSelectedUpgradeBedId = (bedId: string) => {
+    const id = bedId === "" ? null : Number(bedId);
+    selectedUpgradeBedId.value = Number.isNaN(id) ? null : id;
+  };
+
   // --- Computed ---
-  /** Добавочная цена за повышение комфорта (за ночь) */
+  /** Добавочная цена за повышение комфорта (за ночь): min_price номера повышенного комфорта минус min_price выбранного номера (первая карточка) */
   const upgradeAdditionalPerNight = computed(() => {
-    if (!upgradeRoom.value || !selectedTariff.value) return 0;
+    if (!upgradeRoom.value || !selectedRoom.value) return 0;
     const upgradePrice =
       upgradeRoom.value.min_price ?? upgradeRoom.value.tariffs?.[0]?.price ?? 0;
-    const basePrice = selectedTariff.value.price ?? 0;
-    return Math.max(0, upgradePrice - basePrice);
+    const basePrice =
+      selectedRoom.value.min_price ??
+      selectedRoom.value.tariffs?.[0]?.price ??
+      0;
+    return Math.max(0, Number(upgradePrice) - Number(basePrice));
   });
 
   // --- Actions ---
@@ -48,8 +72,52 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
     expandedUpgradeRoom.value = !expandedUpgradeRoom.value;
   };
 
+  const openCompareModal = () => {
+    isCompareModalOpen.value = true;
+  };
+
+  const closeCompareModal = () => {
+    isCompareModalOpen.value = false;
+  };
+
   const onCompareRooms = () => {
-    isUpgradePopupOpen.value = true;
+    openCompareModal();
+  };
+
+  /** Маппинг элемента payload.rooms в тип Room */
+  const mapUpgradeRoomToRoom = (item: SearchUpgradeRoomItem): Room => {
+    const amenities: RoomAmenity[] = Array.isArray(item.amenities)
+      ? item.amenities.map((a) => ({ title: a.title }))
+      : [];
+    const tariffs: RoomTariff[] = (item.tariffs ?? []).map((t) => ({
+      rate_plan_code: t.rate_plan_code,
+      title: t.title,
+      price: Number(t.price) || 0,
+      price_for_register: t.price_for_register,
+      packages: (t.packages ?? []).map((code) => ({ title: code })),
+      has_food: t.has_food,
+      cancellation_free: t.cancellation_free,
+      payment_types: t.payment_types,
+      description: t.cancellation_description ?? null,
+    }));
+    return {
+      id: item.room_type_code,
+      room_type_code: item.room_type_code,
+      title: item.title,
+      description: item.description ?? null,
+      max_occupancy: item.max_occupancy ?? 0,
+      square: item.square ?? 0,
+      rooms: item.rooms ?? 0,
+      amenities,
+      bed: item.bed ?? null,
+      view: item.view ?? null,
+      balcony: item.balcony ?? null,
+      family: item.family ?? null,
+      min_price: Number(item.min_price) || null,
+      price_for_register: item.price_for_register,
+      photos: Array.isArray(item.photos) ? item.photos : [],
+      tariffs,
+    };
   };
 
   /** Подготовка данных гостей для запроса upgrade */
@@ -110,7 +178,7 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
         guests,
       };
 
-      const response = await post<SearchUpgradePayload[]>(
+      const response = await post<SearchUpgradePayload>(
         "/v1/search/upgrade",
         upgradeData,
         {
@@ -118,36 +186,18 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
         },
       );
 
-      if (response.success && response.payload?.length) {
-        const p = response.payload[0]!;
-        upgradeRoom.value = {
-          id: p.room_type_code,
-          room_type_code: p.room_type_code,
-          title: p.title,
-          description: p.description ?? null,
-          max_occupancy: 0,
-          square: 0,
-          rooms: 0,
-          amenities: [],
-          bed: null,
-          view: null,
-          family: null,
-          min_price: Number(p.min_price) || null,
-          photos: Array.isArray(p.photos) ? p.photos : [],
-          tariffs: [
-            {
-              rate_plan_code: p.rate_plan_code,
-              title: p.title,
-              price: Number(p.min_price) || 0,
-              packages: [],
-            },
-          ],
-        };
+      if (response.success && response.payload?.rooms?.length) {
+        const mapped = response.payload.rooms.map(mapUpgradeRoomToRoom);
+        upgradeRooms.value = mapped;
+        const first = mapped[0]!;
+        selectedUpgradeBedId.value = first.bed?.id ?? null;
       } else {
-        upgradeRoom.value = null;
+        upgradeRooms.value = [];
+        selectedUpgradeBedId.value = null;
       }
     } catch (err: unknown) {
-      upgradeRoom.value = null;
+      upgradeRooms.value = [];
+      selectedUpgradeBedId.value = null;
       if (import.meta.dev) {
         console.error("Ошибка загрузки номера повышенного комфорта:", err);
       }
@@ -159,15 +209,21 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
   return {
     // State
     upgradeRoom,
+    upgradeRooms,
+    selectedUpgradeBedId,
     upgradeRoomLoading,
     isUpgradePopupOpen,
+    isCompareModalOpen,
     expandedUpgradeRoom,
     // Computed
     upgradeAdditionalPerNight,
     nights,
     // Actions
+    setSelectedUpgradeBedId,
     openUpgradePopup,
     closeUpgradePopup,
+    openCompareModal,
+    closeCompareModal,
     toggleUpgradeExpand,
     onCompareRooms,
     fetchUpgradeRoom,

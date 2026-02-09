@@ -5,6 +5,8 @@
 
   interface Props {
     upgradeRoom: Room | null;
+    /** Все варианты номера (по типу кровати) для селекта */
+    upgradeRooms?: Room[];
     loading: boolean;
     expanded: boolean;
     additionalPerNight: number;
@@ -15,6 +17,7 @@
   const emit = defineEmits<{
     (e: "open-popup", event: MouseEvent): void;
     (e: "toggle-expand" | "compare" | "upgrade"): void;
+    (e: "bed-type-change", bedId: string): void;
   }>();
 </script>
 
@@ -47,11 +50,13 @@
 
       <BookingRoomInfoCard
         :room="upgradeRoom"
+        :rooms="upgradeRooms"
         :expanded="expanded"
         :hide-description="true"
         :accent-border="true"
         @open-popup="emit('open-popup', $event)"
         @toggle-expand="emit('toggle-expand')"
+        @bed-type-change="emit('bed-type-change', $event)"
       />
 
       <div :class="$style.actions">

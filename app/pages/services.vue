@@ -20,7 +20,13 @@
     packages,
     isServerRequest,
     selectedMultiRooms,
+    guests,
   } = storeToRefs(bookingStore);
+
+  const guestsCount = computed(() => {
+    const list = guests.value?.roomList ?? [];
+    return list.reduce((sum, room) => sum + (room?.adults ?? 0), 0) || 1;
+  });
 
   // --- Баннеры ---
   const { getBannersByVisibility } = useBanners();
@@ -135,11 +141,15 @@
   const {
     upgradeRoomLoading,
     isUpgradePopupOpen,
+    isCompareModalOpen,
     expandedUpgradeRoom,
+    upgradeRooms,
     upgradeAdditionalPerNight,
     nights: upgradeNights,
+    setSelectedUpgradeBedId,
     openUpgradePopup,
     closeUpgradePopup,
+    closeCompareModal,
     toggleUpgradeExpand,
     onCompareRooms,
     fetchUpgradeRoom,
@@ -149,14 +159,22 @@
 
   const onUpgradeRoom = () => {
     if (!upgradeRoom.value) return;
+    bookingStore.applyUpgradeRoom(upgradeRoom.value);
     toast.add({
-      severity: "info",
-      summary: "Улучшить номер",
-      detail:
-        "Выбор номера повышенного комфорта будет доступен в следующей версии.",
-      life: 4000,
+      severity: "success",
+      summary: "Номер улучшен",
+      detail: "Выбран номер повышенного комфорта.",
+      life: 3000,
     });
   };
+
+  /** Показывать блок «Повысить комфорт» только пока выбран базовый номер (не улучшенный) */
+  const showUpgradeBlock = computed(
+    () =>
+      !isMultiRoomsMode.value &&
+      (upgradeRoomLoading.value || !!upgradeRoom.value) &&
+      selectedRoom.value?.room_type_code !== upgradeRoom.value?.room_type_code,
+  );
 
   const handleContinue = () => {
     router.push("/personal");
@@ -238,7 +256,7 @@
             :room="selectedRoom"
             :expanded="expandedRoom"
             :hide-description="true"
-            :no-margin-bottom="!!(upgradeRoom && !isMultiRoomsMode)"
+            :no-margin-bottom="showUpgradeBlock"
             @open-popup="openPopup"
             @toggle-expand="toggleExpand"
           />
@@ -250,16 +268,18 @@
             @close="closePopup"
           />
 
-          <!-- Блок «Повысить комфорт» -->
+          <!-- Блок «Повысить комфорт» (скрывается после нажатия «Улучшить номер») -->
           <BookingUpgradeRoomCard
-            v-if="!isMultiRoomsMode && (upgradeRoomLoading || upgradeRoom)"
+            v-if="showUpgradeBlock"
             :upgrade-room="upgradeRoom"
+            :upgrade-rooms="upgradeRooms"
             :loading="upgradeRoomLoading"
             :expanded="expandedUpgradeRoom"
             :additional-per-night="upgradeAdditionalPerNight"
             :nights="upgradeNights"
             @open-popup="openUpgradePopup"
             @toggle-expand="toggleUpgradeExpand"
+            @bed-type-change="setSelectedUpgradeBedId"
             @compare="onCompareRooms"
             @upgrade="onUpgradeRoom"
           />
@@ -269,6 +289,18 @@
             :room="upgradeRoom"
             :is-open="isUpgradePopupOpen"
             @close="closeUpgradePopup"
+          />
+
+          <BookingCompareRoomsModal
+            :is-open="isCompareModalOpen"
+            :current-room="selectedRoom"
+            :upgrade-room="upgradeRoom"
+            :nights="upgradeNights"
+            :guests-count="guestsCount"
+            :current-price="selectedTariff?.price ?? null"
+            :upgrade-price="upgradeRoom?.min_price ?? upgradeRoom?.tariffs?.[0]?.price ?? null"
+            @close="closeCompareModal"
+            @upgrade="onUpgradeRoom"
           />
 
           <!-- Дополнительные услуги -->
