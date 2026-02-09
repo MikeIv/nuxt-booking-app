@@ -140,14 +140,46 @@ export interface SearchUpgradeRequest {
   };
 }
 
-/** Ответ API: payload для POST /v1/search/upgrade */
-export interface SearchUpgradePayload {
-  description: string;
-  min_price: string;
-  photos: string[];
-  rate_plan_code: string;
+/** Элемент массива payload.rooms в ответе POST /v1/search/upgrade */
+export interface SearchUpgradeRoomItem {
   room_type_code: string;
   title: string;
+  description: string | null;
+  max_occupancy: number;
+  square: number;
+  rooms: number;
+  amenities: Array<{ title: string }>;
+  bed: { id: number; title: string } | null;
+  view: { id: number; title: string } | null;
+  balcony: { id: number; title: string } | null;
+  family: { id: number; title: string; level?: number } | null;
+  min_price: string;
+  price_for_register?: number;
+  photos: string[];
+  tariffs: Array<{
+    rate_plan_code: string;
+    title: string;
+    price: string;
+    price_for_register?: number;
+    packages: string[];
+    has_food?: boolean;
+    cancellation_free?: boolean;
+    cancellation_description?: string | null;
+    payment_types?: string[];
+    group?: {
+      id: number;
+      title: string;
+      created_at?: string;
+      updated_at?: string;
+    };
+  }>;
+}
+
+/** Ответ API: payload для POST /v1/search/upgrade (новая структура) */
+export interface SearchUpgradePayload {
+  rooms: SearchUpgradeRoomItem[];
+  packages: unknown[];
+  availability: unknown;
 }
 
 /** Выбранный номер/тариф для корзины и сводки бронирования */

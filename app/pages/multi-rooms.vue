@@ -1,11 +1,10 @@
 <script setup lang="ts">
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource } from "~/types/room";
+  import type { SelectedEntry } from "~/types/booking";
   import { useNotificationToast } from "~/composables/useToast";
   import { formatCount } from "~/utils/declension";
   import UIPopup from "~/components/ui/Popup.vue";
-
-  import type { SelectedEntry } from "~/types/booking";
 
   definePageMeta({
     layout: "steps",

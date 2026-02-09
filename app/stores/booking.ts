@@ -665,6 +665,17 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
     }
 
+    /** Применить улучшение номера: подставить номер повышенного комфорта в выбор и сводку */
+    function _applyUpgradeRoom(room: Room) {
+      const list = roomTariffs.value;
+      const exists = list.some((r) => r.room_type_code === room.room_type_code);
+      if (!exists) {
+        roomTariffs.value = [...list, room];
+      }
+      selectedRoomType.value = room.room_type_code;
+      selectedTariff.value = room.tariffs?.[0] ?? null;
+    }
+
     async function search(options?: {
       roomTypeCode?: string;
       skipReset?: boolean;
@@ -918,6 +929,7 @@ export const useBookingStore = defineStore(
       loadingMessage,
       forceReset,
       setSelectedRoomType,
+      applyUpgradeRoom: _applyUpgradeRoom,
       setLoading,
       search,
       createBooking,
