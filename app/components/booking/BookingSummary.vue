@@ -411,10 +411,6 @@
     font-weight: 600;
     color: var(--a-text-dark);
     text-align: center;
-
-    @media (min-width: #{size.$desktopMin}) {
-      display: block;
-    }
   }
 
   .pageSummaryDatesMobile {
