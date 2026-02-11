@@ -135,7 +135,12 @@
 
 <template>
   <aside :class="$style.pageSummary">
-    <div :class="$style.pageSummaryInner">
+    <div
+      :class="[
+        $style.pageSummaryInner,
+        isDatesDetailsOpen ? $style.pageSummaryInner_expanded : undefined,
+      ]"
+    >
       <div :class="$style.pageSummaryHeader">
         <span :class="$style.pageSummaryTitle">Ваше бронирование:</span>
         <div :class="$style.infoButtonWrapper">
@@ -519,6 +524,16 @@
     display: flex;
     flex-direction: column;
     gap: rem(10);
+
+    @media (max-width: calc(#{size.$desktopMin} - 1px)) {
+      display: none;
+    }
+  }
+
+  .pageSummaryInner_expanded .pageSummaryList {
+    @media (max-width: calc(#{size.$desktopMin} - 1px)) {
+      display: flex;
+    }
   }
 
   .pageSummaryItem {
