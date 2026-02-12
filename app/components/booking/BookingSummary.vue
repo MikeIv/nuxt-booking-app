@@ -229,7 +229,10 @@
           <Transition name="fade">
             <div
               v-if="isSingleRoom || isRoomExpanded(entry.roomIdx)"
-              :class="$style.roomDetails"
+              :class="[
+                $style.roomDetails,
+                selectedServices.length === 0 ? $style.roomDetails_noServices : undefined,
+              ]"
             >
               <div :class="$style.roomCategoryRow">
                 <span :class="$style.roomType">{{ entry.roomTitle }}</span>
@@ -248,7 +251,10 @@
                 {{ line }}
               </div>
               <div
-                v-if="(roomGuestLines[entry.roomIdx] || []).length > 0"
+                v-if="
+                  (roomGuestLines[entry.roomIdx] || []).length > 0 &&
+                  (!isSingleRoom || selectedServices.length > 0)
+                "
                 :class="$style.roomDivider"
               />
               <!-- Итого за номер показывается только при мультибронировании -->
@@ -261,7 +267,8 @@
               <!-- Дополнительные услуги: внутри блока номера, один раз (в последнем/единственном номере) -->
               <template
                 v-if="
-                  isSingleRoom || entry.roomIdx === roomEntries.length - 1
+                  (isSingleRoom || entry.roomIdx === roomEntries.length - 1) &&
+                  selectedServices.length > 0
                 "
               >
                 <div :class="$style.servicesSection">
@@ -583,6 +590,10 @@
     flex-direction: column;
     gap: rem(12);
     padding: rem(16);
+  }
+
+  .roomDetails_noServices {
+    padding-bottom: 0;
   }
 
   .roomCategoryRow {
