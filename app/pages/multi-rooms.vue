@@ -13,7 +13,7 @@
   const router = useRouter();
   const toast = useNotificationToast();
   const bookingStore = useBookingStore();
-  const { searchResults, roomTariffs, date, guests, selectedServices, selectedMultiRooms } =
+  const { searchResults, roomTariffs, date, guests, selectedMultiRooms } =
     storeToRefs(bookingStore);
 
   const loading = ref(true);
@@ -120,7 +120,16 @@
       const perNight = e.price || 0;
       return sum + perNight * nights.value;
     }, 0);
-    const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
+    const roomIndices = Object.keys(selectedByRoomIdx.value).map(Number);
+    const servicesTotal = roomIndices.reduce(
+      (sum, idx) =>
+        sum +
+        bookingStore.getSelectedServicesForRoom(idx).reduce(
+          (s, svc) => s + svc.price,
+          0,
+        ),
+      0,
+    );
     return roomsTotal + servicesTotal;
   });
 

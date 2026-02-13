@@ -31,6 +31,7 @@ export interface SelectedService {
   id: number;
   title: string;
   price: number;
+  packageCode?: string;
 }
 
 export interface SelectedMultiRoomEntry {
@@ -66,27 +67,48 @@ export const useBookingStore = defineStore(
     const loadingMessage = ref("Загружаем данные о номерах...");
     const userProfiles = ref<Record<string, UserProfileData>>({});
 
-    const selectedServices = ref<SelectedService[]>([]);
+    const selectedServicesByRoom = ref<Record<string, SelectedService[]>>({});
     const createdBooking = ref<BookingResponse | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
     const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
 
-    function addService(service: SelectedService) {
-      if (!selectedServices.value.find((s) => s.id === service.id)) {
-        selectedServices.value.push(service);
-      }
+    /** Услуги для одного номера (режим одного номера — индекс 0) */
+    const selectedServices = computed(() => {
+      const list = selectedServicesByRoom.value["0"] ?? [];
+      return [...list];
+    });
+
+    function addService(service: SelectedService, roomIndex?: number) {
+      const key = String(roomIndex ?? 0);
+      const list = selectedServicesByRoom.value[key] ?? [];
+      if (list.some((s) => s.id === service.id)) return;
+      selectedServicesByRoom.value = {
+        ...selectedServicesByRoom.value,
+        [key]: [...list, service],
+      };
     }
 
-    function removeService(serviceId: number) {
-      const index = selectedServices.value.findIndex((s) => s.id === serviceId);
-      if (index !== -1) {
-        selectedServices.value.splice(index, 1);
-      }
+    function removeService(serviceId: number, roomIndex?: number) {
+      const key = String(roomIndex ?? 0);
+      const list = selectedServicesByRoom.value[key] ?? [];
+      const index = list.findIndex((s) => s.id === serviceId);
+      if (index === -1) return;
+      const next = list.slice(0, index).concat(list.slice(index + 1));
+      selectedServicesByRoom.value = {
+        ...selectedServicesByRoom.value,
+        [key]: next,
+      };
     }
 
-    function isServiceSelected(serviceId: number): boolean {
-      return selectedServices.value.some((s) => s.id === serviceId);
+    function isServiceSelected(serviceId: number, roomIndex?: number): boolean {
+      const key = String(roomIndex ?? 0);
+      const list = selectedServicesByRoom.value[key] ?? [];
+      return list.some((s) => s.id === serviceId);
+    }
+
+    function getSelectedServicesForRoom(roomIndex: number): SelectedService[] {
+      return selectedServicesByRoom.value[String(roomIndex)] ?? [];
     }
 
     function setCurrentBookingDetails(booking: BookingHistoryItem | null) {
@@ -635,17 +657,29 @@ export const useBookingStore = defineStore(
       };
     };
 
-    function prepareSearchData(roomTypeCode?: string) {
+    function prepareSearchData(roomTypeCode?: string, roomIndex?: number) {
       const [startDate, endDate] = date.value!;
 
       const list = guests.value.roomList ?? [];
-      const guestsPayload = list.map((room) => ({
-        adults: room.adults,
-        childs: ensureChildAges(room.children, room.childrenAges ?? []),
-      }));
+      const isSingleRoomRequest = roomIndex !== undefined;
+      const guestsPayload = isSingleRoomRequest
+        ? (() => {
+            const room = list[roomIndex!];
+            if (!room) return [];
+            return [
+              {
+                adults: room.adults,
+                childs: ensureChildAges(room.children, room.childrenAges ?? []),
+              },
+            ];
+          })()
+        : list.map((room) => ({
+            adults: room.adults,
+            childs: ensureChildAges(room.children, room.childrenAges ?? []),
+          }));
 
-      const groupedByBed = guestsPayload.length === 1;
-      const multiBookingMode = guestsPayload.length > 1;
+      const groupedByBed = guestsPayload.length <= 1;
+      const multiBookingMode = !isSingleRoomRequest && guestsPayload.length > 1;
 
       const searchData: Record<string, unknown> = {
         start_at: formatDate(startDate),
@@ -836,37 +870,44 @@ export const useBookingStore = defineStore(
       }
     }
 
-    async function searchPackages(): Promise<PackageResource[]> {
+    async function searchPackages(
+      roomIndex?: number,
+    ): Promise<PackageResource[]> {
       validateSearchParams();
       error.value = null;
 
       try {
         const { post } = useApi();
 
-        // Определяем room_type_code: для multi-rooms используем из selectedMultiRooms
-        let roomTypeCode: string | undefined;
         const multiRoomsEntries = Object.values(selectedMultiRooms.value);
-        if (multiRoomsEntries.length > 0) {
-          // В режиме multi-rooms используем room_type_code из первого выбранного номера
-          const firstEntry = multiRoomsEntries[0];
-          const code = firstEntry?.room_type_code;
-          // Проверяем, что код не пустой
-          roomTypeCode = code && code.trim() !== "" ? code : undefined;
+        const isMultiRoom = multiRoomsEntries.length > 0;
+
+        // Для мультибронирования: запрос по одному номеру (по индексу вкладки)
+        const effectiveRoomIndex = isMultiRoom ? (roomIndex ?? 0) : undefined;
+        let roomTypeCode: string | undefined;
+        let ratePlanCode: string | undefined;
+
+        if (isMultiRoom) {
+          const entry = multiRoomsEntries[effectiveRoomIndex!];
+          roomTypeCode =
+            entry?.room_type_code?.trim() !== ""
+              ? entry?.room_type_code
+              : undefined;
+          ratePlanCode = entry?.ratePlanCode;
         } else {
-          // Для одного номера используем selectedRoomType
           const code = selectedRoomType.value;
-          // Проверяем, что код не пустой
           roomTypeCode = code && code.trim() !== "" ? code : undefined;
+          ratePlanCode = selectedTariff.value?.rate_plan_code;
         }
 
-        const { searchData } = prepareSearchData(roomTypeCode);
+        const { searchData } = prepareSearchData(
+          roomTypeCode,
+          effectiveRoomIndex,
+        );
 
-        // Добавляем rate_plan_code если выбран тариф
         const packagesSearchData: Record<string, unknown> = {
           ...searchData,
-          ...(selectedTariff.value?.rate_plan_code
-            ? { rate_plan_code: selectedTariff.value.rate_plan_code }
-            : {}),
+          ...(ratePlanCode ? { rate_plan_code: ratePlanCode } : {}),
         };
 
         isServerRequest.value = true;
@@ -905,7 +946,7 @@ export const useBookingStore = defineStore(
       searchResults.value = null;
       selectedRoomType.value = null;
       roomTariffs.value = [];
-      selectedServices.value = [];
+      selectedServicesByRoom.value = {};
       createdBooking.value = null;
       currentBookingDetails.value = null;
       selectedMultiRooms.value = {};
@@ -939,9 +980,11 @@ export const useBookingStore = defineStore(
       saveUserProfile,
       getUserProfile,
       selectedServices,
+      selectedServicesByRoom,
       addService,
       removeService,
       isServiceSelected,
+      getSelectedServicesForRoom,
       createdBooking,
       currentBookingDetails,
       setCurrentBookingDetails,
@@ -964,7 +1007,7 @@ export const useBookingStore = defineStore(
         "selectedTariff",
         "roomTariffs",
         "userProfiles",
-        "selectedServices",
+        "selectedServicesByRoom",
         "selectedMultiRooms",
       ],
       serializer: {

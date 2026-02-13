@@ -5,10 +5,17 @@
     id: number;
     title: string;
     price: number;
+    packageCode?: string;
     photos?: string[];
+    /** Индекс номера для мультибронирования (0 для одного номера) */
+    roomIndex?: number;
   }
 
-  const props = defineProps<Props>();
+  const props = withDefaults(defineProps<Props>(), {
+    packageCode: "",
+    photos: () => [],
+    roomIndex: 0,
+  });
   const isPopupOpen = ref(false);
   const bookingStore = useBookingStore();
 
@@ -35,18 +42,22 @@
   );
 
   const isSelected = computed(() => {
-    return bookingStore.isServiceSelected(props.id);
+    return bookingStore.isServiceSelected(props.id, props.roomIndex);
   });
 
   const handleAddService = () => {
     if (isSelected.value) {
-      bookingStore.removeService(props.id);
+      bookingStore.removeService(props.id, props.roomIndex);
     } else {
-      bookingStore.addService({
-        id: props.id,
-        title: props.title,
-        price: props.price,
-      });
+      bookingStore.addService(
+        {
+          id: props.id,
+          title: props.title,
+          price: props.price,
+          packageCode: props.packageCode || undefined,
+        },
+        props.roomIndex,
+      );
     }
   };
 </script>

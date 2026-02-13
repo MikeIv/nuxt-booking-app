@@ -59,19 +59,28 @@
   const nights = useNights(date);
 
   const bookingTotal = computed(() => {
-    const servicesTotal = selectedServices.value.reduce(
-      (sum, s) => sum + s.price,
-      0,
-    );
-
     if (isMultiRoomsMode.value) {
       const roomsTotal = Object.values(selectedMultiRooms.value).reduce(
         (sum, e) => sum + (e.price || 0) * nights.value,
         0,
       );
+      const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
+      const servicesTotal = roomIndices.reduce(
+        (sum, idx) =>
+          sum +
+          bookingStore.getSelectedServicesForRoom(idx).reduce(
+            (s, svc) => s + svc.price,
+            0,
+          ),
+        0,
+      );
       return roomsTotal + servicesTotal;
     }
 
+    const servicesTotal = selectedServices.value.reduce(
+      (sum, s) => sum + s.price,
+      0,
+    );
     if (!selectedTariff.value?.price) return 0;
     return selectedTariff.value.price * nights.value + servicesTotal;
   });
@@ -157,6 +166,36 @@
   // Реактивная ссылка без DeepReadonly (Vue template checker issue)
   const upgradeRoom = computed<Room | null>(() => upgrade.upgradeRoom.value);
 
+  // --- Табы номеров при мультибронировании ---
+  const multiRoomTabIndices = computed(() => {
+    const keys = Object.keys(selectedMultiRooms.value);
+    return keys.map((_, i) => i);
+  });
+  const activeRoomTab = ref(0);
+  watch(
+    () => multiRoomTabIndices.value.length,
+    (len, prevLen) => {
+      if (prevLen !== undefined && activeRoomTab.value >= len) {
+        activeRoomTab.value = Math.max(0, len - 1);
+      }
+    },
+  );
+
+  // При переключении вкладки номера — запрашиваем пакеты для этого номера
+  watch(activeRoomTab, async (tabIndex) => {
+    if (!isMultiRoomsMode.value) return;
+    try {
+      await bookingStore.searchPackages(tabIndex);
+    } catch (err: unknown) {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: (err as Error).message || "Не удалось загрузить услуги",
+        life: 5000,
+      });
+    }
+  });
+
   const onUpgradeRoom = () => {
     if (!upgradeRoom.value) return;
     bookingStore.applyUpgradeRoom(upgradeRoom.value);
@@ -216,9 +255,9 @@
       }
     }
 
-    // Загружаем услуги
+    // Загружаем услуги: при мультибронировании — только для первого номера
     try {
-      await bookingStore.searchPackages();
+      await bookingStore.searchPackages(isMultiRoomsMode.value ? 0 : undefined);
     } catch (err: unknown) {
       toast.add({
         severity: "error",
@@ -305,7 +344,19 @@
 
           <!-- Дополнительные услуги -->
           <section :class="$style.servicesList">
-            <h2 :class="$style.servicesListTitle">Дополнительные услуги</h2>
+            <!-- При мультибронировании — табы переключения номеров вместо заголовка -->
+            <div v-if="isMultiRoomsMode && multiRoomTabIndices.length > 0" :class="$style.roomTabs">
+              <button
+                v-for="(_, tabIndex) in multiRoomTabIndices"
+                :key="tabIndex"
+                type="button"
+                :class="[$style.roomTab, activeRoomTab === tabIndex && $style.roomTabActive]"
+                @click="activeRoomTab = tabIndex"
+              >
+                Номер {{ tabIndex + 1 }}
+              </button>
+            </div>
+            <h2 v-else :class="$style.servicesListTitle">Дополнительные услуги</h2>
             <div v-if="isServerRequest" :class="$style.loading">
               Загрузка услуг...
             </div>
@@ -319,7 +370,9 @@
               :key="service.packageCode"
               :title="service.title"
               :price="service.price"
+              :package-code="service.packageCode"
               :photos="service.photos"
+              :room-index="isMultiRoomsMode ? activeRoomTab : 0"
             />
           </section>
         </div>
@@ -449,6 +502,45 @@
 
     @media (min-width: #{size.$desktopMedium}) {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .roomTabs {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: rem(12);
+    margin-bottom: rem(16);
+  }
+
+  .roomTab {
+    min-width: rem(287);
+    height: rem(49);
+    padding: 0 rem(24);
+    border-radius: 39px;
+    border: 1px solid var(--a-border-primary);
+    background: transparent;
+    color: var(--a-text-dark);
+    font-size: rem(20);
+    font-weight: 400;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+      border-color: var(--a-accentDarkBg);
+      background: var(--ui-color-primary-50);
+    }
+  }
+
+  .roomTabActive {
+    background: var(--a-primaryBg);
+    border-color: var(--a-primaryBg);
+    color: var(--a-text-dark);
+
+    &:hover {
+      background: var(--a-accentDarkBg);
+      border-color: var(--a-accentDarkBg);
     }
   }
 
