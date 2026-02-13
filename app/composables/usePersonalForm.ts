@@ -364,7 +364,8 @@ export const usePersonalForm = () => {
       children: number;
       childrenAges: number[];
     }>,
-    packages?: string[],
+    /** Пакеты (package_code) по индексу номера для мультибронирования */
+    packagesPerRoom?: Record<number, string[]>,
   ): BookingData | null => {
     if (!date || Object.keys(selectedMultiRooms).length === 0) return null;
 
@@ -433,10 +434,12 @@ export const usePersonalForm = () => {
       const roomChildren = roomGuests?.children || 0;
       const roomChildrenAges = roomGuests?.childrenAges || [];
 
+      const roomPackages = packagesPerRoom?.[entry.roomIdx];
       return {
         room_type_code: entry.room_type_code,
         rate_type_code: entry.ratePlanCode,
-        packages: packages && packages.length > 0 ? packages : undefined,
+        packages:
+          roomPackages && roomPackages.length > 0 ? roomPackages : undefined,
         adults: roomAdults,
         children: roomChildren,
         children_ages: roomChildrenAges,

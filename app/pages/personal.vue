@@ -213,7 +213,15 @@ const onFormSubmit = async () => {
       return;
     }
 
-    const packages: string[] = [];
+    const packagesPerRoom: Record<number, string[]> = {};
+    Object.keys(selectedMultiRooms.value).forEach((key) => {
+      const roomIdx = Number(key);
+      const codes = bookingStore
+        .getSelectedServicesForRoom(roomIdx)
+        .map((s) => s.packageCode)
+        .filter((code): code is string => Boolean(code));
+      if (codes.length > 0) packagesPerRoom[roomIdx] = codes;
+    });
 
     const bookingData = prepareMultiBookingData(
       formData,
@@ -221,7 +229,7 @@ const onFormSubmit = async () => {
       selectedMultiRooms.value,
       bookingStore.formatDate,
       bookingStore.guests.roomList,
-      packages.length > 0 ? packages : undefined,
+      Object.keys(packagesPerRoom).length > 0 ? packagesPerRoom : undefined,
     );
 
     if (!bookingData) {
@@ -274,7 +282,9 @@ const onFormSubmit = async () => {
         }
       : { adults: 1, children: 0, childrenAges: [] };
 
-    const packages: string[] = [];
+    const packages = selectedServices.value
+      .map((s) => s.packageCode)
+      .filter((code): code is string => Boolean(code));
 
     const bookingData = prepareBookingData(
       formData,
@@ -419,8 +429,14 @@ const bookingTotal = computed(() => {
       },
       0,
     );
-    const servicesTotal = selectedServices.value.reduce(
-      (sum, s) => sum + s.price,
+    const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
+    const servicesTotal = roomIndices.reduce(
+      (sum, idx) =>
+        sum +
+        bookingStore.getSelectedServicesForRoom(idx).reduce(
+          (s, svc) => s + svc.price,
+          0,
+        ),
       0,
     );
     return roomsTotal + servicesTotal;

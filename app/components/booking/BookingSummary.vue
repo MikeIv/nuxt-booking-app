@@ -3,7 +3,10 @@
   import { storeToRefs } from "pinia";
   import { formatCount } from "~/utils/declension";
   import type { DeclensionRules } from "~/utils/declension";
-  import { useBookingStore } from "~/stores/booking";
+  import {
+    useBookingStore,
+    type SelectedService,
+  } from "~/stores/booking";
   import type { SelectedEntry } from "~/types/booking";
 
   interface Props {
@@ -58,7 +61,24 @@
   };
 
   const bookingStore = useBookingStore();
-  const { guests, selectedServices } = storeToRefs(bookingStore);
+  const { guests, selectedServicesByRoom } = storeToRefs(bookingStore);
+
+  /** Услуги по номерам для мультибронирования; для одного номера — только roomIdx 0 */
+  const servicesByRoom = computed(() => {
+    const byRoom: Record<number, SelectedService[]> = {};
+    const roomList = selectedServicesByRoom.value;
+    roomEntries.value.forEach((entry) => {
+      byRoom[entry.roomIdx] = roomList[String(entry.roomIdx)] ?? [];
+    });
+    return byRoom;
+  });
+
+  const roomTotalWithServices = (entry: SelectedEntry) => {
+    const roomPrice = (entry.price || 0) * nights.value;
+    const services = bookingStore.getSelectedServicesForRoom(entry.roomIdx);
+    const servicesSum = services.reduce((sum, s) => sum + s.price, 0);
+    return roomPrice + servicesSum;
+  };
 
   const expandedRooms = ref<Record<number, boolean>>({});
 
@@ -231,7 +251,9 @@
               v-if="isSingleRoom || isRoomExpanded(entry.roomIdx)"
               :class="[
                 $style.roomDetails,
-                selectedServices.length === 0 ? $style.roomDetails_noServices : undefined,
+                (servicesByRoom[entry.roomIdx]?.length ?? 0) === 0
+                  ? $style.roomDetails_noServices
+                  : undefined,
               ]"
             >
               <div :class="$style.roomCategoryRow">
@@ -253,23 +275,13 @@
               <div
                 v-if="
                   (roomGuestLines[entry.roomIdx] || []).length > 0 &&
-                  (!isSingleRoom || selectedServices.length > 0)
+                  (servicesByRoom[entry.roomIdx]?.length ?? 0) > 0
                 "
                 :class="$style.roomDivider"
               />
-              <!-- Итого за номер показывается только при мультибронировании -->
-              <div v-if="!isSingleRoom" :class="$style.roomTotal">
-                <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
-                <strong>
-                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
-                </strong>
-              </div>
-              <!-- Дополнительные услуги: внутри блока номера, один раз (в последнем/единственном номере) -->
+              <!-- Дополнительные услуги по номеру -->
               <template
-                v-if="
-                  (isSingleRoom || entry.roomIdx === roomEntries.length - 1) &&
-                  selectedServices.length > 0
-                "
+                v-if="(servicesByRoom[entry.roomIdx]?.length ?? 0) > 0"
               >
                 <div :class="$style.servicesSection">
                   <div :class="$style.servicesHeader">
@@ -277,7 +289,7 @@
                   </div>
                   <div :class="$style.servicesList">
                     <div
-                      v-for="service in selectedServices"
+                      v-for="service in servicesByRoom[entry.roomIdx]"
                       :key="service.id"
                       :class="$style.serviceItem"
                     >
@@ -293,7 +305,9 @@
                           unstyled
                           :class="$style.removeServiceButton"
                           aria-label="Удалить услугу"
-                          @click="bookingStore.removeService(service.id)"
+                          @click="
+                            bookingStore.removeService(service.id, entry.roomIdx)
+                          "
                         >
                           <UIcon
                             name="i-close"
@@ -305,6 +319,13 @@
                   </div>
                 </div>
               </template>
+              <!-- Итого за номер: с учётом услуг при мультибронировании -->
+              <div v-if="!isSingleRoom" :class="$style.roomTotal">
+                <span>Итого за Номер {{ entry.roomIdx + 1 }}:</span>
+                <strong>
+                  {{ roomTotalWithServices(entry).toLocaleString("ru-RU") }} ₽
+                </strong>
+              </div>
             </div>
           </Transition>
         </div>
