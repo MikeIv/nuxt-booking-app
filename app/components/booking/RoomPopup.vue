@@ -120,8 +120,8 @@
   .navButton {
     padding: rem(8) rem(16);
     border: 1px solid var(--a-gray-300);
-    border-radius: rem(20);
-    background: white;
+    border-radius: var(--a-borderR--x20);
+    background: var(--a-whiteBg);
     color: var(--a-text-dark);
     font-size: rem(14);
     white-space: nowrap;
@@ -213,7 +213,7 @@
     font-size: rem(16);
     color: var(--a-text-dark);
     border: rem(1) solid var(--a-border-primary);
-    border-radius: rem(8);
+    border-radius: var(--a-borderR--x8);
     background: var(--a-whiteBg);
     transition: all 0.2s ease;
   }

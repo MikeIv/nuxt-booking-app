@@ -368,7 +368,7 @@
     cursor: pointer;
   }
 
-  /* Селект «Тип кровати» (стили из Figma: 321×41, border #BF9D7C, radius 15px) */
+  /* Селект «Тип кровати» (стили из Figma: 321×41, border primary, radius из переменной) */
   .bedTypeSelectFrame {
     position: relative;
     display: flex;
@@ -377,7 +377,7 @@
     max-width: rem(321);
     height: rem(41);
     padding: 0 rem(14) 0 rem(13);
-    border-radius: rem(15);
+    border-radius: var(--a-borderR--select);
     border: 1px solid var(--a-border-primary);
     background: var(--a-whiteBg);
   }

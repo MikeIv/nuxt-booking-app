@@ -28,7 +28,7 @@ ul {
 }
 
 .rounded-md {
-  border-radius: 16px;
+  border-radius: var(--a-borderR--input);
   border: none;
 }
 
@@ -95,7 +95,7 @@ ul {
   max-width: rem(360);
   background: var(--a-whiteBg);
   color: var(--a-text-dark);
-  box-shadow: rem(2) rem(2) rem(30) rem(-10) rgb(0 0 0 / 20%);
+  box-shadow: rem(2) rem(2) rem(30) rem(-10) var(--a-shadow-color-strong);
   border-radius: var(--a-borderR--card);
 
   @media (min-width: #{with.$mobile}) {
@@ -162,8 +162,8 @@ ul {
 .section-shadow {
   padding: rem(22) rem(10);
   border-radius: var(--a-borderR--card);
-  box-shadow: rem(4) rem(4) rem(30) rem(-10) rgb(0 0 0 / 10%);
-  background: var(--a-white);
+  box-shadow: var(--a-shadow-summary);
+  background: var(--a-whiteBg);
 
   @media (min-width: #{with.$tablet}) {
     padding: rem(22) rem(14);

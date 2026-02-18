@@ -363,8 +363,8 @@
     margin: 0 rem(20);
     padding: 0;
     background: var(--a-whiteBg);
-    box-shadow: 4px 4px 30px rgba(0, 0, 0, 0.1);
-    border-radius: rem(40) rem(40) 0 0;
+    box-shadow: var(--a-shadow-summary);
+    border-radius: var(--a-borderR--dialog) var(--a-borderR--dialog) 0 0;
     z-index: z.z("booking-summary");
 
     @media (min-width: 769px) {
@@ -391,13 +391,13 @@
   .pageSummaryInner {
     background: var(--a-whiteBg);
     box-shadow: none;
-    border-radius: rem(40) rem(40) 0 0;
+    border-radius: var(--a-borderR--dialog) var(--a-borderR--dialog) 0 0;
     padding: rem(30) rem(30) rem(16);
 
     @media (min-width: #{size.$desktopMin}) {
       position: sticky;
       top: calc(var(--header-height, 95px) + #{rem(20)});
-      box-shadow: 0 0 rem(10) rgb(0 0 0 / 10%);
+      box-shadow: var(--a-shadow-summary-inner);
       border-radius: var(--a-borderR--card);
       padding: rem(16);
     }
@@ -541,7 +541,7 @@
     white-space: nowrap;
     border: 0.5px solid var(--a-border-dark);
     border-radius: var(--a-borderR--card);
-    box-shadow: 4px 4px 102.5px -10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--a-shadow-weekday);
   }
 
   .pageSummaryList {
@@ -806,7 +806,7 @@
     min-width: rem(275) !important;
     max-width: rem(275) !important;
     padding: 0 !important;
-    border-radius: rem(20);
+    border-radius: var(--a-borderR--x20);
     background-color: var(--a-blackBg);
     color: var(--a-white);
     border: none;
@@ -826,7 +826,7 @@
       min-width: rem(275) !important;
       max-width: rem(275) !important;
       padding: 0 !important;
-      border-radius: rem(20);
+      border-radius: var(--a-borderR--x20);
       font-size: rem(24);
     }
   }
