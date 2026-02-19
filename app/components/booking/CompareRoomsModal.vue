@@ -189,7 +189,7 @@
     font-weight: 400;
     color: var(--a-text-white);
     border: none;
-    border-radius: rem(10);
+    border-radius: var(--a-borderR--btn);
     cursor: pointer;
     transition: opacity 0.2s ease;
 

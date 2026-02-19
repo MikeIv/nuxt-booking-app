@@ -72,7 +72,7 @@
 
   .gallery {
     width: 100%;
-    border-radius: rem(10);
+    border-radius: var(--a-borderR--x10);
     overflow: hidden;
     aspect-ratio: 484 / 326;
 
@@ -127,7 +127,7 @@
     font-weight: 400;
     color: var(--a-text-dark);
     border: 1px solid var(--a-border-primary);
-    border-radius: rem(39);
+    border-radius: var(--a-borderR--pill);
     background: var(--a-whiteBg);
   }
 

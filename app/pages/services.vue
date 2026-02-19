@@ -517,7 +517,7 @@
     min-width: rem(287);
     height: rem(49);
     padding: 0 rem(24);
-    border-radius: 39px;
+    border-radius: var(--a-borderR--pill);
     border: 1px solid var(--a-border-primary);
     background: transparent;
     color: var(--a-text-dark);

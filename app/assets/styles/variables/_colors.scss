@@ -94,6 +94,20 @@
   --ui-input-menu-background: #fff;
   --ui-input-menu-border-color: #bf9d7c;
 
+  /* Тени (для переносимости темы) */
+  --a-shadow-color: rgba(0, 0, 0, 0.1);
+  --a-shadow-color-strong: rgba(0, 0, 0, 0.2);
+  --a-shadow-card: 0 0 10px var(--a-shadow-color);
+  --a-shadow-summary: 4px 4px 30px -10px var(--a-shadow-color);
+  --a-shadow-summary-inner: 0 0 10px var(--a-shadow-color);
+  --a-shadow-weekday: 4px 4px 102.5px -10px var(--a-shadow-color);
+
+  /* Алиасы для совместимости с компонентами (границы, нейтральный фон) */
+  --a-gray-50: #f9f6f3;
+  --a-gray-200: #e5e5e5;
+  --a-gray-300: #d1d1d1;
+  --a-primary: var(--primary);
+
   /* Toast */
   --p-toast-warn-background: #f6ebe9;
   --p-toast-warn-border-color: #c77266;

@@ -146,7 +146,7 @@
     flex-direction: column;
     min-width: rem(200);
     padding: rem(18) rem(14);
-    box-shadow: 0 0 rem(10) rgba(0, 0, 0, 0.1);
+    box-shadow: var(--a-shadow-card);
     border-radius: var(--a-borderR--card);
     overflow: hidden;
   }

@@ -5,8 +5,11 @@ stages:
 build frontend:
   stage: build
   image: node:20.19-alpine
+  environment:
+    name: $CI_COMMIT_BRANCH
+    url: $BASE_URL
   variables:
-    VITE_BASE_API_URL: https://varvarka-api.grandfs-develop.ru/api/v1/
+    VITE_BASE_API_URL: $API_BASE_URL
   script:
     - npm install
     - npm run build
@@ -19,11 +22,39 @@ build frontend:
     - docker
     - $CI_JOB_STAGE
 
+build image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  environment:
+    name: prod
+    url: $BASE_URL
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - |
+      docker build \
+        --build-arg BASE_URL=${CI_ENVIRONMENT_URL} \
+        --build-arg API_BASE_URL=${API_BASE_URL} \
+        -t ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG} \
+        -t ${CI_REGISTRY_IMAGE} --pull .
+    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
+    - docker push ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+    - docker push ${CI_REGISTRY_IMAGE}
+  only:
+    variables:
+      - $CI_COMMIT_TAG =~ /^v\d.*/
+  tags:
+    - docker
+    - $CI_JOB_STAGE
+
 deploy develop:
   stage: deploy
   environment:
     name: dev
-    url: https://varvarka-v2.grandfs-develop.ru/
+    url: $BASE_URL
   script:
     - cp -rf .output /var/www/varvarka/${CI_COMMIT_BRANCH}
     - cd /var/www/varvarka/${CI_COMMIT_BRANCH}
