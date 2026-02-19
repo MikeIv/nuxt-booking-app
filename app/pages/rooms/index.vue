@@ -327,7 +327,7 @@
     align-items: center;
     padding: rem(40);
     font-size: rem(18);
-    color: var(--a-gray);
+    color: var(--a-text-light);
   }
 
   .noResults {
@@ -344,11 +344,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    grid-column: 1 / -1;
     padding: rem(40);
     font-size: rem(18);
     color: var(--a-text-accent);
     text-align: center;
-    grid-column: 1 / -1;
   }
 
   .filterSelect {

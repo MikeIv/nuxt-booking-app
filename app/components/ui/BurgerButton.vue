@@ -31,20 +31,24 @@
 
   .burger {
     position: relative;
-    width: 18px;
-    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: rem(8);
+    width: rem(36);
+    height: rem(36);
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+
     z-index: 1001;
     transition: transform 0.3s ease;
 
-    @media (min-width: #{size.$tablet}) {
-      width: 24px;
+    @media (max-width: #{size.$desktopMin - 1px}) {
+      width: rem(28);
+      height: rem(28);
+      gap: rem(6);
     }
 
     &:active {
@@ -56,15 +60,18 @@
     display: block;
     width: 100%;
     height: rem(2);
-    background-color: var(--a-base);
+    background-color: var(--secondary);
+    border-radius: rem(1);
     transition: all 0.3s ease;
   }
 
+  /* Средняя линия короче в макете (M1 18.46H22.56) */
+  .burgerLine:nth-child(2) {
+    max-width: 62.5%;
+  }
+
   .burgerActive .burgerLine:nth-child(1) {
-    transform: translateY(rem(8)) rotate(45deg);
-    @media (min-width: #{size.$tablet}) {
-      transform: translateY(rem(11)) rotate(45deg);
-    }
+    transform: translateY(rem(9.7)) rotate(45deg);
   }
 
   .burgerActive .burgerLine:nth-child(2) {
@@ -72,9 +79,16 @@
   }
 
   .burgerActive .burgerLine:nth-child(3) {
-    transform: translateY(rem(-8)) rotate(-45deg);
-    @media (min-width: #{size.$tablet}) {
-      transform: translateY(rem(-11)) rotate(-45deg);
+    transform: translateY(rem(-9.7)) rotate(-45deg);
+  }
+
+  @media (max-width: #{size.$desktopMin - 1px}) {
+    .burgerActive .burgerLine:nth-child(1) {
+      transform: translateY(rem(7.5)) rotate(45deg);
+    }
+
+    .burgerActive .burgerLine:nth-child(3) {
+      transform: translateY(rem(-7.5)) rotate(-45deg);
     }
   }
 </style>
