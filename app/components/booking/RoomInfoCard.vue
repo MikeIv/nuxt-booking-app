@@ -293,7 +293,7 @@
   .title {
     display: inline-flex;
     flex-shrink: 1;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: bold;
     color: var(--a-text-dark);
@@ -302,7 +302,7 @@
 
   .roomDescription {
     margin-bottom: rem(24);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     line-height: 1.6;
     color: var(--a-text-dark);
@@ -326,7 +326,7 @@
   }
 
   .amenitiesListShow {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     font-weight: 500;
     color: var(--a-text-light);
@@ -341,7 +341,7 @@
     display: flex;
     align-items: center;
     padding: rem(2) rem(14);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     color: var(--a-text-dark);
     border: rem(1) solid var(--a-border-primary);
@@ -360,7 +360,7 @@
   }
 
   .bedTypeLabel {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(19);
     font-weight: 400;
     color: var(--a-text-dark);
@@ -390,7 +390,7 @@
     height: 100%;
     padding: 0;
     padding-right: rem(17 + 8);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(19);
     font-weight: 400;
     color: var(--a-text-dark);

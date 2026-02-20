@@ -63,6 +63,7 @@
   --a-text-light: #a9a9a9;
   --a-text-dark: #000;
   --a-text-accent: #a02525;
+  --a-text-error: #a02525;
 
   /* Background */
   --a-whiteBg: #fff;
@@ -107,6 +108,10 @@
   --a-gray-200: #e5e5e5;
   --a-gray-300: #d1d1d1;
   --a-primary: var(--primary);
+
+  /* Шрифты (для темизации при клонировании проекта) */
+  --a-font-heading: "Lora", serif;
+  --a-font-body: "Inter", sans-serif;
 
   /* Toast */
   --p-toast-warn-background: #f6ebe9;

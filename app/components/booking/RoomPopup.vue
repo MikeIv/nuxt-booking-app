@@ -151,7 +151,7 @@
 
   .roomTitle {
     margin: 0 0 rem(20) 0;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(28);
     font-weight: 700;
     line-height: 1.2;
@@ -209,7 +209,7 @@
     display: flex;
     align-items: center;
     padding: rem(2) rem(14);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     color: var(--a-text-dark);
     border: rem(1) solid var(--a-border-primary);
@@ -242,7 +242,7 @@
   .description {
     margin: 0 0 rem(16) 0;
     padding: 0 rem(24);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(16);
     line-height: 1.6;
     color: var(--a-text-dark);

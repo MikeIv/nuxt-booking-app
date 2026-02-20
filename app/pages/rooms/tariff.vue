@@ -309,10 +309,10 @@
     justify-content: center;
     align-items: center;
     margin: rem(40) 0;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(34);
     font-weight: 600;
-    color: var(--a-black);
+    color: var(--a-text-dark);
   }
 
   .tariffBlock {
@@ -333,7 +333,7 @@
     align-items: center;
     gap: rem(32);
     margin-bottom: rem(40);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(20);
     color: var(--a-text-dark);
     cursor: pointer;
@@ -352,7 +352,7 @@
   .tariffTitle {
     margin-bottom: rem(40);
     text-align: center;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 600;
     color: var(--a-text-dark);

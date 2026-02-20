@@ -179,7 +179,7 @@
     min-width: rem(300);
     min-height: rem(50);
     padding: rem(14) rem(12);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     background-color: var(--primary);
     border-radius: var(--a-borderR--x30);
     box-shadow: 0 rem(4) rem(4) var(--a-shadow-color-strong);
@@ -206,7 +206,7 @@
     align-items: center;
     width: 100%;
     height: rem(67);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(24);
     font-weight: 400;
     border-radius: var(--a-borderR--input);

@@ -178,7 +178,7 @@
 
   .serviceTitle {
     margin: 0 0 rem(20) 0;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(28);
     font-weight: 700;
     line-height: 1.2;
@@ -219,7 +219,7 @@
   .description {
     margin: 0;
     padding: 0;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(16);
     line-height: 1.6;
     color: var(--a-text-dark);
@@ -271,7 +271,7 @@
   }
 
   .itemTitle {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(14);
     font-weight: 500;
     color: var(--a-text-light);
@@ -288,7 +288,7 @@
   }
 
   .price {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -319,8 +319,8 @@
     border: none;
     border-radius: var(--a-borderR--btn);
     background-color: var(--a-blackBg);
-    color: var(--a-white);
-    font-family: "Inter", sans-serif;
+    color: var(--a-text-white);
+    font-family: var(--a-font-body);
     font-size: rem(16);
     font-weight: 500;
     cursor: pointer;
