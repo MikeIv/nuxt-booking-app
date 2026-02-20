@@ -322,7 +322,7 @@
   .tariffsTitle {
     margin-bottom: rem(40);
     text-align: center;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 500;
     color: var(--a-text-dark);
@@ -350,7 +350,7 @@
     width: 100%;
     height: rem(50);
     padding: rem(2) rem(14);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(20);
     color: var(--a-text-dark);
     border: rem(1) solid var(--a-border-primary);
@@ -406,7 +406,7 @@
   .emptyState {
     padding: rem(40) rem(20);
     text-align: center;
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(18);
     color: var(--a-text-light);
   }
@@ -440,7 +440,7 @@
   }
 
   .tariffName {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(28);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -475,7 +475,7 @@
   }
 
   .chevronIcon {
-    color: var(--a-black);
+    color: var(--a-text-dark);
     transition: transform 0.3s ease;
   }
 
@@ -494,7 +494,7 @@
   }
 
   .tariffDescription {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(20);
     color: var(--a-text-dark);
     line-height: 1.5;
@@ -539,15 +539,15 @@
     width: rem(20);
     height: rem(20);
     flex-shrink: 0;
-    color: #178b08;
+    color: var(--success);
   }
 
   .dataIconPenalty {
-    color: #9ca3af;
+    color: var(--a-text-light);
   }
 
   .dataText {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(20);
     color: var(--a-text-dark);
   }
@@ -565,7 +565,7 @@
   }
 
   .tariffPrice {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(34);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -574,7 +574,7 @@
   }
 
   .tariffPriceLabel {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(12);
     font-weight: 500;
     color: var(--a-text-light);
@@ -656,7 +656,7 @@
   }
 
   .packagesTitle {
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(14);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -674,10 +674,10 @@
 
   .packageItem {
     padding: rem(4) rem(12);
-    background: var(--a-white);
+    background: var(--a-whiteBg);
     border: rem(1) solid var(--a-border-light);
-    border-radius: rem(6);
-    font-family: "Inter", sans-serif;
+    border-radius: var(--a-borderR--x6);
+    font-family: var(--a-font-body);
     font-size: rem(12);
     color: var(--a-text-dark);
   }
