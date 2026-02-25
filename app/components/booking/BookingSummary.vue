@@ -367,7 +367,7 @@
     border-radius: var(--a-borderR--dialog) var(--a-borderR--dialog) 0 0;
     z-index: z.z("booking-summary");
 
-    @media (min-width: 769px) {
+    @media (min-width: #{size.$tablet}) {
       width: rem(687);
       max-width: rem(687);
       margin-left: auto;
@@ -417,7 +417,7 @@
   }
 
   .pageSummaryTitle {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -434,7 +434,7 @@
   .pageSummaryDates {
     display: none;
     margin-bottom: rem(12);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(20);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -444,7 +444,7 @@
   .pageSummaryDatesMobile {
     display: block;
     margin-bottom: rem(12);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(20);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -497,7 +497,7 @@
   }
 
   .bookingDetailLabel {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(20);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -513,7 +513,7 @@
   .detailDay {
     flex-shrink: 0;
     width: rem(52);
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(16);
     font-weight: 400;
     color: var(--a-text-dark);
@@ -533,7 +533,7 @@
     min-width: rem(161);
     height: rem(24);
     padding: rem(4) rem(28);
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(15);
     font-weight: 400;
     color: var(--a-text-dark);
@@ -579,7 +579,7 @@
   .roomButtonText {
     flex: 1;
     text-align: left;
-    font-family: Inter, sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(20);
     font-weight: 700;
     color: var(--a-white);
@@ -626,7 +626,7 @@
 
   .roomType {
     flex: 1;
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -634,7 +634,7 @@
   }
 
   .roomPrice {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -643,7 +643,7 @@
   }
 
   .roomTariff {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(18);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -656,7 +656,7 @@
   }
 
   .roomGuestLine {
-    font-family: Inter, sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     font-weight: 500;
     color: var(--a-text-dark);
@@ -667,14 +667,14 @@
     align-items: center;
     justify-content: space-between;
     gap: rem(12);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(18);
     font-weight: 600;
     color: var(--a-text-dark);
   }
 
   .roomTotal strong {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(18);
     font-weight: 600;
   }
@@ -686,7 +686,7 @@
   }
 
   .servicesHeader {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(18);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -708,7 +708,7 @@
 
   .serviceTitle {
     flex: 1;
-    font-family: Inter, sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     font-weight: 500;
     color: var(--a-text-dark);
@@ -721,7 +721,7 @@
   }
 
   .servicePrice {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(16);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -753,7 +753,7 @@
 
   .pageSummaryDivider {
     width: 100%;
-    height: 1px;
+    height: rem(1);
     background-color: var(--a-border-dark);
     margin: rem(12) 0;
   }
@@ -764,7 +764,7 @@
     justify-content: space-between;
     gap: rem(12);
     margin-bottom: rem(12);
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(24);
     font-weight: 700;
     color: var(--a-text-dark);
@@ -779,7 +779,7 @@
   }
 
   .pageSummaryGrandTotal strong {
-    font-family: Lora, serif;
+    font-family: var(--a-font-heading);
     font-size: rem(32);
     font-weight: 700;
 
@@ -811,7 +811,7 @@
     color: var(--a-white);
     border: none;
     cursor: pointer;
-    font-family: Inter, sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(24);
     font-weight: 400;
     display: flex;

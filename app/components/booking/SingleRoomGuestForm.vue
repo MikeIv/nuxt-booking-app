@@ -189,7 +189,7 @@ const updateCheckbox = (key: string, value: boolean) => {
 }
 
 .checkboxLabel {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   color: var(--a-text-dark);
   line-height: 1.4;
@@ -210,7 +210,7 @@ const updateCheckbox = (key: string, value: boolean) => {
   border-radius: var(--a-borderR--card);
   background: transparent;
   color: var(--a-text-dark);
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 400;
   cursor: pointer;

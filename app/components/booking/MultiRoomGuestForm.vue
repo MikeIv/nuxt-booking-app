@@ -198,7 +198,7 @@ const updateCheckbox = (roomIdx: number, key: string, value: boolean) => {
 .roomButtonText {
   flex: 1;
   text-align: left;
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(20);
   font-weight: 700;
   color: var(--a-white);
@@ -206,7 +206,7 @@ const updateCheckbox = (roomIdx: number, key: string, value: boolean) => {
 
 .roomButtonGuestsTitle {
   flex-shrink: 0;
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(20);
   font-weight: 700;
   color: var(--a-white);
@@ -303,7 +303,7 @@ const updateCheckbox = (roomIdx: number, key: string, value: boolean) => {
 }
 
 .checkboxLabel {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   color: var(--a-text-dark);
   line-height: 1.4;
@@ -324,7 +324,7 @@ const updateCheckbox = (roomIdx: number, key: string, value: boolean) => {
   border-radius: var(--a-borderR--card);
   background: transparent;
   color: var(--a-text-dark);
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 400;
   cursor: pointer;

@@ -100,7 +100,7 @@ const agreementValue = computed({
 }
 
 .sectionHeader {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(24);
   font-weight: 400;
   color: var(--a-text-dark);
@@ -126,7 +126,7 @@ const agreementValue = computed({
 
 .errorMessage {
   margin-top: rem(8);
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(14);
   color: var(--a-text-accent);
 }
@@ -191,7 +191,7 @@ const agreementValue = computed({
 }
 
 .checkboxLabel {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   color: var(--a-text-dark);
   line-height: 1.4;
@@ -202,12 +202,12 @@ const agreementValue = computed({
 
 .securityText {
   padding: rem(16);
-  background: var(--a-bg-light);
+  background: var(--a-gray-50);
   border-radius: var(--a-borderR--input);
 }
 
 .securityTitle {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 600;
   color: var(--a-text-dark);
@@ -215,7 +215,7 @@ const agreementValue = computed({
 }
 
 .securityDescription {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(14);
   line-height: 1.5;
   color: var(--a-text-light);

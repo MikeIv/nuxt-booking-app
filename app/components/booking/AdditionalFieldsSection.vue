@@ -57,7 +57,7 @@ const updateField = (key: string, value: string) => {
 }
 
 .sectionHeader {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(24);
   font-weight: 400;
   color: var(--a-text-dark);
@@ -89,7 +89,7 @@ const updateField = (key: string, value: string) => {
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease;
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   &:focus {
     outline: none;

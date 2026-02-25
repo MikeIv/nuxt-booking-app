@@ -66,7 +66,7 @@ const forSelf = computed({
   position: relative;
   margin-bottom: rem(40);
   padding-left: rem(30);
-  font-family: "Lora", serif;
+  font-family: var(--a-font-heading);
   font-size: rem(20);
   color: var(--a-text-dark);
   text-decoration: none;
@@ -80,14 +80,14 @@ const forSelf = computed({
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    width: 10px;
+    width: rem(10);
   }
 }
 
 .personalTitle {
   margin-bottom: rem(24);
   text-align: center;
-  font-family: "Lora", serif;
+  font-family: var(--a-font-heading);
   font-size: rem(28);
   font-weight: 600;
   color: var(--a-text-dark);
@@ -103,7 +103,7 @@ const forSelf = computed({
 }
 
 .sectionHeader {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(24);
   font-weight: 400;
   color: var(--a-text-dark);
@@ -121,7 +121,7 @@ const forSelf = computed({
 }
 
 .personalNote {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 400;
   color: var(--a-text-light);
