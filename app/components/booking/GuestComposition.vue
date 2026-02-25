@@ -112,7 +112,7 @@ const compositionText = computed(() => {
 }
 
 .guestCompositionText {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 400;
   color: var(--a-text-light);
@@ -133,7 +133,7 @@ const compositionText = computed(() => {
 }
 
 .mainGuestText {
-  font-family: "Inter", sans-serif;
+  font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 600;
   color: var(--a-text-dark);

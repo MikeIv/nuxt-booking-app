@@ -616,10 +616,10 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   margin: rem(40) 0;
-  font-family: "Lora", serif;
+  font-family: var(--a-font-heading);
   font-size: rem(34);
   font-weight: 600;
-  color: var(--a-black);
+  color: var(--a-text-dark);
 }
 
 .personalBlock {

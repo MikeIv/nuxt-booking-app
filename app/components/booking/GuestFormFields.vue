@@ -165,7 +165,7 @@
 
   .guestTitle {
     padding: 0;
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(18);
     font-weight: 600;
     color: var(--a-text-dark);
@@ -214,7 +214,7 @@
     transition:
       border-color 0.3s ease,
       box-shadow 0.3s ease;
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(16);
     &:focus {
       outline: none;
@@ -241,7 +241,7 @@
 
   .errorMessage {
     margin-top: rem(8);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(14);
     color: var(--a-text-accent);
   }
