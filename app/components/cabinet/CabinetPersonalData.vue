@@ -207,9 +207,9 @@
       height: rem(58);
       padding: 0 rem(27) 0 rem(38);
       font-size: rem(20);
-      border: rem(0.5) solid var(--a-black);
+      border: rem(0.5) solid var(--a-border-dark);
       border-radius: var(--a-borderR--card);
-      box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1);
+      box-shadow: var(--a-shadow-weekday);
       transition:
         border-color 0.3s ease,
         box-shadow 0.3s ease;
@@ -224,7 +224,7 @@
       }
 
       &:hover {
-        border-color: var(--a-black);
+        border-color: var(--a-border-dark);
 
         @media (min-width: #{size.$tablet}) {
           border-color: var(--a-border-primary);
@@ -235,7 +235,7 @@
       &.isOpen {
         outline: none;
         border-color: var(--a-border-primary);
-        box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1),
+        box-shadow: var(--a-shadow-weekday),
           0 0 0 2px rgba(191, 157, 124, 0.1);
 
         @media (min-width: #{size.$tablet}) {
@@ -264,11 +264,11 @@
     padding: 0 rem(27) 0 rem(38);
     font-size: rem(20);
     color: var(--a-text-dark);
-    border: rem(0.5) solid var(--a-black);
+    border: rem(0.5) solid var(--a-border-dark);
     border-radius: var(--a-borderR--card);
     background-color: var(--a-whiteBg);
-    font-family: "Inter", sans-serif;
-    box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1);
+    font-family: var(--a-font-body);
+    box-shadow: var(--a-shadow-weekday);
     transition:
       border-color 0.3s ease,
       box-shadow 0.3s ease;
@@ -284,7 +284,7 @@
     &:focus {
       outline: none;
       border-color: var(--a-border-primary);
-      box-shadow: rem(4) rem(4) rem(102.5) rem(-10) rgba(0, 0, 0, 0.1),
+      box-shadow: var(--a-shadow-weekday),
         0 0 0 2px rgba(191, 157, 124, 0.1);
 
       @media (min-width: #{size.$tablet}) {
@@ -305,7 +305,7 @@
     min-height: rem(44);
     margin: rem(20) 0 0 0;
     padding: rem(12) rem(44);
-    font-family: Inter, sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(18);
     font-weight: 400;
     line-height: 1;

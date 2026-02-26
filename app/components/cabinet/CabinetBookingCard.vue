@@ -75,23 +75,23 @@
     display: flex;
     flex-direction: column;
     gap: rem(8);
-    background: #fff;
+    background: var(--a-whiteBg);
     border-radius: rem(12);
-    box-shadow: 0 rem(2) rem(8) rgba(0, 0, 0, 0.08);
+    box-shadow: 0 rem(2) rem(8) var(--a-shadow-color);
     padding: rem(24);
     width: 100%;
     transition: box-shadow 0.2s ease;
 
     &:hover {
-      box-shadow: 0 rem(4) rem(16) rgba(0, 0, 0, 0.12);
+      box-shadow: 0 rem(4) rem(16) var(--a-shadow-color-strong);
     }
   }
 
   .bookingTitle {
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-weight: 600;
     font-size: rem(16);
-    color: var(--a-black);
+    color: var(--a-text-dark);
     line-height: 1.3;
     margin-bottom: rem(18);
 
@@ -106,7 +106,7 @@
     gap: rem(6);
     color: var(--a-text-dark);
     font-size: rem(16);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     line-height: 1.4;
 
     @media (min-width: #{size.$tablet}) {
@@ -138,7 +138,7 @@
   .bookingRooms {
     color: var(--a-text-dark);
     font-size: rem(16);
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     line-height: 1.4;
 
     @media (min-width: #{size.$tablet}) {
