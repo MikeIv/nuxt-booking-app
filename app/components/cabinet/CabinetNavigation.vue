@@ -77,7 +77,7 @@
     width: 100%;
     min-height: rem(44);
     padding: rem(10) rem(16);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
     font-size: rem(18);
     line-height: 1;
     border-radius: var(--a-borderR--btn);

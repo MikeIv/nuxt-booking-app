@@ -180,10 +180,10 @@
     margin: rem(40) 0;
     padding: 0;
     text-align: center;
-    font-family: "Lora", serif;
+    font-family: var(--a-font-heading);
     font-size: rem(28);
     font-weight: 600;
-    color: var(--a-black);
+    color: var(--a-text-dark);
 
     @media (min-width: #{size.$tablet}) {
       font-size: rem(34);
