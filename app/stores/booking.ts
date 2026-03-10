@@ -278,6 +278,19 @@ export const useBookingStore = defineStore(
       return Array.from({ length: count }, (_, index) => ages[index] ?? 0);
     };
 
+    /** Максимум гостей (взрослые + дети) в одном номере — синхрон с GuestsSelector */
+    const MAX_GUESTS_PER_ROOM = 15;
+
+    const clampRoomGuests = (adults: number, children: number) => {
+      let a = adults;
+      let c = children;
+      if (a + c > MAX_GUESTS_PER_ROOM) {
+        a = Math.min(a, MAX_GUESTS_PER_ROOM);
+        c = Math.max(0, MAX_GUESTS_PER_ROOM - a);
+      }
+      return { adults: a, children: c };
+    };
+
     const normalizeMinPrice = (
       price: number | string | null | undefined,
     ): number | null => {
@@ -666,17 +679,27 @@ export const useBookingStore = defineStore(
         ? (() => {
             const room = list[roomIndex!];
             if (!room) return [];
-            return [
-              {
-                adults: room.adults,
-                childs: ensureChildAges(room.children, room.childrenAges ?? []),
-              },
-            ];
+            const { adults, children } = clampRoomGuests(
+              room.adults,
+              room.children,
+            );
+            const childs = ensureChildAges(
+              children,
+              (room.childrenAges ?? []).slice(0, children),
+            );
+            return [{ adults, childs }];
           })()
-        : list.map((room) => ({
-            adults: room.adults,
-            childs: ensureChildAges(room.children, room.childrenAges ?? []),
-          }));
+        : list.map((room) => {
+            const { adults, children } = clampRoomGuests(
+              room.adults,
+              room.children,
+            );
+            const childs = ensureChildAges(
+              children,
+              (room.childrenAges ?? []).slice(0, children),
+            );
+            return { adults, childs };
+          });
 
       const groupedByBed = guestsPayload.length <= 1;
       const multiBookingMode = !isSingleRoomRequest && guestsPayload.length > 1;

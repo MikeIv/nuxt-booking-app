@@ -8,6 +8,9 @@ export interface RoomGuests {
   childrenAges: number[];
 }
 
+/** Максимум гостей (взрослые + дети) в одном номере */
+const MAX_GUESTS_PER_ROOM = 15;
+
 interface GuestsValue {
   rooms: number;
   roomList: RoomGuests[];
@@ -43,22 +46,29 @@ const MAX_ROOMS = 5;
         const normalized = (props.modelValue as GuestsValue).roomList.map(
           (r) => {
             const room = r as RoomGuests & { childrenAges?: number[] };
+            let adults = room.adults;
+            let children = room.children;
+            if (adults + children > MAX_GUESTS_PER_ROOM) {
+              adults = Math.min(adults, MAX_GUESTS_PER_ROOM);
+              children = Math.max(0, MAX_GUESTS_PER_ROOM - adults);
+            }
+            const childrenAges = Array.isArray(room.childrenAges)
+              ? room.childrenAges.slice(0, children).concat(
+                  Array.from(
+                    {
+                      length: Math.max(
+                        0,
+                        children - (room.childrenAges?.length ?? 0),
+                      ),
+                    },
+                    () => AGE_MIN,
+                  ),
+                )
+              : Array.from({ length: children }, () => AGE_MIN);
             return {
-              adults: room.adults,
-              children: room.children,
-              childrenAges: Array.isArray(room.childrenAges)
-                ? room.childrenAges.slice(0, room.children).concat(
-                    Array.from(
-                      {
-                        length: Math.max(
-                          0,
-                          room.children - (room.childrenAges?.length ?? 0),
-                        ),
-                      },
-                      () => AGE_MIN,
-                    ),
-                  )
-                : Array.from({ length: room.children }, () => AGE_MIN),
+              adults,
+              children,
+              childrenAges,
             };
           },
         );
@@ -71,18 +81,22 @@ const MAX_ROOMS = 5;
       const legacyValue = props.modelValue as LegacyGuestsValue;
       return {
         rooms,
-        roomList: Array.from({ length: rooms }).map((_, idx) =>
-          idx === 0
-            ? {
-                adults: legacyValue.adults ?? 1,
-                children: legacyValue.children ?? 0,
-                childrenAges: Array.from(
-                  { length: legacyValue.children ?? 0 },
-                  () => AGE_MIN,
-                ),
-              }
-            : { adults: 1, children: 0, childrenAges: [] },
-        ),
+        roomList: Array.from({ length: rooms }).map((_, idx) => {
+          let adults = idx === 0 ? (legacyValue.adults ?? 1) : 1;
+          let children = idx === 0 ? (legacyValue.children ?? 0) : 0;
+          if (adults + children > MAX_GUESTS_PER_ROOM) {
+            adults = Math.min(adults, MAX_GUESTS_PER_ROOM);
+            children = Math.max(0, MAX_GUESTS_PER_ROOM - adults);
+          }
+          return {
+            adults,
+            children,
+            childrenAges: Array.from(
+              { length: children },
+              () => AGE_MIN,
+            ),
+          };
+        }),
       };
     },
     set: (val) => emit("update:modelValue", val),
@@ -117,7 +131,8 @@ const MAX_ROOMS = 5;
   function updateRoomAdults(roomIdx: number, value: number) {
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
-      return { ...room, adults: Math.max(1, value) };
+      const maxAdults = MAX_GUESTS_PER_ROOM - room.children;
+      return { ...room, adults: Math.max(1, Math.min(value, maxAdults)) };
     });
     guests.value = { ...guests.value, roomList };
   }
@@ -125,7 +140,8 @@ const MAX_ROOMS = 5;
   function updateRoomChildren(roomIdx: number, value: number) {
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
-      const count = Math.max(0, value);
+      const maxChildren = MAX_GUESTS_PER_ROOM - room.adults;
+      const count = Math.max(0, Math.min(value, maxChildren));
       const ages = room.childrenAges?.slice(0, count) ?? [];
       while (ages.length < count) ages.push(AGE_MIN);
       return { ...room, children: count, childrenAges: ages };
@@ -194,6 +210,8 @@ const MAX_ROOMS = 5;
           :room="room"
           :room-index="idx"
           :total-rooms="guests.rooms"
+          :max-adults="MAX_GUESTS_PER_ROOM - room.children"
+          :max-children="MAX_GUESTS_PER_ROOM - room.adults"
           @update:adults="(val: number) => updateRoomAdults(idx, val)"
           @update:children="(val: number) => updateRoomChildren(idx, val)"
           @update:child-age="(childIdx: number, age: number) => updateChildAge(idx, childIdx, age)"

@@ -9,8 +9,8 @@
   export const REQUEST_ERROR_MESSAGES: Record<number, RequestErrorContent> = {
     400: {
       summary: "Попробуйте позже",
-      detail:
-        "Сервер временно не смог обработать запрос. Повторите попытку позднее.",
+      // Для 400 используем текст с backend (например, "По запрошенным параметрам номеров не найдено.")
+      detail: "",
     },
     401: {
       summary: "Требуется авторизация",
@@ -38,7 +38,8 @@
     },
     422: {
       summary: "Ошибка в данных",
-      detail: "Проверьте корректность введенных данных и повторите запрос.",
+      // Для 422 также показываем текст валидации с backend
+      detail: "",
     },
     429: {
       summary: "Слишком много запросов",
@@ -86,7 +87,6 @@
     const mappedMessage = REQUEST_ERROR_MESSAGES[status];
 
     if (mappedMessage) {
-      console.log("fallbackDetail", fallbackDetail);
       return mappedMessage.detail
         ? mappedMessage
         : {

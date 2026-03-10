@@ -6,9 +6,16 @@ interface Props {
   room: RoomGuests;
   roomIndex: number;
   totalRooms: number;
+  /** Максимум взрослых в номере (с учётом лимита гостей на номер) */
+  maxAdults?: number;
+  /** Максимум детей в номере */
+  maxChildren?: number;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  maxAdults: undefined,
+  maxChildren: undefined,
+});
 const emit = defineEmits<{
   "update:adults": [value: number];
   "update:children": [value: number];
@@ -53,6 +60,7 @@ const roomTitle = computed(() =>
       <CoreCounter
         :model-value="room.adults"
         :min="1"
+        :max="maxAdults"
         @update:model-value="updateAdults"
       />
     </div>
@@ -67,6 +75,7 @@ const roomTitle = computed(() =>
       <CoreCounter
         :model-value="room.children"
         :min="0"
+        :max="maxChildren"
         @update:model-value="updateChildren"
       />
     </div>
