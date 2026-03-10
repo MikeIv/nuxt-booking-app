@@ -12,6 +12,7 @@
     
     <!-- Компоненты вне layout, но внутри UApp для правильного контекста provide/inject -->
     <NotificationToast :notifications="notifications" :on-remove="remove" />
+    <LayoutInitialLoadOverlay />
     <BookingLoadingOverlay />
   </UApp>
 </template>
