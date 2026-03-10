@@ -1,12 +1,11 @@
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(() => {
   const { fetchBanners } = useBanners();
 
-  try {
-    await fetchBanners();
-  } catch (error: unknown) {
-    // Не блокируем инициализацию приложения при ошибке загрузки баннеров
+  // Запускаем загрузку баннеров без ожидания, чтобы не блокировать отрисовку страницы
+  // (graceful degradation при медленной сети)
+  void fetchBanners().catch((error: unknown) => {
     if (process.env.NODE_ENV === "development") {
       console.warn("Не удалось загрузить баннеры при инициализации:", error);
     }
-  }
+  });
 });

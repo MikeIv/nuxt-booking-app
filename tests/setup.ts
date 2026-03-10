@@ -3,11 +3,19 @@
  * Этот файл выполняется перед каждым тестом
  */
 import { beforeEach, vi } from "vitest";
-import { storeToRefs } from "pinia";
+import { storeToRefs as piniaStoreToRefs } from "pinia";
 import * as Vue from "vue";
 import type { Ref } from "vue";
 import { mockRouterPush, mockRoute, mockToastAdd } from "./mocks/nuxt";
 import { setupComponentMocks } from "./mocks/components";
+
+// --- Тишина в консоли для тестов ---
+// В компонентах есть отладочные логи под DEV, они не должны засорять вывод Vitest.
+vi.spyOn(console, "log").mockImplementation(() => {});
+vi.spyOn(console, "info").mockImplementation(() => {});
+vi.spyOn(console, "debug").mockImplementation(() => {});
+vi.spyOn(console, "warn").mockImplementation(() => {});
+vi.spyOn(console, "error").mockImplementation(() => {});
 
 // Настраиваем моки компонентов один раз для всех тестов
 setupComponentMocks();
@@ -23,8 +31,23 @@ vi.stubGlobal("useToast", () => ({
   add: mockToastAdd,
 }));
 
-// storeToRefs из Pinia должен быть доступен глобально
-vi.stubGlobal("storeToRefs", storeToRefs);
+// Глобальный мок для проектного toast composable
+vi.mock("~/composables/useToast", () => ({
+  useNotificationToast: () => ({
+    add: mockToastAdd,
+  }),
+}));
+
+// storeToRefs из Pinia должен быть доступен глобально.
+// В тестах мы часто мокируем store как простой объект с ref-полями — для него достаточно identity.
+vi.stubGlobal("storeToRefs", (store: unknown) => {
+  if (!store || typeof store !== "object")
+    return piniaStoreToRefs(store as never);
+  const s = store as Record<string, unknown>;
+  // Если это не настоящий pinia store, возвращаем объект как есть
+  if (!("$id" in s) && !("_p" in s) && !("_hmrPayload" in s)) return store;
+  return piniaStoreToRefs(store as never);
+});
 
 // Мокируем useBookingStore (будет переопределен в тестах через vi.mock, если нужно)
 // Базовый мок для компонентов, которые не мокируют store явно
@@ -46,11 +69,25 @@ vi.stubGlobal("useBookingStore", () => {
 // Мокируем definePageMeta для Nuxt страниц
 vi.stubGlobal("definePageMeta", vi.fn());
 
+// Моки для head/seo composables (Nuxt)
+const mockUseHead = vi.fn();
+const mockUseSeoMeta = vi.fn();
+vi.stubGlobal("useHead", mockUseHead);
+vi.stubGlobal("useSeoMeta", mockUseSeoMeta);
+// Доп. страховка для случаев, когда free-var берётся напрямую из globalThis
+(globalThis as Record<string, unknown>).useHead = mockUseHead;
+(globalThis as Record<string, unknown>).useSeoMeta = mockUseSeoMeta;
+
 // Мокируем useMemoize из @vueuse/core (просто возвращает функцию как есть)
 vi.stubGlobal(
   "useMemoize",
   <T extends (...args: unknown[]) => unknown>(fn: T): T => fn,
 );
+
+// Мокируем useBanners (используется в Booking и страницах бронирования)
+vi.stubGlobal("useBanners", () => ({
+  getBannersByVisibility: vi.fn(() => []),
+}));
 
 // Мокируем composables, которые используются в компонентах
 vi.stubGlobal("useCalendarPrices", () => ({

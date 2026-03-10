@@ -10,7 +10,7 @@
   const router = useRouter();
   const route = useRoute();
 
-  const { getBannersByVisibility } = useBanners();
+  const { getBannersByVisibility, loading: bannersLoading } = useBanners();
 
   const bookingBanners = computed(() => {
     const result = getBannersByVisibility("booking");
@@ -58,6 +58,33 @@
 
     return true;
   };
+
+  // Уведомление о медленной загрузке: показываем один раз, если баннеры грузятся дольше 5 сек
+  const SLOW_NETWORK_THRESHOLD_MS = 5000;
+  const slowNetworkToastShown = ref(false);
+  let slowNetworkTimer: ReturnType<typeof setTimeout> | null = null;
+
+  watch(bannersLoading, (loading) => {
+    if (slowNetworkTimer) {
+      clearTimeout(slowNetworkTimer);
+      slowNetworkTimer = null;
+    }
+    if (loading && !slowNetworkToastShown.value) {
+      slowNetworkTimer = setTimeout(() => {
+        slowNetworkToastShown.value = true;
+        toast.add({
+          severity: "info",
+          summary: "Медленное соединение",
+          detail: "Дополнительный контент подгружается. Форма бронирования доступна.",
+          life: 5000,
+        });
+      }, SLOW_NETWORK_THRESHOLD_MS);
+    }
+  });
+
+  onUnmounted(() => {
+    if (slowNetworkTimer) clearTimeout(slowNetworkTimer);
+  });
 
   const handleSearch = async () => {
     if (!validateForm()) return;
@@ -139,8 +166,22 @@
         {{ loading ? "Поиск..." : "Поиск" }}
       </UButton>
     </div>
-    <div v-if="bookingBanners.length > 0" :class="$style.bannersWrapper">
-      <CommonBannersList :banners="bookingBanners" />
+    <div
+      v-if="bannersLoading || bookingBanners.length > 0"
+      :class="$style.bannersWrapper"
+    >
+      <div
+        v-if="bannersLoading"
+        :class="$style.bannersSkeleton"
+        aria-label="Загрузка баннеров"
+      >
+        <div :class="$style.bannersSkeletonLine" />
+        <div :class="$style.bannersSkeletonLine" />
+      </div>
+      <CommonBannersList
+        v-else-if="bookingBanners.length > 0"
+        :banners="bookingBanners"
+      />
     </div>
   </section>
 </template>
@@ -234,5 +275,38 @@
     max-width: size.$desktop;
     display: flex;
     justify-content: center;
+  }
+
+  .bannersSkeleton {
+    display: flex;
+    gap: rem(16);
+    width: 100%;
+    max-width: size.$desktop;
+    justify-content: center;
+    min-height: rem(80);
+    align-items: center;
+  }
+
+  .bannersSkeletonLine {
+    width: rem(200);
+    height: rem(60);
+    border-radius: var(--a-borderR--btn);
+    background: linear-gradient(
+      90deg,
+      var(--ui-color-primary-50) 25%,
+      var(--a-border-light) 50%,
+      var(--ui-color-primary-50) 75%
+    );
+    background-size: 200% 100%;
+    animation: bannersSkeletonShine 1.5s ease-in-out infinite;
+  }
+
+  @keyframes bannersSkeletonShine {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 </style>

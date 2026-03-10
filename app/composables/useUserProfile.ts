@@ -64,6 +64,11 @@ export const useUserProfile = () => {
         return;
       }
 
+      // Важно: запоминаем "первую загрузку" до обновления originalData,
+      // иначе проверка станет всегда false.
+      const wasOriginalDataEmpty =
+        !originalData.name && !originalData.surname && !originalData.email;
+
       // Используем данные из authStore.user как приоритетные (данные с сервера)
       const source = {
         name: user.name || "",
@@ -98,9 +103,6 @@ export const useUserProfile = () => {
 
         // Перезаписываем formData только если нет несохраненных изменений
         // или если это первая загрузка данных (originalData был пустым)
-        const wasOriginalDataEmpty =
-          !originalData.name && !originalData.surname && !originalData.email;
-
         if (!hasUnsavedChanges || wasOriginalDataEmpty) {
           Object.assign(formData, source);
           hasChanges.value = false;
@@ -115,6 +117,10 @@ export const useUserProfile = () => {
     const keys = Object.keys(originalData) as Array<keyof typeof originalData>;
     hasChanges.value = keys.some((key) => formData[key] !== originalData[key]);
   };
+
+  // Держим hasChanges синхронизированным с formData/originalData
+  watch(formData, checkChanges, { deep: true, flush: "sync" });
+  watch(originalData, checkChanges, { deep: true, flush: "sync" });
 
   const saveChanges = async () => {
     if (!authStore.user) return;

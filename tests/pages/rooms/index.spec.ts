@@ -519,7 +519,7 @@ describe("pages/rooms/index.vue", () => {
         life: 3000,
       });
       expect(mockBookingStore.setLoading).toHaveBeenCalledWith(false);
-      expect(mockBookingStore.isServerRequest.value).toBe(false);
+      expect(mockBookingStore.isServerRequest).toBe(false);
     });
   });
 

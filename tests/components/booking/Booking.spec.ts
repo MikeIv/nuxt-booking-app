@@ -100,7 +100,9 @@ describe("Booking.vue", () => {
         rooms: 1,
         roomList: [{ adults: 2, children: 0, childrenAges: [] }],
       };
-      mockBookingStore.search.mockResolvedValue({});
+      mockBookingStore.search.mockResolvedValue({
+        rooms: [{ room_type_code: "R1" }],
+      });
 
       await wrapper.vm.handleSearch();
 
@@ -108,10 +110,10 @@ describe("Booking.vue", () => {
         true,
         "Загружаем данные о номерах...",
       );
-      expect(mockBookingStore.search).toHaveBeenCalledWith(true);
+      expect(mockBookingStore.search).toHaveBeenCalledWith({ skipReset: true });
       expect(mockRouterPush).toHaveBeenCalledWith("/rooms");
       expect(mockBookingStore.setLoading).toHaveBeenCalledWith(false);
-      expect(mockBookingStore.isServerRequest.value).toBe(false);
+      expect(mockBookingStore.isServerRequest).toBe(false);
     });
 
     it("должен делать редирект на /multi-rooms для нескольких номеров", async () => {
@@ -128,7 +130,9 @@ describe("Booking.vue", () => {
           { adults: 1, children: 0, childrenAges: [] },
         ],
       };
-      mockBookingStore.search.mockResolvedValue({});
+      mockBookingStore.search.mockResolvedValue({
+        rooms: [{ room_type_code: "R1" }],
+      });
 
       await wrapper.vm.handleSearch();
 
@@ -181,7 +185,7 @@ describe("Booking.vue", () => {
         life: 3000,
       });
       expect(mockBookingStore.setLoading).toHaveBeenCalledWith(false);
-      expect(mockBookingStore.isServerRequest.value).toBe(false);
+      expect(mockBookingStore.isServerRequest).toBe(false);
     });
 
     it("не должен выполнять поиск, если валидация не прошла", async () => {

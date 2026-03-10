@@ -1,29 +1,32 @@
 <script setup lang="ts">
+  import { useBookingStore } from "~/stores/booking";
+
   definePageMeta({
     layout: "main",
   });
 
   const bookingStore = useBookingStore();
 
-  // Сбрасываем состояние загрузки при монтировании главной страницы
-  onMounted(() => {
-    bookingStore.setLoading(false);
-    bookingStore.isServerRequest = false;
+  bookingStore.setLoading(false);
+  bookingStore.isServerRequest = false;
+
+  useSeoMeta({
+    title: "Главная",
+    description: "Varvarka — официальный сайт. Бронирование номеров и услуги.",
   });
 </script>
 
 <template>
   <div :class="$style.main">
     <MainIntro />
-    <!-- Блоки бронирования -->
     <Booking />
     <!-- Блоки с якорями -->
-    <MainAccommodation anchor-id="accommodation" />
-    <MainRestaurants anchor-id="restaurants" />
-    <MainEvents anchor-id="events" />
-    <MainSpa anchor-id="spa" />
-    <MainEntertainment anchor-id="entertainment" />
-    <MainConstruction anchor-id="construction" />
+    <LazyMainAccommodation anchor-id="accommodation" />
+    <LazyMainRestaurants anchor-id="restaurants" />
+    <LazyMainEvents anchor-id="events" />
+    <LazyMainSpa anchor-id="spa" />
+    <LazyMainEntertainment anchor-id="entertainment" />
+    <LazyMainConstruction anchor-id="construction" />
   </div>
 </template>
 

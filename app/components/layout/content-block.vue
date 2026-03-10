@@ -4,6 +4,10 @@
       type: String,
       default: "",
     },
+    noBottomMargin: {
+      type: Boolean,
+      default: false,
+    },
     hasTwoColumns: {
       type: Boolean,
       default: false,
@@ -32,7 +36,7 @@
 </script>
 
 <template>
-  <section :class="[$style.layout, layoutClass]">
+  <section :class="[$style.layout, { [$style.noBottomMargin]: noBottomMargin }, layoutClass]">
     <h2 v-if="title" :class="[titleClass]">{{ title }}</h2>
 
     <div
@@ -64,6 +68,10 @@
     padding: 0 rem(15);
     margin-bottom: clamp(50px, 10vw, 100px);
     background-color: var(--ui-color-primary-50);
+  }
+
+  .noBottomMargin {
+    margin-bottom: 0;
   }
 
   .content {

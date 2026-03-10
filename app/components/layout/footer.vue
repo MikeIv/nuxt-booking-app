@@ -1,205 +1,31 @@
 <script setup lang="ts">
-  import { HOTEL_INFO } from "~/utils/hotel";
-
   interface FooterProps {
     anchorId?: string;
   }
 
-  const _props = withDefaults(defineProps<FooterProps>(), {
+  withDefaults(defineProps<FooterProps>(), {
     anchorId: "",
-  });
-
-  const { contacts, loading, fetchContacts } = useContacts();
-
-  onMounted(async () => {
-    await fetchContacts();
-  });
-
-  const address = computed<string>(() => contacts.value?.address || HOTEL_INFO.address);
-  const phone = computed<string>(() => contacts.value?.phone || HOTEL_INFO.phone);
-  const email = computed<string>(() => contacts.value?.email || HOTEL_INFO.email);
-  
-  const phoneHref = computed<string>(() => {
-    const phoneNumber = phone.value.replace(/\D/g, "");
-    return `tel:+${phoneNumber}`;
   });
 </script>
 
 <template>
   <LayoutContentBlock
     :has-two-columns="true"
+    :no-bottom-margin="true"
+    :layout-class="$style.layout"
     :content-class="$style.content"
+    :column-left="$style.columnLeft"
     :column-right="$style.introRight"
     :title-class="$style.title"
   >
     <template #left-column>
       <section :class="$style.footerInfo">
-        <nav :class="$style.mainLinks1" aria-label="Основная навигация">
-          <ul :class="$style.navList">
-            <li :class="$style.navItem">
-              <NuxtLink to="/" :class="$style.navLink">ГЛАВНАЯ</NuxtLink>
-            </li>
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/about.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >О ПРОЕКТЕ</a
-              >
-            </li>
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/hotel.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ОТЕЛЬ</a
-              >
-            </li>
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/service.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >СЕРВИСЫ</a
-              >
-            </li>
-          </ul>
-        </nav>
-        <nav :class="$style.mainLinks2" aria-label="Дополнительная навигация">
-          <ul :class="$style.navList">
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/gallery.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ГАЛЕРЕЯ</a
-              >
-            </li>
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/construction-progress.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >ЭТАПЫ СТРОИТЕЛЬСТВА</a
-              >
-            </li>
-            <li :class="$style.navItem">
-              <a
-                href="http://varvarkan.grandfs.ru/contacts.php"
-                :class="$style.navLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                >КОНТАКТЫ</a
-              >
-            </li>
-          </ul>
-        </nav>
-        <section :class="$style.cellForm">
-          <h2 :class="$style.text">БУДЬ В КУРСЕ ПОСЛЕДНИХ НОВОСТЕЙ</h2>
-          <form :class="$style.subscribeForm" @submit.prevent>
-            <fieldset :class="$style.emailFieldset">
-              <label :class="$style.emailLabel" for="footer-email">
-                <span class="sr-only">E-mail для подписки</span>
-                <input
-                  id="footer-email"
-                  type="email"
-                  name="email"
-                  :class="$style.emailInput"
-                  placeholder="E-MAIL"
-                  autocomplete="email"
-                >
-              </label>
-            </fieldset>
-            <div :class="$style.agreement">
-              <UCheckbox
-                size="lg"
-                :ui="{
-                  indicator: $style.checkboxIndicator,
-                  icon: $style.checkboxIcon,
-                }"
-              />
-              <p :class="$style.agreementText">
-                Даю согласие на обработку
-                <a href="#" :class="$style.agreementTextLink">
-                  персональных данных
-                </a>
-              </p>
-            </div>
-            <UButton label="ПОДПИСАТЬСЯ" :class="$style.subscribeBtn" type="submit" />
-          </form>
-        </section>
-        <address :class="$style.adress">
-          <p v-if="loading" :class="$style.loading">Загрузка...</p>
-          <p v-else>{{ address }}</p>
-          <div :class="$style.adressBox">
-            <a :href="phoneHref" aria-label="Телефон">{{ phone }}</a>
-            <a :href="`mailto:${email}`" aria-label="Email">{{ email }}</a>
-          </div>
-        </address>
-        <section :class="$style.socialMedia" aria-label="Социальные сети">
-          <div :class="$style.socialMediaItem">
-            <a
-              :class="$style.socialMediaItemLink"
-              href="https://t.me/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Telegram"
-            >
-              <div :class="$style.iconBox" aria-hidden="true">
-                <UIcon name="i-telegram" :class="$style.telegramIcon" />
-              </div>
-              <span :class="$style.socialMediaText"> Russia_Hotel </span>
-            </a>
-          </div>
-          <div :class="$style.socialMediaItem">
-            <a
-              :class="$style.socialMediaItemLink"
-              href="https://vk.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="ВКонтакте"
-            >
-              <div :class="$style.iconBox" aria-hidden="true">
-                <UIcon name="i-vk" :class="$style.vkIcon" />
-              </div>
-              <span :class="$style.socialMediaText"> Russia_Hotel </span>
-            </a>
-          </div>
-        </section>
-        <aside :class="$style.qr" aria-label="QR-код для перехода на сайт">
-          <div :class="$style.qrImg">
-            <img
-              src="/images/footer/qr.svg"
-              srcset="/images/footer/qr.svg 1x, /images/footer/qr.svg 2x"
-              alt="QR-код для перехода на сайт"
-              :class="$style.qrImgItem"
-            >
-          </div>
-          <div :class="$style.qrText">
-            QR-код
-            <br >
-            для перехода
-            <br >
-            на сайт
-          </div>
-        </aside>
-        <footer :class="$style.copyright">
-          <UButton
-            icon="i-pdf"
-            size="xl"
-            label="ПРАВИЛА ПАРКОВКИ"
-            :class="$style.copyrightBtn"
-          />
-          <a href="#" target="_blank" :class="$style.copyrightText" rel="noopener noreferrer"
-            >Политика конфиденциальности</a
-          >
-          <p :class="$style.copyrightText">© 2022 ООО «МФК», Москва</p>
-        </footer>
+        <LayoutFooterNav :class="$style.menu" />
+        <LayoutFooterSubscribe :class="$style.cellForm" />
+        <LayoutFooterContacts :class="$style.adress" />
+        <LayoutFooterSocial :class="$style.socialMedia" />
+        <LayoutFooterQR :class="$style.qr" />
+        <LayoutFooterCopyright :class="$style.copyright" />
       </section>
     </template>
     <template #right-column>
@@ -216,122 +42,64 @@
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
 
+  .layout {
+    padding: 0;
+    margin-top: rem(90);
+    background-color: var(--ui-color-primary-50);
+
+    @media (max-width: #{size.$desktopMin}) {
+      margin-top: rem(80);
+    }
+
+    @media (max-width: #{size.$tabletMin}) {
+      margin-top: rem(60);
+    }
+  }
+
   .content {
     max-width: rem(1540);
-    margin: auto;
-    flex-direction: column-reverse;
-    @media (min-width: #{size.$tabletMax}) {
-      flex-direction: row;
-    }
-  }
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 rem(15);
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: rem(30);
 
-  .checkboxIndicator {
-    width: 1.25rem;
-    height: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background-color: #fff;
-    border: 1px solid #686062;
-    border-radius: none;
-
-    &[data-state="checked"] {
-      background-color: #fff;
-      border: 1px solid #686062;
+    @media (max-width: #{size.$desktop}) {
+      padding: 0 rem(30);
     }
 
-    &[data-state="unchecked"] {
-      background-color: #fff;
-      border: 1px solid #686062;
+    @media (max-width: #{size.$tabletMax}) {
+      padding: 0 rem(15);
     }
-  }
-
-  .checkboxIcon {
-    color: #686062;
-  }
-
-  .agreement {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: rem(10);
-    width: rem(270);
-    height: rem(17);
-
-    .agreementText {
-      font-weight: 600;
-      font-size: rem(10);
-      margin-left: 0.5rem;
-      letter-spacing: rem(0.3);
-      line-height: 1.5;
-      opacity: 80%;
-
-      .agreementTextLink {
-        border-bottom: rem(1) solid #686062;
-        cursor: pointer;
-      }
-    }
-  }
-
-  .imagePic {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: clamp(100%, 3vw, 50%);
-    height: auto;
-    object-fit: contain;
-    border: rem(1) solid #c4c4c4;
 
     @media (min-width: #{size.$tabletMax}) {
-      max-width: rem(755);
-      min-width: rem(550);
-      height: auto;
+      grid-template-columns: 42% auto;
+      column-gap: 9%;
+      row-gap: 0;
+      align-items: start;
+    }
+
+    @media (min-width: #{size.$tabletMax}) and (max-width: #{size.$desktopMedium}) {
+      grid-template-columns: 40% auto;
+      column-gap: 2%;
     }
   }
 
-  .subscribeForm {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
+  .columnLeft {
+    align-items: stretch;
+    padding: rem(110) 0 rem(50);
 
-  .emailFieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .emailLabel {
-    display: block;
-    height: rem(40);
-    max-width: rem(290);
-  }
-
-  .email {
-    height: rem(40);
-    max-width: rem(290);
-  }
-
-  .emailInput {
-    height: rem(30);
-    width: 100%;
-    padding: rem(6) rem(12) rem(6) 0;
-    border-bottom: rem(1) solid #686062;
-    line-height: 1.5;
-    border: none;
-    background: transparent;
-
-    &::placeholder {
-      color: var(--secondary);
-      opacity: 75%;
+    @media (max-width: #{size.$desktop}) {
+      padding: rem(90) 0 rem(50);
     }
-    &:hover {
-      box-shadow: none;
-      outline: none;
+
+    @media (max-width: #{size.$desktopMin}) {
+      padding: rem(60) 0 rem(50);
     }
-    &:focus {
-      outline: none;
-      border-bottom-color: var(--primary);
+
+    @media (max-width: #{size.$tablet}) {
+      padding: rem(30) 0;
     }
   }
 
@@ -340,427 +108,111 @@
     height: 100%;
   }
 
-  .subscribeBtn {
-    width: rem(140);
-    height: rem(30);
-    padding-left: rem(17);
-    padding-bottom: rem(7);
-    margin-bottom: rem(10);
-    border-radius: 0%;
-    background-color: var(--primary);
-    color: var(--a-white);
-    text-align: center;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-  }
+  .imagePic {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border: rem(1) solid #c4c4c4;
 
-  .text {
-    width: rem(270);
-    font-weight: 600;
-    opacity: 75%;
-    margin-bottom: rem(10);
-    font-size: inherit;
-    margin-top: 0;
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
+    @media (min-width: #{size.$tabletMax}) {
+      width: 100%;
+    }
   }
 
   .footerInfo {
     width: 100%;
     display: grid;
-    gap: rem(25) rem(30);
     padding: rem(30) 0;
-    font-size: rem(14);
-    transition: color 0.4s ease;
-    font-weight: 600;
-    font-family: "Futura PT", sans-serif;
-    line-height: 2.1;
-    letter-spacing: rem(1);
     color: var(--secondary);
+    font: 600 14px/2.1 "Futura PT", sans-serif;
+    letter-spacing: 1px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "footer-menu footer-subscribe"
+      "footer-address footer-social"
+      "footer-copyright footer-qr";
+    column-gap: rem(50);
+    row-gap: rem(30);
+  }
 
-    // Мобильная версия (до 670px)
-    grid-template-columns: 1fr 1.09fr;
-    grid-template-rows: auto auto auto auto auto;
+  .menu {
+    grid-area: footer-menu;
+  }
 
-    // Расположение элементов для мобильной версии
-    .mainLinks1 {
-      grid-column: 1;
-      grid-row: 1;
-    }
+  .cellForm {
+    grid-area: footer-subscribe;
+  }
 
-    .mainLinks2 {
-      grid-column: 2;
-      grid-row: 1;
-    }
+  .adress {
+    grid-area: footer-address;
+  }
 
-    .cellForm {
-      grid-column: 1 / span 2;
-      grid-row: 2;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
+  .socialMedia {
+    grid-area: footer-social;
+  }
+
+  .qr {
+    grid-area: footer-qr;
+  }
+
+  .copyright {
+    grid-area: footer-copyright;
+  }
+
+  @media (max-width: #{size.$tablet}) {
+    .footerInfo {
+      grid-template-areas:
+        "footer-menu footer-subscribe footer-social"
+        "footer-menu footer-subscribe footer-qr"
+        "footer-address footer-address footer-copyright";
+      grid-template-columns: auto 38% auto;
+      column-gap: rem(50);
+      row-gap: rem(30);
     }
 
     .adress {
-      grid-column: 1 / span 2;
-      grid-row: 3;
-      font-weight: 600;
-      font-size: 13px;
-      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: 1fr;
+      align-content: start;
       align-self: end;
-      grid-template-columns: 1fr;
-      opacity: 75%;
-      line-height: 1.7;
-      letter-spacing: rem(0);
 
-      .adressBox {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .loading {
-        opacity: 50%;
-        font-style: italic;
-      }
-    }
-
-    .socialMedia {
-      grid-column: 1;
-      grid-row: 4;
-      display: flex;
-      flex-direction: column;
-      width: rem(166);
-      height: rem(92);
-
-      .socialMediaItem {
-        height: rem(34);
-        margin-bottom: rem(10);
-      }
-
-      .socialMediaItemLink {
-        display: flex;
-        flex-direction: row;
-        margin-bottom: rem(10);
-      }
-
-      .iconBox {
-        width: rem(37);
-        height: rem(37);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .telegramIcon {
-        width: rem(30);
-        height: rem(30);
-        color: rgb(104, 96, 98);
-      }
-
-      .vkIcon {
-        width: rem(37);
-        height: rem(37);
-        color: rgb(104, 96, 98);
-      }
-
-      .socialMediaText {
-        padding-left: rem(15);
-        font-size: rem(10);
-        color: #686062;
-        letter-spacing: 0;
-        line-height: 4;
-        opacity: 70%;
-      }
-    }
-
-    .qr {
-      grid-column: 2;
-      grid-row: 4;
-      display: flex;
-      flex-direction: row;
-      margin-left: rem(20);
-
-      .qrImgItem {
-        width: rem(92);
-        height: rem(92);
-      }
-
-      .qrText {
-        padding-left: rem(20);
-        align-self: flex-end;
-        line-height: 1.1rem;
-        font-size: rem(10);
-        line-height: rem(13);
-        letter-spacing: 0;
-        opacity: 70%;
+      p {
+        grid-column: 1 / 3;
       }
     }
 
     .copyright {
-      grid-column: 1 / span 2;
-      grid-row: 5;
-      display: flex;
-      flex-direction: column;
-
-      .copyrightBtn {
-        border-radius: 0;
-        width: rem(160);
-        background-color: var(--primary);
-        color: var(--a-white);
-        font-weight: 600;
-        font-size: rem(11);
-        padding: rem(5) rem(10);
-        letter-spacing: 0;
-        margin-bottom: rem(16);
-        cursor: pointer;
-      }
-
-      .copyrightText {
-        font-size: rem(10);
-        letter-spacing: 0;
-        opacity: 75%;
-      }
+      align-self: end;
     }
+  }
 
-    // Десктопная версия (от 670px)
-    @media (min-width: #{size.$tabletMin}) {
-      grid-template-columns: 1fr 1.4fr 0.8fr;
-      grid-template-rows: auto auto auto;
-      gap: 0;
-
-      // Переопределяем расположение для десктопной версии
-      .mainLinks1 {
-        grid-column: 1;
-        grid-row: 1;
-      }
-
-      .mainLinks2 {
-        grid-column: 1;
-        grid-row: 2;
-      }
-
-      .cellForm {
-        width: 250px;
-        grid-column: 2;
-        grid-row: 1 / span 2;
-
-        .text,
-        .email,
-        .emailLabel,
-        .emailInput {
-          width: 100%;
-        }
-
-        .agreement {
-          width: 90%;
-          margin-bottom: rem(25);
-        }
-      }
-
-      .adress {
-        grid-column: 1 / span 2;
-        grid-row: 3;
-        font-size: rem(14);
-
-        .adressBox {
-          display: flex;
-          flex-direction: row;
-        }
-
-        .adressBox a {
-          margin-right: rem(10);
-        }
-      }
-
-      .socialMedia {
-        grid-column: 3;
-        grid-row: 1;
-      }
-
-      .qr {
-        grid-column: 3;
-        grid-row: 2;
-        margin-left: 0;
-        margin-bottom: rem(30);
-      }
-
-      .copyright {
-        grid-column: 3;
-        grid-row: 3;
-
-        .copyrightBtn {
-          font-size: rem(11);
-        }
-      }
-    }
-
-    // Десктопная версия (от 768px)
-    @media (min-width: #{size.$tablet}) {
+  @media (max-width: #{size.$tabletMin}) {
+    .footerInfo {
+      grid-template-areas:
+        "footer-menu footer-menu"
+        "footer-subscribe footer-subscribe"
+        "footer-address footer-address"
+        "footer-social footer-qr"
+        "footer-copyright footer-copyright";
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto auto auto;
-      padding: rem(60) 0 rem(50);
-
-      .mainLinks1 {
-        grid-column: 1;
-        grid-row: 1;
-      }
-
-      .mainLinks2 {
-        padding-top: 0;
-        grid-column: 1;
-        grid-row: 2;
-      }
-
-      .cellForm {
-        width: 300px;
-        grid-column: 2;
-        grid-row: 1 / span 2;
-
-        .emailInput {
-          height: rem(45);
-        }
-
-        .agreement {
-          margin-top: rem(15);
-          margin-bottom: rem(10);
-        }
-
-        .subscribeBtn {
-          width: rem(155);
-          height: rem(36);
-          padding-left: rem(17);
-          padding-bottom: rem(6);
-          font-size: 16px;
-        }
-      }
-
-      .adress {
-        grid-column: 1;
-        grid-row: 3;
-        font-size: rem(14);
-        max-width: rem(210);
-        margin-top: rem(30);
-        margin-bottom: rem(30);
-        line-height: 1.4;
-        font-size: rem(13);
-        width: rem(170);
-
-        .adressBox {
-          display: flex;
-          flex-direction: column;
-          line-height: 1.9;
-        }
-      }
-
-      .socialMedia {
-        grid-column: 2;
-        grid-row: 3;
-      }
-
-      .qr {
-        grid-column: 2;
-        grid-row: 4;
-      }
-
-      .copyright {
-        grid-column: 1;
-        grid-row: 4;
-      }
+      column-gap: rem(30);
+      row-gap: rem(25);
     }
 
-    @media (min-width: #{size.$tabletMax}) {
-      grid-template-columns: 0.7fr 0.7fr;
-      gap: 0;
-      max-height: rem(515);
+    .cellForm {
+      max-width: none;
+      width: 100%;
+    }
 
-      .cellForm {
-        width: rem(206);
+    .adress {
+      grid-template-columns: 1fr;
 
-        .email,
-        .emailLabel {
-          width: 100%;
-        }
-
-        .copyright,
-        .qr {
-          margin-bottom: 0;
-        }
-
-        .emailInput {
-          width: 90%;
-          margin-bottom: rem(25);
-          margin-top: rem(8);
-        }
-
-        .agreement {
-          margin-bottom: rem(25);
-          margin-top: rem(20);
-        }
+      p {
+        grid-column: 1 / 2;
       }
-
-      .adress {
-        margin-top: rem(15);
-        margin-bottom: rem(15);
-      }
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      max-height: rem(760);
-      .cellForm {
-        width: rem(300);
-
-        .email,
-        .emailLabel {
-          width: 100%;
-        }
-      }
-
-      .adress,
-      .socialMedia {
-        margin-top: rem(100);
-        margin-bottom: rem(100);
-      }
-    }
-
-    @media (min-width: #{size.$desktop}) {
-    }
-
-    @media (min-width: #{size.$desktopMax}) {
-    }
-  }
-
-  .navList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .navItem {
-    margin-bottom: rem(2);
-    line-height: rem(30);
-  }
-
-  .navLink {
-    text-decoration: none;
-    opacity: 75%;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    &.router-link-active {
-      font-weight: bold;
     }
   }
 </style>

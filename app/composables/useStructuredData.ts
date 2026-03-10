@@ -1,4 +1,5 @@
 import type { Room } from "~/types/room";
+import { useHead } from "#imports";
 
 /**
  * Структура JSON-LD для номера отеля по стандарту Schema.org

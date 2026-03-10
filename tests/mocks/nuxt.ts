@@ -31,6 +31,12 @@ vi.mock("nuxt/app", () => ({
   definePageMeta: vi.fn(),
 }));
 
+// Мокируем Nuxt auto-imports (используется в composables через "#imports")
+vi.mock("#imports", () => ({
+  useHead: vi.fn(),
+  useSeoMeta: vi.fn(),
+}));
+
 // Глобальные моки для window/global
 if (typeof globalThis !== "undefined") {
   (globalThis as Record<string, unknown>).useRouter = () => ({
