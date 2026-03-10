@@ -133,19 +133,21 @@
       
       // Пропускаем варианты без кровати
       if (!bed?.title?.trim()) continue;
+      const title = bed.title.trim();
       
-      // Пропускаем дубликаты по ID или title
+      // Пропускаем дубликаты: в первую очередь по title (бывает разный id при одинаковом названии)
+      if (seenTitles.has(title)) continue;
+      seenTitles.add(title);
+
+      // Дополнительно учитываем id, если он есть
       if (bed.id !== undefined && bed.id !== null) {
         if (seenBedIds.has(bed.id)) continue;
         seenBedIds.add(bed.id);
-      } else {
-        if (seenTitles.has(bed.title.trim())) continue;
-        seenTitles.add(bed.title.trim());
       }
 
       options.push({
         id: variant.room_type_code || String(options.length),
-        title: bed.title.trim(),
+        title,
       });
     }
 

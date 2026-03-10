@@ -24,13 +24,15 @@ export function createMockBookingStore() {
     promoCode: ref(""),
     loading: ref(false),
     searchResults: searchResultsRef,
-    // Используем геттер/сеттер для поддержки прямой записи
+    // Используем геттер/сеттер как в pinia (на сторе это boolean, не ref)
     get isServerRequest() {
-      return isServerRequestRef;
+      return isServerRequestRef.value;
     },
     set isServerRequest(value: boolean) {
       isServerRequestRef.value = value;
     },
+    // Доступ к ref на случай точечных проверок в тестах
+    _isServerRequestRef: isServerRequestRef,
     setLoading: vi.fn(),
     search: vi.fn().mockResolvedValue({}),
     setSelectedRoomType: vi.fn(),

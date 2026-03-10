@@ -39,6 +39,10 @@ vi.mock("~/stores/booking", () => ({
 
 describe("useUserProfile", () => {
   beforeEach(() => {
+    // Сбрасываем моки/стор до задания пользователя
+    vi.clearAllMocks();
+    resetMockAuthStore(mockAuthStore);
+
     // Устанавливаем начальное состояние пользователя до создания Pinia
     mockAuthStore.user = {
       id: 123,
@@ -51,8 +55,6 @@ describe("useUserProfile", () => {
     };
 
     setupPinia();
-    vi.clearAllMocks();
-    resetMockAuthStore(mockAuthStore);
   });
 
   describe("saveChanges", () => {

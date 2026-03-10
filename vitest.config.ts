@@ -31,6 +31,7 @@ export default defineConfig({
       "~/components": resolve(__dirname, "./app/components"),
       "~/stores": resolve(__dirname, "./app/stores"),
       "~/composables": resolve(__dirname, "./app/composables"),
+      "#imports": resolve(__dirname, "./tests/mocks/nuxt-imports.ts"),
     },
   },
   css: {
