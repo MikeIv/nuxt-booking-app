@@ -8,6 +8,10 @@
   import CabinetPersonalData from "~/components/cabinet/CabinetPersonalData.vue";
   import CabinetBookings from "~/components/cabinet/CabinetBookings.vue";
 
+  definePageMeta({
+    middleware: "auth",
+  });
+
   const router = useRouter();
   const authStore = useAuthStore();
   const bookingStore = useBookingStore();
