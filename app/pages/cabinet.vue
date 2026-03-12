@@ -2,6 +2,7 @@
   import { useAuthStore } from "~/stores/auth";
   import { useBookingStore } from "~/stores/booking";
   import { useNotificationToast } from "~/composables/useToast";
+  import { useApi } from "~/composables/useApi";
   import { useUserProfile } from "~/composables/useUserProfile";
   import { useBookingHistory } from "~/composables/useBookingHistory";
   import CabinetNavigation from "~/components/cabinet/CabinetNavigation.vue";
