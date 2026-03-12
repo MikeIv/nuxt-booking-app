@@ -16,6 +16,7 @@ import type {
   BookingData,
   BookingResponse,
   BookingHistoryItem,
+  BookingByUuidPayload,
 } from "~/types/booking";
 
 export interface UserProfileData {
@@ -791,6 +792,7 @@ export const useBookingStore = defineStore(
 
       setLoading(true, "Создаём бронирование...");
 
+      let skipLoadingReset = false;
       try {
         const processedData: BookingData = {
           for_self: bookingData.for_self,
@@ -845,6 +847,9 @@ export const useBookingStore = defineStore(
 
         if (response.success && response.payload) {
           createdBooking.value = response.payload;
+          if (response.payload.redirect_url) {
+            skipLoadingReset = true;
+          }
           return response.payload;
         } else {
           throw new Error(response.message || "Ошибка при создании брони");
@@ -854,8 +859,10 @@ export const useBookingStore = defineStore(
           (err as Error).message || "Произошла ошибка при бронировании";
         throw err;
       } finally {
-        isServerRequest.value = false;
-        setLoading(false);
+        if (!skipLoadingReset) {
+          isServerRequest.value = false;
+          setLoading(false);
+        }
       }
     }
 
@@ -886,6 +893,65 @@ export const useBookingStore = defineStore(
       } catch (err: unknown) {
         error.value =
           (err as Error).message || "Произошла ошибка при загрузке данных";
+        throw err;
+      } finally {
+        isServerRequest.value = false;
+        setLoading(false);
+      }
+    }
+
+    /**
+     * Загрузка бронирования по uuid (страница подтверждения после редиректа с оплаты).
+     * GET /v1/booking/{uuid}
+     */
+    async function getBookingByUuid(uuid: string): Promise<BookingResponse> {
+      const { get } = useApi();
+
+      setLoading(true, "Загружаем данные бронирования...");
+
+      try {
+        isServerRequest.value = true;
+        const response = await get<BookingByUuidPayload>(
+          `/v1/booking/${uuid}`,
+          {},
+          { signal: AbortSignal.timeout(15000) },
+        );
+
+        if (response.success && response.payload) {
+          const raw = response.payload;
+          let rooms: BookingByUuidPayload["rooms"] = raw.rooms;
+          if (typeof rooms === "string") {
+            try {
+              rooms = JSON.parse(rooms) as BookingByUuidPayload["rooms"];
+            } catch {
+              rooms = [];
+            }
+          }
+          if (!Array.isArray(rooms)) {
+            rooms = [];
+          }
+
+          const normalized: BookingResponse = {
+            id: raw.id,
+            uuid: raw.uuid,
+            confirmation_number: raw.confirmation_number,
+            hotel: raw.hotel,
+            order: {
+              ...raw.order,
+              nights: Number(raw.order.nights) || 0,
+            } as BookingResponse["order"],
+            rooms,
+            total_price: raw.total_price,
+          };
+          createdBooking.value = normalized;
+          return normalized;
+        }
+
+        throw new Error(response.message || "Ошибка при загрузке бронирования");
+      } catch (err: unknown) {
+        error.value =
+          (err as Error).message ||
+          "Произошла ошибка при загрузке бронирования";
         throw err;
       } finally {
         isServerRequest.value = false;
@@ -998,6 +1064,7 @@ export const useBookingStore = defineStore(
       search,
       createBooking,
       getBookingDetails,
+      getBookingByUuid,
       formatDate,
       userProfiles,
       saveUserProfile,
