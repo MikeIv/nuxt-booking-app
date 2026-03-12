@@ -11,8 +11,10 @@
   });
 
   const router = useRouter();
+  const route = useRoute();
   const bookingStore = useBookingStore();
   const authStore = useAuthStore();
+  const toast = useNotificationToast();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -56,7 +58,11 @@
   });
 
   const bookingNumber = computed(() => {
-    return createdBooking.value?.id?.toString() || null;
+    const booking = createdBooking.value;
+    if (!booking) return null;
+    if (booking.confirmation_number) return booking.confirmation_number;
+    if (booking.id !== undefined && booking.id !== null) return String(booking.id);
+    return null;
   });
 
   const guestEmail = computed(() => {
@@ -222,10 +228,24 @@
     { immediate: true },
   );
 
-  onMounted(() => {
+  onMounted(async () => {
     if (loading.value && isServerRequest.value) {
       bookingStore.setLoading(false);
       bookingStore.isServerRequest = false;
+    }
+
+    const uuid = route.query.uuid;
+    if (uuid && typeof uuid === "string") {
+      try {
+        await bookingStore.getBookingByUuid(uuid);
+      } catch {
+        toast.add({
+          severity: "error",
+          summary: "Не удалось загрузить данные бронирования",
+          detail: bookingStore.error ?? "Проверьте ссылку или попробуйте позже.",
+          life: 5000,
+        });
+      }
     }
 
     // Если бронирование успешно создано и пользователь неавторизован,

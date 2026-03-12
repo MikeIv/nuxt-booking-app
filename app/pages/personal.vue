@@ -15,7 +15,7 @@ import BookingSingleRoomGuestForm from "~/components/booking/SingleRoomGuestForm
 import BookingAdditionalFieldsSection from "~/components/booking/AdditionalFieldsSection.vue";
 import BookingPaymentSection from "~/components/booking/PaymentSection.vue";
 
-import type { SelectedEntry } from "~/types/booking";
+import type { SelectedEntry, BookingData } from "~/types/booking";
 
 definePageMeta({
   layout: "steps",
@@ -60,6 +60,42 @@ const errors = reactive<FormErrors>({
 const validateForm = (): boolean => {
   return validatePersonalForm(formData, errors, isMultiRoomsMode.value);
 };
+
+/** Отправка бронирования: оверлей уже показан; при успехе — редирект на оплату или /confirmation */
+async function submitBookingAndRedirect(bookingData: BookingData) {
+  try {
+    bookingStore.setLoading(true, "Создаём бронирование...");
+    const payload = await bookingStore.createBooking(bookingData);
+    if (payload?.redirect_url) {
+      bookingStore.setLoading(true, "Перенаправление на страницу оплаты...");
+      bookingStore.isServerRequest = true;
+      window.location.href = payload.redirect_url;
+      return;
+    }
+    toast.add({
+      severity: "success",
+      summary: "Бронирование успешно создано!",
+      life: 3000,
+    });
+    await router.push("/confirmation");
+  } catch (error) {
+    console.error("Ошибка при создании бронирования:", error);
+    toast.add({
+      severity: "error",
+      summary: "Ошибка при создании бронирования.",
+      detail: bookingStore.error || "Произошла ошибка.",
+      life: 5000,
+    });
+  } finally {
+    bookingStore.setLoading(false);
+    bookingStore.isServerRequest = false;
+  }
+}
+
+function hideBookingOverlay() {
+  bookingStore.setLoading(false);
+  bookingStore.isServerRequest = false;
+}
 
 // Проверяем, есть ли выбранные номера из multi-rooms
 const isMultiRoomsMode = computed(
@@ -194,7 +230,12 @@ const updateRoomFormData = (payload: { roomIdx: number; key: string; value: bool
 };
 
 const onFormSubmit = async () => {
+  bookingStore.setLoading(true, "Проверяем данные...");
+  bookingStore.isServerRequest = true;
+  await nextTick();
+
   if (!validateForm()) {
+    hideBookingOverlay();
     toast.add({
       severity: "error",
       summary: "Пожалуйста, исправьте ошибки в форме.",
@@ -205,6 +246,7 @@ const onFormSubmit = async () => {
 
   if (isMultiRoomsMode.value) {
     if (!date.value || Object.keys(selectedMultiRooms.value).length === 0) {
+      hideBookingOverlay();
       toast.add({
         severity: "error",
         summary: "Недостаточно данных для бронирования.",
@@ -233,6 +275,7 @@ const onFormSubmit = async () => {
     );
 
     if (!bookingData) {
+      hideBookingOverlay();
       toast.add({
         severity: "error",
         summary: "Ошибка при подготовке данных бронирования.",
@@ -241,30 +284,10 @@ const onFormSubmit = async () => {
       return;
     }
 
-    try {
-      bookingStore.setLoading(true, "Создаём бронирование...");
-      await bookingStore.createBooking(bookingData);
-      toast.add({
-        severity: "success",
-        summary: "Бронирование успешно создано!",
-        life: 3000,
-      });
-      await router.push("/confirmation");
-    } catch (error) {
-      console.error("Ошибка при создании бронирования:", error);
-      toast.add({
-        severity: "error",
-        summary: "Ошибка при создании бронирования.",
-        detail: bookingStore.error || "Произошла ошибка.",
-        life: 5000,
-      });
-    } finally {
-      bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
-    }
+    await submitBookingAndRedirect(bookingData);
   } else {
-    // Режим одного номера
     if (!date.value || !selectedRoomType.value || !selectedTariff.value) {
+      hideBookingOverlay();
       toast.add({
         severity: "error",
         summary: "Недостаточно данных для бронирования.",
@@ -297,6 +320,7 @@ const onFormSubmit = async () => {
     );
 
     if (!bookingData) {
+      hideBookingOverlay();
       toast.add({
         severity: "error",
         summary: "Ошибка при подготовке данных бронирования.",
@@ -305,27 +329,7 @@ const onFormSubmit = async () => {
       return;
     }
 
-    try {
-      bookingStore.setLoading(true, "Создаём бронирование...");
-      await bookingStore.createBooking(bookingData);
-      toast.add({
-        severity: "success",
-        summary: "Бронирование успешно создано!",
-        life: 3000,
-      });
-      await router.push("/confirmation");
-    } catch (error) {
-      console.error("Ошибка при создании бронирования:", error);
-      toast.add({
-        severity: "error",
-        summary: "Ошибка при создании бронирования.",
-        detail: bookingStore.error || "Произошла ошибка.",
-        life: 5000,
-      });
-    } finally {
-      bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
-    }
+    await submitBookingAndRedirect(bookingData);
   }
 };
 
@@ -577,11 +581,13 @@ onMounted(async () => {
               }"
               @update:form-data="updateAdditionalField"
             />
+            <!-- Способ оплаты скрыт (оплата по redirect_url), соглашение и текст безопасности отображаются -->
             <BookingPaymentSection
               :payment-methods="paymentMethods"
               :payment-method="formData.paymentMethod"
               :agreement="formData.agreement"
               :agreement-error="errors.agreement"
+              :hide-payment-method="true"
               @update:payment-method="formData.paymentMethod = $event"
               @update:agreement="formData.agreement = $event"
             />

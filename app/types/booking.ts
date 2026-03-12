@@ -70,12 +70,68 @@ interface OrderInfo {
   pdf?: string;
 }
 
-interface BookingResponse {
-  id: number;
+/** Payload ответа GET /v1/booking/{uuid} (после редиректа с оплаты) */
+export interface BookingByUuidOrder {
+  name: string;
+  surname: string;
+  nationality: string;
+  comment: string;
+  payment_cancelled: string;
+  start_at: string;
+  end_at: string;
+  nights: string;
+  pdf: string;
+}
+
+export interface BookingByUuidPayment {
+  init_url: string;
+  guarantee_type: string;
+  amount: number;
+}
+
+/** Элемент rooms в ответе GET /v1/booking/{uuid} (совместим с отображением на confirmation) */
+export interface BookingByUuidRoom {
+  id?: number;
+  title: string;
+  tariff: { title: string; price: string | number };
+  guests?: Array<{
+    surname: string;
+    name: string;
+    middle_name?: string | null;
+    phone?: string;
+    email?: string;
+    is_main?: boolean;
+  }>;
+  adults?: number;
+  children?: number;
+  total_guests?: number;
+  services?: unknown[];
+  total: number;
+}
+
+export interface BookingByUuidPayload {
+  id: string;
   uuid: string;
-  hotel: HotelInfo;
-  order: OrderInfo;
-  rooms: unknown[];
+  confirmation_number: string;
+  status: string;
+  order: BookingByUuidOrder;
+  /** Может прийти массивом или JSON-строкой */
+  rooms: BookingByUuidRoom[] | string;
+  total_price: number;
+  payment: BookingByUuidPayment;
+  hotel?: HotelInfo;
+}
+
+interface BookingResponse {
+  id?: number | string;
+  uuid?: string;
+  confirmation_number?: string;
+  hotel?: HotelInfo;
+  order?: OrderInfo & Partial<BookingByUuidOrder>;
+  rooms?: unknown[];
+  total_price?: number;
+  /** URL для перенаправления на страницу оплаты */
+  redirect_url?: string;
 }
 
 // История бронирований

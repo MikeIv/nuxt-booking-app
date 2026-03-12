@@ -9,6 +9,8 @@ interface Props {
   paymentMethod: string;
   agreement: boolean;
   agreementError: string;
+  /** Скрыть выбор способа оплаты (оплата на отдельной странице), оставить соглашение и текст безопасности */
+  hidePaymentMethod?: boolean;
 }
 
 interface Emits {
@@ -32,16 +34,18 @@ const agreementValue = computed({
 
 <template>
   <div :class="$style.formItem">
-    <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
     <div :class="$style.paymentBlock">
-      <div :class="$style.inputItem">
-        <BookingSelect
-          v-model="paymentMethodValue"
-          :options="paymentMethods"
-          placeholder="Банковской картой"
-          :class="$style.inputSelect"
-        />
-      </div>
+      <template v-if="!hidePaymentMethod">
+        <h3 :class="$style.sectionHeader">Выберите способ оплаты</h3>
+        <div :class="$style.inputItem">
+          <BookingSelect
+            v-model="paymentMethodValue"
+            :options="paymentMethods"
+            placeholder="Банковской картой"
+            :class="$style.inputSelect"
+          />
+        </div>
+      </template>
       <div :class="$style.agreementBlock">
         <div :class="$style.checkItem">
           <Checkbox

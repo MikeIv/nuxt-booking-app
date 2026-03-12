@@ -371,12 +371,12 @@
     column-gap: rem(16);
     row-gap: 0;
 
-    @media (min-width: #{size.$desktopMin}) {
+    @media (min-width: #{size.$headerDesktopMin}) {
       min-height: 93px;
       column-gap: rem(40);
     }
 
-    @media (max-width: #{size.$desktopMin - 1px}) {
+    @media (max-width: #{size.$headerDesktopMin - 1px}) {
       grid-template-columns: auto 1fr auto;
       grid-template-rows: rem(70) auto;
       min-height: rem(150);
@@ -418,7 +418,7 @@
     cursor: pointer;
     padding: 0;
 
-    @media (max-width: #{size.$desktopMin - 1px}) {
+    @media (max-width: #{size.$headerDesktopMin - 1px}) {
       top: rem(51);
       transform: translate(-50%, -50%);
     }
@@ -430,14 +430,14 @@
     align-items: center;
     justify-content: center;
 
-    @media (max-width: #{size.$desktopMin - 1px}) {
+    @media (max-width: #{size.$headerDesktopMin - 1px}) {
       grid-row: 2;
       grid-column: 1 / -1;
       width: 100%;
       justify-self: center;
     }
 
-    @media (min-width: #{size.$desktopMin}) {
+    @media (min-width: #{size.$headerDesktopMin}) {
       grid-row: 1;
       grid-column: 3;
       justify-self: end;
@@ -452,12 +452,12 @@
     grid-row: 1;
     justify-self: end;
 
-    @media (max-width: #{size.$desktopMin - 1px}) {
+    @media (max-width: #{size.$headerDesktopMin - 1px}) {
       grid-column: 3;
       gap: rem(15);
     }
 
-    @media (min-width: #{size.$desktopMin}) {
+    @media (min-width: #{size.$headerDesktopMin}) {
       grid-column: 4;
       gap: rem(40);
     }
@@ -583,7 +583,7 @@
       color: var(--a-base);
     }
 
-    @media (max-width: #{size.$desktopMin - 1px}) {
+    @media (max-width: #{size.$headerDesktopMin - 1px}) {
       font-size: rem(16);
     }
   }
