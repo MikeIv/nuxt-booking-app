@@ -262,7 +262,12 @@
   const handleDownload = async () => {
     const url = pdfUrl.value;
     if (!url) {
-      console.warn("PDF ссылка недоступна");
+      toast.add({
+        severity: "warn",
+        summary: "PDF недоступен",
+        detail: "Ссылка на подтверждение бронирования отсутствует.",
+        life: 4000,
+      });
       return;
     }
 
@@ -293,8 +298,41 @@
   };
 
   const handlePrint = () => {
-    // Логика печати
-    window.print();
+    const url = pdfUrl.value;
+    if (!url) {
+      toast.add({
+        severity: "warn",
+        summary: "PDF недоступен",
+        detail: "Ссылка на подтверждение бронирования отсутствует.",
+        life: 4000,
+      });
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const printWindow = window.open(url, "_blank");
+
+      if (!printWindow) {
+        toast.add({
+          severity: "warn",
+          summary: "Окно печати",
+          detail: "Не удалось открыть окно печати. Проверьте настройки браузера.",
+          life: 4000,
+        });
+        return;
+      }
+
+      if (typeof printWindow.print === "function") {
+        printWindow.print();
+      }
+    } catch (error) {
+      console.error("Ошибка при печати PDF:", error);
+      window.open(url, "_blank");
+    }
   };
 
   const handleChangeDates = () => {
