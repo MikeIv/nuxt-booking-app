@@ -65,6 +65,11 @@ deploy develop:
       curl -s -X POST -H "Content-Type: application/json" \
         -d "{\"chat_id\":${TELEGRAM_GROUP},\"parse_mode\":\"HTML\",\"disable_web_page_preview\":true,\"text\":\"Загружено <a href='${CI_ENVIRONMENT_URL}'><b>${CI_PROJECT_NAME} / ${CI_ENVIRONMENT_NAME}</b></a>\nВетка: ${CI_COMMIT_BRANCH}\nАвтор: ${CI_ESCAPED_AUTHOR}\nКоммит: <a href='${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}'>${CI_COMMIT_TITLE}</a>\"}" \
         https://api.telegram.org/bot${TELEGRAM_BOT}/sendMessage > /dev/null || true
+    - |
+      # MM notification publish
+      curl -s -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: Bearer ${MM_BOT}" \
+        -d "{\"channel_id\":\"${MM_GROUP}\",\"message\":\"Загружено [**${CI_PROJECT_NAME} / ${CI_ENVIRONMENT_NAME}**](${CI_ENVIRONMENT_URL})\nВетка: ${CI_COMMIT_BRANCH}\nАвтор: ${CI_COMMIT_AUTHOR}\nПравка: [${CI_COMMIT_TITLE}](${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA})\"}" \
+        https://mm.grandfs-develop.ru/api/v4/posts > /dev/null
   only:
     refs:
       - develop
