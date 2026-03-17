@@ -13,12 +13,16 @@
     nights: number;
   }
 
-  defineProps<Props>();
+  const props = defineProps<Props>();
   const emit = defineEmits<{
     (e: "open-popup", event: MouseEvent): void;
     (e: "toggle-expand" | "compare" | "upgrade"): void;
     (e: "bed-type-change", bedId: string): void;
   }>();
+
+  const additionalTotal = computed(
+    () => Math.max(0, Number(props.additionalPerNight) || 0) * (Number(props.nights) || 0),
+  );
 </script>
 
 <template>
@@ -62,7 +66,7 @@
       <div :class="$style.actions">
         <div :class="$style.priceBlock">
           <span :class="$style.priceValue">
-            +{{ formatPrice(additionalPerNight) }} ₽
+            +{{ formatPrice(additionalTotal) }} ₽
           </span>
           <span :class="$style.pricePeriod">
             {{ formatCount(nights, 'night') }}
