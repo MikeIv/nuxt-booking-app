@@ -3,6 +3,7 @@
   import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import { useNights } from "~/composables/useNights";
+  import Popup from "~/components/ui/Popup.vue";
   import QRCode from "qrcode";
   import type { SelectedEntry } from "~/types/booking";
 
@@ -15,6 +16,7 @@
   const bookingStore = useBookingStore();
   const authStore = useAuthStore();
   const toast = useNotificationToast();
+  const { getErrorMessage } = useApiHelpers();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -351,9 +353,77 @@
     router.push("/personal");
   };
 
-  const handleCancelBooking = () => {
-    // Логика отмены бронирования
-    console.log("Отменить бронирование");
+  const isCancelBookingPopupOpen = ref(false);
+  const isCancellingBooking = ref(false);
+  const cancelBookingError = ref<string | null>(null);
+
+  const currentBookingUuid = computed<string | null>(() => {
+    const fromStore = createdBooking.value?.uuid;
+    if (fromStore && String(fromStore).trim() !== "") return String(fromStore);
+    const fromQuery = route.query.uuid;
+    if (typeof fromQuery === "string" && fromQuery.trim() !== "") return fromQuery;
+    return null;
+  });
+
+  function openCancelBookingPopup() {
+    cancelBookingError.value = null;
+    isCancelBookingPopupOpen.value = true;
+  }
+
+  function closeCancelBookingPopup() {
+    cancelBookingError.value = null;
+    isCancelBookingPopupOpen.value = false;
+  }
+
+  const confirmCancelBooking = async () => {
+    const uuid = currentBookingUuid.value;
+
+    if (!uuid) {
+      toast.add({
+        severity: "error",
+        summary: "Не удалось отменить бронирование",
+        detail: "UUID бронирования не найден. Обновите страницу или проверьте ссылку.",
+        life: 5000,
+      });
+      closeCancelBookingPopup();
+      return;
+    }
+
+    if (isCancellingBooking.value) return;
+
+    isCancellingBooking.value = true;
+    try {
+      const { post } = useApi();
+
+      const response = await post<unknown>(`/v1/booking/${uuid}/cancel`, { uuid }, {
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (response.success) {
+        cancelBookingError.value = null;
+        closeCancelBookingPopup();
+        bookingStore.forceReset();
+
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("hasUnauthenticatedBooking");
+        }
+
+        await router.push("/");
+        return;
+      }
+
+      cancelBookingError.value = response.message ?? "Не удалось отменить бронирование.";
+    } catch (error: unknown) {
+      cancelBookingError.value = getErrorMessage(error);
+      toast.add({
+        severity: "error",
+        summary: "Не удалось отменить бронирование",
+        detail: getErrorMessage(error),
+        life: 5000,
+      });
+    } finally {
+      isCancellingBooking.value = false;
+    }
   };
 
   const handleNewBooking = () => {
@@ -363,107 +433,109 @@
 </script>
 
 <template>
-  <div :class="$style.container">
+  <main :class="$style.container">
     <h1 :class="$style.header" data-breadcrumb="Ваше бронирование">Ваше бронирование подтверждено!</h1>
     <section :class="$style.contentBlock">
       <div :class="$style.contentWrapper">
         <div :class="$style.mainContent">
           <div :class="$style.section">
-            <h2 :class="$style.sectionTitle">Номер Вашего бронирования:</h2>
-            <div :class="$style.bookingInfo">
-              <div :class="$style.bookingLeft">
-                <div v-if="isBookingCreated && bookingNumber" :class="$style.bookingNumber">
-                  № {{ bookingNumber }}
+              <h2 :class="$style.sectionTitle">Номер Вашего бронирования:</h2>
+              <div :class="$style.bookingInfo">
+                <div :class="$style.bookingLeft">
+                  <div v-if="isBookingCreated && bookingNumber" :class="$style.bookingNumber">
+                    № {{ bookingNumber }}
+                  </div>
+                  <div v-else :class="$style.bookingMessage">
+                    Обновите бронирование
+                  </div>
+                  <div v-if="isBookingCreated" :class="$style.actionButtons">
+                    <Button
+                      v-if="pdfUrl"
+                      label="Скачать подтверждение"
+                      class="btn__bs danger"
+                      unstyled
+                      @click="handleDownload"
+                    />
+                    <Button
+                      label="Распечатать"
+                      class="btn__bs dark"
+                      unstyled
+                      @click="handlePrint"
+                    />
+                  </div>
                 </div>
-                <div v-else :class="$style.bookingMessage">
-                  Обновите бронирование
+                <div v-if="isBookingCreated && pdfUrl" :class="$style.qrCode">
+                  <canvas ref="qrCanvas" :class="$style.qrCanvas" />
                 </div>
-                <div v-if="isBookingCreated" :class="$style.actionButtons">
+              </div>
+            </div>
+
+            <div :class="$style.divider" />
+
+            <div :class="$style.section">
+              <p :class="$style.confirmationText">
+                Подтверждение о бронировании отправлено на указанную Вами
+                электронную почту {{ guestEmail }}
+              </p>
+            </div>
+
+            <div :class="$style.divider" />
+
+            <div :class="$style.section">
+              <h3 :class="$style.sectionTitle">Управление бронированием</h3>
+              <p :class="$style.managementText">
+                Если это не противоречит условиям Вашего тарифа, Вы можете:
+              </p>
+              <div :class="$style.managementButtons">
+                <Button
+                  label="Изменить даты"
+                  class="btn__bs dark"
+                  unstyled
+                  @click="handleChangeDates"
+                />
+                <Button
+                  label="Изменить номер"
+                  class="btn__bs dark"
+                  unstyled
+                  @click="handleChangeRoom"
+                />
+                <Button
+                  label="Изменить услуги"
+                  class="btn__bs dark"
+                  unstyled
+                  @click="handleChangeServices"
+                />
+                <Button
+                  label="Изменить контакты"
+                  class="btn__bs dark"
+                  unstyled
+                  @click="handleChangeContacts"
+                />
+              </div>
+            </div>
+
+            <div :class="$style.divider" />
+
+            <div :class="$style.section">
+              <div :class="$style.finalButtons">
+                <div :class="$style.cancelButtonWrapper">
                   <Button
-                    v-if="pdfUrl"
-                    label="Скачать подтверждение"
+                    label="Отменить бронирование"
                     class="btn__bs danger"
                     unstyled
-                    @click="handleDownload"
-                  />
-                  <Button
-                    label="Распечатать"
-                    class="btn__bs dark"
-                    unstyled
-                    @click="handlePrint"
+                    :disabled="isCancellingBooking"
+                    @click="openCancelBookingPopup"
                   />
                 </div>
+                <Button
+                  label="Новое бронирование"
+                  class="btn__bs danger"
+                  unstyled
+                  @click="handleNewBooking"
+                />
               </div>
-              <div v-if="isBookingCreated && pdfUrl" :class="$style.qrCode">
-                <canvas ref="qrCanvas" :class="$style.qrCanvas" />
-              </div>
             </div>
-          </div>
-
-          <div :class="$style.divider" />
-
-          <div :class="$style.section">
-            <p :class="$style.confirmationText">
-              Подтверждение о бронировании отправлено на указанную Вами
-              электронную почту {{ guestEmail }}
-            </p>
-          </div>
-
-          <div :class="$style.divider" />
-
-          <div :class="$style.section">
-            <h3 :class="$style.sectionTitle">Управление бронированием</h3>
-            <p :class="$style.managementText">
-              Если это не противоречит условиям Вашего тарифа, Вы можете:
-            </p>
-            <div :class="$style.managementButtons">
-              <Button
-                label="Изменить даты"
-                class="btn__bs dark"
-                unstyled
-                @click="handleChangeDates"
-              />
-              <Button
-                label="Изменить номер"
-                class="btn__bs dark"
-                unstyled
-                @click="handleChangeRoom"
-              />
-              <Button
-                label="Изменить услуги"
-                class="btn__bs dark"
-                unstyled
-                @click="handleChangeServices"
-              />
-              <Button
-                label="Изменить контакты"
-                class="btn__bs dark"
-                unstyled
-                @click="handleChangeContacts"
-              />
-            </div>
-          </div>
-
-          <div :class="$style.divider" />
-
-          <div :class="$style.section">
-            <div :class="$style.finalButtons">
-              <Button
-                label="Отменить бронирование"
-                class="btn__bs danger"
-                unstyled
-                @click="handleCancelBooking"
-              />
-              <Button
-                label="Новое бронирование"
-                class="btn__bs danger"
-                unstyled
-                @click="handleNewBooking"
-              />
-            </div>
-          </div>
         </div>
-
         <div :class="$style.summaryWrapper">
           <BookingSummary
             :selected-entries="selectedByRoomIdx"
@@ -474,7 +546,44 @@
         </div>
       </div>
     </section>
-  </div>
+
+    <Popup
+      :is-open="isCancelBookingPopupOpen"
+      max-width="560px"
+      :show-close-button="false"
+      :close-on-click-outside="false"
+      @close="closeCancelBookingPopup"
+    >
+      <template #content>
+        <div :class="$style.cancelPopupContent">
+          <p :class="$style.cancelPopupText">
+            Все данные Вашего бронирования будут удалены
+          </p>
+          <div :class="$style.cancelPopupActions">
+            <Button
+              label="Отменить бронирование"
+              class="btn__bs danger"
+              unstyled
+              :class="$style.whiteBtnText"
+              :disabled="isCancellingBooking"
+              @click="confirmCancelBooking"
+            />
+            <Button
+              label="Вернуться"
+              class="btn__bs dark"
+              unstyled
+              :class="$style.whiteBtnText"
+              :disabled="isCancellingBooking"
+              @click="closeCancelBookingPopup"
+            />
+          </div>
+          <p v-if="cancelBookingError" :class="$style.cancelPopupError">
+            {{ cancelBookingError }}
+          </p>
+        </div>
+      </template>
+    </Popup>
+  </main>
 </template>
 
 <style module lang="scss">
@@ -751,6 +860,63 @@
       justify-content: space-between;
       gap: rem(16);
     }
+  }
+
+  .cancelButtonWrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cancelPopupContent {
+    display: flex;
+    flex-direction: column;
+    gap: rem(20);
+    padding: 0 rem(24);
+  }
+
+  .cancelPopupText {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(18);
+    line-height: 1.5;
+    color: var(--a-btnAccentBg);
+    text-align: center;
+  }
+
+  .cancelPopupActions {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+
+    @media (min-width: #{size.$tablet}) {
+      flex-direction: row;
+      justify-content: space-between;
+      gap: rem(16);
+    }
+
+    :global(.btn__bs) {
+      padding-left: rem(20);
+      padding-right: rem(20);
+      width: 100%;
+
+      @media (min-width: #{size.$tablet}) {
+        width: auto;
+      }
+    }
+  }
+
+  .whiteBtnText {
+    color: var(--a-text-white);
+  }
+
+  .cancelPopupError {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(14);
+    line-height: 1.4;
+    color: var(--a-btnAccentBg);
+    text-align: center;
+    word-break: break-word;
   }
 
   .divider {
