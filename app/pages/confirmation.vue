@@ -17,6 +17,7 @@
   const authStore = useAuthStore();
   const toast = useNotificationToast();
   const { getErrorMessage } = useApiHelpers();
+  const { put } = useApi();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -338,7 +339,8 @@
   };
 
   const handleChangeDates = () => {
-    router.push("/");
+    // Открываем попап смены дат (не уводим пользователя со страницы)
+    openChangeDatesPopup();
   };
 
   const handleChangeRoom = () => {
@@ -429,6 +431,209 @@
   const handleNewBooking = () => {
     bookingStore.forceReset();
     router.push("/");
+  };
+
+  // --- Изменение дат бронирования ---
+  type ChangeBookingDatesResponse = {
+    success: boolean;
+    message?: string;
+    payload?: unknown;
+  };
+
+  const isChangeDatesPopupOpen = ref(false);
+  const isChangingDates = ref(false);
+  const changeDatesError = ref<string | null>(null);
+  const changeDatesSuccess = ref<string | null>(null);
+  const newDates = ref<[Date, Date] | null>(null);
+  const isChangeDatesCalendarOpen = ref(false);
+
+  const selectedPackages = computed<string[]>(() => {
+    const list = bookingStore.getSelectedServicesForRoom(0) ?? [];
+    return list
+      .map((s) => s.packageCode)
+      .filter((code): code is string => typeof code === "string" && code.trim() !== "");
+  });
+
+  function pickString(value: unknown): string | null {
+    return typeof value === "string" && value.trim() !== "" ? value : null;
+  }
+
+  const bookingRoomCodes = computed<{ roomTypeCode: string | null; ratePlanCode: string | null }>(() => {
+    const rooms = createdBooking.value?.rooms;
+    if (!Array.isArray(rooms) || rooms.length === 0) {
+      return { roomTypeCode: null, ratePlanCode: null };
+    }
+
+    const first = rooms[0] as Record<string, unknown> | null | undefined;
+    if (!first || typeof first !== "object") {
+      return { roomTypeCode: null, ratePlanCode: null };
+    }
+
+    // Поддерживаем разные варианты нейминга, если бэкенд их возвращает
+    const roomTypeCode =
+      pickString(first.room_type_code) ??
+      pickString(first.roomTypeCode) ??
+      pickString(first.roomType) ??
+      null;
+
+    const ratePlanCode =
+      pickString(first.rate_plan_code) ??
+      pickString(first.ratePlanCode) ??
+      pickString(first.rate_type_code) ??
+      pickString(first.rateTypeCode) ??
+      null;
+
+    return { roomTypeCode, ratePlanCode };
+  });
+
+  const effectiveRoomTypeCode = computed<string | null>(() => {
+    return pickString(selectedRoomType.value) ?? bookingRoomCodes.value.roomTypeCode;
+  });
+
+  const effectiveRatePlanCode = computed<string | null>(() => {
+    return (
+      pickString(selectedTariff.value?.rate_plan_code) ??
+      bookingRoomCodes.value.ratePlanCode
+    );
+  });
+
+  function openChangeDatesPopup() {
+    changeDatesError.value = null;
+    changeDatesSuccess.value = null;
+    // Проставляем текущие даты брони как дефолт
+    newDates.value = bookingDate.value ? ([...bookingDate.value] as [Date, Date]) : null;
+    isChangeDatesPopupOpen.value = true;
+  }
+
+  function closeChangeDatesPopup() {
+    changeDatesError.value = null;
+    changeDatesSuccess.value = null;
+    isChangeDatesPopupOpen.value = false;
+  }
+
+  const canSubmitDateChange = computed(() => {
+    if (isChangingDates.value) return false;
+    if (!newDates.value || newDates.value.length !== 2) return false;
+    const [start, end] = newDates.value;
+    if (!(start instanceof Date) || !(end instanceof Date)) return false;
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+    // Минимально: диапазон должен быть корректным
+    if (end <= start) return false;
+    return true;
+  });
+
+  const confirmChangeDates = async () => {
+    const uuid = currentBookingUuid.value;
+    const roomTypeCode = effectiveRoomTypeCode.value;
+    const ratePlanCode = effectiveRatePlanCode.value;
+
+    if (!uuid) {
+      changeDatesError.value =
+        "UUID бронирования не найден. Обновите страницу или проверьте ссылку.";
+      return;
+    }
+
+    if (!roomTypeCode || !ratePlanCode) {
+      changeDatesError.value =
+        "Не удалось определить выбранный номер/тариф для перепроверки доступности. Откройте бронь из личного кабинета или повторите бронирование.";
+      return;
+    }
+
+    if (!canSubmitDateChange.value || !newDates.value) return;
+
+    const prevDate = date.value ? ([...date.value] as [Date, Date]) : null;
+    const prevSelectedTariff = selectedTariffStore.value;
+
+    isChangingDates.value = true;
+    changeDatesError.value = null;
+    changeDatesSuccess.value = null;
+
+    try {
+      // 1) Временно переключаем даты в store, чтобы переиспользовать существующую логику /v1/search
+      date.value = ([...newDates.value] as [Date, Date]);
+
+      const searchResults = await bookingStore.search({
+        roomTypeCode,
+        skipReset: true,
+      });
+
+      if (!searchResults.available) {
+        changeDatesError.value = "На выбранные даты номер нельзя забронировать.";
+        // rollback
+        date.value = prevDate;
+        return;
+      }
+
+      // Проверяем, что нужный тариф присутствует на новых датах
+      const room = searchResults.rooms.find((r) => r.room_type_code === roomTypeCode);
+      const matchingTariff = room?.tariffs?.find((t) => t.rate_plan_code === ratePlanCode) ?? null;
+      if (!room || !matchingTariff) {
+        changeDatesError.value = "На выбранные даты выбранный тариф недоступен.";
+        date.value = prevDate;
+        return;
+      }
+
+      // 2) Перепроверяем доступность выбранных пакетов/услуг для нового диапазона
+      selectedTariffStore.value = matchingTariff;
+      let packagesOk = true;
+      const chosenPackages = selectedPackages.value;
+      if (chosenPackages.length) {
+        const packages = await bookingStore.searchPackages(0);
+        const availablePackageCodes = new Set((packages ?? []).map((p) => p.package_code));
+        packagesOk = chosenPackages.every((code) => availablePackageCodes.has(code));
+      }
+
+      if (!packagesOk) {
+        changeDatesError.value =
+          "На выбранные даты выбранные дополнительные услуги недоступны. Попробуйте другие даты.";
+        // rollback
+        selectedTariffStore.value = prevSelectedTariff;
+        date.value = prevDate;
+        return;
+      }
+
+      // 3) Отправляем запрос изменения (backend: PUT /v1/users/profile)
+      const [startDate, endDate] = newDates.value;
+      const body = {
+        // сохраняем совместимость с текущим контрактом профиля
+        name: authStore.user?.name ?? "",
+        surname: authStore.user?.surname ?? "",
+        middle_name: authStore.user?.middle_name ?? "",
+        email: authStore.user?.email ?? "",
+        phone: authStore.user?.phone ?? "",
+        country: authStore.user?.country ?? "",
+        // расширение для механизма изменения брони
+        booking_change: {
+          uuid,
+          start_at: bookingStore.formatDate(startDate),
+          end_at: bookingStore.formatDate(endDate),
+          room_type_code: roomTypeCode,
+          rate_plan_code: ratePlanCode,
+          packages: chosenPackages,
+        },
+      };
+
+      const response = (await put<unknown>("/v1/users/profile", body, {
+        signal: AbortSignal.timeout(15000),
+      })) as ChangeBookingDatesResponse;
+
+      if (!response.success) {
+        throw new Error(response.message || "Не удалось изменить даты бронирования");
+      }
+
+      // 4) Обновляем отображение: перегружаем бронь по uuid (если доступно)
+      await bookingStore.getBookingByUuid(uuid);
+
+      changeDatesSuccess.value = "Ваша дата изменена и подтверждена.";
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error);
+      changeDatesError.value = msg;
+      // rollback best-effort
+      selectedTariffStore.value = prevSelectedTariff;
+      date.value = prevDate;
+    } finally {
+      isChangingDates.value = false;
+    }
   };
 </script>
 
@@ -579,6 +784,67 @@
           </div>
           <p v-if="cancelBookingError" :class="$style.cancelPopupError">
             {{ cancelBookingError }}
+          </p>
+        </div>
+      </template>
+    </Popup>
+
+    <Popup
+      :is-open="isChangeDatesPopupOpen"
+      max-width="720px"
+      title="Изменить даты"
+      @close="closeChangeDatesPopup"
+    >
+      <template #content>
+        <div
+          :class="[
+            $style.changeDatesPopupContent,
+            isChangeDatesCalendarOpen ? $style.changeDatesPopupContentExpanded : undefined,
+          ]"
+        >
+          <p :class="$style.changeDatesPopupText">
+            <span :class="$style.changeDatesPopupTextLine">
+              Выберите новые <strong>даты заезда и выезда</strong>.
+            </span>
+            <span :class="$style.changeDatesPopupTextLine">
+              Мы проверим доступность выбранного номера и услуг.
+            </span>
+          </p>
+
+          <div :class="$style.changeDatesPicker">
+            <CoreDatePicker
+              v-model="newDates"
+              :teleport="false"
+              @open="isChangeDatesCalendarOpen = true"
+              @closed="isChangeDatesCalendarOpen = false"
+            />
+          </div>
+
+          <div :class="$style.changeDatesPopupActions">
+            <Button
+              label="Изменить"
+              class="btn__bs dark"
+              unstyled
+              :disabled="!canSubmitDateChange"
+              @click="confirmChangeDates"
+            />
+            <Button
+              label="Отмена"
+              class="btn__bs danger"
+              unstyled
+              :disabled="isChangingDates"
+              @click="closeChangeDatesPopup"
+            />
+          </div>
+
+          <p v-if="isChangingDates" :class="$style.changeDatesPopupStatus">
+            Проверяем доступность и меняем даты…
+          </p>
+          <p v-else-if="changeDatesSuccess" :class="$style.changeDatesPopupSuccess">
+            {{ changeDatesSuccess }}
+          </p>
+          <p v-else-if="changeDatesError" :class="$style.changeDatesPopupError">
+            {{ changeDatesError }}
           </p>
         </div>
       </template>
@@ -915,6 +1181,105 @@
     font-size: rem(14);
     line-height: 1.4;
     color: var(--a-btnAccentBg);
+    text-align: center;
+    word-break: break-word;
+  }
+
+  .changeDatesPopupContent {
+    display: flex;
+    flex-direction: column;
+    gap: rem(16);
+    padding: 0 rem(24);
+  }
+
+  .changeDatesPopupText {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(20);
+    line-height: 1.5;
+    color: var(--a-text-dark);
+    text-align: center;
+  }
+
+  .changeDatesPopupTextLine {
+    display: block;
+  }
+
+  .changeDatesPicker {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /**
+   * Внутри попапа смены дат календарь vue-datepicker по умолчанию рисуется
+   * абсолютным блоком и не влияет на высоту контейнера.
+   * Чтобы попап адаптивно «рос» по контенту при открытии календаря,
+   * переводим меню в normal flow только в этом сценарии.
+   */
+  .changeDatesPopupContent :global(.dp__menu) {
+    position: static !important;
+    transform: none !important;
+    margin-top: rem(12);
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .changeDatesPopupContent :global(.dp__menu_content) {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .changeDatesPopupContentExpanded {
+    padding-bottom: rem(350);
+  }
+
+  .changeDatesPopupActions {
+    display: flex;
+    flex-direction: column;
+    gap: rem(12);
+
+    @media (min-width: #{size.$tablet}) {
+      flex-direction: row;
+      justify-content: center;
+      gap: rem(16);
+    }
+
+    :global(.btn__bs) {
+      width: 100%;
+
+      @media (min-width: #{size.$tablet}) {
+        width: auto;
+        min-width: rem(180);
+      }
+    }
+  }
+
+  .changeDatesPopupError {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(14);
+    line-height: 1.4;
+    color: var(--a-btnAccentBg);
+    text-align: center;
+    word-break: break-word;
+  }
+
+  .changeDatesPopupStatus {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(14);
+    line-height: 1.4;
+    color: var(--a-text-light);
+    text-align: center;
+  }
+
+  .changeDatesPopupSuccess {
+    margin: 0;
+    font-family: var(--a-font-body);
+    font-size: rem(14);
+    line-height: 1.4;
+    color: var(--success);
     text-align: center;
     word-break: break-word;
   }
