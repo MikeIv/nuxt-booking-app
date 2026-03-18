@@ -5,11 +5,22 @@
 
   const props = defineProps<{
     modelValue: [Date, Date] | null;
+    /**
+     * Управляет тем, где рендерится меню календаря.
+     * true (default) — телепорт в body (поведение либы),
+     * false — меню внутри компонента (нужно, например, для попапов,
+     * чтобы контейнер мог растягиваться по высоте).
+     */
+    teleport?: boolean;
   }>();
 
   const hidenIcon = ref(true);
 
-  const emit = defineEmits(["update:modelValue"]);
+  const emit = defineEmits<{
+    (e: "update:modelValue", value: [Date, Date] | null): void;
+    (e: "open"): void;
+    (e: "closed"): void;
+  }>();
 
   const value = computed({
     get: () => props.modelValue,
@@ -56,7 +67,10 @@
       select-text="Выбрать"
       :input-class-name="'custom-datepicker-input'"
       :multi-calendars="true"
+      :teleport="props.teleport ?? true"
       class="date-range-picker"
+      @open="emit('open')"
+      @closed="emit('closed')"
     >
       <template #input-icon>
         <div class="calendar-icon-wrapper">
@@ -173,13 +187,22 @@
       padding: rem(22) rem(36) rem(2) rem(12);
       font-family: "Inter", sans-serif;
       font-size: rem(16);
-      border: none;
-      border-radius: rem(16);
+      border: rem(1) solid var(--a-border-light);
+      border-radius: var(--a-borderR--input);
       background-color: var(--a-white);
+      transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
 
       &:hover {
-        border-color: var(--a-borderAccent);
+        border-color: var(--a-border-primary);
+      }
+
+      &:focus,
+      &:focus-visible {
         outline: none;
+        border-color: var(--a-border-primary);
+        box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
       }
     }
 
