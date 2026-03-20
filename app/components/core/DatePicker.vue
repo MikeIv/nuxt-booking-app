@@ -18,8 +18,7 @@
 
   const emit = defineEmits<{
     (e: "update:modelValue", value: [Date, Date] | null): void;
-    (e: "open"): void;
-    (e: "closed"): void;
+    (e: "open" | "closed"): void;
   }>();
 
   const value = computed({

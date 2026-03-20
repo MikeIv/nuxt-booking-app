@@ -14,6 +14,11 @@
     date: [Date, Date] | null | undefined;
     nights: number;
     bookingTotal: number;
+    /**
+     * Показывать CTA "Продолжить".
+     * Используется на шагах оформления; на финальной странице скрываем.
+     */
+    showContinue?: boolean;
   }
 
   const props = defineProps<Props>();
@@ -22,6 +27,7 @@
   }>();
 
   const { date, nights, selectedEntries, bookingTotal } = toRefs(props);
+  const isContinueVisible = computed(() => props.showContinue !== false);
 
   const formatDate = (date: Date | null | undefined): string => {
     if (!date) return "";
@@ -336,7 +342,10 @@
         <span>Итого:</span>
         <strong>{{ bookingTotal.toLocaleString("ru-RU") }} ₽</strong>
       </div>
-      <div :class="$style.pageSummaryFooter">
+      <div
+        v-if="isContinueVisible"
+        :class="$style.pageSummaryFooter"
+      >
         <Button
           unstyled
           :class="$style.pageContinueButton"

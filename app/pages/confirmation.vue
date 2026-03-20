@@ -747,6 +747,7 @@
             :date="bookingDate"
             :nights="nights"
             :booking-total="bookingTotal"
+            :show-continue="false"
           />
         </div>
       </div>
