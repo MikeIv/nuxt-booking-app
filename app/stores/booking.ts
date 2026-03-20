@@ -920,6 +920,20 @@ export const useBookingStore = defineStore(
         if (response.success && response.payload) {
           const raw = response.payload;
           let rooms: BookingByUuidPayload["rooms"] = raw.rooms;
+          const allowed = Array.isArray(raw.allowed)
+            ? raw.allowed.filter(
+                (
+                  item,
+                ): item is NonNullable<
+                  BookingByUuidPayload["allowed"]
+                >[number] =>
+                  item === "edit-dates" ||
+                  item === "edit-number" ||
+                  item === "edit-packages" ||
+                  item === "edit-contacts" ||
+                  item === "cancel",
+              )
+            : [];
           if (typeof rooms === "string") {
             try {
               rooms = JSON.parse(rooms) as BookingByUuidPayload["rooms"];
@@ -935,6 +949,8 @@ export const useBookingStore = defineStore(
             id: raw.id,
             uuid: raw.uuid,
             confirmation_number: raw.confirmation_number,
+            status: raw.status,
+            allowed,
             hotel: raw.hotel,
             order: {
               ...raw.order,
@@ -942,6 +958,7 @@ export const useBookingStore = defineStore(
             } as BookingResponse["order"],
             rooms,
             total_price: raw.total_price,
+            payment: raw.payment,
           };
           createdBooking.value = normalized;
           return normalized;

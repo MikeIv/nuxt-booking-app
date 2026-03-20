@@ -21,13 +21,15 @@
     showContinue?: boolean;
   }
 
-  const props = defineProps<Props>();
+  const props = withDefaults(defineProps<Props>(), {
+    showContinue: true,
+  });
   const emit = defineEmits<{
     (e: "continue"): void;
   }>();
 
   const { date, nights, selectedEntries, bookingTotal } = toRefs(props);
-  const isContinueVisible = computed(() => props.showContinue !== false);
+  const isContinueVisible = computed(() => props.showContinue);
 
   const formatDate = (date: Date | null | undefined): string => {
     if (!date) return "";
