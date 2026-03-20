@@ -76,6 +76,37 @@
     return createdBooking.value?.order?.pdf || null;
   });
 
+  type BookingAllowedAction =
+    | "edit-dates"
+    | "edit-number"
+    | "edit-packages"
+    | "edit-contacts"
+    | "cancel";
+
+  const allowedActions = computed<Set<BookingAllowedAction>>(() => {
+    const allowed = createdBooking.value?.allowed;
+    if (!Array.isArray(allowed)) return new Set<BookingAllowedAction>();
+    return new Set(
+      allowed.filter(
+        (action): action is BookingAllowedAction =>
+          action === "edit-dates" ||
+          action === "edit-number" ||
+          action === "edit-packages" ||
+          action === "edit-contacts" ||
+          action === "cancel",
+      ),
+    );
+  });
+
+  const canEditDates = computed(() => allowedActions.value.has("edit-dates"));
+  const canEditRoom = computed(() => allowedActions.value.has("edit-number"));
+  const canEditPackages = computed(() => allowedActions.value.has("edit-packages"));
+  const canEditContacts = computed(() => allowedActions.value.has("edit-contacts"));
+  const canCancelBooking = computed(() => allowedActions.value.has("cancel"));
+  const hasManagementActions = computed(() => {
+    return canEditDates.value || canEditRoom.value || canEditPackages.value || canEditContacts.value;
+  });
+
   interface BookingRoom {
     id: number;
     title: string;
@@ -237,10 +268,15 @@
       bookingStore.isServerRequest = false;
     }
 
-    const uuid = route.query.uuid;
-    if (uuid && typeof uuid === "string") {
+    const queryUuid = route.query.uuid;
+    const effectiveBookingUuid =
+      typeof queryUuid === "string" && queryUuid.trim() !== ""
+        ? queryUuid
+        : currentBookingUuid.value;
+
+    if (effectiveBookingUuid) {
       try {
-        await bookingStore.getBookingByUuid(uuid);
+        await bookingStore.getBookingByUuid(effectiveBookingUuid);
       } catch {
         toast.add({
           severity: "error",
@@ -686,31 +722,35 @@
 
             <div :class="$style.divider" />
 
-            <div :class="$style.section">
+            <div v-if="hasManagementActions" :class="$style.section">
               <h3 :class="$style.sectionTitle">Управление бронированием</h3>
               <p :class="$style.managementText">
                 Если это не противоречит условиям Вашего тарифа, Вы можете:
               </p>
               <div :class="$style.managementButtons">
                 <Button
+                  v-if="canEditDates"
                   label="Изменить даты"
                   class="btn__bs dark"
                   unstyled
                   @click="handleChangeDates"
                 />
                 <Button
+                  v-if="canEditRoom"
                   label="Изменить номер"
                   class="btn__bs dark"
                   unstyled
                   @click="handleChangeRoom"
                 />
                 <Button
+                  v-if="canEditPackages"
                   label="Изменить услуги"
                   class="btn__bs dark"
                   unstyled
                   @click="handleChangeServices"
                 />
                 <Button
+                  v-if="canEditContacts"
                   label="Изменить контакты"
                   class="btn__bs dark"
                   unstyled
@@ -719,12 +759,13 @@
               </div>
             </div>
 
-            <div :class="$style.divider" />
+            <div v-if="hasManagementActions" :class="$style.divider" />
 
             <div :class="$style.section">
               <div :class="$style.finalButtons">
                 <div :class="$style.cancelButtonWrapper">
                   <Button
+                    v-if="canCancelBooking"
                     label="Отменить бронирование"
                     class="btn__bs danger"
                     unstyled

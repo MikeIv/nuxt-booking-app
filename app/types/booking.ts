@@ -114,11 +114,19 @@ export interface BookingByUuidPayload {
   uuid: string;
   confirmation_number: string;
   status: string;
+  allowed?: Array<
+    | "edit-dates"
+    | "edit-number"
+    | "edit-packages"
+    | "edit-contacts"
+    | "cancel"
+    | null
+  >;
   order: BookingByUuidOrder;
   /** Может прийти массивом или JSON-строкой */
   rooms: BookingByUuidRoom[] | string;
   total_price: number;
-  payment: BookingByUuidPayment;
+  payment: BookingByUuidPayment | BookingByUuidPayment[] | null;
   hotel?: HotelInfo;
 }
 
@@ -126,10 +134,15 @@ interface BookingResponse {
   id?: number | string;
   uuid?: string;
   confirmation_number?: string;
+  status?: string;
+  allowed?: Array<
+    "edit-dates" | "edit-number" | "edit-packages" | "edit-contacts" | "cancel"
+  >;
   hotel?: HotelInfo;
   order?: OrderInfo & Partial<BookingByUuidOrder>;
   rooms?: unknown[];
   total_price?: number;
+  payment?: BookingByUuidPayment | BookingByUuidPayment[] | null;
   /** URL для перенаправления на страницу оплаты */
   redirect_url?: string;
 }
