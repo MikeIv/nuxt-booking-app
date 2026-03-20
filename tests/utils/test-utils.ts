@@ -152,12 +152,77 @@ export function mountComponent<T extends Component>(
     },
     Button: {
       template:
-        '<button @click="$attrs.onClick" :disabled="disabled" :class="$attrs.class"><slot /></button>',
-      props: ["disabled", "unstyled"],
+        '<button @click="$attrs.onClick" :disabled="disabled" :class="$attrs.class">{{ label }}<slot /></button>',
+      props: ["disabled", "unstyled", "label"],
     },
     ProgressSpinner: {
       template: '<div data-testid="progress-spinner"></div>',
       props: ["style", "strokeWidth", "fill", "animationDuration", "ariaLabel"],
+    },
+    // Заглушки для BookingSummary
+    BookingSummary: {
+      template: '<div data-testid="booking-summary"></div>',
+      props: [
+        "selectedEntries",
+        "date",
+        "nights",
+        "bookingTotal",
+        "showContinue",
+      ],
+    },
+    // Заглушки для компонентов страницы confirmation
+    BookingConfirmationManagement: {
+      template: `
+        <div v-if="hasManagementActions" data-testid="booking-management">
+          <button v-if="canEditDates" @click="$emit('change-dates')">Изменить даты</button>
+          <button v-if="canEditRoom" @click="$emit('change-room')">Изменить номер</button>
+          <button v-if="canEditPackages" @click="$emit('change-services')">Изменить услуги</button>
+          <button v-if="canEditContacts" @click="$emit('change-contacts')">Изменить контакты</button>
+        </div>
+      `,
+      props: [
+        "hasManagementActions",
+        "canEditDates",
+        "canEditRoom",
+        "canEditPackages",
+        "canEditContacts",
+      ],
+      emits: [
+        "change-dates",
+        "change-room",
+        "change-services",
+        "change-contacts",
+      ],
+    },
+    BookingConfirmationCancelPopup: {
+      template: '<div v-if="isOpen" data-testid="cancel-popup"></div>',
+      props: ["isOpen", "isCancellingBooking", "cancelBookingError"],
+      emits: ["close", "confirm"],
+    },
+    BookingConfirmationChangeDatesPopup: {
+      template: '<div v-if="isOpen" data-testid="change-dates-popup"></div>',
+      props: [
+        "isOpen",
+        "modelValue",
+        "isCalendarOpen",
+        "canSubmitDateChange",
+        "isChangingDates",
+        "changeDatesSuccess",
+        "changeDatesError",
+      ],
+      emits: ["close", "confirm", "update:modelValue", "update:isCalendarOpen"],
+    },
+    BookingConfirmationChangeContactsPopup: {
+      template: '<div v-if="isOpen" data-testid="change-contacts-popup"></div>',
+      props: [
+        "isOpen",
+        "form",
+        "canSubmitContactChange",
+        "isChangingContacts",
+        "changeContactsSuccess",
+        "changeContactsError",
+      ],
+      emits: ["close", "confirm", "update:form"],
     },
   } as const;
 

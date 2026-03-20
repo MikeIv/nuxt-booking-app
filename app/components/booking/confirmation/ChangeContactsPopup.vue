@@ -1,14 +1,6 @@
 <script setup lang="ts">
   import Popup from "~/components/ui/Popup.vue";
-
-  type ContactFormData = {
-    name: string;
-    surname: string;
-    middle_name: string;
-    phone: string;
-    email: string;
-    country: string;
-  };
+  import type { ContactFormData } from "~/types/booking";
 
   type Props = {
     isOpen: boolean;

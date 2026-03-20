@@ -251,6 +251,16 @@ export interface SearchUpgradePayload {
   availability: unknown;
 }
 
+/** Форма контактных данных при изменении бронирования */
+export type ContactFormData = {
+  name: string;
+  surname: string;
+  middle_name: string;
+  phone: string;
+  email: string;
+  country: string;
+};
+
 /** Выбранный номер/тариф для корзины и сводки бронирования */
 export interface SelectedEntry {
   roomIdx: number;

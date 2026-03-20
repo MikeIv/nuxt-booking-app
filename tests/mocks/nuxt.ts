@@ -4,7 +4,13 @@
 import { vi } from "vitest";
 
 export const mockRouterPush = vi.fn().mockResolvedValue(undefined);
-export const mockRoute = { path: "/" };
+export const mockRoute: {
+  path: string;
+  query: Record<string, string | string[] | undefined>;
+} = {
+  path: "/",
+  query: {},
+};
 export const mockToastAdd = vi.fn();
 
 // Настраиваем моки для Nuxt composables глобально
