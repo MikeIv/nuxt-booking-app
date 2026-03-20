@@ -31,11 +31,28 @@ vi.stubGlobal("useToast", () => ({
   add: mockToastAdd,
 }));
 
-// Глобальный мок для проектного toast composable
+// Глобальный мок для проектного toast composable (для явных импортов)
 vi.mock("~/composables/useToast", () => ({
   useNotificationToast: () => ({
     add: mockToastAdd,
   }),
+}));
+
+// Глобальные стабы для проектных composables, используемых как авто-импорты
+// (без явного import-оператора в исходниках)
+vi.stubGlobal("useNotificationToast", () => ({
+  add: mockToastAdd,
+}));
+
+vi.stubGlobal("useApi", () => ({
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+}));
+
+vi.stubGlobal("useApiHelpers", () => ({
+  getErrorMessage: (e: unknown) => (e instanceof Error ? e.message : String(e)),
 }));
 
 // storeToRefs из Pinia должен быть доступен глобально.
@@ -175,4 +192,5 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRouterPush.mockResolvedValue(undefined);
   mockRoute.path = "/";
+  mockRoute.query = {};
 });
