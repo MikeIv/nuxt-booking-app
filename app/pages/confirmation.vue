@@ -3,7 +3,6 @@
   import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import { useNights } from "~/composables/useNights";
-  import Popup from "~/components/ui/Popup.vue";
   import QRCode from "qrcode";
   import type { SelectedEntry } from "~/types/booking";
 
@@ -27,6 +26,7 @@
     loading,
     isServerRequest,
     createdBooking,
+    currentBookingUuid: currentBookingUuidStore,
   } = storeToRefs(bookingStore);
 
   const bookingDate = computed<[Date, Date] | null>(() => {
@@ -276,7 +276,12 @@
 
     if (effectiveBookingUuid) {
       try {
-        await bookingStore.getBookingByUuid(effectiveBookingUuid);
+        const cachedBooking = bookingStore.getSessionBookingByUuid(effectiveBookingUuid);
+        if (cachedBooking) {
+          bookingStore.setBookingByUuid(cachedBooking);
+        } else {
+          await bookingStore.getBookingByUuid(effectiveBookingUuid);
+        }
       } catch {
         toast.add({
           severity: "error",
@@ -388,7 +393,7 @@
   };
 
   const handleChangeContacts = () => {
-    router.push("/personal");
+    openChangeContactsPopup();
   };
 
   const isCancelBookingPopupOpen = ref(false);
@@ -396,12 +401,151 @@
   const cancelBookingError = ref<string | null>(null);
 
   const currentBookingUuid = computed<string | null>(() => {
+    if (currentBookingUuidStore.value && currentBookingUuidStore.value.trim() !== "") {
+      return currentBookingUuidStore.value;
+    }
     const fromStore = createdBooking.value?.uuid;
     if (fromStore && String(fromStore).trim() !== "") return String(fromStore);
     const fromQuery = route.query.uuid;
     if (typeof fromQuery === "string" && fromQuery.trim() !== "") return fromQuery;
     return null;
   });
+
+  type ContactFormData = {
+    name: string;
+    surname: string;
+    middle_name: string;
+    phone: string;
+    email: string;
+    country: string;
+  };
+
+  const isChangeContactsPopupOpen = ref(false);
+  const isChangingContacts = ref(false);
+  const changeContactsError = ref<string | null>(null);
+  const changeContactsSuccess = ref<string | null>(null);
+  const contactForm = ref<ContactFormData>({
+    name: "",
+    surname: "",
+    middle_name: "",
+    phone: "",
+    email: "",
+    country: "",
+  });
+
+  function buildContactFormFromBooking(): ContactFormData {
+    const order = createdBooking.value?.order;
+    const firstRoom = Array.isArray(createdBooking.value?.rooms)
+      ? (createdBooking.value.rooms[0] as Record<string, unknown> | undefined)
+      : undefined;
+    const guests = Array.isArray(firstRoom?.guests)
+      ? (firstRoom.guests as Array<Record<string, unknown>>)
+      : [];
+    const mainGuest = guests.find((guest) => guest.is_main === true) ?? guests[0] ?? null;
+
+    const fromOrderName = typeof order?.name === "string" ? order.name : "";
+    const fromOrderSurname = typeof order?.surname === "string" ? order.surname : "";
+    const fromOrderCountry = typeof order?.nationality === "string" ? order.nationality : "";
+
+    const fromGuestName = typeof mainGuest?.name === "string" ? mainGuest.name : "";
+    const fromGuestSurname = typeof mainGuest?.surname === "string" ? mainGuest.surname : "";
+    const fromGuestMiddleName =
+      typeof mainGuest?.middle_name === "string" ? mainGuest.middle_name : "";
+    const fromGuestPhone = typeof mainGuest?.phone === "string" ? mainGuest.phone : "";
+    const fromGuestEmail = typeof mainGuest?.email === "string" ? mainGuest.email : "";
+
+    return {
+      name: fromOrderName || fromGuestName || authStore.user?.name || "",
+      surname: fromOrderSurname || fromGuestSurname || authStore.user?.surname || "",
+      middle_name: fromGuestMiddleName || authStore.user?.middle_name || "",
+      phone: fromGuestPhone || authStore.user?.phone || "",
+      email: fromGuestEmail || authStore.user?.email || "",
+      country: fromOrderCountry || authStore.user?.country || "",
+    };
+  }
+
+  const canSubmitContactChange = computed(() => {
+    if (isChangingContacts.value) return false;
+    if (!contactForm.value.name.trim()) return false;
+    if (!contactForm.value.surname.trim()) return false;
+    if (!contactForm.value.phone.trim()) return false;
+    if (!contactForm.value.email.trim()) return false;
+    if (!contactForm.value.country.trim()) return false;
+
+    const emailPattern = /^\S+@\S+\.\S+$/;
+    const phonePattern = /^[+]?[0-9\s\-()]{10,}$/;
+    if (!emailPattern.test(contactForm.value.email.trim())) return false;
+    if (!phonePattern.test(contactForm.value.phone.trim())) return false;
+    return true;
+  });
+
+  function openChangeContactsPopup() {
+    changeContactsError.value = null;
+    changeContactsSuccess.value = null;
+    contactForm.value = buildContactFormFromBooking();
+    isChangeContactsPopupOpen.value = true;
+  }
+
+  function closeChangeContactsPopup() {
+    changeContactsError.value = null;
+    changeContactsSuccess.value = null;
+    isChangeContactsPopupOpen.value = false;
+  }
+
+  const confirmChangeContacts = async () => {
+    const uuid = currentBookingUuid.value;
+    if (!uuid) {
+      changeContactsError.value =
+        "UUID бронирования не найден. Обновите страницу или проверьте ссылку.";
+      return;
+    }
+
+    if (!canSubmitContactChange.value) {
+      changeContactsError.value = "Проверьте корректность заполнения полей.";
+      return;
+    }
+
+    isChangingContacts.value = true;
+    changeContactsError.value = null;
+    changeContactsSuccess.value = null;
+
+    try {
+      const body = {
+        name: contactForm.value.name.trim(),
+        surname: contactForm.value.surname.trim(),
+        middle_name: contactForm.value.middle_name.trim(),
+        email: contactForm.value.email.trim(),
+        phone: contactForm.value.phone.trim(),
+        country: contactForm.value.country.trim(),
+        booking_change: {
+          uuid,
+          contacts: {
+            name: contactForm.value.name.trim(),
+            surname: contactForm.value.surname.trim(),
+            middle_name: contactForm.value.middle_name.trim(),
+            email: contactForm.value.email.trim(),
+            phone: contactForm.value.phone.trim(),
+            country: contactForm.value.country.trim(),
+          },
+        },
+      };
+
+      const response = (await put<unknown>("/v1/users/profile", body, {
+        signal: AbortSignal.timeout(15000),
+      })) as ChangeBookingDatesResponse;
+
+      if (!response.success) {
+        throw new Error(response.message || "Не удалось изменить контактные данные");
+      }
+
+      await bookingStore.getBookingByUuid(uuid);
+      changeContactsSuccess.value = "Контактные данные успешно обновлены.";
+    } catch (error: unknown) {
+      changeContactsError.value = getErrorMessage(error);
+    } finally {
+      isChangingContacts.value = false;
+    }
+  };
 
   function openCancelBookingPopup() {
     cancelBookingError.value = null;
@@ -722,42 +866,17 @@
 
             <div :class="$style.divider" />
 
-            <div v-if="hasManagementActions" :class="$style.section">
-              <h3 :class="$style.sectionTitle">Управление бронированием</h3>
-              <p :class="$style.managementText">
-                Если это не противоречит условиям Вашего тарифа, Вы можете:
-              </p>
-              <div :class="$style.managementButtons">
-                <Button
-                  v-if="canEditDates"
-                  label="Изменить даты"
-                  class="btn__bs dark"
-                  unstyled
-                  @click="handleChangeDates"
-                />
-                <Button
-                  v-if="canEditRoom"
-                  label="Изменить номер"
-                  class="btn__bs dark"
-                  unstyled
-                  @click="handleChangeRoom"
-                />
-                <Button
-                  v-if="canEditPackages"
-                  label="Изменить услуги"
-                  class="btn__bs dark"
-                  unstyled
-                  @click="handleChangeServices"
-                />
-                <Button
-                  v-if="canEditContacts"
-                  label="Изменить контакты"
-                  class="btn__bs dark"
-                  unstyled
-                  @click="handleChangeContacts"
-                />
-              </div>
-            </div>
+            <BookingConfirmationManagement
+              :has-management-actions="hasManagementActions"
+              :can-edit-dates="canEditDates"
+              :can-edit-room="canEditRoom"
+              :can-edit-packages="canEditPackages"
+              :can-edit-contacts="canEditContacts"
+              @change-dates="handleChangeDates"
+              @change-room="handleChangeRoom"
+              @change-services="handleChangeServices"
+              @change-contacts="handleChangeContacts"
+            />
 
             <div v-if="hasManagementActions" :class="$style.divider" />
 
@@ -794,103 +913,37 @@
       </div>
     </section>
 
-    <Popup
+    <BookingConfirmationCancelPopup
       :is-open="isCancelBookingPopupOpen"
-      max-width="560px"
-      :show-close-button="false"
-      :close-on-click-outside="false"
+      :is-cancelling-booking="isCancellingBooking"
+      :cancel-booking-error="cancelBookingError"
       @close="closeCancelBookingPopup"
-    >
-      <template #content>
-        <div :class="$style.cancelPopupContent">
-          <p :class="$style.cancelPopupText">
-            Все данные Вашего бронирования будут удалены
-          </p>
-          <div :class="$style.cancelPopupActions">
-            <Button
-              label="Отменить бронирование"
-              class="btn__bs danger"
-              unstyled
-              :class="$style.whiteBtnText"
-              :disabled="isCancellingBooking"
-              @click="confirmCancelBooking"
-            />
-            <Button
-              label="Вернуться"
-              class="btn__bs dark"
-              unstyled
-              :class="$style.whiteBtnText"
-              :disabled="isCancellingBooking"
-              @click="closeCancelBookingPopup"
-            />
-          </div>
-          <p v-if="cancelBookingError" :class="$style.cancelPopupError">
-            {{ cancelBookingError }}
-          </p>
-        </div>
-      </template>
-    </Popup>
+      @confirm="confirmCancelBooking"
+    />
 
-    <Popup
+    <BookingConfirmationChangeDatesPopup
+      v-model="newDates"
       :is-open="isChangeDatesPopupOpen"
-      max-width="720px"
-      title="Изменить даты"
+      :is-calendar-open="isChangeDatesCalendarOpen"
+      :can-submit-date-change="canSubmitDateChange"
+      :is-changing-dates="isChangingDates"
+      :change-dates-success="changeDatesSuccess"
+      :change-dates-error="changeDatesError"
       @close="closeChangeDatesPopup"
-    >
-      <template #content>
-        <div
-          :class="[
-            $style.changeDatesPopupContent,
-            isChangeDatesCalendarOpen ? $style.changeDatesPopupContentExpanded : undefined,
-          ]"
-        >
-          <p :class="$style.changeDatesPopupText">
-            <span :class="$style.changeDatesPopupTextLine">
-              Выберите новые <strong>даты заезда и выезда</strong>.
-            </span>
-            <span :class="$style.changeDatesPopupTextLine">
-              Мы проверим доступность выбранного номера и услуг.
-            </span>
-          </p>
-
-          <div :class="$style.changeDatesPicker">
-            <CoreDatePicker
-              v-model="newDates"
-              :teleport="false"
-              @open="isChangeDatesCalendarOpen = true"
-              @closed="isChangeDatesCalendarOpen = false"
-            />
-          </div>
-
-          <div :class="$style.changeDatesPopupActions">
-            <Button
-              label="Изменить"
-              class="btn__bs dark"
-              unstyled
-              :disabled="!canSubmitDateChange"
-              @click="confirmChangeDates"
-            />
-            <Button
-              label="Отмена"
-              class="btn__bs danger"
-              unstyled
-              :disabled="isChangingDates"
-              @click="closeChangeDatesPopup"
-            />
-          </div>
-
-          <p v-if="isChangingDates" :class="$style.changeDatesPopupStatus">
-            Проверяем доступность и меняем даты…
-          </p>
-          <p v-else-if="changeDatesSuccess" :class="$style.changeDatesPopupSuccess">
-            {{ changeDatesSuccess }}
-          </p>
-          <p v-else-if="changeDatesError" :class="$style.changeDatesPopupError">
-            {{ changeDatesError }}
-          </p>
-        </div>
-      </template>
-    </Popup>
+      @confirm="confirmChangeDates"
+      @update:is-calendar-open="isChangeDatesCalendarOpen = $event"
+    />
+    <BookingConfirmationChangeContactsPopup
+      :is-open="isChangeContactsPopupOpen"
+      :form="contactForm"
+      :can-submit-contact-change="canSubmitContactChange"
+      :is-changing-contacts="isChangingContacts"
+      :change-contacts-success="changeContactsSuccess"
+      :change-contacts-error="changeContactsError"
+      @close="closeChangeContactsPopup"
+      @confirm="confirmChangeContacts"
+      @update:form="contactForm = $event"
+    />
   </main>
 </template>
 
@@ -1124,40 +1177,6 @@
     }
   }
 
-  .managementText {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    font-weight: 400;
-    color: var(--a-text-dark);
-    line-height: 1.5;
-    margin: 0;
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(16);
-    }
-  }
-
-  .managementButtons {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      grid-template-columns: repeat(2, 1fr);
-      gap: rem(16);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      grid-template-columns: repeat(4, 1fr);
-    }
-
-    // Запрет переноса текста в кнопках
-    :global(.btn__bs) {
-      white-space: nowrap;
-      min-width: 0; // Позволяет кнопке сжиматься при необходимости
-    }
-  }
-
   .finalButtons {
     display: flex;
     flex-direction: column;
@@ -1173,157 +1192,6 @@
   .cancelButtonWrapper {
     display: flex;
     flex-direction: column;
-  }
-
-  .cancelPopupContent {
-    display: flex;
-    flex-direction: column;
-    gap: rem(20);
-    padding: 0 rem(24);
-  }
-
-  .cancelPopupText {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(18);
-    line-height: 1.5;
-    color: var(--a-btnAccentBg);
-    text-align: center;
-  }
-
-  .cancelPopupActions {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      justify-content: space-between;
-      gap: rem(16);
-    }
-
-    :global(.btn__bs) {
-      padding-left: rem(20);
-      padding-right: rem(20);
-      width: 100%;
-
-      @media (min-width: #{size.$tablet}) {
-        width: auto;
-      }
-    }
-  }
-
-  .whiteBtnText {
-    color: var(--a-text-white);
-  }
-
-  .cancelPopupError {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(14);
-    line-height: 1.4;
-    color: var(--a-btnAccentBg);
-    text-align: center;
-    word-break: break-word;
-  }
-
-  .changeDatesPopupContent {
-    display: flex;
-    flex-direction: column;
-    gap: rem(16);
-    padding: 0 rem(24);
-  }
-
-  .changeDatesPopupText {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(20);
-    line-height: 1.5;
-    color: var(--a-text-dark);
-    text-align: center;
-  }
-
-  .changeDatesPopupTextLine {
-    display: block;
-  }
-
-  .changeDatesPicker {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  /**
-   * Внутри попапа смены дат календарь vue-datepicker по умолчанию рисуется
-   * абсолютным блоком и не влияет на высоту контейнера.
-   * Чтобы попап адаптивно «рос» по контенту при открытии календаря,
-   * переводим меню в normal flow только в этом сценарии.
-   */
-  .changeDatesPopupContent :global(.dp__menu) {
-    position: static !important;
-    transform: none !important;
-    margin-top: rem(12);
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .changeDatesPopupContent :global(.dp__menu_content) {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .changeDatesPopupContentExpanded {
-    padding-bottom: rem(350);
-  }
-
-  .changeDatesPopupActions {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      justify-content: center;
-      gap: rem(16);
-    }
-
-    :global(.btn__bs) {
-      width: 100%;
-
-      @media (min-width: #{size.$tablet}) {
-        width: auto;
-        min-width: rem(180);
-      }
-    }
-  }
-
-  .changeDatesPopupError {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(14);
-    line-height: 1.4;
-    color: var(--a-btnAccentBg);
-    text-align: center;
-    word-break: break-word;
-  }
-
-  .changeDatesPopupStatus {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(14);
-    line-height: 1.4;
-    color: var(--a-text-light);
-    text-align: center;
-  }
-
-  .changeDatesPopupSuccess {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(14);
-    line-height: 1.4;
-    color: var(--success);
-    text-align: center;
-    word-break: break-word;
   }
 
   .divider {

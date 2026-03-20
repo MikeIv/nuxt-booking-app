@@ -70,6 +70,8 @@ export const useBookingStore = defineStore(
 
     const selectedServicesByRoom = ref<Record<string, SelectedService[]>>({});
     const createdBooking = ref<BookingResponse | null>(null);
+    const bookingsByUuid = ref<Record<string, BookingResponse>>({});
+    const currentBookingUuid = ref<string | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
     const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
@@ -114,6 +116,28 @@ export const useBookingStore = defineStore(
 
     function setCurrentBookingDetails(booking: BookingHistoryItem | null) {
       currentBookingDetails.value = booking;
+    }
+
+    function setBookingByUuid(booking: BookingResponse | null) {
+      if (!booking) return;
+      const uuid =
+        typeof booking.uuid === "string" && booking.uuid.trim() !== ""
+          ? booking.uuid
+          : null;
+      if (!uuid) return;
+
+      bookingsByUuid.value = {
+        ...bookingsByUuid.value,
+        [uuid]: booking,
+      };
+      currentBookingUuid.value = uuid;
+      createdBooking.value = booking;
+    }
+
+    function getSessionBookingByUuid(uuid: string): BookingResponse | null {
+      const safeUuid = typeof uuid === "string" ? uuid.trim() : "";
+      if (!safeUuid) return null;
+      return bookingsByUuid.value[safeUuid] ?? null;
     }
 
     function setSelectedMultiRooms(
@@ -846,7 +870,7 @@ export const useBookingStore = defineStore(
         );
 
         if (response.success && response.payload) {
-          createdBooking.value = response.payload;
+          setBookingByUuid(response.payload);
           if (response.payload.redirect_url) {
             skipLoadingReset = true;
           }
@@ -960,7 +984,7 @@ export const useBookingStore = defineStore(
             total_price: raw.total_price,
             payment: raw.payment,
           };
-          createdBooking.value = normalized;
+          setBookingByUuid(normalized);
           return normalized;
         }
 
@@ -1054,6 +1078,8 @@ export const useBookingStore = defineStore(
       roomTariffs.value = [];
       selectedServicesByRoom.value = {};
       createdBooking.value = null;
+      bookingsByUuid.value = {};
+      currentBookingUuid.value = null;
       currentBookingDetails.value = null;
       selectedMultiRooms.value = {};
       setLoading(false);
@@ -1093,6 +1119,10 @@ export const useBookingStore = defineStore(
       isServiceSelected,
       getSelectedServicesForRoom,
       createdBooking,
+      bookingsByUuid,
+      currentBookingUuid,
+      setBookingByUuid,
+      getSessionBookingByUuid,
       currentBookingDetails,
       setCurrentBookingDetails,
       packages,
