@@ -8,7 +8,7 @@
   const bookingStore = useBookingStore();
 
   bookingStore.setLoading(false);
-  bookingStore.isServerRequest = false;
+  bookingStore.setServerRequest(false);
 
   useSeoMeta({
     title: "Главная",

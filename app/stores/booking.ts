@@ -147,6 +147,33 @@ export const useBookingStore = defineStore(
       selectedMultiRooms.value = { ...rooms };
     }
 
+    function setServerRequest(value: boolean) {
+      isServerRequest.value = value;
+    }
+
+    function setGuests(value: {
+      rooms: number;
+      roomList: { adults: number; children: number; childrenAges: number[] }[];
+    }) {
+      guests.value = value;
+    }
+
+    function setSearchResults(value: SearchResponse | null) {
+      searchResults.value = value;
+    }
+
+    function setSelectedTariff(value: RoomTariff | null) {
+      selectedTariff.value = value;
+    }
+
+    function setDate(value: [Date, Date] | null) {
+      date.value = value;
+    }
+
+    function setChangeRoomUuid(value: string | null) {
+      changeRoomUuid.value = value;
+    }
+
     const totalGuests = computed(() => {
       const rooms = guests.value.roomList ?? [];
       const totalAdults = rooms.reduce((sum, room) => sum + room.adults, 0);
@@ -726,7 +753,7 @@ export const useBookingStore = defineStore(
       return { searchData, groupedByBed };
     }
 
-    function setSelectedRoomType(roomTypeCode: string) {
+    function setSelectedRoomType(roomTypeCode: string | null) {
       selectedRoomType.value = roomTypeCode;
       roomTariffs.value = [];
     }
@@ -1143,6 +1170,12 @@ export const useBookingStore = defineStore(
       selectedMultiRooms,
       setSelectedMultiRooms,
       changeRoomUuid,
+      setServerRequest,
+      setGuests,
+      setSearchResults,
+      setSelectedTariff,
+      setDate,
+      setChangeRoomUuid,
     };
   },
   {

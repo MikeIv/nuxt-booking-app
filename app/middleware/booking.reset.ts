@@ -5,13 +5,13 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const nonBookingPages = ["/cabinet", "/confirmation"];
   if (nonBookingPages.includes(to.path)) {
     bookingStore.setLoading(false);
-    bookingStore.isServerRequest = false;
+    bookingStore.setServerRequest(false);
   }
 
   // При переходе на главную страницу всегда сбрасываем состояние загрузки
   if (to.path === "/") {
     bookingStore.setLoading(false);
-    bookingStore.isServerRequest = false;
+    bookingStore.setServerRequest(false);
 
     if (from.path !== "/" && from.path !== "") {
       bookingStore.forceReset();

@@ -119,7 +119,7 @@
 
   onMounted(async () => {
     bookingStore.setLoading(false);
-    bookingStore.isServerRequest = false;
+    bookingStore.setServerRequest(false);
 
     if (authStore.user) {
       await fetchUserProfile();

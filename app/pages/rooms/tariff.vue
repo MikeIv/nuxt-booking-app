@@ -74,7 +74,7 @@
       });
       return;
     }
-    bookingStore.selectedTariff = tariff;
+    bookingStore.setSelectedTariff(tariff);
 
     if (bookingStore.changeRoomUuid) {
       await router.push(`/confirmation?uuid=${bookingStore.changeRoomUuid}`);
@@ -86,10 +86,9 @@
 
   const goBackToRooms = async () => {
     bookingStore.setLoading(true, "Загружаем номера...");
-    bookingStore.isServerRequest = true;
-    bookingStore.selectedRoomType = null;
-    bookingStore.searchResults = null;
-    bookingStore.roomTariffs = [];
+    bookingStore.setServerRequest(true);
+    bookingStore.setSelectedRoomType(null);
+    bookingStore.setSearchResults(null);
     try {
       await router.push("/rooms");
       await nextTick();
