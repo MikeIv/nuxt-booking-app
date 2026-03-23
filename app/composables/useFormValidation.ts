@@ -112,6 +112,46 @@ export const useFormValidation = () => {
     return null;
   };
 
+  /** Поля гостя без пароля — для валидации формы бронирования */
+  const guestFieldsRules: ValidationRules = {
+    surname: { required: true, maxLength: 255 },
+    name: { required: true, maxLength: 255 },
+    middle_name: { maxLength: 255 },
+    phone: {
+      required: true,
+      maxLength: 32,
+      pattern: /^[+]?[0-9\s\-()]{10,}$/,
+      patternMessage: "Введите корректный телефон",
+    },
+    email: {
+      required: true,
+      maxLength: 255,
+      pattern: /^\S+@\S+\.\S+$/,
+      patternMessage: "Введите корректный email",
+    },
+    country: { required: true, maxLength: 255 },
+  };
+
+  const validateGuestFields = (data: {
+    surname: string;
+    name: string;
+    middle_name: string | null;
+    phone: string;
+    email: string;
+    country: string;
+  }): ValidationErrors => {
+    const errors: ValidationErrors = {};
+    Object.keys(guestFieldsRules).forEach((fieldName) => {
+      const error = validateField(
+        fieldName,
+        data[fieldName as keyof typeof data],
+        guestFieldsRules,
+      );
+      if (error) errors[fieldName] = error;
+    });
+    return errors;
+  };
+
   const validateRegisterForm = (
     formData: RegisterData,
     agreeTerms: boolean = false,
@@ -175,6 +215,7 @@ export const useFormValidation = () => {
 
   return {
     validateRegisterForm,
+    validateGuestFields,
     validateField,
     registerFormRules,
     useValidationErrors,

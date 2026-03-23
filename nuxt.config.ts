@@ -6,11 +6,6 @@ const API_BASE_URL =
 const IS_DEV = process.env.NODE_ENV === "development";
 
 export default defineNuxtConfig({
-  routeRules: {
-    // @ts-expect-error - middleware works correctly despite type error
-    "/": { middleware: "booking.reset" },
-  },
-
   modules: [
     // Локальные composables должны быть загружены первыми
     "@nuxt/ui",

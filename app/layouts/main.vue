@@ -7,7 +7,6 @@
 </template>
 
 <script setup lang="ts">
-  useBookingReset();
 </script>
 
 <style module lang="scss">

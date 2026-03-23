@@ -59,8 +59,6 @@ const initialGuestData = (): GuestData => ({
 });
 
 export const usePersonalForm = () => {
-  const { validateRegisterForm } = useFormValidation();
-
   const formFields: FormField[] = [
     {
       key: "lastName",
@@ -156,31 +154,26 @@ export const usePersonalForm = () => {
     additionalGuests: [],
   });
 
-  const guestToRegisterData = (guest: GuestData) => ({
-    surname: guest.lastName,
-    name: guest.firstName,
-    middle_name: guest.middleName || null,
-    phone: guest.phone,
-    email: guest.email,
-    country: guest.citizenship,
-    password: "dummy_password",
-    password_confirmation: "dummy_password",
-  });
-
   const validateGuest = (guest: GuestData): Partial<GuestData> => {
     const guestErrors: Partial<GuestData> = {};
-    const registerData = guestToRegisterData(guest);
-    const guestValidation = validateRegisterForm(registerData, true);
+    const { validateGuestFields } = useFormValidation();
+    const result = validateGuestFields({
+      surname: guest.lastName,
+      name: guest.firstName,
+      middle_name: guest.middleName || null,
+      phone: guest.phone,
+      email: guest.email,
+      country: guest.citizenship,
+    });
 
-    if (guestValidation.surname) guestErrors.lastName = guestValidation.surname;
-    if (guestValidation.name) guestErrors.firstName = guestValidation.name;
-    if (guestValidation.middle_name)
-      guestErrors.middleName = guestValidation.middle_name;
-    if (guestValidation.phone) guestErrors.phone = guestValidation.phone;
-    if (guestValidation.email) guestErrors.email = guestValidation.email;
+    if (result.surname) guestErrors.lastName = result.surname;
+    if (result.name) guestErrors.firstName = result.name;
+    if (result.middle_name) guestErrors.middleName = result.middle_name;
+    if (result.phone) guestErrors.phone = result.phone;
+    if (result.email) guestErrors.email = result.email;
     // citizenship is optional in the form — skip country required error
-    if (guestValidation.country && (guest.citizenship || "").trim())
-      guestErrors.citizenship = guestValidation.country;
+    if (result.country && (guest.citizenship || "").trim())
+      guestErrors.citizenship = result.country;
 
     return guestErrors;
   };

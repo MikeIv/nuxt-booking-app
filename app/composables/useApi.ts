@@ -168,7 +168,7 @@ export const useApi = () => {
       const status = (error as { status?: number }).status;
 
       if (
-        (status === 401 || status === 302) &&
+        status === 401 &&
         !request.toString().includes("/auth/refresh") &&
         retryCount === 0
       ) {
