@@ -2,15 +2,19 @@ import type { ApiError } from "~/composables/useApi";
 
 export const isApiError = (error: unknown): error is ApiError => {
   return (
-    error &&
     typeof error === "object" &&
-    "success" in error &&
-    "message" in error
+    error !== null &&
+    "message" in error &&
+    !(error instanceof Error)
   );
 };
 
 export const getValidationErrors = (error: ApiError): string[] => {
-  return error.payload || [];
+  const data = error.data;
+  if (Array.isArray(data)) {
+    return data.filter((item): item is string => typeof item === "string");
+  }
+  return [];
 };
 
 export const getErrorMessage = (error: unknown): string => {
