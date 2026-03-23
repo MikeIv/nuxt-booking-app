@@ -4,6 +4,11 @@ import type {
   BedResource,
   ViewResource,
   BalconyResource,
+  TariffPackage,
+  RoomAmenity,
+  RoomBed,
+  RoomView,
+  RoomFamily,
 } from "./room";
 
 interface SearchFilters {
@@ -271,6 +276,87 @@ export interface SelectedEntry {
   price: number | null | undefined;
   title: string;
 }
+
+/** API-типы ответа поиска (сырые данные от сервера, до маппинга) */
+
+export interface ApiRoomTariff {
+  rate_plan_code: string;
+  title: string;
+  price: number | string;
+  price_for_register?: number;
+  packages?: TariffPackage[];
+  has_food?: boolean;
+  cancellation_free?: boolean;
+  cancellation_description?: string | null;
+  payment_types?: string[];
+  description?: string | null;
+  cancellation_popover?: {
+    title?: string;
+    description?: string;
+  };
+  group?: {
+    id: number;
+    title: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+}
+
+export interface ApiRoomType {
+  id?: number | string;
+  room_type_code: string;
+  title: string;
+  description?: string | null;
+  max_occupancy?: number;
+  square?: number;
+  rooms?: number;
+  amenities?: RoomAmenity[];
+  bed?: RoomBed | null;
+  view?: RoomView | null;
+  family?: RoomFamily | null;
+  min_price?: number | string | null;
+  price_for_register?: number;
+  photos?: string[];
+  tariffs?: ApiRoomTariff[];
+}
+
+export interface ApiGroupedRoom {
+  title: string;
+  description: string | null;
+  max_occupancy: number;
+  square: number;
+  rooms: number;
+  amenities: RoomAmenity[];
+  min_price: number | string | null;
+  price_for_register?: number;
+  photos: string[];
+  /** Сервер может возвращать варианты как "beds" или "room_type_codes" */
+  beds?: ApiRoomType[];
+  room_type_codes?: ApiRoomType[];
+}
+
+export interface ApiGroupedPayload {
+  rooms: ApiGroupedRoom[];
+  filters: SearchFilters;
+}
+
+export interface ApiUngroupedPayload {
+  rooms: ApiRoomType[];
+  packages?: PackageResource[];
+  filters: SearchFilters;
+}
+
+export interface ApiRoomTariffPayload {
+  room: ApiRoomType;
+  packages?: PackageResource[];
+}
+
+export type ApiSearchPayload =
+  | ApiGroupedRoom[]
+  | ApiGroupedPayload
+  | ApiUngroupedPayload
+  | ApiRoomTariffPayload
+  | undefined;
 
 export type {
   SearchResponse,

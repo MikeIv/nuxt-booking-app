@@ -1,22 +1,20 @@
 import { defineStore } from "pinia";
 import type { StateTree } from "pinia";
 import type { PersistenceOptions } from "pinia-plugin-persistedstate";
-import type {
-  PackageResource,
-  Room,
-  RoomAmenity,
-  RoomTariff,
-  TariffPackage,
-  RoomBed,
-  RoomView,
-  RoomFamily,
-} from "~/types/room";
+import type { PackageResource, Room, RoomTariff } from "~/types/room";
 import type {
   SearchResponse,
   BookingData,
   BookingResponse,
   BookingHistoryItem,
   BookingByUuidPayload,
+  ApiRoomTariff,
+  ApiRoomType,
+  ApiGroupedRoom,
+  ApiGroupedPayload,
+  ApiUngroupedPayload,
+  ApiRoomTariffPayload,
+  ApiSearchPayload,
 } from "~/types/booking";
 
 export interface UserProfileData {
@@ -236,87 +234,6 @@ export const useBookingStore = defineStore(
       }
     }
 
-    interface ApiRoomTariff {
-      rate_plan_code: string;
-      title: string;
-      price: number | string;
-      price_for_register?: number;
-      packages?: TariffPackage[];
-      has_food?: boolean;
-      cancellation_free?: boolean;
-      cancellation_description?: string | null;
-      payment_types?: string[];
-      description?: string | null;
-      cancellation_popover?: {
-        title?: string;
-        description?: string;
-      };
-      group?: {
-        id: number;
-        title: string;
-        created_at?: string;
-        updated_at?: string;
-      };
-    }
-
-    interface ApiRoomType {
-      id?: number | string;
-      room_type_code: string;
-      title: string;
-      description?: string | null;
-      max_occupancy?: number;
-      square?: number;
-      rooms?: number;
-      amenities?: RoomAmenity[];
-      bed?: RoomBed | null;
-      view?: RoomView | null;
-      family?: RoomFamily | null;
-      min_price?: number | string | null;
-      price_for_register?: number;
-      photos?: string[];
-      tariffs?: ApiRoomTariff[];
-    }
-
-    interface ApiGroupedRoom {
-      title: string;
-      description: string | null;
-      max_occupancy: number;
-      square: number;
-      rooms: number;
-      amenities: RoomAmenity[];
-      min_price: number | string | null;
-      price_for_register?: number;
-      photos: string[];
-      // Сервер может возвращать варианты как "beds" или "room_type_codes"
-      beds?: ApiRoomType[];
-      room_type_codes?: ApiRoomType[];
-    }
-
-    // Grouped формат с фильтрами (новый формат ответа)
-    interface ApiGroupedPayload {
-      rooms: ApiGroupedRoom[];
-      filters: SearchResponse["filters"];
-    }
-
-    interface ApiUngroupedPayload {
-      rooms: ApiRoomType[];
-      packages?: PackageResource[];
-      filters: SearchResponse["filters"];
-    }
-
-    // Новый формат ответа для тарифов конкретного номера
-    interface ApiRoomTariffPayload {
-      room: ApiRoomType;
-      packages?: PackageResource[];
-    }
-
-    type ApiSearchPayload =
-      | ApiGroupedRoom[]
-      | ApiGroupedPayload
-      | ApiUngroupedPayload
-      | ApiRoomTariffPayload
-      | undefined;
-
     const ensureChildAges = (count: number, ages: number[]): number[] => {
       if (count === 0) return [];
       if (ages.length === count) return ages;
@@ -482,225 +399,181 @@ export const useBookingStore = defineStore(
       } satisfies Room;
     };
 
+    const EMPTY_FILTERS: SearchResponse["filters"] = {
+      beds: [],
+      views: [],
+      balconies: [],
+    };
+
+    /**
+     * Объединяет дубликат Room при группировке:
+     * мержит варианты (room_type_codes), обновляет min_price, фото и удобства.
+     */
+    const mergeGroupedRoom = (existing: Room, incoming: Room): void => {
+      const variantMap = new Map<string, Room>();
+      (existing.room_type_codes ?? []).forEach((v, i) => {
+        variantMap.set(v.room_type_code ?? v.id?.toString() ?? `v-${i}`, v);
+      });
+      (incoming.room_type_codes ?? []).forEach((v, i) => {
+        variantMap.set(v.room_type_code ?? v.id?.toString() ?? `v-new-${i}`, v);
+      });
+      existing.room_type_codes = Array.from(variantMap.values());
+
+      const incomingPrice = normalizeMinPrice(incoming.min_price);
+      if (existing.min_price === null) {
+        existing.min_price = incomingPrice;
+      } else if (incomingPrice !== null) {
+        existing.min_price = Math.min(existing.min_price, incomingPrice);
+      }
+
+      if (
+        existing.price_for_register === undefined ||
+        (incoming.price_for_register !== undefined &&
+          incoming.price_for_register < existing.price_for_register)
+      ) {
+        existing.price_for_register = incoming.price_for_register;
+      }
+
+      if (!existing.photos?.length && incoming.photos?.length) {
+        existing.photos = incoming.photos;
+      }
+      if (!existing.amenities?.length && incoming.amenities?.length) {
+        existing.amenities = incoming.amenities;
+      }
+    };
+
+    /**
+     * Преобразует список ApiGroupedRoom[] в SearchResponse, объединяя дубликаты по ключу семейства/группы.
+     * Используется для форматов 3 (ApiGroupedPayload) и 5 (устаревший массив без фильтров).
+     */
+    const processGroupedRooms = (
+      groups: ApiGroupedRoom[],
+      rawPayload: ApiSearchPayload,
+      filters?: SearchResponse["filters"],
+    ): SearchResponse => {
+      const groupedRooms = new Map<string, Room>();
+
+      groups.forEach((group, index) => {
+        const room = mapGroupedRoom(group);
+
+        const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
+        const key =
+          firstVariant?.family?.id?.toString() ??
+          firstVariant?.family?.title ??
+          group.title ??
+          room.room_type_code ??
+          `group-${index}`;
+
+        const existing = groupedRooms.get(key);
+        if (existing) {
+          mergeGroupedRoom(existing, room);
+        } else {
+          groupedRooms.set(key, room);
+        }
+      });
+
+      const rooms = Array.from(groupedRooms.values());
+      return {
+        available: rooms.length > 0,
+        rooms,
+        packages: [],
+        filters: filters ?? EMPTY_FILTERS,
+        groupedByBed: true,
+        rawPayload,
+      };
+    };
+
+    /**
+     * Нормализует сырой ответ API поиска в унифицированный `SearchResponse`.
+     *
+     * Поддерживаемые форматы ответа:
+     * 1. `undefined` / falsy — нет данных
+     * 2. `ApiRoomTariffPayload` (`{ room, packages? }`) — один номер с тарифами (страница /rooms/tariff)
+     * 3. `ApiGroupedPayload` (`{ rooms: ApiGroupedRoom[], filters }`) — сгруппированные номера
+     * 4. `ApiUngroupedPayload` (`{ rooms: ApiRoomType[], filters, packages? }`) — плоский список (multi_booking_mode)
+     * 5. `ApiGroupedRoom[]` — устаревший массив без фильтров
+     */
     const normalizeSearchPayload = (
       payload: ApiSearchPayload,
       groupedByBed: boolean,
     ): SearchResponse => {
+      // Формат 1: пустой ответ
       if (!payload) {
         return {
           available: false,
           rooms: [],
           packages: [],
-          filters: {
-            beds: [],
-            views: [],
-            balconies: [],
-          },
+          filters: EMPTY_FILTERS,
           groupedByBed,
           rawPayload: payload,
         };
       }
 
+      // Формат 2: один номер с тарифами — страница /rooms/tariff
       if (!Array.isArray(payload) && "room" in payload && payload.room) {
-        const roomPayload = payload as ApiRoomTariffPayload;
-        const room = mapRoom(roomPayload.room);
+        const p = payload as ApiRoomTariffPayload;
         return {
           available: true,
-          rooms: [room],
-          packages: roomPayload.packages ?? [],
-          filters: {
-            beds: [],
-            views: [],
-            balconies: [],
-          },
+          rooms: [mapRoom(p.room)],
+          packages: p.packages ?? [],
+          filters: EMPTY_FILTERS,
           groupedByBed: false,
           rawPayload: payload,
         };
       }
 
-      const processGroupedRooms = (
-        groups: ApiGroupedRoom[],
-        filters?: SearchResponse["filters"],
-      ): SearchResponse => {
-        const groupedRooms = new Map<string, Room>();
+      // Формат 5: устаревший массив ApiGroupedRoom[] (без фильтров)
+      if (Array.isArray(payload)) {
+        return processGroupedRooms(payload, payload);
+      }
 
-        groups.forEach((group, index) => {
-          const room = mapGroupedRoom(group);
-
-          const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
-          const key =
-            firstVariant?.family?.id?.toString() ??
-            firstVariant?.family?.title ??
-            group.title ??
-            room.room_type_code ??
-            `group-${index}`;
-
-          const existing = groupedRooms.get(key);
-
-          if (existing) {
-            const existingVariants = existing.room_type_codes ?? [];
-            const newVariants = room.room_type_codes ?? [];
-
-            const variantMap = new Map<string, Room>();
-
-            existingVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            newVariants.forEach((variant, variantIndex) => {
-              const variantKey =
-                variant.room_type_code ??
-                (typeof variant.id === "string"
-                  ? variant.id
-                  : variant.id?.toString()) ??
-                `variant-${key}-new-${variantIndex}`;
-              variantMap.set(variantKey, variant);
-            });
-
-            existing.room_type_codes = Array.from(variantMap.values());
-
-            // Обновляем min_price с учетом null значений
-            const normalizedRoomPrice = normalizeMinPrice(room.min_price);
-            if (existing.min_price === null) {
-              existing.min_price = normalizedRoomPrice;
-            } else if (normalizedRoomPrice !== null) {
-              existing.min_price = Math.min(
-                existing.min_price,
-                normalizedRoomPrice,
-              );
-            }
-
-            if (
-              existing.price_for_register === undefined ||
-              (room.price_for_register !== undefined &&
-                room.price_for_register < existing.price_for_register)
-            ) {
-              existing.price_for_register = room.price_for_register;
-            }
-
-            if (
-              (!existing.photos || existing.photos.length === 0) &&
-              room.photos &&
-              room.photos.length > 0
-            ) {
-              existing.photos = room.photos;
-            }
-
-            if (
-              (!existing.amenities || existing.amenities.length === 0) &&
-              room.amenities &&
-              room.amenities.length > 0
-            ) {
-              existing.amenities = room.amenities;
-            }
-          } else {
-            groupedRooms.set(key, room);
-          }
-        });
-
-        const rooms = Array.from(groupedRooms.values());
-
-        return {
-          available: rooms.length > 0,
-          rooms,
-          packages: [],
-          filters: filters ?? {
-            beds: [],
-            views: [],
-            balconies: [],
-          },
-          groupedByBed: true,
-          rawPayload: payload,
-        };
-      };
-
-      // Обработка нового формата: объект с rooms и filters
+      // Форматы 3 и 4: объект { rooms: [...], filters }
       if (
-        !Array.isArray(payload) &&
         "rooms" in payload &&
         Array.isArray(payload.rooms) &&
         "filters" in payload
       ) {
-        // Проверяем, является ли это grouped форматом (есть beds или room_type_codes)
-        // или ungrouped форматом (rooms уже финальные объекты с тарифами)
-        // Для безопасности проверяем первый непустой элемент массива
-        const firstRoom = payload.rooms.find(
-          (room) => room !== null && room !== undefined,
-        );
+        const firstRoom = payload.rooms.find((r) => r != null);
 
-        // Если массив пустой, обрабатываем как ungrouped (безопасный fallback)
         if (!firstRoom) {
-          const ungroupedPayload = payload as ApiUngroupedPayload;
+          // Пустой список номеров — ungrouped fallback
+          const p = payload as ApiUngroupedPayload;
           return {
             available: false,
             rooms: [],
-            packages: ungroupedPayload.packages ?? [],
-            filters: ungroupedPayload.filters ?? {
-              beds: [],
-              views: [],
-              balconies: [],
-            },
+            packages: p.packages ?? [],
+            filters: p.filters ?? EMPTY_FILTERS,
             groupedByBed: false,
             rawPayload: payload,
           };
         }
 
-        const isGroupedFormat =
-          "beds" in firstRoom || "room_type_codes" in firstRoom;
-
-        if (isGroupedFormat) {
-          // Это grouped формат - обрабатываем как группированные комнаты
-          const groupedPayload = payload as ApiGroupedPayload;
-          return processGroupedRooms(
-            groupedPayload.rooms,
-            groupedPayload.filters,
-          );
-        } else {
-          // Это ungrouped формат - rooms уже финальные объекты с тарифами
-          // Используется для мультибронирования (multi_booking_mode: true)
-          const ungroupedPayload = payload as ApiUngroupedPayload;
-          const rooms = (ungroupedPayload.rooms ?? []).map((room) =>
-            mapRoom(room),
-          );
-
-          return {
-            available: rooms.length > 0,
-            rooms,
-            packages: ungroupedPayload.packages ?? [],
-            filters: ungroupedPayload.filters ?? {
-              beds: [],
-              views: [],
-              balconies: [],
-            },
-            groupedByBed: false, // Для ungrouped формата всегда false
-            rawPayload: payload,
-          };
+        // Формат 3: grouped — каждый элемент содержит beds или room_type_codes (вложенные варианты)
+        if ("beds" in firstRoom || "room_type_codes" in firstRoom) {
+          const p = payload as ApiGroupedPayload;
+          return processGroupedRooms(p.rooms, payload, p.filters);
         }
+
+        // Формат 4: ungrouped — плоские ApiRoomType с тарифами (multi_booking_mode: true)
+        const p = payload as ApiUngroupedPayload;
+        return {
+          available: p.rooms.length > 0,
+          rooms: p.rooms.map((r) => mapRoom(r)),
+          packages: p.packages ?? [],
+          filters: p.filters ?? EMPTY_FILTERS,
+          groupedByBed: false,
+          rawPayload: payload,
+        };
       }
 
-      if (Array.isArray(payload)) {
-        return processGroupedRooms(payload);
-      }
-
-      // Обработка формата ApiUngroupedPayload
-      const ungroupedPayload = payload as ApiUngroupedPayload;
-      const rooms = (ungroupedPayload.rooms ?? []).map((room) => mapRoom(room));
-
+      // Fallback: ApiUngroupedPayload без распознанной структуры
+      const p = payload as ApiUngroupedPayload;
+      const rooms = (p.rooms ?? []).map((r) => mapRoom(r));
       return {
         available: rooms.length > 0,
         rooms,
-        packages: ungroupedPayload.packages ?? [],
-        filters: ungroupedPayload.filters ?? {
-          beds: [],
-          views: [],
-          balconies: [],
-        },
+        packages: p.packages ?? [],
+        filters: p.filters ?? EMPTY_FILTERS,
         groupedByBed,
         rawPayload: payload,
       };

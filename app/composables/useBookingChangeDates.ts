@@ -31,23 +31,6 @@ type BookingChangeRoom = {
   guests: BookingChangeGuest[];
 };
 
-function pickString(value: unknown): string | null {
-  return typeof value === "string" && value.trim() !== "" ? value : null;
-}
-
-function pickNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() !== "") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return null;
-}
-
-function pickBoolean(value: unknown): boolean {
-  return value === true;
-}
-
 export const useBookingChangeDates = (
   currentBookingUuid: ComputedRef<string | null>,
   bookingDate: ComputedRef<[Date, Date] | null>,

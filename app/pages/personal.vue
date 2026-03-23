@@ -622,7 +622,7 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   margin: rem(40) 0;
-  font-family: var(--a-font-heading);
+  font-family: var(--a-font-heading), serif;
   font-size: rem(34);
   font-weight: 600;
   color: var(--a-text-dark);
