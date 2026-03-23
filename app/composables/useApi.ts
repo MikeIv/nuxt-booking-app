@@ -1,6 +1,4 @@
-// composables/useApi.ts
-import type { NitroFetchRequest } from "nitropack";
-import type { FetchOptions } from "ofetch";
+import type { NitroFetchRequest, NitroFetchOptions } from "nitropack";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -16,10 +14,12 @@ export interface ApiError {
   data?: unknown;
 }
 
+let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+
 export const useApi = () => {
   const config = useRuntimeConfig();
 
-  // Всегда используем прямой URL, проксирование убрано
   // Нормализуем baseURL: убираем /v1 из конца, если он там есть
   let baseURL = config.public.apiBase;
   // Убираем завершающий слэш и /v1 если есть
@@ -29,11 +29,6 @@ export const useApi = () => {
     console.log("🔧 useApi initialized with baseURL:", baseURL);
   }
 
-  // Флаг для предотвращения множественных попыток обновления токена
-  let isRefreshing = false;
-  let refreshPromise: Promise<string> | null = null;
-
-  // Функция для обновления токена
   const refreshToken = async (): Promise<string> => {
     if (isRefreshing && refreshPromise) {
       return refreshPromise;
@@ -42,6 +37,8 @@ export const useApi = () => {
     isRefreshing = true;
 
     refreshPromise = (async () => {
+      let newToken: string | null = null;
+
       try {
         if (import.meta.dev) {
           console.log("🔄 Обновление токена...");
@@ -62,18 +59,15 @@ export const useApi = () => {
         );
 
         if (response.success && response.payload?.token) {
-          const newToken = response.payload.token;
+          newToken = response.payload.token;
           authStore.setToken(newToken);
 
           if (import.meta.dev) {
             console.log("✅ Токен успешно обновлен");
           }
-
-          return newToken;
-        } else {
-          throw new Error("Failed to refresh token");
         }
       } catch (error: unknown) {
+        // Обрабатываем только сетевые/HTTP-ошибки от $fetch
         const status = (error as { status?: number }).status;
 
         if (import.meta.dev) {
@@ -85,10 +79,8 @@ export const useApi = () => {
           }
         }
 
-        const authStore = useAuthStore();
-        authStore.logout();
+        useAuthStore().logout();
 
-        // Создаем специальную ошибку для случая, когда refresh token недействителен
         const refreshError = new Error(
           status === 401
             ? "Refresh token expired or invalid"
@@ -102,12 +94,24 @@ export const useApi = () => {
         isRefreshing = false;
         refreshPromise = null;
       }
+
+      // Успешный HTTP-ответ, но сервер не вернул токен
+      if (!newToken) {
+        useAuthStore().logout();
+        const noTokenError = new Error("Failed to refresh token") as Error & {
+          isRefreshError?: boolean;
+        };
+        noTokenError.isRefreshError = true;
+        throw noTokenError;
+      }
+
+      return newToken;
     })();
 
     return refreshPromise;
   };
 
-  const defaultOptions: FetchOptions = {
+  const defaultOptions: NitroFetchOptions<NitroFetchRequest> = {
     baseURL,
     credentials: "include",
     headers: {
@@ -123,11 +127,10 @@ export const useApi = () => {
 
   const fetchApi = async <T = unknown>(
     request: NitroFetchRequest,
-    options: FetchOptions = {},
+    options: NitroFetchOptions<NitroFetchRequest> = {},
     retryCount = 0,
   ): Promise<ApiResponse<T>> => {
     try {
-      // Получаем токен для заголовка
       const authStore = useAuthStore();
       const token = authStore.token;
 
@@ -138,14 +141,13 @@ export const useApi = () => {
         );
       }
 
-      const mergedOptions: FetchOptions = {
+      const mergedOptions: NitroFetchOptions<NitroFetchRequest> = {
         ...defaultOptions,
         ...options,
-        baseURL, // Явно добавляем baseURL
+        baseURL,
         headers: {
           ...defaultOptions.headers,
           ...options.headers,
-          // Добавляем Authorization заголовок, если токен есть
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       };
@@ -161,12 +163,10 @@ export const useApi = () => {
         });
       }
 
-      const response = await $fetch<ApiResponse<T>>(request, mergedOptions);
-      return response;
+      return await $fetch<ApiResponse<T>>(request, mergedOptions);
     } catch (error: unknown) {
       const status = (error as { status?: number }).status;
 
-      // Если ошибка 401/302 и это не запрос на refresh, пробуем обновить токен
       if (
         (status === 401 || status === 302) &&
         !request.toString().includes("/auth/refresh") &&
@@ -177,10 +177,8 @@ export const useApi = () => {
         }
 
         try {
-          // Обновляем токен
           await refreshToken();
 
-          // Повторяем запрос с обновленным токеном
           if (import.meta.dev) {
             console.log("🔁 Повторяем запрос с новым токеном...");
           }
@@ -203,29 +201,23 @@ export const useApi = () => {
             }
           }
 
-          // Если refresh token тоже недействителен (401), не пробуем повторять запрос
-          // Просто выбрасываем ошибку, чтобы вызывающий код мог обработать её
           if (refreshStatus === 401 || isRefreshError) {
-            // Создаем ошибку, указывающую на необходимость повторной авторизации
-            const authError: ApiError = {
+            throw {
               message: "Сессия истекла. Требуется повторная авторизация.",
               status: 401,
               statusText: "Unauthorized",
               data: { requiresReauth: true },
-            };
-            throw authError;
+            } satisfies ApiError;
           }
 
-          // Для других ошибок обновления токена также выбрасываем ошибку
-          const apiError: ApiError = {
+          throw {
             message:
               (refreshError as { message?: string })?.message ||
               "Не удалось обновить токен",
             status: refreshStatus || 401,
             statusText: "Token refresh failed",
             data: refreshError,
-          };
-          throw apiError;
+          } satisfies ApiError;
         }
       }
 
@@ -234,7 +226,7 @@ export const useApi = () => {
         (error as { name?: string }).name === "AbortError" ||
         /abort|timeout|load response data/i.test(errMessage);
 
-      const apiError: ApiError = {
+      throw {
         message: isAbortOrTimeout
           ? "Сервер не ответил вовремя. Проверьте соединение и попробуйте снова."
           : (error as { data?: { message?: string } }).data?.message ||
@@ -245,30 +237,26 @@ export const useApi = () => {
           ? "Request Timeout"
           : (error as { statusText?: string }).statusText,
         data: (error as { data?: unknown }).data,
-      };
-
-      throw apiError;
+      } satisfies ApiError;
     }
   };
 
-  // GET запрос
   const get = async <T = unknown>(
     url: string,
-    params?: Record<string, unknown>,
-    options: FetchOptions = {},
+    query?: Record<string, unknown>,
+    options: NitroFetchOptions<NitroFetchRequest> = {},
   ): Promise<ApiResponse<T>> => {
     return fetchApi<T>(url, {
       method: "GET",
-      params,
+      query,
       ...options,
     });
   };
 
-  // POST запрос
   const post = async <T = unknown>(
     url: string,
-    body?: unknown,
-    options: FetchOptions = {},
+    body?: NitroFetchOptions<NitroFetchRequest>["body"],
+    options: NitroFetchOptions<NitroFetchRequest> = {},
   ): Promise<ApiResponse<T>> => {
     return fetchApi<T>(url, {
       method: "POST",
@@ -277,11 +265,10 @@ export const useApi = () => {
     });
   };
 
-  // PUT запрос
   const put = async <T = unknown>(
     url: string,
-    body?: unknown,
-    options: FetchOptions = {},
+    body?: NitroFetchOptions<NitroFetchRequest>["body"],
+    options: NitroFetchOptions<NitroFetchRequest> = {},
   ): Promise<ApiResponse<T>> => {
     return fetchApi<T>(url, {
       method: "PUT",
@@ -290,11 +277,10 @@ export const useApi = () => {
     });
   };
 
-  // PATCH запрос
   const patch = async <T = unknown>(
     url: string,
-    body?: unknown,
-    options: FetchOptions = {},
+    body?: NitroFetchOptions<NitroFetchRequest>["body"],
+    options: NitroFetchOptions<NitroFetchRequest> = {},
   ): Promise<ApiResponse<T>> => {
     return fetchApi<T>(url, {
       method: "PATCH",
@@ -303,10 +289,9 @@ export const useApi = () => {
     });
   };
 
-  // DELETE запрос
   const del = async <T = unknown>(
     url: string,
-    options: FetchOptions = {},
+    options: NitroFetchOptions<NitroFetchRequest> = {},
   ): Promise<ApiResponse<T>> => {
     return fetchApi<T>(url, {
       method: "DELETE",
@@ -321,8 +306,6 @@ export const useApi = () => {
     put,
     patch,
     delete: del,
-    baseURL, // экспортируем baseURL для отладки
+    baseURL,
   };
 };
-
-export default useApi;
