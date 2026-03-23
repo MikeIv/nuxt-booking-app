@@ -211,7 +211,7 @@
           life: 3000,
         });
         bookingStore.setLoading(false);
-        bookingStore.isServerRequest = false;
+        bookingStore.setServerRequest(false);
       }
     }
   });

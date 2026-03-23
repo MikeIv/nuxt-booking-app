@@ -218,14 +218,14 @@
     (booking) => {
       if (booking?.rooms && Array.isArray(booking.rooms)) {
         const rooms = booking.rooms as Array<{ adults?: number; children?: number }>;
-        bookingStore.guests = {
+        bookingStore.setGuests({
           rooms: rooms.length,
           roomList: rooms.map((room) => ({
             adults: room.adults || 0,
             children: room.children || 0,
             childrenAges: [] as number[],
           })),
-        };
+        });
       }
     },
     { immediate: true },
@@ -244,7 +244,7 @@
   onMounted(async () => {
     if (loading.value && isServerRequest.value) {
       bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      bookingStore.setServerRequest(false);
     }
 
     const queryUuid = route.query.uuid;
@@ -342,12 +342,12 @@
 
   const handleChangeRoom = () => {
     if (bookingDate.value) {
-      bookingStore.date = [...bookingDate.value] as [Date, Date];
+      bookingStore.setDate([...bookingDate.value] as [Date, Date]);
     }
-    bookingStore.searchResults = null;
-    bookingStore.selectedRoomType = null;
-    bookingStore.selectedTariff = null;
-    bookingStore.changeRoomUuid = currentBookingUuid.value;
+    bookingStore.setSearchResults(null);
+    bookingStore.setSelectedRoomType(null);
+    bookingStore.setSelectedTariff(null);
+    bookingStore.setChangeRoomUuid(currentBookingUuid.value);
     router.push("/rooms");
   };
 

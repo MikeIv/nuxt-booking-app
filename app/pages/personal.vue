@@ -68,7 +68,7 @@ async function submitBookingAndRedirect(bookingData: BookingData) {
     const payload = await bookingStore.createBooking(bookingData);
     if (payload?.redirect_url) {
       bookingStore.setLoading(true, "Перенаправление на страницу оплаты...");
-      bookingStore.isServerRequest = true;
+      bookingStore.setServerRequest(true);
       window.location.href = payload.redirect_url;
       return;
     }
@@ -88,13 +88,13 @@ async function submitBookingAndRedirect(bookingData: BookingData) {
     });
   } finally {
     bookingStore.setLoading(false);
-    bookingStore.isServerRequest = false;
+    bookingStore.setServerRequest(false);
   }
 }
 
 function hideBookingOverlay() {
   bookingStore.setLoading(false);
-  bookingStore.isServerRequest = false;
+  bookingStore.setServerRequest(false);
 }
 
 // Проверяем, есть ли выбранные номера из multi-rooms
@@ -231,7 +231,7 @@ const updateRoomFormData = (payload: { roomIdx: number; key: string; value: bool
 
 const onFormSubmit = async () => {
   bookingStore.setLoading(true, "Проверяем данные...");
-  bookingStore.isServerRequest = true;
+  bookingStore.setServerRequest(true);
   await nextTick();
 
   if (!validateForm()) {
@@ -475,7 +475,7 @@ const roomFormData = computed(() => {
 
 onMounted(async () => {
   bookingStore.setLoading(false);
-  bookingStore.isServerRequest = false;
+  bookingStore.setServerRequest(false);
 
   // Проверяем режим мультибронирования
   if (isMultiRoomsMode.value) {

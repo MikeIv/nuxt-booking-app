@@ -90,7 +90,7 @@
     if (!validateForm()) return;
 
     bookingStore.setLoading(true, "Загружаем данные о номерах...");
-    bookingStore.isServerRequest = true;
+    bookingStore.setServerRequest(true);
 
     try {
       const result = await bookingStore.search({ skipReset: true });
@@ -104,7 +104,7 @@
           life: 5000,
         });
         bookingStore.setLoading(false);
-        bookingStore.isServerRequest = false;
+        bookingStore.setServerRequest(false);
         return;
       }
 
@@ -118,7 +118,7 @@
         await nextTick();
       }
       bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      bookingStore.setServerRequest(false);
     } catch (error: unknown) {
       const { status, message } = (error || {}) as ApiError;
       const { summary, detail } = getRequestErrorContent(status, message);
@@ -130,11 +130,11 @@
         life: 3000,
       });
       bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      bookingStore.setServerRequest(false);
     } finally {
       // Дополнительная защита: гарантируем сброс состояния даже при неожиданных ошибках
       bookingStore.setLoading(false);
-      bookingStore.isServerRequest = false;
+      bookingStore.setServerRequest(false);
     }
 
     if (import.meta?.env?.DEV) {
