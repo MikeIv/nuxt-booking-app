@@ -146,7 +146,7 @@ export const usePersonalForm = () => {
     checkInTime: "",
     checkOutTime: "",
     comment: "",
-    paymentMethod: "",
+    paymentMethod: "card",
     agreement: false,
     forSelf: true,
   });
