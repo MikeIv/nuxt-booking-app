@@ -136,7 +136,7 @@ export const useBookingStore = defineStore(
     }
 
     function getSessionBookingByUuid(uuid: string): BookingResponse | null {
-      const safeUuid = typeof uuid === "string" ? uuid.trim() : "";
+      const safeUuid = uuid.trim();
       if (!safeUuid) return null;
       return bookingsByUuid.value[safeUuid] ?? null;
     }
@@ -145,10 +145,6 @@ export const useBookingStore = defineStore(
       rooms: Record<string, SelectedMultiRoomEntry>,
     ) {
       selectedMultiRooms.value = { ...rooms };
-    }
-
-    function clearSelectedMultiRooms() {
-      selectedMultiRooms.value = {};
     }
 
     const totalGuests = computed(() => {
@@ -168,12 +164,8 @@ export const useBookingStore = defineStore(
     function saveUserProfile(userId: number, profile: UserProfileData) {
       userProfiles.value = {
         ...userProfiles.value,
-        [userId]: { ...profile },
+        [String(userId)]: { ...profile },
       };
-    }
-
-    function getUserProfile(userId: number): UserProfileData | null {
-      return userProfiles.value[userId] || null;
     }
 
     const formatDate = (value: Date | string): string => {
@@ -406,8 +398,6 @@ export const useBookingStore = defineStore(
 
       const primaryVariant = variants[0];
 
-      // Критически важно: room_type_code должен быть кодом, а не названием
-      // Используем код из первого варианта, если он есть и валидный
       const firstVariant = variantsSource[0];
       const roomTypeCode =
         primaryVariant?.room_type_code &&
@@ -421,12 +411,10 @@ export const useBookingStore = defineStore(
             : "";
 
       // Собираем тарифы из всех вариантов
-      // Тарифы могут быть в любом варианте, поэтому собираем из всех
       const tariffsSet = new Map<string, RoomTariff>();
       variants.forEach((variant) => {
         if (variant.tariffs && variant.tariffs.length > 0) {
           variant.tariffs.forEach((tariff) => {
-            // Используем rate_plan_code как уникальный ключ
             if (!tariffsSet.has(tariff.rate_plan_code)) {
               tariffsSet.set(tariff.rate_plan_code, tariff);
             }
@@ -435,7 +423,7 @@ export const useBookingStore = defineStore(
       });
       const allTariffs = Array.from(tariffsSet.values());
 
-      const baseRoom: Room = {
+      return {
         id: primaryVariant?.id ?? group.title,
         room_type_code: roomTypeCode,
         title: group.title ?? primaryVariant?.title ?? "",
@@ -464,9 +452,7 @@ export const useBookingStore = defineStore(
         room_type_codes: variants,
         group_title: group.title,
         group_description: group.description ?? null,
-      };
-
-      return baseRoom;
+      } satisfies Room;
     };
 
     const normalizeSearchPayload = (
@@ -488,7 +474,6 @@ export const useBookingStore = defineStore(
         };
       }
 
-      // Обработка нового формата: payload.room с тарифами
       if (!Array.isArray(payload) && "room" in payload && payload.room) {
         const roomPayload = payload as ApiRoomTariffPayload;
         const room = mapRoom(roomPayload.room);
@@ -506,7 +491,6 @@ export const useBookingStore = defineStore(
         };
       }
 
-      // Общая функция для обработки grouped rooms
       const processGroupedRooms = (
         groups: ApiGroupedRoom[],
         filters?: SearchResponse["filters"],
@@ -516,7 +500,6 @@ export const useBookingStore = defineStore(
         groups.forEach((group, index) => {
           const room = mapGroupedRoom(group);
 
-          // Сервер может возвращать варианты как "beds" или "room_type_codes"
           const firstVariant = group.beds?.[0] ?? group.room_type_codes?.[0];
           const key =
             firstVariant?.family?.id?.toString() ??
@@ -774,6 +757,8 @@ export const useBookingStore = defineStore(
         selectedRoomType.value = roomTypeCode;
       }
 
+      let apiError: Error | null = null;
+
       try {
         const { post } = useApi();
         const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
@@ -800,7 +785,7 @@ export const useBookingStore = defineStore(
           return normalized;
         }
 
-        throw new Error(response.message || "Ошибка при поиске номеров");
+        apiError = new Error(response.message || "Ошибка при поиске номеров");
       } catch (err: unknown) {
         error.value = (err as Error).message || "Произошла ошибка при поиске";
         throw err;
@@ -810,6 +795,9 @@ export const useBookingStore = defineStore(
           setLoading(false);
         }
       }
+
+      error.value = apiError!.message;
+      throw apiError!;
     }
 
     async function createBooking(bookingData: BookingData) {
@@ -818,6 +806,8 @@ export const useBookingStore = defineStore(
       setLoading(true, "Создаём бронирование...");
 
       let skipLoadingReset = false;
+      let apiError: Error | null = null;
+
       try {
         const processedData: BookingData = {
           for_self: bookingData.for_self,
@@ -876,9 +866,9 @@ export const useBookingStore = defineStore(
             skipLoadingReset = true;
           }
           return response.payload;
-        } else {
-          throw new Error(response.message || "Ошибка при создании брони");
         }
+
+        apiError = new Error(response.message || "Ошибка при создании брони");
       } catch (err: unknown) {
         error.value =
           (err as Error).message || "Произошла ошибка при бронировании";
@@ -889,12 +879,17 @@ export const useBookingStore = defineStore(
           setLoading(false);
         }
       }
+
+      error.value = apiError!.message;
+      throw apiError!;
     }
 
     async function getBookingDetails(bookingId: string | number) {
       const { get } = useApi();
 
       setLoading(true, "Загружаем детали брони...");
+
+      let apiError: Error | null = null;
 
       try {
         isServerRequest.value = true;
@@ -910,11 +905,11 @@ export const useBookingStore = defineStore(
           const bookingDetails = response.payload;
           setCurrentBookingDetails(bookingDetails);
           return bookingDetails;
-        } else {
-          throw new Error(
-            response.message || "Ошибка при получении данных брони",
-          );
         }
+
+        apiError = new Error(
+          response.message || "Ошибка при получении данных брони",
+        );
       } catch (err: unknown) {
         error.value =
           (err as Error).message || "Произошла ошибка при загрузке данных";
@@ -923,6 +918,9 @@ export const useBookingStore = defineStore(
         isServerRequest.value = false;
         setLoading(false);
       }
+
+      error.value = apiError!.message;
+      throw apiError!;
     }
 
     /**
@@ -933,6 +931,8 @@ export const useBookingStore = defineStore(
       const { get } = useApi();
 
       setLoading(true, "Загружаем данные бронирования...");
+
+      let apiError: Error | null = null;
 
       try {
         isServerRequest.value = true;
@@ -949,9 +949,10 @@ export const useBookingStore = defineStore(
             ? raw.allowed.filter(
                 (
                   item,
-                ): item is NonNullable<
-                  BookingByUuidPayload["allowed"]
-                >[number] =>
+                ): item is Exclude<
+                  NonNullable<BookingByUuidPayload["allowed"]>[number],
+                  null
+                > =>
                   item === "edit-dates" ||
                   item === "edit-number" ||
                   item === "edit-packages" ||
@@ -989,7 +990,9 @@ export const useBookingStore = defineStore(
           return normalized;
         }
 
-        throw new Error(response.message || "Ошибка при загрузке бронирования");
+        apiError = new Error(
+          response.message || "Ошибка при загрузке бронирования",
+        );
       } catch (err: unknown) {
         error.value =
           (err as Error).message ||
@@ -999,6 +1002,9 @@ export const useBookingStore = defineStore(
         isServerRequest.value = false;
         setLoading(false);
       }
+
+      error.value = apiError!.message;
+      throw apiError!;
     }
 
     async function searchPackages(
@@ -1006,6 +1012,8 @@ export const useBookingStore = defineStore(
     ): Promise<PackageResource[]> {
       validateSearchParams();
       error.value = null;
+
+      let apiError: Error | null = null;
 
       try {
         const { post } = useApi();
@@ -1055,7 +1063,7 @@ export const useBookingStore = defineStore(
           return response.payload;
         }
 
-        throw new Error(response.message || "Ошибка при получении услуг");
+        apiError = new Error(response.message || "Ошибка при получении услуг");
       } catch (err: unknown) {
         error.value =
           (err as Error).message || "Произошла ошибка при загрузке услуг";
@@ -1064,6 +1072,10 @@ export const useBookingStore = defineStore(
       } finally {
         isServerRequest.value = false;
       }
+
+      error.value = apiError!.message;
+      packages.value = [];
+      throw apiError!;
     }
 
     function forceReset() {
@@ -1113,7 +1125,6 @@ export const useBookingStore = defineStore(
       formatDate,
       userProfiles,
       saveUserProfile,
-      getUserProfile,
       selectedServices,
       selectedServicesByRoom,
       addService,
@@ -1131,7 +1142,6 @@ export const useBookingStore = defineStore(
       searchPackages,
       selectedMultiRooms,
       setSelectedMultiRooms,
-      clearSelectedMultiRooms,
       changeRoomUuid,
     };
   },
@@ -1142,10 +1152,8 @@ export const useBookingStore = defineStore(
         "date",
         "guests",
         "promoCode",
-        "searchResults",
         "selectedRoomType",
         "selectedTariff",
-        "roomTariffs",
         "userProfiles",
         "selectedServicesByRoom",
         "selectedMultiRooms",
@@ -1160,7 +1168,17 @@ export const useBookingStore = defineStore(
               d instanceof Date ? d.toISOString() : d,
             );
           }
-          return JSON.stringify(serialized);
+          try {
+            return JSON.stringify(serialized);
+          } catch {
+            // Fallback: сохраняем только критически важные поля без объёмных данных
+            const minimal = {
+              date: serialized.date,
+              guests: serialized.guests,
+              promoCode: serialized.promoCode,
+            };
+            return JSON.stringify(minimal);
+          }
         },
         deserialize: (str: string) => {
           const state = JSON.parse(str);
