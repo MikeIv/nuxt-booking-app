@@ -9,7 +9,6 @@ interface Props {
   paymentMethod: string;
   agreement: boolean;
   agreementError: string;
-  /** Скрыть выбор способа оплаты (оплата на отдельной странице), оставить соглашение и текст безопасности */
   hidePaymentMethod?: boolean;
 }
 
@@ -55,9 +54,7 @@ const agreementValue = computed({
             :class="$style.checkbox"
           />
           <label for="agreement" :class="$style.checkboxLabel">
-            Фактом бронирования вы соглашаетесь с правилами
-            онлайн-бронирования, обработкой персональных данных и
-            политикой конфиденциальности
+            Я даю свое согласие с правилами онлайн-бронирования, обработкой персональных данных и политикой конфиденциальности
           </label>
         </div>
         <Message
@@ -104,7 +101,7 @@ const agreementValue = computed({
 }
 
 .sectionHeader {
-  font-family: var(--a-font-body);
+  font-family: var(--a-font-body), sans-serif;
   font-size: rem(24);
   font-weight: 400;
   color: var(--a-text-dark);
@@ -130,7 +127,7 @@ const agreementValue = computed({
 
 .errorMessage {
   margin-top: rem(8);
-  font-family: var(--a-font-body);
+  font-family: var(--a-font-body), sans-serif;
   font-size: rem(14);
   color: var(--a-text-accent);
 }
@@ -195,7 +192,7 @@ const agreementValue = computed({
 }
 
 .checkboxLabel {
-  font-family: var(--a-font-body);
+  font-family: var(--a-font-body), sans-serif;
   font-size: rem(16);
   color: var(--a-text-dark);
   line-height: 1.4;
@@ -211,7 +208,7 @@ const agreementValue = computed({
 }
 
 .securityTitle {
-  font-family: var(--a-font-body);
+  font-family: var(--a-font-body), sans-serif;
   font-size: rem(16);
   font-weight: 600;
   color: var(--a-text-dark);
@@ -219,7 +216,7 @@ const agreementValue = computed({
 }
 
 .securityDescription {
-  font-family: var(--a-font-body);
+  font-family: var(--a-font-body), sans-serif;
   font-size: rem(14);
   line-height: 1.5;
   color: var(--a-text-light);

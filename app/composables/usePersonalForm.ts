@@ -115,7 +115,7 @@ export const usePersonalForm = () => {
     {
       id: "information",
       key: "specialOffers" as const,
-      label: "Я хочу узнавать о специальных предложениях и новостях",
+      label: "Я даю согласие на получение специальных предложений и новостей",
     },
   ];
 
@@ -178,7 +178,8 @@ export const usePersonalForm = () => {
       guestErrors.middleName = guestValidation.middle_name;
     if (guestValidation.phone) guestErrors.phone = guestValidation.phone;
     if (guestValidation.email) guestErrors.email = guestValidation.email;
-    if (guestValidation.country)
+    // citizenship is optional in the form — skip country required error
+    if (guestValidation.country && (guest.citizenship || "").trim())
       guestErrors.citizenship = guestValidation.country;
 
     return guestErrors;
@@ -200,6 +201,7 @@ export const usePersonalForm = () => {
       Object.keys(formData.roomGuests).forEach((roomIdxStr) => {
         const roomIdx = Number(roomIdxStr);
         const roomData = formData.roomGuests[roomIdx];
+        if (!roomData) return;
 
         if (!errors.roomGuests[roomIdx]) {
           errors.roomGuests[roomIdx] = {
@@ -208,22 +210,21 @@ export const usePersonalForm = () => {
           };
         }
 
+        const roomErrors = errors.roomGuests[roomIdx]!;
+
         const mainGuestErrors = validateGuest(roomData.mainGuest);
         if (Object.keys(mainGuestErrors).length > 0) {
-          errors.roomGuests[roomIdx].mainGuest = mainGuestErrors;
+          roomErrors.mainGuest = mainGuestErrors;
           isValid = false;
         }
 
         roomData.additionalGuests.forEach((guest, index) => {
           const guestErrors = validateGuest(guest);
           if (Object.keys(guestErrors).length > 0) {
-            if (!errors.roomGuests[roomIdx].additionalGuests[index]) {
-              errors.roomGuests[roomIdx].additionalGuests[index] = {};
+            if (!roomErrors.additionalGuests[index]) {
+              roomErrors.additionalGuests[index] = {};
             }
-            Object.assign(
-              errors.roomGuests[roomIdx].additionalGuests[index],
-              guestErrors,
-            );
+            Object.assign(roomErrors.additionalGuests[index], guestErrors);
             isValid = false;
           }
         });
