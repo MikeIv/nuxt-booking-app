@@ -69,6 +69,17 @@ export default withNuxt([
       ],
     },
   },
+  // Nuxt auto-discovered files: middleware, plugins, pages — не нужен явный импорт
+  {
+    files: [
+      "app/middleware/**/*.ts",
+      "app/plugins/**/*.ts",
+      "server/**/*.ts",
+    ],
+    rules: {
+      "import/no-unused-modules": "off",
+    },
+  },
   // Отключаем правила ESLint, которые конфликтуют с Prettier
   prettierConfig,
 ]);
