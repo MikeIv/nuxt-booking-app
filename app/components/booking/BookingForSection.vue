@@ -28,20 +28,21 @@ const forSelf = computed({
         <Button
           label="Для себя"
           class="btn__bs"
-          :class="{ 'btn__bs--active': forSelf }"
+          :class="{ ghost: !forSelf }"
           unstyled
           @click="forSelf = true"
         />
         <Button
           label="Для другого"
-          class="btn__bs ghost"
-          :class="{ 'btn__bs--active': !forSelf }"
+          class="btn__bs"
+          :class="{ ghost: forSelf }"
           unstyled
           @click="forSelf = false"
         />
       </div>
-      <p :class="$style.personalNote">
-        Укажите данные основного гостя. Остальных гостей — при заселении
+      <p v-if="!forSelf" :class="$style.personalNote">
+        Настоящим подтверждаю, что предоставляю персональные данные лиц, на
+        которых производится бронирование с их согласия
       </p>
     </div>
   </section>
