@@ -13,19 +13,12 @@ export const useBookingReset = () => {
     bookingStore.forceReset();
   };
 
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      bookingStore.forceReset();
-    }
-  };
-
   onMounted(() => {
     watch(() => route.path, handleRouteChange, { immediate: true });
 
     if (typeof window !== "undefined") {
       window.addEventListener("beforeunload", handleBeforeUnload);
       window.addEventListener("pagehide", handleBeforeUnload);
-      document.addEventListener("visibilitychange", handleVisibilityChange);
     }
   });
 
@@ -33,7 +26,6 @@ export const useBookingReset = () => {
     if (typeof window !== "undefined") {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("pagehide", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     }
   });
 };
