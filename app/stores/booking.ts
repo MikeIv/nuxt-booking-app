@@ -75,6 +75,7 @@ export const useBookingStore = defineStore(
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
     const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
+    const changeRoomUuid = ref<string | null>(null);
 
     /** Услуги для одного номера (режим одного номера — индекс 0) */
     const selectedServices = computed(() => {
@@ -1082,6 +1083,7 @@ export const useBookingStore = defineStore(
       currentBookingUuid.value = null;
       currentBookingDetails.value = null;
       selectedMultiRooms.value = {};
+      changeRoomUuid.value = null;
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -1130,6 +1132,7 @@ export const useBookingStore = defineStore(
       selectedMultiRooms,
       setSelectedMultiRooms,
       clearSelectedMultiRooms,
+      changeRoomUuid,
     };
   },
   {

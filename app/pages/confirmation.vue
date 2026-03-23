@@ -202,6 +202,16 @@
     confirmChangeDates,
   } = useBookingChangeDates(currentBookingUuid, bookingDate);
 
+  const {
+    isChangeRoomPopupOpen,
+    isChangingRoom,
+    changeRoomError,
+    changeRoomSuccess,
+    openChangeRoomPopup,
+    closeChangeRoomPopup,
+    confirmChangeRoom,
+  } = useBookingChangeRoom(currentBookingUuid);
+
   // --- Watchers ---
   watch(
     () => createdBooking.value,
@@ -259,6 +269,14 @@
           life: 5000,
         });
       }
+    }
+
+    if (
+      bookingStore.changeRoomUuid &&
+      bookingStore.changeRoomUuid === effectiveBookingUuid &&
+      bookingStore.selectedRoomType
+    ) {
+      openChangeRoomPopup();
     }
   });
 
@@ -320,6 +338,17 @@
     } catch {
       window.open(url, "_blank");
     }
+  };
+
+  const handleChangeRoom = () => {
+    if (bookingDate.value) {
+      bookingStore.date = [...bookingDate.value] as [Date, Date];
+    }
+    bookingStore.searchResults = null;
+    bookingStore.selectedRoomType = null;
+    bookingStore.selectedTariff = null;
+    bookingStore.changeRoomUuid = currentBookingUuid.value;
+    router.push("/rooms");
   };
 
   const handleNewBooking = () => {
@@ -388,7 +417,7 @@
               :can-edit-packages="canEditPackages"
               :can-edit-contacts="canEditContacts"
               @change-dates="openChangeDatesPopup"
-              @change-room="router.push('/rooms')"
+              @change-room="handleChangeRoom"
               @change-services="router.push('/services')"
               @change-contacts="openChangeContactsPopup"
             />
@@ -458,6 +487,14 @@
       @close="closeChangeContactsPopup"
       @confirm="confirmChangeContacts"
       @update:form="contactForm = $event"
+    />
+    <BookingConfirmationChangeRoomPopup
+      :is-open="isChangeRoomPopupOpen"
+      :is-changing-room="isChangingRoom"
+      :change-room-success="changeRoomSuccess"
+      :change-room-error="changeRoomError"
+      @close="closeChangeRoomPopup"
+      @confirm="confirmChangeRoom"
     />
   </main>
 </template>

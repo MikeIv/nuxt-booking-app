@@ -75,6 +75,12 @@
       return;
     }
     bookingStore.selectedTariff = tariff;
+
+    if (bookingStore.changeRoomUuid) {
+      await router.push(`/confirmation?uuid=${bookingStore.changeRoomUuid}`);
+      return;
+    }
+
     await router.push("/services");
   };
 
