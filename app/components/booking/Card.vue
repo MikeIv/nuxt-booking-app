@@ -49,7 +49,9 @@
 
   const availableRoomVariants = computed<Room[]>(() => {
     const variants = props.room.room_type_codes ?? [];
-    console.log(variants);
+    if (import.meta.dev) {
+      console.log(variants);
+    }
     return variants.length > 0 ? variants : [props.room];
   });
 
@@ -195,7 +197,9 @@
 
   const handleTariff = async () => {
     if (!isValidDateRange.value) {
-      console.error("Не выбраны даты бронирования");
+      if (import.meta.dev) {
+        console.error("Не выбраны даты бронирования");
+      }
       return;
     }
 

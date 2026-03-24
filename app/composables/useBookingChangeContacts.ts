@@ -32,49 +32,6 @@ export const useBookingChangeContacts = (
     country: "",
   });
 
-  function buildContactFormFromBooking(): ContactFormData {
-    const order = createdBooking.value?.order;
-    const firstRoom = Array.isArray(createdBooking.value?.rooms)
-      ? (createdBooking.value.rooms[0] as Record<string, unknown> | undefined)
-      : undefined;
-    const guests = Array.isArray(firstRoom?.guests)
-      ? (firstRoom.guests as Array<Record<string, unknown>>)
-      : [];
-    const mainGuest =
-      guests.find((g) => g.is_main === true) ?? guests[0] ?? null;
-
-    return {
-      name:
-        (typeof order?.name === "string" ? order.name : "") ||
-        (typeof mainGuest?.name === "string" ? mainGuest.name : "") ||
-        authStore.user?.name ||
-        "",
-      surname:
-        (typeof order?.surname === "string" ? order.surname : "") ||
-        (typeof mainGuest?.surname === "string" ? mainGuest.surname : "") ||
-        authStore.user?.surname ||
-        "",
-      middle_name:
-        (typeof mainGuest?.middle_name === "string"
-          ? mainGuest.middle_name
-          : "") ||
-        authStore.user?.middle_name ||
-        "",
-      phone:
-        (typeof mainGuest?.phone === "string" ? mainGuest.phone : "") ||
-        authStore.user?.phone ||
-        "",
-      email:
-        (typeof mainGuest?.email === "string" ? mainGuest.email : "") ||
-        authStore.user?.email ||
-        "",
-      country:
-        (typeof order?.nationality === "string" ? order.nationality : "") ||
-        authStore.user?.country ||
-        "",
-    };
-  }
-
   const canSubmitContactChange = computed(() => {
     if (isChangingContacts.value) return false;
     const f = contactForm.value;
@@ -96,7 +53,10 @@ export const useBookingChangeContacts = (
   const openChangeContactsPopup = () => {
     changeContactsError.value = null;
     changeContactsSuccess.value = null;
-    contactForm.value = buildContactFormFromBooking();
+    contactForm.value = buildBookingContactFallback(
+      createdBooking.value,
+      authStore.user,
+    );
     isChangeContactsPopupOpen.value = true;
   };
 
@@ -167,7 +127,6 @@ export const useBookingChangeContacts = (
     changeContactsSuccess,
     contactForm,
     canSubmitContactChange,
-    buildContactFormFromBooking,
     openChangeContactsPopup,
     closeChangeContactsPopup,
     confirmChangeContacts,

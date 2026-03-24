@@ -55,29 +55,41 @@
   };
 
   const handleLogin = async () => {
-    console.log("🔄 Начало входа...");
+    if (import.meta.dev) {
+      console.log("🔄 Начало входа...");
+    }
 
     if (!validateForm()) {
-      console.log("❌ Валидация не пройдена");
+      if (import.meta.dev) {
+        console.log("❌ Валидация не пройдена");
+      }
       return;
     }
 
-    console.log("✅ Валидация пройдена, данные:", formData.value);
+    if (import.meta.dev) {
+      console.log("✅ Валидация пройдена, данные:", formData.value);
+    }
 
     apiError.value = null;
     authStore.setLoading(true);
     authStore.setError(null);
 
     try {
-      console.log("📡 Отправка запроса на вход...");
+      if (import.meta.dev) {
+        console.log("📡 Отправка запроса на вход...");
+      }
 
       const { post } = useApi();
       const response = await post<LoginResponse>("/v1/auth/login", formData.value);
 
-      console.log("📨 Ответ сервера:", response);
+      if (import.meta.dev) {
+        console.log("📨 Ответ сервера:", response);
+      }
 
       if (response.success && response.payload) {
-        console.log("✅ Успешный вход");
+        if (import.meta.dev) {
+          console.log("✅ Успешный вход");
+        }
 
         authStore.setToken(response.payload.accessToken);
 
@@ -97,7 +109,9 @@
         emit("close");
         await router.push("/cabinet");
       } else {
-        console.log("❌ Ошибка в ответе:", response.message);
+        if (import.meta.dev) {
+          console.log("❌ Ошибка в ответе:", response.message);
+        }
 
         if (
           response.message?.includes("неверный пароль") ||
@@ -120,7 +134,9 @@
         }
       }
     } catch (err: unknown) {
-      console.error("💥 Ошибка при входе:", err);
+      if (import.meta.dev) {
+        console.error("💥 Ошибка при входе:", err);
+      }
       const apiErr = err as ApiError;
       const errorData = apiErr.data as { message?: string } | undefined;
       const errorMessage =
@@ -147,20 +163,15 @@
   watch(
     () => props.visible,
     (visible) => {
-      console.log("📋 Popup visible changed:", visible);
       if (visible) {
-        console.log("🔧 LoginPopup opened, autofilling test data BEFORE resetForm...");
-        
-        // Заполняем ПОСЛЕ nextTick чтобы resetForm успел выполниться
         nextTick(() => {
           resetForm();
-          
-          // 🔧 ТЕСТОВОЕ АВТОЗАПОЛНЕНИЕ - убрать после отладки
-          nextTick(() => {
-            formData.value.email = "test@test.ru";
-            formData.value.password = "1234567890";
-            console.log("✅ Test data filled:", formData.value);
-          });
+          if (import.meta.dev) {
+            nextTick(() => {
+              formData.value.email = "test@test.ru";
+              formData.value.password = "1234567890";
+            });
+          }
         });
       }
     },

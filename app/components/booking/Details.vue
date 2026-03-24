@@ -16,7 +16,9 @@
     } | null;
   }>();
 
-  console.log("bookingDetails", props.bookingDetails);
+  if (import.meta.dev) {
+    console.log("bookingDetails", props.bookingDetails);
+  }
 
   const getWeekday = (date: Date | null): string => {
     if (!date) return "";

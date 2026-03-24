@@ -15,8 +15,10 @@ export const useBookingChangeRoom = (
   const bookingStore = useBookingStore();
   const { put } = useApi();
   const { getErrorMessage } = useApiHelpers();
-  const { createdBooking, selectedRoomType, selectedTariff, changeRoomUuid } =
+  const { createdBooking, selectedRoomType, selectedTariff } =
     storeToRefs(bookingStore);
+
+  const { setChangeRoomUuid } = bookingStore;
 
   const isChangeRoomPopupOpen = ref(false);
   const isChangingRoom = ref(false);
@@ -33,7 +35,7 @@ export const useBookingChangeRoom = (
     changeRoomError.value = null;
     changeRoomSuccess.value = null;
     isChangeRoomPopupOpen.value = false;
-    changeRoomUuid.value = null;
+    setChangeRoomUuid(null);
   };
 
   const confirmChangeRoom = async () => {
@@ -169,7 +171,7 @@ export const useBookingChangeRoom = (
       }
 
       await bookingStore.getBookingByUuid(uuid);
-      changeRoomUuid.value = null;
+      setChangeRoomUuid(null);
       changeRoomSuccess.value = "Номер успешно изменён.";
     } catch (error: unknown) {
       changeRoomError.value = getErrorMessage(error);
