@@ -69,12 +69,6 @@
             type="email"
             placeholder="E-mail"
           />
-          <input
-            v-model.trim="localForm.country"
-            :class="$style.changeContactsInput"
-            type="text"
-            placeholder="Гражданство"
-          />
         </div>
 
         <div :class="$style.changeContactsPopupActions">

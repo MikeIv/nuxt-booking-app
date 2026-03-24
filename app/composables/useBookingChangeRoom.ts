@@ -2,12 +2,11 @@ import { useBookingStore } from "~/stores/booking";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
 
-type ChangeBookingRoomResponse =
-  | true
-  | false
-  | { success?: boolean; message?: string; payload?: unknown }
-  | null
-  | undefined;
+type ChangeBookingRoomResponse = {
+  success: boolean;
+  message?: string;
+  payload?: unknown;
+};
 
 export const useBookingChangeRoom = (
   currentBookingUuid: ComputedRef<string | null>,
@@ -60,19 +59,29 @@ export const useBookingChangeRoom = (
     changeRoomSuccess.value = null;
 
     try {
+      const startAt =
+        typeof createdBooking.value?.order?.start_at === "string"
+          ? createdBooking.value.order.start_at.slice(0, 10)
+          : "";
+      const endAt =
+        typeof createdBooking.value?.order?.end_at === "string"
+          ? createdBooking.value.order.end_at.slice(0, 10)
+          : "";
+      if (!startAt || !endAt) {
+        throw new Error("Не удалось определить даты текущего бронирования.");
+      }
+
       type GuestItem = {
+        id: number | null;
         surname: string;
         name: string;
         middle_name: string | null;
         phone: string;
         email: string;
-        nationality: string;
-        sms_confirmation: boolean;
-        email_subscribe: boolean;
       };
       type RoomItem = {
+        booking_id: number | null;
         room_type_code: string;
-        rate_type_code: string;
         rate_plan_code: string;
         packages: string[];
         adults: number;
@@ -93,17 +102,12 @@ export const useBookingChangeRoom = (
               const guests: GuestItem[] = guestsRaw.map((g) => {
                 const guest = g as Record<string, unknown>;
                 return {
+                  id: pickNumber(guest.id),
                   surname: pickString(guest.surname) ?? "",
                   name: pickString(guest.name) ?? "",
                   middle_name: pickString(guest.middle_name),
                   phone: pickString(guest.phone) ?? "",
                   email: pickString(guest.email) ?? "",
-                  nationality:
-                    pickString(guest.nationality) ??
-                    pickString(createdBooking.value?.order?.nationality) ??
-                    "",
-                  sms_confirmation: pickBoolean(guest.sms_confirmation),
-                  email_subscribe: pickBoolean(guest.email_subscribe),
                 };
               });
 
@@ -120,8 +124,8 @@ export const useBookingChangeRoom = (
                 .filter((pkg): pkg is string => pkg !== null);
 
               return {
+                booking_id: pickNumber(room.id),
                 room_type_code: roomTypeCode,
-                rate_type_code: ratePlanCode,
                 rate_plan_code: ratePlanCode,
                 packages: roomPackages,
                 adults: pickNumber(room.adults) ?? 1,
@@ -132,8 +136,8 @@ export const useBookingChangeRoom = (
             })
           : [
               {
+                booking_id: null,
                 room_type_code: roomTypeCode,
-                rate_type_code: ratePlanCode,
                 rate_plan_code: ratePlanCode,
                 packages: [],
                 adults: 1,
@@ -146,9 +150,8 @@ export const useBookingChangeRoom = (
       const response = (await put<unknown>(
         `/v1/booking/${uuid}`,
         {
-          room_type_code: roomTypeCode,
-          rate_plan_code: ratePlanCode,
-          rate_type_code: ratePlanCode,
+          start_at: startAt,
+          end_at: endAt,
           rooms,
         },
         {
@@ -156,18 +159,10 @@ export const useBookingChangeRoom = (
         },
       )) as ChangeBookingRoomResponse;
 
-      const isSuccess =
-        response === true ||
-        (typeof response === "object" &&
-          response !== null &&
-          (response as { success?: boolean }).success === true);
-
-      if (!isSuccess) {
-        const errMsg =
-          typeof response === "object" && response !== null
-            ? (response as { message?: string }).message
-            : null;
-        throw new Error(errMsg || "Не удалось изменить номер бронирования");
+      if (!response.success) {
+        throw new Error(
+          response.message || "Не удалось изменить номер бронирования",
+        );
       }
 
       await bookingStore.getBookingByUuid(uuid);

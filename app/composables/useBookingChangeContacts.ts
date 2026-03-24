@@ -39,8 +39,7 @@ export const useBookingChangeContacts = (
       !f.name.trim() ||
       !f.surname.trim() ||
       !f.phone.trim() ||
-      !f.email.trim() ||
-      !f.country.trim()
+      !f.email.trim()
     ) {
       return false;
     }
@@ -91,14 +90,92 @@ export const useBookingChangeContacts = (
         middle_name: f.middle_name.trim(),
         email: f.email.trim(),
         phone: f.phone.trim(),
-        country: f.country.trim(),
       };
 
+      const order = createdBooking.value?.order;
+      const startAtRaw =
+        typeof order?.start_at === "string" ? order.start_at : "";
+      const endAtRaw = typeof order?.end_at === "string" ? order.end_at : "";
+      const startAt = startAtRaw.slice(0, 10);
+      const endAt = endAtRaw.slice(0, 10);
+      if (!startAt || !endAt) {
+        throw new Error("Не удалось определить даты текущего бронирования.");
+      }
+      const roomsRaw = Array.isArray(createdBooking.value?.rooms)
+        ? createdBooking.value.rooms
+        : [];
+      if (roomsRaw.length === 0) {
+        throw new Error(
+          "Не удалось определить состав бронирования. Обновите страницу.",
+        );
+      }
+      const rooms = roomsRaw.map((roomRaw, roomIndex) => {
+        const room = roomRaw as Record<string, unknown>;
+        const roomPackages = (Array.isArray(room.packages) ? room.packages : [])
+          .map((pkg) => pickString(pkg))
+          .filter((pkg): pkg is string => pkg !== null);
+        const childrenAges = (
+          Array.isArray(room.children_ages) ? room.children_ages : []
+        )
+          .map((age) => pickNumber(age))
+          .filter((age): age is number => age !== null);
+        const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
+        const guests =
+          guestsRaw.length > 0
+            ? guestsRaw.map((guestRaw, guestIndex) => {
+                const guest = guestRaw as Record<string, unknown>;
+                const shouldUpdateGuest = roomIndex === 0 && guestIndex === 0;
+                return {
+                  id: pickNumber(guest.id),
+                  surname: shouldUpdateGuest
+                    ? contacts.surname
+                    : (pickString(guest.surname) ?? ""),
+                  name: shouldUpdateGuest
+                    ? contacts.name
+                    : (pickString(guest.name) ?? ""),
+                  middle_name: shouldUpdateGuest
+                    ? contacts.middle_name || null
+                    : pickString(guest.middle_name),
+                  phone: shouldUpdateGuest
+                    ? contacts.phone
+                    : (pickString(guest.phone) ?? ""),
+                  email: shouldUpdateGuest
+                    ? contacts.email
+                    : (pickString(guest.email) ?? ""),
+                };
+              })
+            : [
+                {
+                  id: null,
+                  surname: contacts.surname,
+                  name: contacts.name,
+                  middle_name: contacts.middle_name || null,
+                  phone: contacts.phone,
+                  email: contacts.email,
+                },
+              ];
+
+        return {
+          booking_id: pickNumber(room.id),
+          room_type_code: pickString(room.room_type_code) ?? "",
+          rate_plan_code:
+            pickString(room.rate_plan_code) ??
+            pickString(room.rate_type_code) ??
+            "",
+          adults: pickNumber(room.adults) ?? 1,
+          children: pickNumber(room.children) ?? 0,
+          children_ages: childrenAges,
+          packages: roomPackages,
+          guests,
+        };
+      });
+
       const response = (await put<unknown>(
-        "/v1/users/profile",
+        `/v1/booking/${uuid}`,
         {
-          ...contacts,
-          booking_change: { uuid, contacts },
+          start_at: startAt,
+          end_at: endAt,
+          rooms,
         },
         {
           signal: AbortSignal.timeout(15000),
