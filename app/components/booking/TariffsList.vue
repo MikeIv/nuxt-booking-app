@@ -10,6 +10,8 @@
   const emit = defineEmits<{
     (e: "book-tariff", tariff: RoomTariff): void;
   }>();
+  // Временно отключаем блок "Включенные пакеты" до повторного использования.
+  const isPackagesSectionEnabled = false;
 
   const selectedFilter = ref<string | null>(null);
 
@@ -291,7 +293,7 @@
           </div>
 
           <section
-            v-if="tariff.packages?.length"
+            v-if="isPackagesSectionEnabled && tariff.packages?.length"
             :class="$style.tariffPackages"
           >
             <h4 :class="$style.packagesTitle">Включенные пакеты:</h4>

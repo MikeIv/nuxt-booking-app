@@ -1,5 +1,4 @@
 import { useBookingStore } from "~/stores/booking";
-import { useAuthStore } from "~/stores/auth";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
 
@@ -10,19 +9,17 @@ type ChangeBookingDatesResponse = {
 };
 
 type BookingChangeGuest = {
+  id: number | null;
   surname: string;
   name: string;
   middle_name: string | null;
   phone: string;
   email: string;
-  nationality: string;
-  sms_confirmation: boolean;
-  email_subscribe: boolean;
 };
 
 type BookingChangeRoom = {
+  booking_id: number | null;
   room_type_code: string;
-  rate_type_code: string;
   rate_plan_code: string;
   packages: string[];
   adults: number;
@@ -36,7 +33,6 @@ export const useBookingChangeDates = (
   bookingDate: ComputedRef<[Date, Date] | null>,
 ) => {
   const bookingStore = useBookingStore();
-  const authStore = useAuthStore();
   const { put } = useApi();
   const { getErrorMessage } = useApiHelpers();
   const {
@@ -115,8 +111,8 @@ export const useBookingChangeDates = (
     if (!Array.isArray(roomsRaw) || roomsRaw.length === 0) {
       return [
         {
+          booking_id: null,
           room_type_code: roomTypeCode,
-          rate_type_code: ratePlanCode,
           rate_plan_code: ratePlanCode,
           packages: [...chosenPackages],
           adults: 1,
@@ -161,23 +157,18 @@ export const useBookingChangeDates = (
       const guests: BookingChangeGuest[] = guestsRaw.map((guestRaw) => {
         const guest = guestRaw as Record<string, unknown>;
         return {
+          id: pickNumber(guest.id),
           surname: pickString(guest.surname) ?? "",
           name: pickString(guest.name) ?? "",
           middle_name: pickString(guest.middle_name),
           phone: pickString(guest.phone) ?? "",
           email: pickString(guest.email) ?? "",
-          nationality:
-            pickString(guest.nationality) ??
-            pickString(createdBooking.value?.order?.nationality) ??
-            "",
-          sms_confirmation: pickBoolean(guest.sms_confirmation),
-          email_subscribe: pickBoolean(guest.email_subscribe),
         };
       });
 
       return {
+        booking_id: pickNumber(room.id),
         room_type_code: roomType,
-        rate_type_code: roomRateCode,
         rate_plan_code: roomRateCode,
         packages,
         adults: pickNumber(room.adults) ?? 1,
@@ -211,6 +202,7 @@ export const useBookingChangeDates = (
     changeDatesError.value = null;
     changeDatesSuccess.value = null;
     isChangeDatesPopupOpen.value = false;
+    isChangeDatesCalendarOpen.value = false;
   };
 
   const confirmChangeDates = async () => {
@@ -288,66 +280,18 @@ export const useBookingChangeDates = (
       }
 
       const [startDate, endDate] = newDates.value;
-      const profileFallback = buildBookingContactFallback(
-        createdBooking.value,
-        authStore.user,
-      );
       const bookingChangeRooms = buildBookingChangeRooms(
         roomTypeCode,
         ratePlanCode,
         chosenPackages,
       );
-      const totalAdults = bookingChangeRooms.reduce(
-        (sum, r) => sum + r.adults,
-        0,
-      );
-      const totalChildren = bookingChangeRooms.reduce(
-        (sum, r) => sum + r.children,
-        0,
-      );
-      const allChildrenAges = bookingChangeRooms.flatMap(
-        (r) => r.children_ages,
-      );
-      const bookingOrder = createdBooking.value?.order as
-        | Record<string, unknown>
-        | undefined;
-
       const body = {
-        name: (authStore.user?.name ?? "").trim() || profileFallback.name,
-        surname:
-          (authStore.user?.surname ?? "").trim() || profileFallback.surname,
-        middle_name:
-          (authStore.user?.middle_name ?? "").trim() ||
-          profileFallback.middle_name,
-        email: (authStore.user?.email ?? "").trim() || profileFallback.email,
-        phone: (authStore.user?.phone ?? "").trim() || profileFallback.phone,
-        country:
-          (authStore.user?.country ?? "").trim() || profileFallback.country,
-        booking_change: {
-          uuid,
-          start_at: bookingStore.formatDate(startDate),
-          end_at: bookingStore.formatDate(endDate),
-          room_type_code: roomTypeCode,
-          rate_plan_code: ratePlanCode,
-          rate_type_code: ratePlanCode,
-          adults: totalAdults,
-          children: totalChildren,
-          children_ages: allChildrenAges,
-          payment:
-            pickString(bookingOrder?.payment_method) ??
-            pickString(createdBooking.value?.status) ??
-            "",
-          additional: {
-            start_at: null,
-            end_at: null,
-            comment: pickString(bookingOrder?.comment),
-          },
-          packages: chosenPackages,
-          rooms: bookingChangeRooms,
-        },
+        start_at: bookingStore.formatDate(startDate),
+        end_at: bookingStore.formatDate(endDate),
+        rooms: bookingChangeRooms,
       };
 
-      const response = (await put<unknown>("/v1/users/profile", body, {
+      const response = (await put<unknown>(`/v1/booking/${uuid}`, body, {
         signal: AbortSignal.timeout(15000),
       })) as ChangeBookingDatesResponse;
 

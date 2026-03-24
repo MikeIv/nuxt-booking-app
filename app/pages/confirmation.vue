@@ -212,6 +212,20 @@
     confirmChangeRoom,
   } = useBookingChangeRoom(currentBookingUuid);
 
+  const {
+    isChangeServicesPopupOpen,
+    isLoadingPackages,
+    isChangingServices,
+    changeServicesError,
+    changeServicesSuccess,
+    availablePackages,
+    selectedPackageCodes,
+    openChangeServicesPopup,
+    closeChangeServicesPopup,
+    togglePackage,
+    confirmChangeServices,
+  } = useBookingChangeServices(currentBookingUuid);
+
   // --- Watchers ---
   watch(
     () => createdBooking.value,
@@ -421,7 +435,7 @@
               :can-edit-contacts="canEditContacts"
               @change-dates="openChangeDatesPopup"
               @change-room="handleChangeRoom"
-              @change-services="router.push('/services')"
+              @change-services="openChangeServicesPopup"
               @change-contacts="openChangeContactsPopup"
             />
 
@@ -498,6 +512,18 @@
       :change-room-error="changeRoomError"
       @close="closeChangeRoomPopup"
       @confirm="confirmChangeRoom"
+    />
+    <BookingConfirmationChangeServicesPopup
+      :is-open="isChangeServicesPopupOpen"
+      :is-loading-packages="isLoadingPackages"
+      :is-changing-services="isChangingServices"
+      :available-packages="availablePackages"
+      :selected-package-codes="selectedPackageCodes"
+      :change-services-success="changeServicesSuccess"
+      :change-services-error="changeServicesError"
+      @close="closeChangeServicesPopup"
+      @confirm="confirmChangeServices"
+      @toggle-package="togglePackage"
     />
   </main>
 </template>
