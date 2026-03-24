@@ -184,20 +184,16 @@
         }
       }
 
-      // Проверяем, что данные действительно загружены
-      if (!roomTariffs.value || roomTariffs.value.length === 0) {
-        console.warn("⚠️ Данные тарифов не загружены после запроса");
-        if (import.meta?.env?.DEV) {
+      if (import.meta?.env?.DEV) {
+        if (!roomTariffs.value || roomTariffs.value.length === 0) {
+          console.warn("⚠️ Данные тарифов не загружены после запроса");
           console.warn("Проверка searchResults:", searchResults.value);
-        }
-      } else {
-        // Проверяем, что у номеров есть тарифы
-        const roomsWithTariffs = roomTariffs.value.filter(
-          (room) => room.tariffs && room.tariffs.length > 0,
-        );
-        if (roomsWithTariffs.length === 0) {
-          console.warn("⚠️ Номера загружены, но тарифы отсутствуют");
-          if (import.meta?.env?.DEV) {
+        } else {
+          const roomsWithTariffs = roomTariffs.value.filter(
+            (room) => room.tariffs && room.tariffs.length > 0,
+          );
+          if (roomsWithTariffs.length === 0) {
+            console.warn("⚠️ Номера загружены, но тарифы отсутствуют");
             console.warn("Структура номеров:", roomTariffs.value.map(r => ({
               title: r.title,
               tariffs: r.tariffs,

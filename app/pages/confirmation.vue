@@ -293,7 +293,10 @@
     }
 
     try {
-      const response = await fetch(url);
+      const headers: HeadersInit = authStore.token
+        ? { Authorization: `Bearer ${authStore.token}` }
+        : {};
+      const response = await fetch(url, { headers });
       if (!response.ok) throw new Error(`Ошибка загрузки PDF: ${response.statusText}`);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);

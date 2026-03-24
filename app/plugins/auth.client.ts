@@ -31,9 +31,17 @@ export default defineNuxtPlugin(async () => {
     if (response.success && response.payload?.token) {
       authStore.setToken(response.payload.token);
     } else {
+      // API ответил успешно, но refresh не прошёл (нет токена в payload)
       authStore.logout();
     }
-  } catch {
-    authStore.logout();
+  } catch (err: unknown) {
+    // Logout только при явных auth-ошибках (401/403):
+    // токен отозван или сессия истекла на стороне сервера.
+    // Сетевые сбои (таймаут, 500, offline) не должны сбрасывать сессию.
+    const status = (err as { response?: { status?: number } })?.response
+      ?.status;
+    if (status === 401 || status === 403) {
+      authStore.logout();
+    }
   }
 });

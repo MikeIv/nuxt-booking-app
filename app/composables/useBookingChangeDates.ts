@@ -46,6 +46,8 @@ export const useBookingChangeDates = (
     createdBooking,
   } = storeToRefs(bookingStore);
 
+  const { setDate, setSelectedTariff } = bookingStore;
+
   const isChangeDatesPopupOpen = ref(false);
   const isChangingDates = ref(false);
   const changeDatesError = ref<string | null>(null);
@@ -103,49 +105,6 @@ export const useBookingChangeDates = (
       bookingRoomCodes.value.ratePlanCode
     );
   });
-
-  function buildProfileFallback() {
-    const order = createdBooking.value?.order;
-    const firstRoom = Array.isArray(createdBooking.value?.rooms)
-      ? (createdBooking.value.rooms[0] as Record<string, unknown> | undefined)
-      : undefined;
-    const guests = Array.isArray(firstRoom?.guests)
-      ? (firstRoom.guests as Array<Record<string, unknown>>)
-      : [];
-    const mainGuest =
-      guests.find((g) => g.is_main === true) ?? guests[0] ?? null;
-
-    return {
-      name:
-        (typeof order?.name === "string" ? order.name : "") ||
-        (typeof mainGuest?.name === "string" ? mainGuest.name : "") ||
-        authStore.user?.name ||
-        "",
-      surname:
-        (typeof order?.surname === "string" ? order.surname : "") ||
-        (typeof mainGuest?.surname === "string" ? mainGuest.surname : "") ||
-        authStore.user?.surname ||
-        "",
-      middle_name:
-        (typeof mainGuest?.middle_name === "string"
-          ? mainGuest.middle_name
-          : "") ||
-        authStore.user?.middle_name ||
-        "",
-      phone:
-        (typeof mainGuest?.phone === "string" ? mainGuest.phone : "") ||
-        authStore.user?.phone ||
-        "",
-      email:
-        (typeof mainGuest?.email === "string" ? mainGuest.email : "") ||
-        authStore.user?.email ||
-        "",
-      country:
-        (typeof order?.nationality === "string" ? order.nationality : "") ||
-        authStore.user?.country ||
-        "",
-    };
-  }
 
   function buildBookingChangeRooms(
     roomTypeCode: string,
@@ -281,7 +240,7 @@ export const useBookingChangeDates = (
     changeDatesSuccess.value = null;
 
     try {
-      date.value = [...newDates.value] as [Date, Date];
+      setDate([...newDates.value] as [Date, Date]);
 
       const searchResults = await bookingStore.search({
         roomTypeCode,
@@ -290,7 +249,7 @@ export const useBookingChangeDates = (
       if (!searchResults.available) {
         changeDatesError.value =
           "На выбранные даты номер нельзя забронировать.";
-        date.value = prevDate;
+        setDate(prevDate);
         return;
       }
 
@@ -302,11 +261,11 @@ export const useBookingChangeDates = (
       if (!room || !matchingTariff) {
         changeDatesError.value =
           "На выбранные даты выбранный тариф недоступен.";
-        date.value = prevDate;
+        setDate(prevDate);
         return;
       }
 
-      selectedTariffStore.value = matchingTariff;
+      setSelectedTariff(matchingTariff);
 
       let packagesOk = true;
       const chosenPackages = selectedPackages.value;
@@ -323,13 +282,16 @@ export const useBookingChangeDates = (
       if (!packagesOk) {
         changeDatesError.value =
           "На выбранные даты выбранные дополнительные услуги недоступны. Попробуйте другие даты.";
-        selectedTariffStore.value = prevSelectedTariff;
-        date.value = prevDate;
+        setSelectedTariff(prevSelectedTariff);
+        setDate(prevDate);
         return;
       }
 
       const [startDate, endDate] = newDates.value;
-      const profileFallback = buildProfileFallback();
+      const profileFallback = buildBookingContactFallback(
+        createdBooking.value,
+        authStore.user,
+      );
       const bookingChangeRooms = buildBookingChangeRooms(
         roomTypeCode,
         ratePlanCode,
@@ -399,8 +361,8 @@ export const useBookingChangeDates = (
       changeDatesSuccess.value = "Ваша дата изменена и подтверждена.";
     } catch (error: unknown) {
       changeDatesError.value = getErrorMessage(error);
-      selectedTariffStore.value = prevSelectedTariff;
-      date.value = prevDate;
+      setSelectedTariff(prevSelectedTariff);
+      setDate(prevDate);
     } finally {
       isChangingDates.value = false;
     }

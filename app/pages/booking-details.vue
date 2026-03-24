@@ -64,7 +64,9 @@ const handlePrint = () => {
 };
 
 const handleCancelBooking = () => {
-  console.log("Отменить бронирование");
+  if (import.meta.dev) {
+    console.log("Отменить бронирование");
+  }
   // TODO: Реализовать отмену бронирования
 };
 
@@ -78,22 +80,30 @@ const handleBackToCabinet = async () => {
 };
 
 const handleChangeDates = () => {
-  console.log("Изменить даты");
+  if (import.meta.dev) {
+    console.log("Изменить даты");
+  }
   // TODO: Реализовать изменение дат
 };
 
 const handleChangeRoom = () => {
-  console.log("Изменить номер");
+  if (import.meta.dev) {
+    console.log("Изменить номер");
+  }
   // TODO: Реализовать изменение номера
 };
 
 const handleChangeServices = () => {
-  console.log("Изменить услуги");
+  if (import.meta.dev) {
+    console.log("Изменить услуги");
+  }
   // TODO: Реализовать изменение услуг
 };
 
 const handleChangeContacts = () => {
-  console.log("Изменить контакты");
+  if (import.meta.dev) {
+    console.log("Изменить контакты");
+  }
   // TODO: Реализовать изменение контактов
 };
 

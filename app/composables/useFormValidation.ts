@@ -129,7 +129,7 @@ export const useFormValidation = () => {
       pattern: /^\S+@\S+\.\S+$/,
       patternMessage: "Введите корректный email",
     },
-    country: { required: true, maxLength: 255 },
+    country: { maxLength: 255 },
   };
 
   const validateGuestFields = (data: {

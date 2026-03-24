@@ -35,8 +35,6 @@
   const loading = computed(() => authStore.loading);
 
   const validateForm = (): boolean => {
-    console.log("🔄 Валидация формы...");
-
     const validationErrors = validateRegisterForm(
       formData.value,
       agreeTerms.value,
@@ -46,35 +44,34 @@
     apiError.value = null;
     const isValid = Object.keys(validationErrors).length === 0;
 
-    console.log(`✅ Валидация ${isValid ? "пройдена" : "не пройдена"}`);
+    if (import.meta.dev) {
+      console.log(`✅ Валидация ${isValid ? "пройдена" : "не пройдена"}`);
+    }
     return isValid;
   };
 
   const handleRegister = async () => {
-    console.log("🔄 Начало регистрации...");
-
     if (!validateForm()) {
-      console.log("❌ Валидация не пройдена");
       return;
     }
-
-    console.log("✅ Валидация пройдена, данные:", formData.value);
 
     apiError.value = null;
     authStore.setLoading(true);
     authStore.setError(null);
 
     try {
-      console.log("📡 Отправка запроса на регистрацию...");
+      if (import.meta.dev) {
+        console.log("📡 Отправка запроса на регистрацию...");
+      }
 
       const { post } = useApi();
       const response = await post("/v1/auth/register", formData.value);
 
-      console.log("📨 Ответ сервера:", response);
+      if (import.meta.dev) {
+        console.log("📨 Ответ сервера:", response);
+      }
 
       if (response.success && response.payload) {
-        console.log("✅ Успешная регистрация");
-
         authStore.setToken(response.payload.accessToken);
 
         const userData = {
@@ -92,12 +89,16 @@
         emit("registration-success");
         emit("close");
       } else {
-        console.log("❌ Ошибка в ответе:", response.message);
+        if (import.meta.dev) {
+          console.log("❌ Ошибка в ответе:", response.message);
+        }
         apiError.value = response.message || "Ошибка регистрации";
         authStore.setError(apiError.value);
       }
     } catch (err: unknown) {
-      console.error("💥 Ошибка при регистрации:", err);
+      if (import.meta.dev) {
+        console.error("💥 Ошибка при регистрации:", err);
+      }
       const errorMessage =
         err.data?.message || err.message || "Произошла ошибка при регистрации";
       apiError.value = errorMessage;

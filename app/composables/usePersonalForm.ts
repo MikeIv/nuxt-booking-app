@@ -171,9 +171,7 @@ export const usePersonalForm = () => {
     if (result.middle_name) guestErrors.middleName = result.middle_name;
     if (result.phone) guestErrors.phone = result.phone;
     if (result.email) guestErrors.email = result.email;
-    // citizenship is optional in the form — skip country required error
-    if (result.country && (guest.citizenship || "").trim())
-      guestErrors.citizenship = result.country;
+    if (result.country) guestErrors.citizenship = result.country;
 
     return guestErrors;
   };

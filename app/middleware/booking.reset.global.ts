@@ -18,17 +18,22 @@ export default defineNuxtRouteMiddleware((to, from) => {
 
   // При переходе на главную сбрасываем всё состояние бронирования.
   // from.path === "/" исключает повторный сброс при навигации внутри /
+  let didReset = false;
   if (to.path === "/" && from.path !== "/") {
     bookingStore.setLoading(false);
     bookingStore.setServerRequest(false);
     bookingStore.forceReset();
+    didReset = true;
   }
 
-  if (typeof window !== "undefined") {
+  if (!didReset && typeof window !== "undefined") {
     const lastActivity = sessionStorage.getItem("last-activity");
     if (lastActivity && Date.now() - parseInt(lastActivity) > 30 * 60 * 1000) {
       bookingStore.forceReset();
     }
+  }
+
+  if (typeof window !== "undefined") {
     sessionStorage.setItem("last-activity", String(Date.now()));
   }
 });
