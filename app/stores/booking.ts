@@ -639,7 +639,15 @@ export const useBookingStore = defineStore(
         roomTariffs.value = [...list, room];
       }
       selectedRoomType.value = room.room_type_code;
-      selectedTariff.value = room.tariffs?.[0] ?? null;
+      const targetRatePlanCode = selectedTariff.value?.rate_plan_code ?? null;
+      const nextTariff =
+        (targetRatePlanCode
+          ? room.tariffs?.find((t) => t.rate_plan_code === targetRatePlanCode)
+          : null) ??
+        room.tariffs?.[0] ??
+        null;
+
+      selectedTariff.value = nextTariff;
     }
 
     async function search(options?: {
