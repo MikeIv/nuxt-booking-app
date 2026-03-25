@@ -46,15 +46,28 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
   };
 
   // --- Computed ---
-  /** Добавочная цена за повышение комфорта (за ночь): min_price номера повышенного комфорта минус min_price выбранного номера (первая карточка) */
+  /**
+   * Добавочная цена за повышение комфорта (за ночь):
+   * разница между ценой улучшенного номера и выбранного номера для одного и того же тарифного плана.
+   */
   const upgradeAdditionalPerNight = computed(() => {
-    if (!upgradeRoom.value || !selectedRoom.value) return 0;
+    if (!upgradeRoom.value || !selectedRoom.value || !selectedTariff.value)
+      return 0;
+
+    const targetRatePlanCode = selectedTariff.value.rate_plan_code;
+
+    // Берем цену улучшенного номера именно по выбранному тарифу (rate_plan_code),
+    // а не по min_price (который не учитывает выбранный тариф).
+    const upgradeTariff =
+      upgradeRoom.value.tariffs?.find(
+        (t) => t.rate_plan_code === targetRatePlanCode,
+      ) ?? upgradeRoom.value.tariffs?.[0];
+
     const upgradePrice =
-      upgradeRoom.value.min_price ?? upgradeRoom.value.tariffs?.[0]?.price ?? 0;
+      upgradeTariff?.price ?? upgradeRoom.value.min_price ?? 0;
     const basePrice =
-      selectedRoom.value.min_price ??
-      selectedRoom.value.tariffs?.[0]?.price ??
-      0;
+      selectedTariff.value.price ?? selectedRoom.value.min_price ?? 0;
+
     return Math.max(0, Number(upgradePrice) - Number(basePrice));
   });
 

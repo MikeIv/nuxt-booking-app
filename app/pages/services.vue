@@ -166,6 +166,18 @@
   // Реактивная ссылка без DeepReadonly (Vue template checker issue)
   const upgradeRoom = computed<Room | null>(() => upgrade.upgradeRoom.value);
 
+  const upgradeSelectedTariffPrice = computed<number | null>(() => {
+    if (!upgradeRoom.value || !selectedTariff.value) return null;
+
+    const targetRatePlanCode = selectedTariff.value.rate_plan_code;
+    const tariff =
+      upgradeRoom.value.tariffs?.find(
+        (t) => t.rate_plan_code === targetRatePlanCode,
+      ) ?? upgradeRoom.value.tariffs?.[0];
+
+    return tariff?.price ?? upgradeRoom.value.min_price ?? null;
+  });
+
   // --- Табы номеров при мультибронировании ---
   const multiRoomTabIndices = computed(() => {
     const keys = Object.keys(selectedMultiRooms.value);
@@ -337,7 +349,7 @@
             :nights="upgradeNights"
             :guests-count="guestsCount"
             :current-price="selectedTariff?.price ?? null"
-            :upgrade-price="upgradeRoom?.min_price ?? upgradeRoom?.tariffs?.[0]?.price ?? null"
+            :upgrade-price="upgradeSelectedTariffPrice"
             @close="closeCompareModal"
             @upgrade="onUpgradeRoom"
           />
