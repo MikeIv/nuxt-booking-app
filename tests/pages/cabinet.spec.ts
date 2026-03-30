@@ -16,10 +16,12 @@ import {
 // Моки для auth и booking store
 const mockAuthStore = createMockAuthStore();
 const baseBookingStore = createMockBookingStore();
-const mockBookingStore = {
-  ...baseBookingStore,
-  setCurrentBookingDetails: vi.fn(),
+const mockBookingStore = baseBookingStore as ReturnType<
+  typeof createMockBookingStore
+> & {
+  setCurrentBookingDetails: ReturnType<typeof vi.fn>;
 };
+mockBookingStore.setCurrentBookingDetails = vi.fn();
 
 vi.mock("~/stores/auth", () => ({
   useAuthStore: () => mockAuthStore,

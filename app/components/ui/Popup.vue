@@ -3,6 +3,7 @@
     isOpen: boolean;
     title?: string;
     maxWidth?: string;
+    borderRadius?: string;
     showCloseButton?: boolean;
     closeOnClickOutside?: boolean;
     preventBodyScroll?: boolean;
@@ -11,6 +12,7 @@
   const props = withDefaults(defineProps<Props>(), {
     title: "",
     maxWidth: "500px",
+    borderRadius: "",
     showCloseButton: true,
     closeOnClickOutside: true,
     preventBodyScroll: true,
@@ -95,7 +97,7 @@
       <section v-if="isOpen" :class="$style.popupOverlay" data-popup-overlay>
         <div
           :class="$style.popup"
-          :style="{ maxWidth }"
+          :style="{ maxWidth, ...(borderRadius ? { borderRadius } : {}) }"
           data-popup
           role="dialog"
           aria-modal="true"

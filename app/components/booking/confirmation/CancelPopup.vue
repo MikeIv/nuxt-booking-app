@@ -18,35 +18,36 @@
 <template>
   <Popup
     :is-open="isOpen"
-    max-width="560px"
-    :show-close-button="false"
+    max-width="600px"
+    border-radius="var(--a-borderR--dialog)"
+    :show-close-button="true"
     :close-on-click-outside="false"
     @close="emit('close')"
   >
     <template #content>
-      <div :class="$style.cancelPopupContent">
-        <p :class="$style.cancelPopupText">
-          Все данные Вашего бронирования будут удалены
+      <div :class="$style.content">
+        <h2 :class="$style.title">Отмена бронирования</h2>
+        <p :class="$style.text">
+          Вы уверены, что хотите отменить бронирование?
         </p>
-        <div :class="$style.cancelPopupActions">
+        <div :class="$style.divider" />
+        <div :class="$style.actions">
           <Button
-            label="Отменить бронирование"
-            class="btn__bs danger"
-            unstyled
-            :class="$style.whiteBtnText"
-            :disabled="isCancellingBooking"
-            @click="emit('confirm')"
-          />
-          <Button
-            label="Вернуться"
+            label="Нет"
             class="btn__bs dark"
             unstyled
-            :class="$style.whiteBtnText"
             :disabled="isCancellingBooking"
             @click="emit('close')"
           />
+          <Button
+            label="Да, отменить"
+            class="btn__bs dark"
+            unstyled
+            :disabled="isCancellingBooking"
+            @click="emit('confirm')"
+          />
         </div>
-        <p v-if="cancelBookingError" :class="$style.cancelPopupError">
+        <p v-if="cancelBookingError" :class="$style.error">
           {{ cancelBookingError }}
         </p>
       </div>
@@ -57,54 +58,58 @@
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
 
-  .cancelPopupContent {
+  .content {
     display: flex;
     flex-direction: column;
-    gap: rem(20);
-    padding: 0 rem(24);
+    gap: rem(24);
+    padding: 0 rem(30) rem(10);
   }
 
-  .cancelPopupText {
+  .title {
     margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(18);
-    line-height: 1.5;
-    color: var(--a-btnAccentBg);
+    font-family: var(--a-font-heading);
+    font-size: rem(24);
+    font-weight: 700;
+    color: var(--a-text-dark);
     text-align: center;
   }
 
-  .cancelPopupActions {
+  .text {
+    margin: 0;
+    font-family: var(--a-font-heading);
+    font-size: rem(18);
+    font-weight: 400;
+    color: var(--a-text-dark);
+    text-align: center;
+  }
+
+  .divider {
+    width: 100%;
+    height: rem(1);
+    background-color: var(--a-border-dark);
+  }
+
+  .actions {
     display: flex;
     flex-direction: column;
     gap: rem(12);
 
     @media (min-width: #{size.$tablet}) {
       flex-direction: row;
-      justify-content: space-between;
       gap: rem(16);
     }
 
     :global(.btn__bs) {
-      padding-left: rem(20);
-      padding-right: rem(20);
       width: 100%;
-
-      @media (min-width: #{size.$tablet}) {
-        width: auto;
-      }
     }
   }
 
-  .whiteBtnText {
-    color: var(--a-text-white);
-  }
-
-  .cancelPopupError {
+  .error {
     margin: 0;
     font-family: var(--a-font-body);
     font-size: rem(14);
     line-height: 1.4;
-    color: var(--a-btnAccentBg);
+    color: var(--a-text-error);
     text-align: center;
     word-break: break-word;
   }

@@ -55,6 +55,10 @@ const mockBookingStore = {
     roomList: [],
   },
   setLoading: vi.fn(),
+  setServerRequest: vi.fn((value: boolean) => {
+    isServerRequestRef.value = value;
+  }),
+  setGuests: vi.fn(),
   getBookingByUuid: vi.fn(),
   getSessionBookingByUuid: vi.fn().mockReturnValue(null),
   setBookingByUuid: vi.fn(),
@@ -141,6 +145,30 @@ vi.stubGlobal("useBookingChangeDates", () => ({
   openChangeDatesPopup: vi.fn(),
   closeChangeDatesPopup: vi.fn(),
   confirmChangeDates: vi.fn(),
+}));
+
+vi.stubGlobal("useBookingChangeRoom", () => ({
+  isChangeRoomPopupOpen: ref(false),
+  isChangingRoom: ref(false),
+  changeRoomError: ref<string | null>(null),
+  changeRoomSuccess: ref<string | null>(null),
+  openChangeRoomPopup: vi.fn(),
+  closeChangeRoomPopup: vi.fn(),
+  confirmChangeRoom: vi.fn(),
+}));
+
+vi.stubGlobal("useBookingChangeServices", () => ({
+  isChangeServicesPopupOpen: ref(false),
+  isLoadingPackages: ref(false),
+  isChangingServices: ref(false),
+  changeServicesError: ref<string | null>(null),
+  changeServicesSuccess: ref<string | null>(null),
+  availablePackages: ref([]),
+  selectedPackageCodes: ref<string[]>([]),
+  openChangeServicesPopup: vi.fn(),
+  closeChangeServicesPopup: vi.fn(),
+  togglePackage: vi.fn(),
+  confirmChangeServices: vi.fn(),
 }));
 
 // Мок QRCode — чтобы не падать при работе с canvas
@@ -396,7 +424,12 @@ describe("pages/confirmation.vue", () => {
       expect(downloadButton).toBeDefined();
       await downloadButton!.trigger("click");
 
-      expect(fetchMock).toHaveBeenCalledWith(booking.order.pdf);
+      expect(fetchMock).toHaveBeenCalledWith(
+        booking.order.pdf,
+        expect.objectContaining({
+          headers: expect.any(Object),
+        }),
+      );
     });
 
     it("не должен вызывать fetch, если pdfUrl отсутствует", async () => {
