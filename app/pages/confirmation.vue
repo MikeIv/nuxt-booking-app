@@ -175,7 +175,7 @@
     openCancelBookingPopup,
     closeCancelBookingPopup,
     confirmCancelBooking,
-  } = useBookingCancel(currentBookingUuid);
+  } = useBookingCancel(currentBookingUuid, bookingNumber, confirmationEmail);
 
   const {
     isChangeContactsPopupOpen,

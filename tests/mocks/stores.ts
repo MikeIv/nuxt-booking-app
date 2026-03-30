@@ -34,6 +34,9 @@ export function createMockBookingStore() {
     // Доступ к ref на случай точечных проверок в тестах
     _isServerRequestRef: isServerRequestRef,
     setLoading: vi.fn(),
+    setServerRequest: vi.fn((value: boolean) => {
+      isServerRequestRef.value = value;
+    }),
     search: vi.fn().mockResolvedValue({}),
     setSelectedRoomType: vi.fn(),
   };
@@ -57,6 +60,7 @@ export function resetMockBookingStore(
   // Используем сеттер для установки значения
   store.isServerRequest = false;
   store.setLoading.mockClear();
+  store.setServerRequest.mockClear();
   store.search.mockResolvedValue({});
   (store.setSelectedRoomType as ReturnType<typeof vi.fn>).mockClear();
 }

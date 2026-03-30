@@ -3,6 +3,8 @@ import type { ComputedRef } from "vue";
 
 export const useBookingCancel = (
   currentBookingUuid: ComputedRef<string | null>,
+  bookingNumber: ComputedRef<string | null>,
+  confirmationEmail: ComputedRef<string>,
 ) => {
   const bookingStore = useBookingStore();
   const toast = useNotificationToast();
@@ -41,6 +43,8 @@ export const useBookingCancel = (
 
     if (isCancellingBooking.value) return;
     isCancellingBooking.value = true;
+    bookingStore.setLoading(true, "Отменяем бронирование...");
+    bookingStore.setServerRequest(true);
 
     try {
       const response = await post<unknown>(
@@ -54,21 +58,33 @@ export const useBookingCancel = (
       if (response.success) {
         cancelBookingError.value = null;
         closeCancelBookingPopup();
+
+        const number = bookingNumber.value;
+        const email = confirmationEmail.value;
+
         bookingStore.forceReset();
 
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("hasUnauthenticatedBooking");
         }
 
-        await router.push("/");
+        const query: Record<string, string> = {};
+        if (number) query.bookingNumber = number;
+        if (email) query.email = email;
+
+        await router.push({ path: "/cancellation", query });
         return;
       }
 
       cancelBookingError.value =
         response.message ?? "Не удалось отменить бронирование.";
+      bookingStore.setLoading(false);
+      bookingStore.setServerRequest(false);
     } catch (error: unknown) {
       const msg = getErrorMessage(error);
       cancelBookingError.value = msg;
+      bookingStore.setLoading(false);
+      bookingStore.setServerRequest(false);
       toast.add({
         severity: "error",
         summary: "Не удалось отменить бронирование",
