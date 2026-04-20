@@ -307,25 +307,12 @@
   <div ref="datepickerRef" :class="$style.datepickerWithPrices" role="group" aria-label="Выбор дат заезда и выезда">
     <CoreDatePickerInput
       :id="datepickerId"
+      :label="t('datepicker.checkInOut')"
       :display-value="displayValue"
       :placeholder="t('datepicker.selectDates')"
       :is-open="isOpen"
       @toggle="toggleCalendar"
-    >
-      <template #label>
-        {{ t("datepicker.checkInOut") }}
-      </template>
-      <template #display>
-        <time
-          v-if="displayValue && selectedStartDate && selectedEndDate"
-          :class="$style.selectedDates"
-          :datetime="`${formatDateForDateTime(selectedStartDate)}/${formatDateForDateTime(selectedEndDate)}`"
-        >
-          {{ displayValue }}
-        </time>
-        <span v-else :class="$style.placeholder" aria-hidden="true">{{ t("datepicker.selectDates") }}</span>
-      </template>
-    </CoreDatePickerInput>
+    />
 
     <Transition name="calendar">
       <div
@@ -396,30 +383,6 @@
     @media (min-width: #{size.$desktopMedium}) {
       flex: 1;
       min-width: rem(340);
-    }
-  }
-
-  .selectedDates {
-    font-size: rem(12);
-    font-weight: 600;
-    color: var(--a-text-dark);
-    margin-top: rem(12);
-    display: inline-block;
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(14);
-      margin-top: rem(16);
-    }
-  }
-
-  .placeholder {
-    font-size: rem(12);
-    color: var(--a-text-light);
-    margin-top: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(14);
-      margin-top: rem(16);
     }
   }
 

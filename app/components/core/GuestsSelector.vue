@@ -175,16 +175,15 @@ const MAX_ROOMS = 5;
 
 <template>
   <div :class="$style.guestSection">
-    <div :class="$style.inputWrapper" @click="openOverlay">
-      <input
-        readonly
-        :class="$style.customInput"
-        :aria-label="`Гости: ${summaryString}`"
-        :value="summaryString"
-      >
-      <span :class="$style.label">Гости</span>
-      <UIcon name="i-chevron-down" :class="$style.chevronIcon" />
-    </div>
+    <UiSelect
+      :class="$style.uiSelect"
+      variant="booking"
+      label="Гости"
+      :value-text="summaryString"
+      icon-name="i-chevron-down-select"
+      :aria-label="`Гости: ${summaryString}`"
+      @click="openOverlay"
+    />
 
     <Popover
       ref="overlayRef"
@@ -218,13 +217,9 @@ const MAX_ROOMS = 5;
           @delete="deleteRoom(idx)"
         />
 
-        <Button
-          class="btn__bs"
-          :class="$style.applyButton"
-          unstyled
-          @click="applyChanges"
-          >Готово</Button
-        >
+        <UiButton :class="$style.applyButton" variant="dark" size="m" @click="applyChanges">
+          Готово
+        </UiButton>
       </div>
     </Popover>
   </div>
@@ -243,7 +238,6 @@ const MAX_ROOMS = 5;
 
 <style module lang="scss">
   @use "~/assets/styles/variables/resolutions" as size;
-  @use "~/assets/styles/variables/z-index" as z;
 
   .guestSection {
     width: 100%;
@@ -268,55 +262,8 @@ const MAX_ROOMS = 5;
     }
   }
 
-  .inputWrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .uiSelect {
     width: 100%;
-    gap: rem(4);
-    cursor: pointer;
-  }
-
-  .customInput {
-    width: 100%;
-    height: rem(67);
-    padding: rem(22) rem(36) rem(2) rem(12);
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    color: var(--a-black);
-    background-color: var(--a-white);
-    border-radius: rem(16);
-    border: 1px solid var(--a-border-primary);
-    cursor: pointer;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-  }
-
-  .label {
-    position: absolute;
-    top: rem(8);
-    left: rem(8);
-    font-size: rem(12);
-    font-weight: 400;
-    font-family: Inter, sans-serif;
-    color: var(--a-text-light);
-    margin-left: rem(12);
-    z-index: z.z("booking-label");
-    pointer-events: none;
-  }
-
-  .chevronIcon {
-    position: absolute;
-    top: 34%;
-    right: rem(12);
-    width: rem(30);
-    height: rem(30);
-    color: var(--primary);
-    pointer-events: none;
   }
 
   .guestsDropdownContent {
@@ -336,7 +283,7 @@ const MAX_ROOMS = 5;
     justify-content: space-between;
     align-items: center;
     margin-bottom: rem(12);
-    font-family: "Inter", sans-serif;
+    font-family: var(--a-font-body);
   }
 
   .roomsTitle {
@@ -347,19 +294,8 @@ const MAX_ROOMS = 5;
 
   .applyButton {
     width: 100%;
-    height: rem(56);
+    min-height: rem(56);
     margin-top: rem(16);
-    color: var(--a-white);
-    border-radius: rem(10);
-    background-color: var(--a-black);
-    border: none;
-    cursor: pointer;
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    font-weight: 500;
-
-    &:hover {
-      background-color: var(--a-text-dark);
-    }
+    border-radius: var(--a-borderR--btn);
   }
 </style>
