@@ -150,21 +150,20 @@
 <template>
   <section :class="$style.wrapper">
     <div :class="$style.form">
-      <CoreDatePickerWithPrices v-model="date" />
-      <CoreGuestsSelector v-model="guests" />
-      <CorePromoCodeInput v-model="promoCode" />
+      <CoreDatePickerWithPrices v-model="date" :class="$style.dateField" />
+      <CoreGuestsSelector v-model="guests" :class="$style.guestsField" />
+      <CorePromoCodeInput v-model="promoCode" :class="$style.promoField" />
 
-      <UButton
+      <UiButton
         :class="$style.button"
-        color="bgAccent"
-        class="text-white px-4 py-2"
+        variant="danger"
         size="xl"
         :loading="loading"
         :disabled="loading"
         @click="handleSearch"
       >
         {{ loading ? "Поиск..." : "Поиск" }}
-      </UButton>
+      </UiButton>
     </div>
     <div
       v-if="bannersLoading || bookingBanners.length > 0"
@@ -198,74 +197,76 @@
     width: 100%;
     margin: 0 auto;
     margin-bottom: rem(20);
-    padding: 0;
+    padding-inline: var(--a-space-2, 12px);
 
     @media (min-width: #{size.$tablet}) {
       margin-bottom: rem(40);
+      padding-inline: var(--a-space-3, 18px);
     }
 
     @media (min-width: #{size.$desktopMin}) {
-      padding: 0;
+      padding-inline: var(--a-space-4, 24px);
     }
   }
 
   .form {
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: rem(20);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: rem(12);
+    width: 100%;
     max-width: size.$desktop;
     min-width: rem(300);
     min-height: rem(50);
     padding: rem(14) rem(12);
     font-family: var(--a-font-body);
+    // Фон и скругление оставляем из текущего проекта.
     background-color: var(--primary);
     border-radius: var(--a-borderR--x30);
     box-shadow: 0 rem(4) rem(4) var(--a-shadow-color-strong);
 
-    @media (min-width: #{size.$desktopMin}) {
-      padding: rem(32) rem(24);
+    @media (min-width: #{size.$tabletMin}) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: rem(20) rem(16);
     }
 
     @media (min-width: #{size.$desktopMedium}) {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.9fr) minmax(0, 0.9fr) rem(272);
       width: 100%;
-      margin: 0 rem(24);
       padding: rem(32) rem(24);
-      justify-content: flex-start;
-    }
-
-    @media (min-width: #{size.$desktopMax}) {
-      margin: 0;
     }
   }
 
   .button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 100%;
-    height: rem(67);
-    font-family: var(--a-font-body);
-    font-size: rem(24);
-    font-weight: 400;
-    border-radius: var(--a-borderR--input);
-    cursor: pointer;
+    max-width: none;
+    grid-column: 1 / -1;
 
-    @media (min-width: #{size.$desktopMin}) {
-      width: calc(50% - rem(12));
+    @media (min-width: #{size.$tabletMin}) {
+      grid-column: span 1;
     }
 
     @media (min-width: #{size.$desktopMedium}) {
-      flex-grow: 1;
-      width: auto;
-      max-width: rem(280);
+      grid-column: auto;
+    }
+  }
+
+  .dateField,
+  .guestsField,
+  .promoField {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dateField,
+  .guestsField,
+  .promoField {
+    @media (min-width: #{size.$tabletMin}) {
+      grid-column: span 1;
     }
 
-    @media (min-width: #{size.$desktop}) {
-      flex-grow: 1;
-      max-width: rem(280);
+    @media (min-width: #{size.$desktopMedium}) {
+      grid-column: auto;
     }
   }
 
