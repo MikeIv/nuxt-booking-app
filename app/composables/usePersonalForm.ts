@@ -1,6 +1,8 @@
 import type { BookingData } from "~/types/booking";
 import { countriesRu } from "~/utils/countries";
 
+const HH_MM_TIME_REGEX = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+
 export interface GuestData {
   lastName: string;
   firstName: string;
@@ -248,18 +250,19 @@ export const usePersonalForm = () => {
     return isValid;
   };
 
-  const formatDateTime = (date: Date, time: string): string | null => {
+  const formatDateTime = (
+    date: Date,
+    time: string,
+    formatDate: (date: Date) => string,
+  ): string | null => {
     if (!date || !time) return null;
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
-    if (!timeRegex.test(time)) {
+    if (!HH_MM_TIME_REGEX.test(time)) {
       console.warn(`Неверный формат времени: ${time}. Ожидается HH:mm.`);
       return null;
     }
-    const [hours, minutes] = time.split(":").map(Number);
-    if (hours === undefined || minutes === undefined) return null;
-    const dateTime = new Date(date);
-    dateTime.setHours(hours, minutes, 0, 0);
-    return dateTime.toISOString();
+    const formattedDate = formatDate(date);
+    if (!formattedDate) return null;
+    return `${formattedDate}T${time}:00Z`;
   };
 
   const prepareBookingData = (
@@ -315,10 +318,10 @@ export const usePersonalForm = () => {
       children_ages: childrenAges,
       additional: {
         start_at: formData.checkInTime
-          ? formatDateTime(date[0], formData.checkInTime)
+          ? formatDateTime(date[0], formData.checkInTime, formatDate)
           : null,
         end_at: formData.checkOutTime
-          ? formatDateTime(date[1], formData.checkOutTime)
+          ? formatDateTime(date[1], formData.checkOutTime, formatDate)
           : null,
         comment: formData.comment || null,
       },
@@ -450,10 +453,10 @@ export const usePersonalForm = () => {
       children_ages: allChildrenAges,
       additional: {
         start_at: formData.checkInTime
-          ? formatDateTime(date[0], formData.checkInTime)
+          ? formatDateTime(date[0], formData.checkInTime, formatDate)
           : null,
         end_at: formData.checkOutTime
-          ? formatDateTime(date[1], formData.checkOutTime)
+          ? formatDateTime(date[1], formData.checkOutTime, formatDate)
           : null,
         comment: formData.comment || null,
       },
