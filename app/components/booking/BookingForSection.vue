@@ -18,10 +18,9 @@ const forSelf = computed({
 
 <template>
   <section :class="$style.personalBlock">
-    <NuxtLink to="/rooms/tariff" :class="$style.return"
-      >Назад к тарифам</NuxtLink
+    <NuxtLink to="/services" :class="$style.return"
+      >Назад к услугам</NuxtLink
     >
-    <h2 :class="$style.personalTitle">Введите свои данные</h2>
     <div :class="$style.wrapper">
       <h3 :class="$style.sectionHeader">Я бронирую</h3>
       <div :class="$style.btnBlock">
@@ -85,19 +84,12 @@ const forSelf = computed({
   }
 }
 
-.personalTitle {
-  margin-bottom: rem(24);
-  text-align: center;
-  font-family: var(--a-font-heading);
-  font-size: rem(28);
-  font-weight: 600;
-  color: var(--a-text-dark);
-  text-transform: uppercase;
-}
-
 .wrapper {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: rem(24);
+  row-gap: rem(12);
   width: 100%;
   padding: 0 0 rem(25) 0;
   border-bottom: rem(1) solid var(--a-border-dark);
@@ -108,20 +100,19 @@ const forSelf = computed({
   font-size: rem(24);
   font-weight: 400;
   color: var(--a-text-dark);
-  margin-bottom: rem(16);
+  margin: 0;
 }
 
 .btnBlock {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: rem(24);
-  margin-bottom: rem(25);
-  @media (min-width: #{size.$tablet}) {
-    flex-direction: row;
-  }
+  margin: 0;
 }
 
 .personalNote {
+  width: 100%;
+  margin-top: rem(8);
   font-family: var(--a-font-body);
   font-size: rem(16);
   font-weight: 400;
