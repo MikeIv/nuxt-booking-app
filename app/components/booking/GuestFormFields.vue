@@ -1,5 +1,7 @@
 <script setup lang="ts">
   import type { GuestData, FormField } from "~/composables/usePersonalForm";
+  import UiInput from "~/components/ui/Input.vue";
+  import UiOptionSelect from "~/components/ui/OptionSelect.vue";
   import { countriesRu } from "~/utils/countries";
   import { usePhoneMask } from "~/composables/usePhoneMask";
 
@@ -84,51 +86,43 @@
       :key="field.key"
       :class="$style.inputItem"
     >
-      <BookingSelect
+      <UiOptionSelect
         v-if="field.key === 'citizenship'"
         :model-value="guest[field.key] ?? ''"
         :options="countriesRu"
         :placeholder="field.placeholder"
-        :error="errors[field.key]"
-        :searchable="true"
-        search-placeholder="Поиск страны..."
-        :class="[
-          $style.inputSelect,
-          errors[field.key] && $style.inputError,
-        ]"
+        :invalid="Boolean(errors[field.key])"
+        :aria-label="field.placeholder"
+        variant="personal"
         @update:model-value="updateField(field.key, $event)"
       />
-      <InputText
+      <UiInput
         v-else-if="field.key !== 'phone'"
         :model-value="guest[field.key] ?? ''"
         :type="field.type"
         :placeholder="field.placeholder"
-        :class="[
-          $style.input,
-          errors[field.key] && $style.inputError,
-        ]"
-        unstyled
+        variant="personal"
+        :invalid="Boolean(errors[field.key])"
         @update:model-value="updateField(field.key, $event)"
       />
-      <input
+      <UiInput
         v-else
-        :value="getDisplayValue(guest.phone)"
+        :model-value="getDisplayValue(guest.phone)"
         type="tel"
         inputmode="numeric"
         autocomplete="tel"
         :placeholder="field.placeholder"
-        :class="[
-          $style.input,
-          errors[field.key] && $style.inputError,
-        ]"
-        @beforeinput="onPhoneBeforeInput"
+        variant="personal"
+        :invalid="Boolean(errors[field.key])"
+        @update:model-value="updatePhone"
+        @before-input="onPhoneBeforeInput"
         @keydown="onPhoneKeydown"
         @paste="onPhonePaste"
         @focus="onPhoneFocus"
         @blur="onPhoneBlur"
       />
       <Message
-        v-if="errors[field.key] && field.key !== 'citizenship'"
+        v-if="errors[field.key]"
         severity="error"
         size="small"
         variant="simple"
@@ -152,6 +146,7 @@
     @media (min-width: #{size.$desktopMedium}) {
       flex-direction: row;
       flex-wrap: wrap;
+      justify-content: space-between;
     }
   }
 
@@ -195,47 +190,12 @@
   .inputItem {
     display: flex;
     flex-direction: column;
+    position: relative;
     width: 100%;
     @media (min-width: #{size.$desktopMedium}) {
-      width: 45%;
-    }
-  }
-
-  .input {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: rem(54);
-    padding: 0 rem(16);
-    color: var(--a-text-dark);
-    border: rem(1) solid var(--a-border-light);
-    border-radius: var(--a-borderR--input);
-    transition:
-      border-color 0.3s ease,
-      box-shadow 0.3s ease;
-    font-family: var(--a-font-body);
-    font-size: rem(16);
-    &:focus {
-      outline: none;
-      border-color: var(--a-border-primary);
-      box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
-    }
-    &::placeholder {
-      color: var(--a-text-light);
-    }
-  }
-
-  .inputSelect {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .inputError {
-    border-color: var(--a-border-accent) !important;
-    &:focus {
-      border-color: var(--a-border-accent);
-      box-shadow: 0 0 0 2px rgba(160, 37, 37, 0.1);
+      flex: 1 1 calc(50% - rem(12));
+      min-width: 0;
+      width: auto;
     }
   }
 

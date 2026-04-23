@@ -3,17 +3,19 @@
     defineProps<{
       label?: string;
       valueText?: string;
+      placeholder?: string;
       disabled?: boolean;
       invalid?: boolean;
       iconName?: string;
       open?: boolean;
       ariaLabel?: string;
-      variant?: "default" | "booking";
+      variant?: "default" | "booking" | "personal";
       rotateIconOnOpen?: boolean;
     }>(),
     {
       label: "",
       valueText: "",
+      placeholder: "",
       disabled: false,
       invalid: false,
       iconName: "i-chevron-down",
@@ -29,6 +31,12 @@
   }>();
 
   const attrs = useAttrs();
+  const resolvedValueText = computed(() =>
+    props.valueText || props.placeholder || "",
+  );
+  const isPlaceholder = computed(
+    () => !props.valueText && Boolean(props.placeholder),
+  );
 </script>
 
 <template>
@@ -48,7 +56,9 @@
   >
     <span :class="$style.content">
       <span v-if="props.label" :class="$style.label">{{ props.label }}</span>
-      <span :class="$style.value">{{ props.valueText }}</span>
+      <span :class="[$style.value, isPlaceholder && $style.valuePlaceholder]">{{
+        resolvedValueText
+      }}</span>
     </span>
     <UIcon
       :name="props.iconName"
@@ -116,6 +126,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .valuePlaceholder {
+    color: var(--a-text-dark);
+    opacity: 0.3;
   }
 
   .icon {
@@ -186,6 +201,37 @@
     }
   }
 
+  .personal {
+    min-height: rem(58);
+    padding: 0 rem(32);
+    border-color: var(--a-border-dark);
+    border-radius: rem(22);
+    box-shadow: var(--a-shadow-summary);
+
+    .value {
+      margin-top: 0;
+      font-family: var(--a-font-body);
+      font-size: rem(16);
+      line-height: 1.2;
+      color: var(--a-text-dark);
+    }
+
+    .icon {
+      color: var(--a-text-dark);
+      opacity: 0.3;
+    }
+
+    .iconChevronSelect {
+      width: rem(20);
+      height: rem(9);
+      transform: translateY(rem(1));
+    }
+  }
+
+  .root.personal.invalid {
+    border-color: var(--a-border-accent);
+  }
+
   .root.booking:hover:not(.disabled) {
     .icon:not(.iconCalendar) {
       color: #000;
@@ -193,7 +239,7 @@
   }
 
   .root:hover:not(.disabled) {
-    .icon:not(.iconCalendar) {
+    .icon {
       color: var(--a-text-primary);
     }
   }

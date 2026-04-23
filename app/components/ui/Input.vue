@@ -19,7 +19,7 @@
         | "numeric"
         | "decimal"
         | "search";
-      variant?: "default" | "booking";
+      variant?: "default" | "booking" | "personal";
     }>(),
     {
       modelValue: "",
@@ -40,11 +40,26 @@
     "update:modelValue": [value: string];
     blur: [event: FocusEvent];
     focus: [event: FocusEvent];
+    "before-input": [event: InputEvent];
+    keydown: [event: KeyboardEvent];
+    paste: [event: ClipboardEvent];
   }>();
 
   const onInput = (event: Event) => {
     const target = event.target as HTMLInputElement;
     emit("update:modelValue", target.value);
+  };
+
+  const onBeforeInput = (event: Event) => {
+    emit("before-input", event as InputEvent);
+  };
+
+  const onKeydown = (event: Event) => {
+    emit("keydown", event as KeyboardEvent);
+  };
+
+  const onPaste = (event: Event) => {
+    emit("paste", event as ClipboardEvent);
   };
 
   const attrs = useAttrs();
@@ -72,6 +87,9 @@
       :class="$style.input"
       v-bind="attrs"
       @input="onInput"
+      @beforeinput="onBeforeInput"
+      @keydown="onKeydown"
+      @paste="onPaste"
       @blur="emit('blur', $event)"
       @focus="emit('focus', $event)"
     >
@@ -146,6 +164,29 @@
       line-height: var(--ds-typo-line-select, 1);
       font-weight: var(--ds-typo-weight-select, 400);
       color: #000;
+    }
+  }
+
+  .personal {
+    min-height: rem(58);
+    padding: 0 rem(32);
+    justify-content: center;
+    border-color: var(--a-border-dark);
+    border-radius: rem(22);
+    box-shadow: var(--a-shadow-summary);
+
+    .input {
+      margin-top: 0;
+      width: 100%;
+      font-family: var(--a-font-body);
+      font-size: rem(16);
+      line-height: 1.2;
+      color: var(--a-text-dark);
+    }
+
+    .input::placeholder {
+      color: var(--a-text-dark);
+      opacity: 0.3;
     }
   }
 
