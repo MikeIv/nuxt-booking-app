@@ -38,6 +38,14 @@ export interface FormField {
   required: boolean;
 }
 
+type AdditionalFieldKey = "checkInTime" | "checkOutTime" | "comment";
+
+export interface AdditionalField {
+  key: AdditionalFieldKey;
+  placeholder: string;
+  type: "text" | "select" | "textarea";
+}
+
 export interface FormErrors {
   mainGuest: Partial<GuestData>;
   additionalGuests: Array<Partial<GuestData>>;
@@ -119,21 +127,21 @@ export const usePersonalForm = () => {
     },
   ];
 
-  const additionalFields = [
+  const additionalFields: AdditionalField[] = [
     {
-      key: "checkInTime" as const,
+      key: "checkInTime",
       placeholder: "Время заезда",
-      type: "text",
+      type: "select",
     },
     {
-      key: "checkOutTime" as const,
+      key: "checkOutTime",
       placeholder: "Время выезда",
-      type: "text",
+      type: "select",
     },
     {
-      key: "comment" as const,
+      key: "comment",
       placeholder: "Комментарий",
-      type: "text",
+      type: "textarea",
     },
   ];
 

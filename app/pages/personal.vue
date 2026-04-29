@@ -6,6 +6,7 @@ import {
   type PersonalFormData,
   type FormErrors,
   type GuestData,
+  type AdditionalField,
 } from "~/composables/usePersonalForm";
 import { useNotificationToast } from "~/composables/useToast";
 import { usePersonalPageLogic } from "~/composables/usePersonalPageLogic";
@@ -49,6 +50,7 @@ const {
 const { fillFormWithUserData } = usePersonalPageLogic();
 
 const formData = reactive<PersonalFormData>(createFormData());
+const additionalFieldsTyped = computed<AdditionalField[]>(() => additionalFields);
 
 const errors = reactive<FormErrors>({
   mainGuest: {},
@@ -195,7 +197,7 @@ const canAddRoomAdditionalGuest = (roomIdx: number): boolean => {
 // Добавление дополнительного гостя для номера
 const addRoomAdditionalGuest = (roomIdx: number) => {
   if (!canAddRoomAdditionalGuest(roomIdx)) return;
-  
+
   if (!formData.roomGuests[roomIdx]) {
     formData.roomGuests[roomIdx] = createRoomGuestData();
   }
@@ -577,7 +579,7 @@ onMounted(async () => {
               @update:form-data="updateFormData"
             />
             <BookingAdditionalFieldsSection
-              :fields="additionalFields"
+              :fields="additionalFieldsTyped"
               :form-data="{
                 checkInTime: formData.checkInTime,
                 checkOutTime: formData.checkOutTime,
