@@ -49,17 +49,17 @@
     if (!selectedRoomType.value || !roomTariffs.value?.length) {
       return roomTariffs.value || [];
     }
-    
+
     // Фильтруем номера по выбранному типу
     const filtered = roomTariffs.value.filter(
       (room) => room.room_type_code === selectedRoomType.value,
     );
-    
+
     // Если нашли номера с тарифами, возвращаем их
     if (filtered.length > 0) {
       return filtered;
     }
-    
+
     // Если не нашли, возвращаем все номера (на случай, если код не совпадает)
     return roomTariffs.value;
   });
@@ -158,10 +158,10 @@
     try {
       loading.value = true;
       const result = await bookingStore.search({ roomTypeCode: selectedRoomType.value });
-      
+
       // Ждем обновления DOM после загрузки данных
       await nextTick();
-      
+
       if (import.meta?.env?.DEV) {
         console.log("📥 Результат загрузки тарифов:", {
           result,
@@ -170,7 +170,7 @@
           searchResults: searchResults.value,
           normalizedRooms: result?.rooms,
         });
-        
+
         // Детальная проверка структуры данных
         if (roomTariffs.value && roomTariffs.value.length > 0) {
           roomTariffs.value.forEach((room, idx) => {
@@ -260,6 +260,7 @@
             <!--            />-->
             <BookingTariffsList
               :tariffs="room.tariffs || []"
+              :tariff-groups="searchResults?.tariffGroups"
               @book-tariff="handleTariff"
             />
             <BookingRoomPopup

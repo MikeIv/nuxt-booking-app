@@ -5,6 +5,7 @@ import type {
   ViewResource,
   BalconyResource,
   TariffPackage,
+  TariffGroup,
   RoomAmenity,
   RoomBed,
   RoomView,
@@ -23,6 +24,8 @@ interface SearchResponse {
   packages: PackageResource[];
   filters: SearchFilters;
   groupedByBed: boolean;
+  /** Группы тарифов для фильтрации (при grouped: true в запросе) */
+  tariffGroups?: TariffGroup[];
   rawPayload?: unknown;
 }
 
@@ -344,11 +347,13 @@ export interface ApiUngroupedPayload {
   rooms: ApiRoomType[];
   packages?: PackageResource[];
   filters: SearchFilters;
+  tariff_groups?: TariffGroup[];
 }
 
 export interface ApiRoomTariffPayload {
   room: ApiRoomType;
   packages?: PackageResource[];
+  tariff_groups?: TariffGroup[];
 }
 
 export type ApiSearchPayload =

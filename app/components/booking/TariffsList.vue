@@ -1,9 +1,10 @@
 <script setup lang="ts">
   // @ts-nocheck - Vue автоматически преобразует kebab-case в camelCase в шаблонах
-  import type { RoomTariff } from "~/types/room";
+  import type { RoomTariff, TariffGroup } from "~/types/room";
 
   interface Props {
     tariffs: RoomTariff[];
+    tariffGroups?: TariffGroup[];
   }
 
   const props = defineProps<Props>();
@@ -13,7 +14,30 @@
   // Временно отключаем блок "Включенные пакеты" до повторного использования.
   const isPackagesSectionEnabled = false;
 
-  const selectedFilter = ref<string | null>(null);
+  const selectedFilter = ref<number | null>(null);
+
+  const availableGroups = computed<TariffGroup[]>(() => {
+    if (props.tariffGroups?.length) {
+      return props.tariffGroups;
+    }
+
+    const groups = new Map<number, TariffGroup>();
+    for (const tariff of props.tariffs) {
+      if (tariff.group) {
+        groups.set(tariff.group.id, tariff.group);
+      }
+    }
+    return Array.from(groups.values());
+  });
+
+  watch(availableGroups, (groups) => {
+    if (
+      selectedFilter.value !== null &&
+      !groups.some((group) => group.id === selectedFilter.value)
+    ) {
+      selectedFilter.value = null;
+    }
+  });
 
   /**
    * Состояние открытия/закрытия информационных блоков для каждого тарифа
@@ -45,24 +69,14 @@
   };
 
   /**
-   * Определяет тип тарифа на основе его свойств
-   * Предоплатный тариф обычно имеет price_for_register
-   */
-  const getTariffType = (tariff: RoomTariff): "basic" | "prepaid" => {
-    // Если есть price_for_register, считаем тариф предоплатным
-    // В противном случае - базовым
-    return tariff.price_for_register !== undefined ? "prepaid" : "basic";
-  };
-
-  /**
-   * Отфильтрованные тарифы на основе выбранного фильтра
+   * Отфильтрованные тарифы на основе выбранной группы
    */
   const filteredTariffs = computed(() => {
     if (selectedFilter.value === null) {
       return props.tariffs;
     }
     return props.tariffs.filter(
-      (tariff) => getTariffType(tariff) === selectedFilter.value,
+      (tariff) => tariff.group?.id === selectedFilter.value,
     );
   });
 
@@ -94,8 +108,8 @@
     loadingTariffs.value = {};
   });
 
-  const handleFilterClick = (filterType: string | null) => {
-    selectedFilter.value = filterType;
+  const handleFilterClick = (groupId: number | null) => {
+    selectedFilter.value = groupId;
   };
 </script>
 
@@ -103,6 +117,7 @@
   <section :class="$style.tariffsSection">
     <h2 :class="$style.tariffsTitle">Тарифы к номеру</h2>
     <nav
+      v-if="availableGroups.length > 0"
       :class="$style.tarifsFiltersBlock"
       role="group"
       aria-label="Фильтры тарифов"
@@ -118,24 +133,16 @@
         Все тарифы
       </button>
       <button
+        v-for="group in availableGroups"
+        :key="group.id"
         :class="[
           $style.filterItem,
-          { [$style.filterItemActive]: selectedFilter === 'basic' },
+          { [$style.filterItemActive]: selectedFilter === group.id },
         ]"
-        :aria-pressed="selectedFilter === 'basic'"
-        @click="handleFilterClick('basic')"
+        :aria-pressed="selectedFilter === group.id"
+        @click="handleFilterClick(group.id)"
       >
-        Базовый
-      </button>
-      <button
-        :class="[
-          $style.filterItem,
-          { [$style.filterItemActive]: selectedFilter === 'prepaid' },
-        ]"
-        :aria-pressed="selectedFilter === 'prepaid'"
-        @click="handleFilterClick('prepaid')"
-      >
-        Предоплатный
+        {{ group.title }}
       </button>
     </nav>
     <div
@@ -596,7 +603,7 @@
     @media (min-width: #{size.$desktopMin}) {
       width: fit-content;
       margin-left: 0;
-      
+
       // Скрываем цену в footer на desktop (она отображается в header)
       .tariffPrice,
       .tariffPriceLabel {

@@ -4,7 +4,12 @@
 .nitro
 .cache
 dist
+# Cursor / agent (локально, не в репозитории)
 .cursor
+.cursorrules
+AGENTS.md
+CURSOR_RULES_EXPORT.md
+.planning
 
 # Node
 node_modules
@@ -20,9 +25,6 @@ yarn-error.log
 # IDE
 .idea
 .vscode
-.cursor
-.cursorrules
-CURSOR_RULES_EXPORT.md
 *.swp
 *.swo
 *~

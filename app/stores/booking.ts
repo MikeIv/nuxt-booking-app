@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import type { StateTree } from "pinia";
 import type { PersistenceOptions } from "pinia-plugin-persistedstate";
-import type { PackageResource, Room, RoomTariff } from "~/types/room";
+import type {
+  PackageResource,
+  Room,
+  RoomTariff,
+  TariffGroup,
+} from "~/types/room";
 import type {
   SearchResponse,
   BookingData,
@@ -302,6 +307,9 @@ export const useBookingStore = defineStore(
           description:
             tariff.description ?? tariff.cancellation_description ?? null,
           cancellation_popover,
+          group: tariff.group
+            ? { id: tariff.group.id, title: tariff.group.title }
+            : undefined,
         };
       });
     };
@@ -403,6 +411,19 @@ export const useBookingStore = defineStore(
       beds: [],
       views: [],
       balconies: [],
+    };
+
+    const extractTariffGroups = (
+      payload: ApiSearchPayload,
+    ): TariffGroup[] | undefined => {
+      if (!payload || Array.isArray(payload) || !("tariff_groups" in payload)) {
+        return undefined;
+      }
+
+      const groups = payload.tariff_groups;
+      if (!groups?.length) return undefined;
+
+      return groups.map(({ id, title }) => ({ id, title }));
     };
 
     /**
@@ -518,6 +539,7 @@ export const useBookingStore = defineStore(
           packages: p.packages ?? [],
           filters: EMPTY_FILTERS,
           groupedByBed: false,
+          tariffGroups: extractTariffGroups(payload),
           rawPayload: payload,
         };
       }
@@ -670,6 +692,9 @@ export const useBookingStore = defineStore(
       try {
         const { post } = useApi();
         const { searchData, groupedByBed } = prepareSearchData(roomTypeCode);
+        if (roomTypeCode) {
+          searchData.grouped = true;
+        }
         const multiBookingMode = (searchData.guests as unknown[])?.length > 1;
         // При мультибронировании бэкенд может обрабатывать запрос дольше — увеличиваем таймаут
         const searchTimeoutMs = multiBookingMode ? 35000 : 15000;

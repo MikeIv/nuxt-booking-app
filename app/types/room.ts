@@ -16,6 +16,11 @@ export interface TariffPackage {
   [key: string]: unknown;
 }
 
+export interface TariffGroup {
+  id: number;
+  title: string;
+}
+
 export interface RoomTariff {
   rate_plan_code: string;
   title: string;
@@ -32,6 +37,8 @@ export interface RoomTariff {
     title?: string;
     description?: string;
   };
+  /** Группа тарифа (Базовый, Предоплатный и т.д.) */
+  group?: TariffGroup;
 }
 
 export interface RoomBed {
