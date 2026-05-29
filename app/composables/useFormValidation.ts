@@ -1,5 +1,25 @@
 import type { RegisterData } from "~/types/auth";
 
+const REQUIRED_FIELD_MESSAGE = "Обязательное поле";
+
+const requiredTextField = { required: true, maxLength: 255 } as const;
+
+const phoneFieldRule = {
+  required: true,
+  maxLength: 32,
+  pattern: /^[+]?[0-9\s\-()]{10,}$/,
+  patternMessage: "Введите корректный телефон",
+} as const;
+
+const emailFieldRule = {
+  required: true,
+  maxLength: 255,
+  pattern: /^\S+@\S+\.\S+$/,
+  patternMessage: "Введите корректный email",
+} as const;
+
+const countryFieldRule = { required: true, maxLength: 255 } as const;
+
 export interface ValidationRules<FormData = unknown> {
   [key: string]: {
     required?: boolean;
@@ -14,44 +34,34 @@ export interface ValidationErrors {
   [key: string]: string;
 }
 
+const isRequiredValueEmpty = (value: unknown): boolean =>
+  value == null || (typeof value === "string" && !value.trim());
+
+const FIELD_LABELS: Record<string, string> = {
+  surname: "Фамилия",
+  name: "Имя",
+  middle_name: "Отчество",
+  phone: "Телефон",
+  email: "Почта",
+  country: "Страна",
+  password: "Пароль",
+  password_confirmation: "Подтверждение пароля",
+};
+
+const getFieldLabel = (fieldName: string): string =>
+  FIELD_LABELS[fieldName] ?? fieldName;
+
 export const useFormValidation = () => {
   const registerFormRules: ValidationRules<RegisterData> = {
-    surname: {
-      required: true,
-      maxLength: 255,
-    },
-    name: {
-      required: true,
-      maxLength: 255,
-    },
-    middle_name: {
-      maxLength: 255,
-    },
-    phone: {
-      required: true,
-      maxLength: 32,
-      pattern: /^[+]?[0-9\s\-()]{10,}$/,
-      patternMessage: "Введите корректный телефон",
-    },
-    email: {
-      required: true,
-      maxLength: 255,
-      pattern: /^\S+@\S+\.\S+$/,
-      patternMessage: "Введите корректный email",
-    },
-    country: {
-      required: true,
-      maxLength: 255,
-    },
+    surname: requiredTextField,
+    name: requiredTextField,
+    middle_name: { maxLength: 255 },
+    phone: phoneFieldRule,
+    email: emailFieldRule,
+    country: countryFieldRule,
     password: {
       required: true,
       custom: (value: unknown) => {
-        if (
-          value == null ||
-          (typeof value === "string" && value.trim().length === 0)
-        ) {
-          return "Пароль обязателен";
-        }
         if (typeof value === "string" && value.length < 3) {
           return "Пароль должен содержать минимум 3 символов";
         }
@@ -62,12 +72,21 @@ export const useFormValidation = () => {
       required: true,
       custom: (value: unknown, formData?: RegisterData) => {
         const valueStr = typeof value === "string" ? value : "";
-        if (valueStr.trim().length === 0) return "Подтвердите пароль";
-        if (formData && valueStr !== formData.password)
+        if (formData && valueStr !== formData.password) {
           return "Пароли не совпадают";
+        }
         return null;
       },
     },
+  };
+
+  const guestFieldsRules: ValidationRules = {
+    surname: requiredTextField,
+    name: requiredTextField,
+    middle_name: { maxLength: 255 },
+    phone: phoneFieldRule,
+    email: emailFieldRule,
+    country: countryFieldRule,
   };
 
   const validateField = <FormData = unknown>(
@@ -79,11 +98,8 @@ export const useFormValidation = () => {
     const rule = rules[fieldName];
     if (!rule) return null;
 
-    if (
-      rule.required &&
-      (!value || (typeof value === "string" && !value.trim()))
-    ) {
-      return getFieldLabel(fieldName) + " обязателен";
+    if (rule.required && isRequiredValueEmpty(value)) {
+      return REQUIRED_FIELD_MESSAGE;
     }
 
     if (
@@ -112,24 +128,17 @@ export const useFormValidation = () => {
     return null;
   };
 
-  /** Поля гостя без пароля — для валидации формы бронирования */
-  const guestFieldsRules: ValidationRules = {
-    surname: { required: true, maxLength: 255 },
-    name: { required: true, maxLength: 255 },
-    middle_name: { maxLength: 255 },
-    phone: {
-      required: true,
-      maxLength: 32,
-      pattern: /^[+]?[0-9\s\-()]{10,}$/,
-      patternMessage: "Введите корректный телефон",
-    },
-    email: {
-      required: true,
-      maxLength: 255,
-      pattern: /^\S+@\S+\.\S+$/,
-      patternMessage: "Введите корректный email",
-    },
-    country: { maxLength: 255 },
+  const collectValidationErrors = <FormData extends Record<string, unknown>>(
+    rules: ValidationRules<FormData>,
+    data: FormData,
+    formData?: FormData,
+  ): ValidationErrors => {
+    const errors: ValidationErrors = {};
+    for (const fieldName of Object.keys(rules)) {
+      const error = validateField(fieldName, data[fieldName], rules, formData);
+      if (error) errors[fieldName] = error;
+    }
+    return errors;
   };
 
   const validateGuestFields = (data: {
@@ -139,57 +148,23 @@ export const useFormValidation = () => {
     phone: string;
     email: string;
     country: string;
-  }): ValidationErrors => {
-    const errors: ValidationErrors = {};
-    Object.keys(guestFieldsRules).forEach((fieldName) => {
-      const error = validateField(
-        fieldName,
-        data[fieldName as keyof typeof data],
-        guestFieldsRules,
-      );
-      if (error) errors[fieldName] = error;
-    });
-    return errors;
-  };
+  }): ValidationErrors => collectValidationErrors(guestFieldsRules, data);
 
   const validateRegisterForm = (
     formData: RegisterData,
     agreeTerms: boolean = false,
   ): ValidationErrors => {
-    const errors: ValidationErrors = {};
-
-    Object.keys(registerFormRules).forEach((fieldName) => {
-      const error = validateField(
-        fieldName,
-        formData[fieldName as keyof RegisterData],
-        registerFormRules,
-        formData,
-      );
-      if (error) {
-        errors[fieldName] = error;
-      }
-    });
+    const errors = collectValidationErrors(
+      registerFormRules,
+      formData,
+      formData,
+    );
 
     if (!agreeTerms) {
       errors.agreeTerms = "Необходимо согласие с правилами";
     }
 
     return errors;
-  };
-
-  const getFieldLabel = (fieldName: string): string => {
-    const labels: { [key: string]: string } = {
-      surname: "Фамилия",
-      name: "Имя",
-      middle_name: "Отчество",
-      phone: "Телефон",
-      email: "Почта",
-      country: "Страна",
-      password: "Пароль",
-      password_confirmation: "Подтверждение пароля",
-    };
-
-    return labels[fieldName] || fieldName;
   };
 
   const useValidationErrors = () => {

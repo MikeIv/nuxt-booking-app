@@ -35,8 +35,16 @@ export interface FormField {
   key: keyof GuestData;
   placeholder: string;
   type: string;
-  required: boolean;
 }
+
+const GUEST_VALIDATION_ERROR_KEYS: Record<string, keyof GuestData> = {
+  surname: "lastName",
+  name: "firstName",
+  middle_name: "middleName",
+  phone: "phone",
+  email: "email",
+  country: "citizenship",
+};
 
 type AdditionalFieldKey = "checkInTime" | "checkOutTime" | "comment";
 
@@ -70,42 +78,12 @@ const initialGuestData = (): GuestData => ({
 
 export const usePersonalForm = () => {
   const formFields: FormField[] = [
-    {
-      key: "lastName",
-      placeholder: "Фамилия",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "firstName",
-      placeholder: "Имя",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "middleName",
-      placeholder: "Отчество",
-      type: "text",
-      required: false,
-    },
-    {
-      key: "phone",
-      placeholder: "Номер телефона",
-      type: "tel",
-      required: true,
-    },
-    {
-      key: "email",
-      placeholder: "Почта",
-      type: "email",
-      required: true,
-    },
-    {
-      key: "citizenship",
-      placeholder: "Гражданство",
-      type: "text",
-      required: false,
-    },
+    { key: "lastName", placeholder: "Фамилия", type: "text" },
+    { key: "firstName", placeholder: "Имя", type: "text" },
+    { key: "middleName", placeholder: "Отчество", type: "text" },
+    { key: "phone", placeholder: "Номер телефона", type: "tel" },
+    { key: "email", placeholder: "Почта", type: "email" },
+    { key: "citizenship", placeholder: "Страна", type: "text" },
   ];
 
   const paymentMethods = [
@@ -165,7 +143,6 @@ export const usePersonalForm = () => {
   });
 
   const validateGuest = (guest: GuestData): Partial<GuestData> => {
-    const guestErrors: Partial<GuestData> = {};
     const { validateGuestFields } = useFormValidation();
     const result = validateGuestFields({
       surname: guest.lastName,
@@ -176,13 +153,13 @@ export const usePersonalForm = () => {
       country: guest.citizenship,
     });
 
-    if (result.surname) guestErrors.lastName = result.surname;
-    if (result.name) guestErrors.firstName = result.name;
-    if (result.middle_name) guestErrors.middleName = result.middle_name;
-    if (result.phone) guestErrors.phone = result.phone;
-    if (result.email) guestErrors.email = result.email;
-    if (result.country) guestErrors.citizenship = result.country;
-
+    const guestErrors: Partial<GuestData> = {};
+    for (const [validationKey, guestKey] of Object.entries(
+      GUEST_VALIDATION_ERROR_KEYS,
+    )) {
+      const message = result[validationKey];
+      if (message) guestErrors[guestKey] = message;
+    }
     return guestErrors;
   };
 
