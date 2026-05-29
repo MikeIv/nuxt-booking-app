@@ -216,9 +216,7 @@
             <span :class="$style.weekday">{{
               formatCount(nights, "night")
             }}</span>
-            <span :class="[$style.detailDay, $style.dayRight]">{{
-              checkOutWeekday
-            }}</span>
+            <span :class="$style.detailDay">{{ checkOutWeekday }}</span>
           </div>
         </div>
       </div>
@@ -502,9 +500,9 @@
 
   .weekdayRow {
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    gap: rem(8);
     width: 100%;
   }
 
@@ -523,33 +521,23 @@
   }
 
   .detailDay {
-    flex-shrink: 0;
-    width: rem(52);
     font-family: var(--a-font-heading);
     font-size: rem(16);
     font-weight: 400;
     color: var(--a-text-dark);
-    text-align: center;
-  }
-
-  .dayRight {
-    width: rem(62);
-    text-align: center;
+    white-space: nowrap;
   }
 
   .weekday {
-    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: rem(161);
-    height: rem(24);
-    padding: rem(4) rem(28);
+    padding-block: rem(4);
+    padding-inline: rem(24);
     font-family: var(--a-font-heading);
     font-size: rem(15);
     font-weight: 400;
     color: var(--a-text-dark);
-    text-align: center;
     white-space: nowrap;
     border: 0.5px solid var(--a-border-dark);
     border-radius: var(--a-borderR--card);
