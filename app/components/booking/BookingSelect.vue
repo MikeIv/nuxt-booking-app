@@ -1,17 +1,10 @@
 <script setup lang="ts">
+  import { useCssModule } from "vue";
   import {
-    useCssModule,
-    ref,
-    computed,
-    onMounted,
-    onUnmounted,
-    nextTick,
-  } from "vue";
-
-  export interface SelectOption {
-    label: string;
-    value: string;
-  }
+    filterSelectOptions,
+    normalizeSelectOptions,
+    type SelectOption,
+  } from "~/utils/selectOptions";
 
   const props = withDefaults(
     defineProps<{
@@ -42,15 +35,7 @@
   const dropdownPosition = ref({ top: 0, left: 0, width: 0 });
   const searchQuery = ref("");
 
-  // Нормализуем опции: если это массив строк, преобразуем в объекты
-  const normalizedOptions = computed<SelectOption[]>(() => {
-    return props.options.map((option) => {
-      if (typeof option === "string") {
-        return { label: option, value: option };
-      }
-      return option;
-    });
-  });
+  const normalizedOptions = computed(() => normalizeSelectOptions(props.options));
 
   const selectedValue = computed(() => {
     return props.modelValue || "";
@@ -66,15 +51,11 @@
     return option?.label || props.placeholder;
   });
 
-  const filteredOptions = computed(() => {
-    if (!props.searchable || !searchQuery.value.trim()) {
-      return normalizedOptions.value;
-    }
-    const query = searchQuery.value.toLowerCase().trim();
-    return normalizedOptions.value.filter((option) =>
-      option.label.toLowerCase().includes(query)
-    );
-  });
+  const filteredOptions = computed(() =>
+    props.searchable
+      ? filterSelectOptions(normalizedOptions.value, searchQuery.value)
+      : normalizedOptions.value,
+  );
 
   const toggleDropdown = async () => {
     isOpen.value = !isOpen.value;
@@ -221,7 +202,7 @@
               {{ option.label }}
             </button>
             <div
-              v-if="filteredOptions.length === 0"
+              v-if="searchable && filteredOptions.length === 0"
               :class="$style.noResults"
             >
               Ничего не найдено
@@ -471,4 +452,3 @@
     transform: translateY(-rem(8));
   }
 </style>
-

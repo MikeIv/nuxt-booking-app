@@ -116,6 +116,8 @@
         :invalid="Boolean(displayErrors[field.key])"
         :aria-label="field.placeholder"
         variant="personal"
+        searchable
+        search-placeholder="Поиск страны..."
         @update:model-value="updateField(field.key, $event)"
       />
       <UiInput
