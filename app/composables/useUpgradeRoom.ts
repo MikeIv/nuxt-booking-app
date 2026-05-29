@@ -68,7 +68,9 @@ export const useUpgradeRoom = (options: UseUpgradeRoomOptions) => {
     const basePrice =
       selectedTariff.value.price ?? selectedRoom.value.min_price ?? 0;
 
-    return Math.max(0, Number(upgradePrice) - Number(basePrice));
+    const diff = Math.max(0, Number(upgradePrice) - Number(basePrice));
+    const n = nights.value;
+    return n > 0 ? diff / n : diff;
   });
 
   // --- Actions ---

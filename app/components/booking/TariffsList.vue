@@ -1,6 +1,7 @@
 <script setup lang="ts">
   // @ts-nocheck - Vue автоматически преобразует kebab-case в camelCase в шаблонах
   import type { RoomTariff, TariffGroup } from "~/types/room";
+  import { toPricePerNight } from "~/utils/price";
 
   interface Props {
     tariffs: RoomTariff[];
@@ -82,6 +83,13 @@
 
   const route = useRoute();
   const currentPath = ref(route.path);
+
+  const bookingStore = useBookingStore();
+  const { date } = storeToRefs(bookingStore);
+  const nights = useNights(date);
+
+  const averagePricePerNight = (tariff: RoomTariff): number =>
+    toPricePerNight(tariff.price, nights.value);
 
   const handleBook = async (tariff: RoomTariff) => {
     loadingTariffs.value[tariff.rate_plan_code] = true;
@@ -193,10 +201,10 @@
             <div :class="$style.tariffPriceBlock">
               <data
                 :class="$style.tariffPrice"
-                :value="tariff.price"
+                :value="averagePricePerNight(tariff)"
                 itemprop="price"
               >
-                {{ tariff.price }} руб.
+                {{ averagePricePerNight(tariff).toLocaleString("ru-RU") }} руб.
               </data>
               <span :class="$style.tariffPriceLabel"
                 >Средняя стоимость за 1 ночь
@@ -265,10 +273,10 @@
             <footer :class="$style.tariffBookingSection">
               <data
                 :class="$style.tariffPrice"
-                :value="tariff.price"
+                :value="averagePricePerNight(tariff)"
                 itemprop="price"
               >
-                {{ tariff.price }} руб.
+                {{ averagePricePerNight(tariff).toLocaleString("ru-RU") }} руб.
               </data>
               <span :class="$style.tariffPriceLabel"
                 >Средняя стоимость за 1 ночь

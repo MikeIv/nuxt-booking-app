@@ -3,6 +3,7 @@
   import { useNotificationToast } from "~/composables/useToast";
   import type { Room, RoomTariff } from "~/types/room";
   import type { SelectedEntry } from "~/types/booking";
+  import { toPricePerNight, toStayTotal } from "~/utils/price";
 
   definePageMeta({
     layout: "steps",
@@ -58,10 +59,25 @@
   // --- Ночи и итоговая стоимость ---
   const nights = useNights(date);
 
+  // --- Выбранная запись для сводки ---
+  const selectedEntry = computed<SelectedEntry | null>(() => {
+    if (isMultiRoomsMode.value) return null;
+    if (!selectedRoom.value || !selectedTariff.value) return null;
+    return {
+      roomIdx: 0,
+      roomCardIdx: 0,
+      roomTitle: selectedRoom.value.title || "",
+      room_type_code: selectedRoom.value.room_type_code,
+      ratePlanCode: selectedTariff.value.rate_plan_code,
+      price: toPricePerNight(selectedTariff.value.price, nights.value),
+      title: selectedTariff.value.title || "",
+    };
+  });
+
   const bookingTotal = computed(() => {
     if (isMultiRoomsMode.value) {
       const roomsTotal = Object.values(selectedMultiRooms.value).reduce(
-        (sum, e) => sum + (e.price || 0) * nights.value,
+        (sum, e) => sum + toStayTotal(e.price, nights.value),
         0,
       );
       const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
@@ -81,23 +97,8 @@
       (sum, s) => sum + s.price,
       0,
     );
-    if (!selectedTariff.value?.price) return 0;
-    return selectedTariff.value.price * nights.value + servicesTotal;
-  });
-
-  // --- Выбранная запись для сводки ---
-  const selectedEntry = computed<SelectedEntry | null>(() => {
-    if (isMultiRoomsMode.value) return null;
-    if (!selectedRoom.value || !selectedTariff.value) return null;
-    return {
-      roomIdx: 0,
-      roomCardIdx: 0,
-      roomTitle: selectedRoom.value.title || "",
-      room_type_code: selectedRoom.value.room_type_code,
-      ratePlanCode: selectedTariff.value.rate_plan_code,
-      price: selectedTariff.value.price,
-      title: selectedTariff.value.title || "",
-    };
+    if (!selectedEntry.value?.price) return 0;
+    return toStayTotal(selectedEntry.value.price, nights.value) + servicesTotal;
   });
 
   const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {

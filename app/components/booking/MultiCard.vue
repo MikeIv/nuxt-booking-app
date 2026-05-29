@@ -2,6 +2,7 @@
   import type { Room, RoomTariff, PackageResource } from "~/types/room";
   import { formatCount } from "~/utils/declension";
   import { useBookingStore } from "~/stores/booking";
+  import { toPricePerNight } from "~/utils/price";
 
   interface Props {
     room: Room;
@@ -100,8 +101,8 @@
   function onSelectTariff(index: number, tariff: RoomTariff | null) {
     if (!tariff) return;
     // Используем составной ключ для уникальной идентификации номера в конкретной карточке
-    const key = props.roomCardIdx !== undefined 
-      ? `${props.roomCardIdx}-${index}` 
+    const key = props.roomCardIdx !== undefined
+      ? `${props.roomCardIdx}-${index}`
       : `${index}`;
     const alreadySelectedCode =
       props.selectedCodes?.[key] ??
@@ -119,8 +120,8 @@
   function isSelected(index: number, tariff: RoomTariff | null) {
     if (!tariff) return false;
     // Используем составной ключ для уникальной идентификации номера в конкретной карточке
-    const key = props.roomCardIdx !== undefined 
-      ? `${props.roomCardIdx}-${index}` 
+    const key = props.roomCardIdx !== undefined
+      ? `${props.roomCardIdx}-${index}`
       : `${index}`;
     const externalCode = props.selectedCodes?.[key];
     if (externalCode) return externalCode === tariff.rate_plan_code;
@@ -132,17 +133,17 @@
 
   function isButtonDisabled(index: number, tariff: RoomTariff | null) {
     if (!tariff) return true;
-    
+
     // Если номер уже выбран в другой карточке, блокируем кнопку
     if (props.disabledRoomIndices?.has(index) && !isSelected(index, tariff)) {
       return true;
     }
-    
+
     // Если все номера выбраны и текущий номер не выбран, блокируем кнопку
     if (props.isAllRoomsSelected && !isSelected(index, tariff)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -167,11 +168,12 @@
     return { adults: 0, children: 0, childrenAges: [] };
   };
 
-  const getTotalPrice = (pricePerNight: number | null | undefined): number => {
-    const price = pricePerNight || 0;
-    const nights = calculateNights();
-    return price * nights;
-  };
+  const getAveragePricePerNight = (
+    stayTotal: number | null | undefined,
+  ): number => toPricePerNight(stayTotal, calculateNights());
+
+  const getStayTotal = (stayTotal: number | null | undefined): number =>
+    stayTotal || 0;
 
   const checkInDate = computed(() => date.value?.[0] || null);
   const checkOutDate = computed(() => date.value?.[1] || null);
@@ -362,7 +364,9 @@
                           aria-hidden="true"
                         />
                       </div>
-                      <div :class="$style.confirmPrice">{{ tar.price?.toLocaleString("ru-RU") || 0 }} ₽</div>
+                      <div :class="$style.confirmPrice">
+                        {{ getAveragePricePerNight(tar.price).toLocaleString("ru-RU") }} ₽
+                      </div>
                     </div>
                   </div>
                   <BookingInfoButtonWithPopover
@@ -394,7 +398,7 @@
                               )
                             }}
                             на основном месте -
-                            {{ tar.price?.toLocaleString("ru-RU") || 0 }} ₽ за
+                            {{ getAveragePricePerNight(tar.price).toLocaleString("ru-RU") }} ₽ за
                             ночь
                           </div>
                           <div
@@ -415,7 +419,7 @@
                       <div :class="$style.priceDetailsTotal">
                         <span>Стоимость номера за весь период проживания</span>
                         <span :class="$style.priceDetailsTotalAmount">
-                          {{ getTotalPrice(tar.price).toLocaleString("ru-RU") }}
+                          {{ getStayTotal(tar.price).toLocaleString("ru-RU") }}
                           ₽
                         </span>
                       </div>

@@ -8,6 +8,7 @@
     type SelectedService,
   } from "~/stores/booking";
   import type { SelectedEntry } from "~/types/booking";
+  import { toStayTotal } from "~/utils/price";
 
   interface Props {
     selectedEntries: Record<string, SelectedEntry>;
@@ -82,7 +83,7 @@
   });
 
   const roomTotalWithServices = (entry: SelectedEntry) => {
-    const roomPrice = (entry.price || 0) * nights.value;
+    const roomPrice = toStayTotal(entry.price, nights.value);
     const services = bookingStore.getSelectedServicesForRoom(entry.roomIdx);
     const servicesSum = services.reduce((sum, s) => sum + s.price, 0);
     return roomPrice + servicesSum;
@@ -267,7 +268,7 @@
               <div :class="$style.roomCategoryRow">
                 <span :class="$style.roomType">{{ entry.roomTitle }}</span>
                 <span :class="$style.roomPrice">
-                  {{ ((entry.price || 0) * nights).toLocaleString("ru-RU") }} ₽
+                  {{ toStayTotal(entry.price, nights).toLocaleString("ru-RU") }} ₽
                 </span>
               </div>
               <div :class="$style.roomDivider" />

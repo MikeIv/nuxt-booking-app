@@ -3,6 +3,7 @@
   import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
+  import { toPricePerNight, toStayTotal } from "~/utils/price";
 
   definePageMeta({
     layout: "steps",
@@ -146,7 +147,7 @@
         roomTitle: selectedRoom.value.title || "",
         room_type_code: selectedRoom.value.room_type_code,
         ratePlanCode: selectedTariff.value.rate_plan_code,
-        price: selectedTariff.value.price,
+        price: toPricePerNight(selectedTariff.value.price, nights.value),
         title: selectedTariff.value.title || "",
       },
     };
@@ -162,7 +163,10 @@
       (sum, service) => sum + (service.price || 0),
       0,
     );
-    return tariffPrice * nights.value + servicesTotal;
+    return (
+      toStayTotal(toPricePerNight(tariffPrice, nights.value), nights.value) +
+      servicesTotal
+    );
   });
 
   // --- Composables ---
@@ -706,7 +710,7 @@
     align-items: flex-start;
     justify-content: center;
     order: 2;
-    
+
     @media (min-width: #{size.$desktopMin}) {
       order: 0;
       justify-content: flex-end;
@@ -781,4 +785,3 @@
     background-color: var(--a-black);
   }
 </style>
-

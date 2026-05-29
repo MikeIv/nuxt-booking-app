@@ -276,6 +276,7 @@ export interface SelectedEntry {
   roomTitle: string;
   room_type_code: string;
   ratePlanCode: string;
+  /** Цена за 1 ночь (не итог за период из API search) */
   price: number | null | undefined;
   title: string;
 }

@@ -17,6 +17,7 @@ import BookingAdditionalFieldsSection from "~/components/booking/AdditionalField
 import BookingPaymentSection from "~/components/booking/PaymentSection.vue";
 
 import type { SelectedEntry, BookingData } from "~/types/booking";
+import { toPricePerNight, toStayTotal } from "~/utils/price";
 
 definePageMeta({
   layout: "steps",
@@ -415,7 +416,7 @@ const selectedEntry = computed<SelectedEntry | null>(() => {
     roomTitle: selectedRoom.value.title || "",
     room_type_code: selectedRoom.value.room_type_code,
     ratePlanCode: selectedTariff.value.rate_plan_code,
-    price: selectedTariff.value.price,
+    price: toPricePerNight(selectedTariff.value.price, nights.value),
     title: selectedTariff.value.title || "",
   };
 });
@@ -433,10 +434,7 @@ const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
 const bookingTotal = computed(() => {
   if (isMultiRoomsMode.value) {
     const roomsTotal = Object.values(selectedMultiRooms.value).reduce(
-      (sum, e) => {
-        const perNight = e.price || 0;
-        return sum + perNight * nights.value;
-      },
+      (sum, e) => sum + toStayTotal(e.price, nights.value),
       0,
     );
     const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
@@ -451,10 +449,9 @@ const bookingTotal = computed(() => {
     );
     return roomsTotal + servicesTotal;
   }
-  if (!selectedTariff.value?.price) return 0;
-  const roomTotal = selectedTariff.value.price * nights.value;
+  if (!selectedEntry.value?.price) return 0;
   const servicesTotal = selectedServices.value.reduce((sum, s) => sum + s.price, 0);
-  return roomTotal + servicesTotal;
+  return toStayTotal(selectedEntry.value.price, nights.value) + servicesTotal;
 });
 
 const guestComposition = computed(() => {

@@ -2,6 +2,7 @@
   import { useBookingStore } from "~/stores/booking";
   import type { PackageResource } from "~/types/room";
   import type { SelectedEntry } from "~/types/booking";
+  import { toPricePerNight, toStayTotal } from "~/utils/price";
   import { useNotificationToast } from "~/composables/useToast";
   import { formatCount } from "~/utils/declension";
   import UIPopup from "~/components/ui/Popup.vue";
@@ -25,6 +26,8 @@
   const selectedView = ref<number | undefined>(undefined);
   const selectedBalcony = ref<number | undefined>(undefined);
 
+  const nights = useNights(date);
+
   const selectedByRoomIdx = ref<Record<string, SelectedEntry>>({});
   const isInitialLoad = ref(true);
 
@@ -42,11 +45,11 @@
       room.tariffs?.find((t) => t.rate_plan_code === ratePlanCode) || null;
 
     // Используем составной ключ для уникальной идентификации номера в конкретной карточке
-    const key = roomCardIdx !== undefined 
-      ? `${roomCardIdx}-${roomIdx}` 
+    const key = roomCardIdx !== undefined
+      ? `${roomCardIdx}-${roomIdx}`
       : `${roomIdx}`;
     const already = selectedByRoomIdx.value[key];
-    
+
     if (!ratePlanCode || (already && already.ratePlanCode === ratePlanCode)) {
       Reflect.deleteProperty(selectedByRoomIdx.value, key);
       return;
@@ -54,11 +57,11 @@
 
     // Проверяем, не выбран ли уже этот номер (roomIdx) в другой карточке
     // Если выбран, запрещаем выбор
-    const isRoomIdxAlreadySelected = selectedRoomIndices.value.has(roomIdx) && 
+    const isRoomIdxAlreadySelected = selectedRoomIndices.value.has(roomIdx) &&
       Object.values(selectedByRoomIdx.value).some(
         (entry) => entry.roomIdx === roomIdx && entry.roomCardIdx !== cardIdx
       );
-    
+
     if (isRoomIdxAlreadySelected) {
       toast.add({
         severity: "warn",
@@ -76,7 +79,7 @@
         roomTitle: room.title,
         room_type_code: room.room_type_code,
         ratePlanCode: tar.rate_plan_code,
-        price: tar.price,
+        price: toPricePerNight(tar.price, nights.value),
         title: tar.title,
       };
     }
@@ -113,13 +116,11 @@
     return selectedRoomsCount.value >= requiredRoomsCount.value;
   });
 
-  const nights = useNights(date);
-
   const bookingTotal = computed(() => {
-    const roomsTotal = Object.values(selectedByRoomIdx.value).reduce((sum, e) => {
-      const perNight = e.price || 0;
-      return sum + perNight * nights.value;
-    }, 0);
+    const roomsTotal = Object.values(selectedByRoomIdx.value).reduce(
+      (sum, e) => sum + toStayTotal(e.price, nights.value),
+      0,
+    );
     const roomIndices = Object.keys(selectedByRoomIdx.value).map(Number);
     const servicesTotal = roomIndices.reduce(
       (sum, idx) =>
@@ -196,7 +197,7 @@
     if (selectedMultiRooms.value && Object.keys(selectedMultiRooms.value).length > 0) {
       selectedByRoomIdx.value = { ...selectedMultiRooms.value };
     }
-    
+
     // После загрузки данных разрешаем синхронизацию
     await nextTick();
     isInitialLoad.value = false;
