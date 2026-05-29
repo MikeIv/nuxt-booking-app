@@ -1,5 +1,12 @@
 import type { BookingData } from "~/types/booking";
 import { countriesRu } from "~/utils/countries";
+import {
+  guestFieldsRules,
+  validateField,
+  validateGuestFields,
+  type GuestValidationData,
+  type ValidationErrors,
+} from "~/composables/useFormValidation";
 
 const HH_MM_TIME_REGEX = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
 
@@ -45,6 +52,52 @@ const GUEST_VALIDATION_ERROR_KEYS: Record<string, keyof GuestData> = {
   email: "email",
   country: "citizenship",
 };
+
+const GUEST_FIELD_TO_VALIDATION_KEY: Record<
+  keyof GuestData,
+  keyof GuestValidationData
+> = {
+  lastName: "surname",
+  firstName: "name",
+  middleName: "middle_name",
+  phone: "phone",
+  email: "email",
+  citizenship: "country",
+};
+
+const toGuestValidationData = (guest: GuestData): GuestValidationData => ({
+  surname: guest.lastName,
+  name: guest.firstName,
+  middle_name: guest.middleName || null,
+  phone: guest.phone,
+  email: guest.email,
+  country: guest.citizenship,
+});
+
+const mapValidationErrorsToGuest = (
+  result: ValidationErrors,
+): Partial<GuestData> => {
+  const guestErrors: Partial<GuestData> = {};
+  for (const [validationKey, guestKey] of Object.entries(
+    GUEST_VALIDATION_ERROR_KEYS,
+  )) {
+    const message = result[validationKey];
+    if (message) guestErrors[guestKey] = message;
+  }
+  return guestErrors;
+};
+
+export const validateGuestField = (
+  guest: GuestData,
+  field: keyof GuestData,
+): string | null => {
+  const validationKey = GUEST_FIELD_TO_VALIDATION_KEY[field];
+  const data = toGuestValidationData(guest);
+  return validateField(validationKey, data[validationKey], guestFieldsRules);
+};
+
+const validateGuest = (guest: GuestData): Partial<GuestData> =>
+  mapValidationErrorsToGuest(validateGuestFields(toGuestValidationData(guest)));
 
 type AdditionalFieldKey = "checkInTime" | "checkOutTime" | "comment";
 
@@ -141,27 +194,6 @@ export const usePersonalForm = () => {
     mainGuest: initialGuestData(),
     additionalGuests: [],
   });
-
-  const validateGuest = (guest: GuestData): Partial<GuestData> => {
-    const { validateGuestFields } = useFormValidation();
-    const result = validateGuestFields({
-      surname: guest.lastName,
-      name: guest.firstName,
-      middle_name: guest.middleName || null,
-      phone: guest.phone,
-      email: guest.email,
-      country: guest.citizenship,
-    });
-
-    const guestErrors: Partial<GuestData> = {};
-    for (const [validationKey, guestKey] of Object.entries(
-      GUEST_VALIDATION_ERROR_KEYS,
-    )) {
-      const message = result[validationKey];
-      if (message) guestErrors[guestKey] = message;
-    }
-    return guestErrors;
-  };
 
   const validateForm = (
     formData: PersonalFormData,
@@ -458,7 +490,6 @@ export const usePersonalForm = () => {
     createFormData,
     createRoomGuestData,
     initialGuestData,
-    validateGuest,
     validateForm,
     formatDateTime,
     prepareBookingData,

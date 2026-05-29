@@ -1,4 +1,5 @@
 import type { RegisterData } from "~/types/auth";
+import { EMAIL_INVALID_MESSAGE, isValidEmail } from "~/utils/email";
 
 const REQUIRED_FIELD_MESSAGE = "Обязательное поле";
 
@@ -14,8 +15,11 @@ const phoneFieldRule = {
 const emailFieldRule = {
   required: true,
   maxLength: 255,
-  pattern: /^\S+@\S+\.\S+$/,
-  patternMessage: "Введите корректный email",
+  custom: (value: unknown) => {
+    if (typeof value !== "string" || !value.trim()) return null;
+    if (!isValidEmail(value)) return EMAIL_INVALID_MESSAGE;
+    return null;
+  },
 } as const;
 
 const countryFieldRule = { required: true, maxLength: 255 } as const;
@@ -34,6 +38,24 @@ export interface ValidationErrors {
   [key: string]: string;
 }
 
+export interface GuestValidationData {
+  surname: string;
+  name: string;
+  middle_name: string | null;
+  phone: string;
+  email: string;
+  country: string;
+}
+
+export const guestFieldsRules: ValidationRules = {
+  surname: requiredTextField,
+  name: requiredTextField,
+  middle_name: { maxLength: 255 },
+  phone: phoneFieldRule,
+  email: emailFieldRule,
+  country: countryFieldRule,
+};
+
 const isRequiredValueEmpty = (value: unknown): boolean =>
   value == null || (typeof value === "string" && !value.trim());
 
@@ -50,6 +72,58 @@ const FIELD_LABELS: Record<string, string> = {
 
 const getFieldLabel = (fieldName: string): string =>
   FIELD_LABELS[fieldName] ?? fieldName;
+
+export const validateField = <FormData = unknown>(
+  fieldName: string,
+  value: unknown,
+  rules: ValidationRules<FormData>,
+  formData?: FormData,
+): string | null => {
+  const rule = rules[fieldName];
+  if (!rule) return null;
+
+  if (rule.required && isRequiredValueEmpty(value)) {
+    return REQUIRED_FIELD_MESSAGE;
+  }
+
+  if (
+    rule.maxLength &&
+    typeof value === "string" &&
+    value.length > rule.maxLength
+  ) {
+    return `${getFieldLabel(fieldName)} не должен превышать ${rule.maxLength} символов`;
+  }
+
+  if (rule.pattern && typeof value === "string" && !rule.pattern.test(value)) {
+    return (
+      rule.patternMessage ||
+      `Некорректный формат ${getFieldLabel(fieldName).toLowerCase()}`
+    );
+  }
+
+  if (rule.custom) {
+    return rule.custom(value, formData);
+  }
+
+  return null;
+};
+
+const collectValidationErrors = <FormData extends Record<string, unknown>>(
+  rules: ValidationRules<FormData>,
+  data: FormData,
+  formData?: FormData,
+): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  for (const fieldName of Object.keys(rules)) {
+    const error = validateField(fieldName, data[fieldName], rules, formData);
+    if (error) errors[fieldName] = error;
+  }
+  return errors;
+};
+
+export const validateGuestFields = (
+  data: GuestValidationData,
+): ValidationErrors => collectValidationErrors(guestFieldsRules, data);
 
 export const useFormValidation = () => {
   const registerFormRules: ValidationRules<RegisterData> = {
@@ -79,76 +153,6 @@ export const useFormValidation = () => {
       },
     },
   };
-
-  const guestFieldsRules: ValidationRules = {
-    surname: requiredTextField,
-    name: requiredTextField,
-    middle_name: { maxLength: 255 },
-    phone: phoneFieldRule,
-    email: emailFieldRule,
-    country: countryFieldRule,
-  };
-
-  const validateField = <FormData = unknown>(
-    fieldName: string,
-    value: unknown,
-    rules: ValidationRules<FormData>,
-    formData?: FormData,
-  ): string | null => {
-    const rule = rules[fieldName];
-    if (!rule) return null;
-
-    if (rule.required && isRequiredValueEmpty(value)) {
-      return REQUIRED_FIELD_MESSAGE;
-    }
-
-    if (
-      rule.maxLength &&
-      typeof value === "string" &&
-      value.length > rule.maxLength
-    ) {
-      return `${getFieldLabel(fieldName)} не должен превышать ${rule.maxLength} символов`;
-    }
-
-    if (
-      rule.pattern &&
-      typeof value === "string" &&
-      !rule.pattern.test(value)
-    ) {
-      return (
-        rule.patternMessage ||
-        `Некорректный формат ${getFieldLabel(fieldName).toLowerCase()}`
-      );
-    }
-
-    if (rule.custom) {
-      return rule.custom(value, formData);
-    }
-
-    return null;
-  };
-
-  const collectValidationErrors = <FormData extends Record<string, unknown>>(
-    rules: ValidationRules<FormData>,
-    data: FormData,
-    formData?: FormData,
-  ): ValidationErrors => {
-    const errors: ValidationErrors = {};
-    for (const fieldName of Object.keys(rules)) {
-      const error = validateField(fieldName, data[fieldName], rules, formData);
-      if (error) errors[fieldName] = error;
-    }
-    return errors;
-  };
-
-  const validateGuestFields = (data: {
-    surname: string;
-    name: string;
-    middle_name: string | null;
-    phone: string;
-    email: string;
-    country: string;
-  }): ValidationErrors => collectValidationErrors(guestFieldsRules, data);
 
   const validateRegisterForm = (
     formData: RegisterData,
@@ -193,6 +197,7 @@ export const useFormValidation = () => {
     validateGuestFields,
     validateField,
     registerFormRules,
+    guestFieldsRules,
     useValidationErrors,
   };
 };

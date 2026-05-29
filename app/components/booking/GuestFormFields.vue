@@ -1,5 +1,9 @@
 <script setup lang="ts">
-  import type { GuestData, FormField } from "~/composables/usePersonalForm";
+  import {
+    validateGuestField,
+    type GuestData,
+    type FormField,
+  } from "~/composables/usePersonalForm";
   import UiInput from "~/components/ui/Input.vue";
   import UiOptionSelect from "~/components/ui/OptionSelect.vue";
   import { countriesRu } from "~/utils/countries";
@@ -26,6 +30,17 @@
 
   const emit = defineEmits<Emits>();
 
+  const emailBlurError = ref<string | null>(null);
+
+  const displayErrors = computed(() => ({
+    ...(emailBlurError.value ? { email: emailBlurError.value } : {}),
+    ...props.errors,
+  }));
+
+  const validateEmail = (guest: GuestData) => {
+    emailBlurError.value = validateGuestField(guest, "email");
+  };
+
   const {
     handlePhoneInput,
     handlePhoneKeydown,
@@ -36,15 +51,24 @@
   } = usePhoneMask();
 
   const updateField = (key: keyof GuestData, value: string | undefined) => {
-    emit("update:guest", { ...props.guest, [key]: value ?? "" });
+    const nextGuest = { ...props.guest, [key]: value ?? "" };
+    emit("update:guest", nextGuest);
+
+    if (key === "email" && emailBlurError.value !== null) {
+      validateEmail(nextGuest);
+    }
   };
 
-  // Универсальный обработчик обновления телефона
+  const onFieldBlur = (field: FormField) => {
+    if (field.key === "email") {
+      validateEmail(props.guest);
+    }
+  };
+
   const updatePhone = (value: string) => {
     updateField("phone", value);
   };
 
-  // Обработчик ввода для телефона
   const onPhoneBeforeInput = (event: InputEvent) => {
     handlePhoneInput(event, updatePhone);
   };
@@ -57,12 +81,10 @@
     handlePhonePaste(event, updatePhone);
   };
 
-  // Обработчик фокуса для телефона
   const onPhoneFocus = (event: Event) => {
     handlePhoneFocus(event, props.guest.phone || "", updatePhone);
   };
 
-  // Обработчик потери фокуса для телефона
   const onPhoneBlur = (event: Event) => {
     handlePhoneBlur(event, props.guest.phone || "", updatePhone);
   };
@@ -91,7 +113,7 @@
         :model-value="guest[field.key] ?? ''"
         :options="countriesRu"
         :placeholder="field.placeholder"
-        :invalid="Boolean(errors[field.key])"
+        :invalid="Boolean(displayErrors[field.key])"
         :aria-label="field.placeholder"
         variant="personal"
         @update:model-value="updateField(field.key, $event)"
@@ -102,8 +124,9 @@
         :type="field.type"
         :placeholder="field.placeholder"
         variant="personal"
-        :invalid="Boolean(errors[field.key])"
+        :invalid="Boolean(displayErrors[field.key])"
         @update:model-value="updateField(field.key, $event)"
+        @blur="onFieldBlur(field)"
       />
       <UiInput
         v-else
@@ -113,7 +136,7 @@
         autocomplete="tel"
         :placeholder="field.placeholder"
         variant="personal"
-        :invalid="Boolean(errors[field.key])"
+        :invalid="Boolean(displayErrors[field.key])"
         @update:model-value="updatePhone"
         @before-input="onPhoneBeforeInput"
         @keydown="onPhoneKeydown"
@@ -122,14 +145,14 @@
         @blur="onPhoneBlur"
       />
       <Message
-        v-if="errors[field.key]"
+        v-if="displayErrors[field.key]"
         severity="error"
         size="small"
         variant="simple"
         unstyled
         :class="$style.errorMessage"
       >
-        {{ errors[field.key] }}
+        {{ displayErrors[field.key] }}
       </Message>
     </div>
   </div>
@@ -206,4 +229,3 @@
     color: var(--a-text-accent);
   }
 </style>
-
