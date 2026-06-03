@@ -4,6 +4,7 @@
   import type { SelectedEntry } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
   import { useNotificationToast } from "~/composables/useToast";
+  import { useRoomFilters } from "~/composables/useRoomFilters";
   import { formatCount } from "~/utils/declension";
   import UIPopup from "~/components/ui/Popup.vue";
 
@@ -23,8 +24,18 @@
   const selectedService = ref<PackageResource | null>(null);
   const isWarningPopupOpen = ref(false);
 
-  const selectedView = ref<number | undefined>(undefined);
-  const selectedBalcony = ref<number | undefined>(undefined);
+  const searchFilters = computed(() => searchResults.value?.filters);
+  const {
+    selectedView,
+    selectedBalcony,
+    viewOptions,
+    balconyOptions,
+    filterRoomListWithIndex,
+  } = useRoomFilters(searchFilters);
+
+  const filteredRoomCards = computed(() =>
+    filterRoomListWithIndex(roomTariffs.value),
+  );
 
   const nights = useNights(date);
 
@@ -135,22 +146,6 @@
   });
 
   const dateValue = computed(() => date.value);
-
-  const viewOptions = computed(() => {
-    return [
-      { id: 1, title: "Парк" },
-      { id: 2, title: "Город" },
-      { id: 3, title: "Море" },
-      { id: 4, title: "Внутренний двор" },
-    ];
-  });
-
-  const balconyOptions = computed(() => {
-    return [
-      { id: 1, title: "Есть балкон" },
-      { id: 2, title: "Нет балкона" },
-    ];
-  });
 
   const openServicePopup = (event: MouseEvent, service: PackageResource) => {
     event.stopPropagation();
@@ -287,13 +282,13 @@
 
       <template v-else>
         <div v-if="roomTariffs?.length > 0">
-          <div :class="$style.twoCols">
+          <div v-if="filteredRoomCards.length > 0" :class="$style.twoCols">
             <div :class="$style.cards">
               <BookingMultiCard
-                v-for="(room, idx) in roomTariffs"
-                :key="idx"
+                v-for="{ room, cardIdx } in filteredRoomCards"
+                :key="room.room_type_code"
                 :room="room"
-                :room-card-idx="idx"
+                :room-card-idx="cardIdx"
                 :services="searchResults?.packages || []"
                 :selected-codes="selectedCodes"
                 :is-all-rooms-selected="isAllRoomsSelected"
@@ -344,6 +339,10 @@
                 @continue="handleContinue"
               />
             </div>
+          </div>
+
+          <div v-else :class="$style.noFilterResults">
+            Нет номеров с выбранными параметрами
           </div>
 
           <div :class="$style.summaryWrapperMobile">
@@ -550,6 +549,16 @@
         }
       }
     }
+  }
+
+  .noFilterResults {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: rem(40);
+    font-size: rem(18);
+    color: var(--a-text-accent);
+    text-align: center;
   }
 
   .noResults {
