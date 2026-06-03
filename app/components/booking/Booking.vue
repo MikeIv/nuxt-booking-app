@@ -3,6 +3,11 @@
   import type { ApiError } from "~/composables/useApi";
   import { getRequestErrorContent } from "~/components/common/RequestErrorMessage.vue";
   import { useNotificationToast } from "~/composables/useToast";
+  import {
+    getExpectedRoomCount,
+    getUnavailableRoomIndices,
+    MULTI_BOOKING_UNAVAILABLE_TOAST,
+  } from "~/utils/multiBooking";
 
   const toast = useNotificationToast();
   const bookingStore = useBookingStore();
@@ -14,7 +19,7 @@
 
   const bookingBanners = computed(() => {
     const result = getBannersByVisibility("booking");
-    
+
     if (import.meta?.env?.DEV) {
       console.log("🔍 bookingBanners computed:", {
         type: typeof result,
@@ -22,7 +27,7 @@
         result,
       });
     }
-    
+
     // Убеждаемся, что возвращается массив
     if (!Array.isArray(result)) {
       console.warn("Booking: getBannersByVisibility вернул не массив:", typeof result, result);
@@ -94,7 +99,7 @@
 
     try {
       const result = await bookingStore.search({ skipReset: true });
-      
+
       // Проверяем, что сервер вернул данные о номерах
       if (!result || !result.rooms || result.rooms.length === 0) {
         toast.add({
@@ -108,9 +113,19 @@
         return;
       }
 
-      const roomsCount = guests.value?.roomList
-        ? guests.value.roomList.length
-        : guests.value?.rooms || 1;
+      const roomsCount = getExpectedRoomCount(guests.value);
+
+      if (roomsCount > 1) {
+        const unavailable = getUnavailableRoomIndices(result.rooms, roomsCount);
+        if (unavailable.length > 0) {
+          bookingStore.setMultiBookingUnavailableRooms(unavailable);
+          toast.add(MULTI_BOOKING_UNAVAILABLE_TOAST);
+          bookingStore.setLoading(false);
+          bookingStore.setServerRequest(false);
+          return;
+        }
+        bookingStore.clearMultiBookingUnavailableRooms();
+      }
 
       const target = roomsCount > 1 ? "/multi-rooms" : "/rooms";
       if (route.path !== target) {

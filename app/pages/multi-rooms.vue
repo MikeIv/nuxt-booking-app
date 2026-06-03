@@ -6,6 +6,12 @@
   import { useNotificationToast } from "~/composables/useToast";
   import { useRoomFilters } from "~/composables/useRoomFilters";
   import { formatCount } from "~/utils/declension";
+  import {
+    getExpectedRoomCount,
+    getTariffStayTotalForRoom,
+    getUnavailableRoomIndices,
+    MULTI_BOOKING_UNAVAILABLE_TOAST,
+  } from "~/utils/multiBooking";
   import UIPopup from "~/components/ui/Popup.vue";
 
   definePageMeta({
@@ -23,6 +29,7 @@
   const isServicePopupOpen = ref(false);
   const selectedService = ref<PackageResource | null>(null);
   const isWarningPopupOpen = ref(false);
+  const roomsUnavailable = ref(false);
 
   const searchFilters = computed(() => searchResults.value?.filters);
   const {
@@ -84,13 +91,16 @@
     }
 
     if (tar && room.room_type_code && room.room_type_code.trim() !== "") {
+      const stayTotal = getTariffStayTotalForRoom(tar, roomIdx);
+      if (stayTotal === null) return;
+
       selectedByRoomIdx.value[key] = {
         roomIdx,
         roomCardIdx: cardIdx,
         roomTitle: room.title,
         room_type_code: room.room_type_code,
         ratePlanCode: tar.rate_plan_code,
-        price: toPricePerNight(tar.price, nights.value),
+        price: toPricePerNight(stayTotal, nights.value),
         title: tar.title,
       };
     }
@@ -197,9 +207,7 @@
     await nextTick();
     isInitialLoad.value = false;
 
-    const roomsCount = guests.value?.roomList
-      ? guests.value.roomList.length
-      : guests.value?.rooms || 1;
+    const roomsCount = getExpectedRoomCount(guests.value);
 
     const totalAdults = guests.value?.roomList
       ? guests.value.roomList.reduce((sum, r) => sum + r.adults, 0)
@@ -223,7 +231,21 @@
 
     try {
       loading.value = true;
-      await bookingStore.search();
+      if (!roomTariffs.value.length) {
+        await bookingStore.search();
+      }
+
+      const unavailable = getUnavailableRoomIndices(
+        roomTariffs.value,
+        roomsCount,
+      );
+      if (unavailable.length > 0) {
+        bookingStore.setMultiBookingUnavailableRooms(unavailable);
+        roomsUnavailable.value = true;
+        toast.add(MULTI_BOOKING_UNAVAILABLE_TOAST);
+        return;
+      }
+      bookingStore.clearMultiBookingUnavailableRooms();
     } catch (err: unknown) {
       error.value = err as Error;
       toast.add({
@@ -278,6 +300,13 @@
 
       <div v-else-if="error" :class="$style.errorContainer">
         <p>Произошла ошибка при загрузке тарифов. Попробуйте позже.</p>
+      </div>
+
+      <div v-else-if="roomsUnavailable" :class="$style.errorContainer">
+        <p>
+          Не все номера доступны для выбранного состава гостей. Измените параметры
+          в блоке «Гости» выше.
+        </p>
       </div>
 
       <template v-else>

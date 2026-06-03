@@ -10,6 +10,8 @@ interface Props {
   maxAdults?: number;
   /** Максимум детей в номере */
   maxChildren?: number;
+  /** Номер недоступен для выбранных условий (мультибронирование) */
+  unavailable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -42,8 +44,10 @@ const roomTitle = computed(() =>
 
 <template>
   <div :class="$style.roomGroup">
-    <div :class="$style.roomTitle">
-      <span>{{ roomTitle }}</span>
+    <div :class="[$style.roomTitle, unavailable && $style.roomTitleUnavailable]">
+      <span>
+        {{ roomTitle }}<template v-if="unavailable"> — номер отсутствует</template>
+      </span>
       <Button
         v-if="totalRooms > 1"
         type="button"
@@ -128,6 +132,11 @@ const roomTitle = computed(() =>
   }
 }
 
+.roomTitleUnavailable {
+  background-color: var(--a-banner-warning-bg);
+  color: var(--a-text-error);
+}
+
 .deleteRoomButton {
   display: flex;
   align-items: center;
@@ -193,4 +202,3 @@ const roomTitle = computed(() =>
   margin-top: rem(8);
 }
 </style>
-

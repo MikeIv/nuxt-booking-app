@@ -283,11 +283,22 @@ export interface SelectedEntry {
 
 /** API-типы ответа поиска (сырые данные от сервера, до маппинга) */
 
+export interface ApiTariffRoomPrice {
+  room_index: number | string;
+  room_number: number;
+  room_type_code: string;
+  rate_plan_code: string;
+  price: number | string;
+  price_for_register?: number;
+  packages?: string[];
+}
+
 export interface ApiRoomTariff {
   rate_plan_code: string;
   title: string;
   price: number | string;
   price_for_register?: number;
+  room_prices?: ApiTariffRoomPrice[];
   packages?: TariffPackage[];
   has_food?: boolean;
   cancellation_free?: boolean;

@@ -21,11 +21,24 @@ export interface TariffGroup {
   title: string;
 }
 
+/** Цена тарифа для конкретного номера в мультибронировании */
+export interface TariffRoomPrice {
+  room_index: number;
+  room_number: number;
+  room_type_code: string;
+  rate_plan_code: string;
+  price: number;
+  price_for_register?: number;
+  packages?: string[];
+}
+
 export interface RoomTariff {
   rate_plan_code: string;
   title: string;
   price: number;
   price_for_register?: number;
+  /** Цены по номерам (multi_booking_mode); при наличии — использовать вместо price для строк номеров */
+  room_prices?: TariffRoomPrice[];
   packages: TariffPackage[];
   has_food?: boolean;
   cancellation_free?: boolean;

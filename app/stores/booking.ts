@@ -21,6 +21,7 @@ import type {
   ApiRoomTariffPayload,
   ApiSearchPayload,
 } from "~/types/booking";
+import { normalizeRoomIndex } from "~/utils/multiBooking";
 
 export interface UserProfileData {
   name: string;
@@ -79,6 +80,16 @@ export const useBookingStore = defineStore(
     const packages = ref<PackageResource[]>([]);
     const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
     const changeRoomUuid = ref<string | null>(null);
+    /** Индексы номеров без доступности в последнем multi-поиске (для подсветки в GuestsSelector) */
+    const multiBookingUnavailableRooms = ref<number[]>([]);
+
+    function setMultiBookingUnavailableRooms(indices: number[]) {
+      multiBookingUnavailableRooms.value = indices;
+    }
+
+    function clearMultiBookingUnavailableRooms() {
+      multiBookingUnavailableRooms.value = [];
+    }
 
     /** Услуги для одного номера (режим одного номера — индекс 0) */
     const selectedServices = computed(() => {
@@ -299,6 +310,18 @@ export const useBookingStore = defineStore(
               ? Number(tariff.price)
               : tariff.price,
           price_for_register: tariff.price_for_register,
+          room_prices: tariff.room_prices?.map((roomPrice) => ({
+            room_index: normalizeRoomIndex(roomPrice.room_index),
+            room_number: roomPrice.room_number,
+            room_type_code: roomPrice.room_type_code,
+            rate_plan_code: roomPrice.rate_plan_code,
+            price:
+              typeof roomPrice.price === "string"
+                ? Number(roomPrice.price)
+                : roomPrice.price,
+            price_for_register: roomPrice.price_for_register,
+            packages: roomPrice.packages,
+          })),
           packages: tariff.packages ?? [],
           has_food: tariff.has_food,
           cancellation_free: tariff.cancellation_free,
@@ -1029,6 +1052,7 @@ export const useBookingStore = defineStore(
       currentBookingDetails.value = null;
       selectedMultiRooms.value = {};
       changeRoomUuid.value = null;
+      multiBookingUnavailableRooms.value = [];
       setLoading(false);
       isServerRequest.value = false;
       // deliberately preserve persisted state (e.g., userProfiles)
@@ -1082,6 +1106,9 @@ export const useBookingStore = defineStore(
       setSelectedTariff,
       setDate,
       setChangeRoomUuid,
+      multiBookingUnavailableRooms,
+      setMultiBookingUnavailableRooms,
+      clearMultiBookingUnavailableRooms,
     };
   },
   {

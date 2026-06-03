@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { AGE_MIN, AGE_MAX } from "~/utils/age";
 import { declension } from "~/utils/declension";
+import { useBookingStore } from "~/stores/booking";
+import type { ApiError } from "~/composables/useApi";
+import { getRequestErrorContent } from "~/components/common/RequestErrorMessage.vue";
+import { useNotificationToast } from "~/composables/useToast";
+import {
+  getExpectedRoomCount,
+  getUnavailableRoomIndices,
+  MULTI_BOOKING_UNAVAILABLE_TOAST,
+} from "~/utils/multiBooking";
 
 export interface RoomGuests {
   adults: number;
@@ -30,6 +39,17 @@ const MAX_ROOMS = 5;
       | { rooms: number; adults: number; children: number };
   }>();
   const emit = defineEmits(["update:modelValue"]);
+
+  const bookingStore = useBookingStore();
+  const router = useRouter();
+  const toast = useNotificationToast();
+  const { multiBookingUnavailableRooms } = storeToRefs(bookingStore);
+
+  const isApplying = ref(false);
+
+  function clearUnavailableHighlight() {
+    bookingStore.clearMultiBookingUnavailableRooms();
+  }
 
   const guests = computed<GuestsValue>({
     get: () => {
@@ -102,6 +122,8 @@ const MAX_ROOMS = 5;
     set: (val) => emit("update:modelValue", val),
   });
 
+  const isMultiBooking = computed(() => guests.value.roomList.length > 1);
+
   const overlayRef = ref<{
     toggle: (event: Event) => void;
     hide: (event: Event) => void;
@@ -114,7 +136,9 @@ const MAX_ROOMS = 5;
   function updateRooms(value: number) {
     const nextRooms = Math.max(1, Math.min(MAX_ROOMS, value));
     if (nextRooms === guests.value.rooms) return;
-    
+
+    clearUnavailableHighlight();
+
     const roomList = guests.value.roomList.slice(0, nextRooms);
     for (let i = roomList.length; i < nextRooms; i++) {
       roomList.push({ adults: 1, children: 0, childrenAges: [] });
@@ -124,11 +148,13 @@ const MAX_ROOMS = 5;
 
   function deleteRoom(roomIdx: number) {
     if (guests.value.rooms <= 1) return;
+    clearUnavailableHighlight();
     const roomList = guests.value.roomList.filter((_, idx) => idx !== roomIdx);
     guests.value = { rooms: guests.value.rooms - 1, roomList };
   }
 
   function updateRoomAdults(roomIdx: number, value: number) {
+    clearUnavailableHighlight();
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
       const maxAdults = MAX_GUESTS_PER_ROOM - room.children;
@@ -138,6 +164,7 @@ const MAX_ROOMS = 5;
   }
 
   function updateRoomChildren(roomIdx: number, value: number) {
+    clearUnavailableHighlight();
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
       const maxChildren = MAX_GUESTS_PER_ROOM - room.adults;
@@ -150,6 +177,7 @@ const MAX_ROOMS = 5;
   }
 
   function updateChildAge(roomIdx: number, childIdx: number, age: number) {
+    clearUnavailableHighlight();
     const roomList = guests.value.roomList.map((room, idx) => {
       if (idx !== roomIdx) return room;
       const ages = room.childrenAges.slice();
@@ -167,9 +195,77 @@ const MAX_ROOMS = 5;
     return `${guests.value.rooms} ${roomsWord}, ${totalAdults} взр., ${totalChildren} дет.`;
   });
 
-  function applyChanges(event: Event) {
+  async function applyChanges(event: Event) {
     emit("update:modelValue", guests.value);
-    overlayRef.value?.hide(event);
+
+    if (!isMultiBooking.value) {
+      clearUnavailableHighlight();
+      overlayRef.value?.hide(event);
+      return;
+    }
+
+    const bookingStoreDate = bookingStore.date;
+    if (!bookingStoreDate) {
+      toast.add({
+        severity: "warn",
+        summary: "Некорректные данные",
+        detail: "Пожалуйста, выберите даты",
+        life: 3000,
+      });
+      return;
+    }
+
+    isApplying.value = true;
+    clearUnavailableHighlight();
+
+    try {
+      bookingStore.setGuests({ ...guests.value });
+      await nextTick();
+      const result = await bookingStore.search({ skipReset: true });
+
+      if (!result?.rooms?.length) {
+        toast.add({
+          severity: "warn",
+          summary: "Повторите запрос позже",
+          detail: "Временные неполадки. Повторите запрос немного позже",
+          life: 5000,
+        });
+        return;
+      }
+
+      const unavailable = getUnavailableRoomIndices(
+        result.rooms,
+        getExpectedRoomCount(guests.value),
+      );
+
+      if (unavailable.length > 0) {
+        bookingStore.setMultiBookingUnavailableRooms(unavailable);
+        toast.add(MULTI_BOOKING_UNAVAILABLE_TOAST);
+        return;
+      }
+
+      overlayRef.value?.hide(event);
+      if (router.currentRoute.value.path !== "/multi-rooms") {
+        await router.push("/multi-rooms");
+      }
+    } catch (error: unknown) {
+      const { status, message } = (error || {}) as ApiError;
+      const { summary, detail } = getRequestErrorContent(status, message);
+      toast.add({
+        severity: "warn",
+        summary,
+        detail,
+        life: 3000,
+      });
+    } finally {
+      isApplying.value = false;
+      bookingStore.setLoading(false);
+      bookingStore.setServerRequest(false);
+    }
+  }
+
+  function isRoomUnavailable(roomIndex: number): boolean {
+    return multiBookingUnavailableRooms.value.includes(roomIndex);
   }
 </script>
 
@@ -211,13 +307,31 @@ const MAX_ROOMS = 5;
           :total-rooms="guests.rooms"
           :max-adults="MAX_GUESTS_PER_ROOM - room.children"
           :max-children="MAX_GUESTS_PER_ROOM - room.adults"
+          :unavailable="isRoomUnavailable(idx)"
           @update:adults="(val: number) => updateRoomAdults(idx, val)"
           @update:children="(val: number) => updateRoomChildren(idx, val)"
           @update:child-age="(childIdx: number, age: number) => updateChildAge(idx, childIdx, age)"
           @delete="deleteRoom(idx)"
         />
 
-        <UiButton :class="$style.applyButton" variant="dark" size="m" @click="applyChanges">
+        <div v-if="isApplying" :class="$style.loadingOverlay" aria-live="polite">
+          <ProgressSpinner
+            style="width: 40px; height: 40px"
+            stroke-width="4"
+            fill="transparent"
+            animation-duration="2.5s"
+            aria-label="Проверка доступности номеров"
+          />
+        </div>
+
+        <UiButton
+          :class="$style.applyButton"
+          variant="dark"
+          size="m"
+          :loading="isApplying"
+          :disabled="isApplying"
+          @click="applyChanges"
+        >
           Готово
         </UiButton>
       </div>
@@ -267,6 +381,7 @@ const MAX_ROOMS = 5;
   }
 
   .guestsDropdownContent {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-width: rem(360);
@@ -297,5 +412,16 @@ const MAX_ROOMS = 5;
     min-height: rem(56);
     margin-top: rem(16);
     border-radius: var(--a-borderR--btn);
+  }
+
+  .loadingOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.75);
+    border-radius: rem(16);
   }
 </style>
