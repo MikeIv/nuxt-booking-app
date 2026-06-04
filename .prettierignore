@@ -19,10 +19,11 @@ package.json
 .gitlab-ci.yml
 .prettierrc.js
 .stylelintrc.js
+stylelint.config.mjs
+stylelint-properties-order.mjs
 commitizen.js
 jest.config.js
 nuxt.config.js
-stylelint.config.js
 README.md
 commitlint.config.js
 commitlint.js
