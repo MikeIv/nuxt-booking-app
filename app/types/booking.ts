@@ -279,6 +279,8 @@ export interface SelectedEntry {
   /** Цена за 1 ночь (не итог за период из API search) */
   price: number | null | undefined;
   title: string;
+  /** Площадь номера, м² (ключ square в API) */
+  square?: number;
 }
 
 /** API-типы ответа поиска (сырые данные от сервера, до маппинга) */

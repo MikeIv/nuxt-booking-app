@@ -269,6 +269,17 @@
                   {{ toStayTotal(entry.price, nights).toLocaleString("ru-RU") }} ₽
                 </span>
               </div>
+              <div
+                v-if="(entry.square ?? 0) > 0"
+                :class="$style.roomSquareRow"
+              >
+                <UIcon
+                  name="i-square"
+                  :class="$style.roomSquareIcon"
+                  aria-hidden="true"
+                />
+                <span>{{ entry.square }} м²</span>
+              </div>
               <div :class="$style.roomDivider" />
               <div :class="$style.roomTariff">{{ entry.title }}</div>
               <div :class="$style.roomDivider" />
@@ -639,6 +650,22 @@
     font-weight: 700;
     color: var(--a-text-dark);
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .roomSquareRow {
+    display: flex;
+    align-items: center;
+    gap: rem(8);
+    font-family: var(--a-font-body);
+    font-size: rem(12);
+    font-weight: 500;
+    color: var(--a-text-light);
+  }
+
+  .roomSquareIcon {
+    width: rem(18);
+    height: rem(18);
     flex-shrink: 0;
   }
 

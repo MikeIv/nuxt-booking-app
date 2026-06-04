@@ -18,6 +18,7 @@ import BookingPaymentSection from "~/components/booking/PaymentSection.vue";
 
 import type { SelectedEntry, BookingData } from "~/types/booking";
 import { toPricePerNight, toStayTotal } from "~/utils/price";
+import { buildSelectedEntry } from "~/utils/selectedEntry";
 
 definePageMeta({
   layout: "steps",
@@ -410,15 +411,12 @@ const selectedEntry = computed<SelectedEntry | null>(() => {
     return null;
   }
   if (!selectedRoom.value || !selectedTariff.value) return null;
-  return {
-    roomIdx: 0,
-    roomCardIdx: 0,
-    roomTitle: selectedRoom.value.title || "",
-    room_type_code: selectedRoom.value.room_type_code,
+  return buildSelectedEntry({
+    room: selectedRoom.value,
     ratePlanCode: selectedTariff.value.rate_plan_code,
-    price: toPricePerNight(selectedTariff.value.price, nights.value),
-    title: selectedTariff.value.title || "",
-  };
+    tariffTitle: selectedTariff.value.title || "",
+    pricePerNight: toPricePerNight(selectedTariff.value.price, nights.value),
+  });
 });
 
 // Преобразуем selectedEntry в формат для BookingSummary

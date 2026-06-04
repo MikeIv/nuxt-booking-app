@@ -3,6 +3,7 @@
   import type { PackageResource } from "~/types/room";
   import type { SelectedEntry } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
+  import { buildSelectedEntry } from "~/utils/selectedEntry";
   import { useNotificationToast } from "~/composables/useToast";
   import { useRoomFilters } from "~/composables/useRoomFilters";
   import { formatCount } from "~/utils/declension";
@@ -94,15 +95,14 @@
       const stayTotal = getTariffStayTotalForRoom(tar, roomIdx);
       if (stayTotal === null) return;
 
-      selectedByRoomIdx.value[key] = {
+      selectedByRoomIdx.value[key] = buildSelectedEntry({
+        room,
+        ratePlanCode: tar.rate_plan_code,
+        tariffTitle: tar.title,
+        pricePerNight: toPricePerNight(stayTotal, nights.value),
         roomIdx,
         roomCardIdx: cardIdx,
-        roomTitle: room.title,
-        room_type_code: room.room_type_code,
-        ratePlanCode: tar.rate_plan_code,
-        price: toPricePerNight(stayTotal, nights.value),
-        title: tar.title,
-      };
+      });
     }
   }
 

@@ -4,6 +4,7 @@
   import { storeToRefs } from "pinia";
   import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
+  import { buildSelectedEntry } from "~/utils/selectedEntry";
 
   definePageMeta({
     layout: "steps",
@@ -141,15 +142,12 @@
     if (!selectedRoom.value || !selectedTariff.value) return {};
 
     return {
-      "0": {
-        roomIdx: 0,
-        roomCardIdx: 0,
-        roomTitle: selectedRoom.value.title || "",
-        room_type_code: selectedRoom.value.room_type_code,
+      "0": buildSelectedEntry({
+        room: selectedRoom.value,
         ratePlanCode: selectedTariff.value.rate_plan_code,
-        price: toPricePerNight(selectedTariff.value.price, nights.value),
-        title: selectedTariff.value.title || "",
-      },
+        tariffTitle: selectedTariff.value.title || "",
+        pricePerNight: toPricePerNight(selectedTariff.value.price, nights.value),
+      }),
     };
   });
 

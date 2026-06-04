@@ -20,6 +20,7 @@ import type {
   ApiUngroupedPayload,
   ApiRoomTariffPayload,
   ApiSearchPayload,
+  SelectedEntry,
 } from "~/types/booking";
 import { normalizeRoomIndex } from "~/utils/multiBooking";
 
@@ -37,16 +38,6 @@ export interface SelectedService {
   title: string;
   price: number;
   packageCode?: string;
-}
-
-export interface SelectedMultiRoomEntry {
-  roomIdx: number;
-  roomCardIdx: number;
-  roomTitle: string;
-  room_type_code: string;
-  ratePlanCode: string;
-  price: number | null | undefined;
-  title: string;
 }
 
 export const useBookingStore = defineStore(
@@ -78,7 +69,7 @@ export const useBookingStore = defineStore(
     const currentBookingUuid = ref<string | null>(null);
     const currentBookingDetails = ref<BookingHistoryItem | null>(null);
     const packages = ref<PackageResource[]>([]);
-    const selectedMultiRooms = ref<Record<string, SelectedMultiRoomEntry>>({});
+    const selectedMultiRooms = ref<Record<string, SelectedEntry>>({});
     const changeRoomUuid = ref<string | null>(null);
     /** Индексы номеров без доступности в последнем multi-поиске (для подсветки в GuestsSelector) */
     const multiBookingUnavailableRooms = ref<number[]>([]);
@@ -155,9 +146,7 @@ export const useBookingStore = defineStore(
       return bookingsByUuid.value[safeUuid] ?? null;
     }
 
-    function setSelectedMultiRooms(
-      rooms: Record<string, SelectedMultiRoomEntry>,
-    ) {
+    function setSelectedMultiRooms(rooms: Record<string, SelectedEntry>) {
       selectedMultiRooms.value = { ...rooms };
     }
 
