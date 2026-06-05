@@ -130,6 +130,7 @@
           ratePlanCode: "",
           price: pricePerNight,
           title: room.tariff.title || "",
+          square: room.square,
         };
       });
       return entries;

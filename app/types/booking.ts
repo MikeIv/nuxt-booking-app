@@ -101,6 +101,7 @@ export interface BookingByUuidPayment {
 export interface BookingByUuidRoom {
   id?: number;
   title: string;
+  square?: number;
   tariff: { title: string; price: string | number };
   guests?: Array<{
     surname: string;
