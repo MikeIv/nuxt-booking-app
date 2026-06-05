@@ -51,10 +51,8 @@
   const isBookingCreated = computed(() => !!createdBooking.value);
 
   const bookingNumber = computed(() => {
-    const booking = createdBooking.value;
-    if (!booking) return null;
-    if (booking.confirmation_number) return booking.confirmation_number;
-    if (booking.id !== undefined && booking.id !== null) return String(booking.id);
+    const number = createdBooking.value?.number;
+    if (typeof number === "string" && number.trim() !== "") return number.trim();
     return null;
   });
 
@@ -166,8 +164,6 @@
   });
 
   // --- Composables ---
-  const { qrCanvas } = useConfirmationQR(pdfUrl);
-
   const {
     isCancelBookingPopupOpen,
     isCancellingBooking,
@@ -248,6 +244,8 @@
       },
       onConfirmed: openChangeRoomPopupIfNeeded,
     });
+
+  const { qrCanvas } = useConfirmationQR(pdfUrl, showConfirmationContent);
 
   // --- Watchers ---
   watch(

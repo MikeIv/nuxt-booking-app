@@ -1,29 +1,27 @@
 import QRCode from "qrcode";
 import type { ComputedRef } from "vue";
 
-export const useConfirmationQR = (pdfUrl: ComputedRef<string | null>) => {
+export const useConfirmationQR = (
+  pdfUrl: ComputedRef<string | null>,
+  isCanvasMounted?: ComputedRef<boolean>,
+) => {
   const qrCanvas = ref<HTMLCanvasElement | null>(null);
 
-  const generateQRCode = async () => {
-    if (!qrCanvas.value || !pdfUrl.value) return;
-    try {
-      await QRCode.toCanvas(qrCanvas.value, pdfUrl.value, {
-        width: 140,
-        margin: 1,
-        color: { dark: "#000000", light: "#FFFFFF" },
-      });
-    } catch (error) {
-      console.error("Ошибка при генерации QR-кода:", error);
-    }
-  };
+  watchPostEffect(() => {
+    const url = pdfUrl.value;
+    const canvas = qrCanvas.value;
+    const mounted = isCanvasMounted?.value ?? true;
 
-  watch(
-    pdfUrl,
-    (url) => {
-      if (url) nextTick(() => generateQRCode());
-    },
-    { immediate: true },
-  );
+    if (!url || !canvas || !mounted) return;
+
+    void QRCode.toCanvas(canvas, url, {
+      width: 140,
+      margin: 1,
+      color: { dark: "#000000", light: "#FFFFFF" },
+    }).catch((error) => {
+      console.error("Ошибка при генерации QR-кода:", error);
+    });
+  });
 
   return { qrCanvas };
 };

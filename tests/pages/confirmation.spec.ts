@@ -21,7 +21,8 @@ type TestOrder = {
 type TestBooking = {
   id: number;
   uuid?: string;
-  confirmation_number: string | null;
+  number: string;
+  confirmation_number?: string | null;
   status: string;
   allowed?: string[];
   order: TestOrder;
@@ -255,6 +256,7 @@ describe("pages/confirmation.vue", () => {
     const { order, ...rest } = overrides ?? {};
     return {
       id: 179,
+      number: "BW-2026-06-05-179",
       confirmation_number: null,
       status: "confirmed",
       order: { ...defaultOrder, ...order },
@@ -278,7 +280,7 @@ describe("pages/confirmation.vue", () => {
 
       const bookingNumber = wrapper.find("[class*='bookingNumber']");
       expect(bookingNumber.exists()).toBe(true);
-      expect(bookingNumber.text()).toContain("№ 179");
+      expect(bookingNumber.text()).toContain("№ BW-2026-06-05-179");
 
       const downloadButton = wrapper.find("button.btn__bs.danger");
       const printButton = wrapper.find("button.btn__bs.dark");
@@ -302,16 +304,29 @@ describe("pages/confirmation.vue", () => {
       expect(downloadBtn).toBeUndefined();
     });
 
-    it("должен показывать confirmation_number если он задан", async () => {
+    it("не должен показывать id если number отсутствует", async () => {
       createdBookingRef.value = createBookingPayload({
-        confirmation_number: "CONF-9999",
+        number: "",
+        id: 144,
+      });
+
+      const wrapper = createWrapper();
+      await nextTick();
+
+      expect(wrapper.find("[class*='bookingNumber']").exists()).toBe(false);
+    });
+
+    it("должен показывать number из payload", async () => {
+      createdBookingRef.value = createBookingPayload({
+        number: "BW-2026-06-05-144",
+        id: 144,
       });
 
       const wrapper = createWrapper();
       await nextTick();
 
       expect(wrapper.find("[class*='bookingNumber']").text()).toContain(
-        "CONF-9999",
+        "BW-2026-06-05-144",
       );
     });
 

@@ -927,6 +927,10 @@ export const useBookingStore = defineStore(
           const normalized: BookingResponse = {
             id: raw.id,
             uuid: raw.uuid,
+            number:
+              raw.number != null && String(raw.number).trim() !== ""
+                ? String(raw.number).trim()
+                : undefined,
             confirmation_number: raw.confirmation_number,
             status: raw.status,
             allowed,

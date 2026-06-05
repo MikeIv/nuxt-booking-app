@@ -5,7 +5,6 @@ import { setupPinia, mountComponent } from "../utils/test-utils";
 
 const createdBookingRef = ref<{ status?: string } | null>(null);
 const mockGetBookingByUuid = vi.fn();
-const mockGetSessionBookingByUuid = vi.fn();
 const mockSetBookingByUuid = vi.fn();
 const mockSetLoading = vi.fn();
 const mockSetServerRequest = vi.fn();
@@ -14,7 +13,6 @@ vi.mock("~/stores/booking", () => ({
   useBookingStore: () => ({
     createdBooking: createdBookingRef,
     getBookingByUuid: mockGetBookingByUuid,
-    getSessionBookingByUuid: mockGetSessionBookingByUuid,
     setBookingByUuid: mockSetBookingByUuid,
     setLoading: mockSetLoading,
     setServerRequest: mockSetServerRequest,
@@ -44,7 +42,6 @@ describe("useBookingStatusPolling", () => {
     vi.useFakeTimers();
 
     createdBookingRef.value = null;
-    mockGetSessionBookingByUuid.mockReturnValue(null);
     mockGetBookingByUuid.mockResolvedValue({ status: "confirmed" });
   });
 
@@ -98,30 +95,16 @@ describe("useBookingStatusPolling", () => {
     expect(mockGetBookingByUuid).toHaveBeenCalledTimes(1);
   });
 
-  it("должен использовать кэш без запроса если status не processing", async () => {
-    const cachedBooking = { status: "confirmed", id: 1 };
-    mockGetSessionBookingByUuid.mockReturnValue(cachedBooking);
-
-    const wrapper = mountPolling();
-    await nextTick();
-    await vi.runOnlyPendingTimersAsync();
-    await nextTick();
-
-    expect(mockSetBookingByUuid).toHaveBeenCalledWith(cachedBooking);
-    expect(mockGetBookingByUuid).not.toHaveBeenCalled();
-    expect(wrapper.vm.isBookingConfirmed).toBe(true);
-  });
-
-  it("должен опрашивать API если в кэше status = processing", async () => {
-    const cachedBooking = { status: "processing", id: 1 };
-    mockGetSessionBookingByUuid.mockReturnValue(cachedBooking);
-    mockGetBookingByUuid.mockResolvedValue({ status: "confirmed" });
+  it("должен всегда запрашивать API при uuid", async () => {
+    mockGetBookingByUuid.mockResolvedValue({
+      status: "confirmed",
+      number: "BW-2026-06-05-144",
+    });
 
     const wrapper = mountPolling();
     await nextTick();
     await nextTick();
 
-    expect(mockSetBookingByUuid).toHaveBeenCalledWith(cachedBooking);
     expect(mockGetBookingByUuid).toHaveBeenCalledWith("test-uuid", {
       silent: true,
     });

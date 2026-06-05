@@ -123,7 +123,8 @@ export type BookingStatus = "processing" | "confirmed" | "failed";
 export interface BookingByUuidPayload {
   id: string;
   uuid: string;
-  confirmation_number: string;
+  number: string;
+  confirmation_number?: string;
   status: BookingStatus | string;
   allowed?: Array<
     | "edit-dates"
@@ -144,6 +145,7 @@ export interface BookingByUuidPayload {
 interface BookingResponse {
   id?: number | string;
   uuid?: string;
+  number?: string;
   confirmation_number?: string;
   status?: string;
   allowed?: Array<

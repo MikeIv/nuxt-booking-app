@@ -1,4 +1,5 @@
 import { useBookingStore } from "~/stores/booking";
+import type { BookingStatus } from "~/types/booking";
 import type { ComputedRef } from "vue";
 
 const POLL_INTERVAL_MS = 5000;
@@ -13,9 +14,10 @@ export type BookingConfirmationPageStatus =
 const resolvePageStatus = (
   status: string | undefined,
 ): BookingConfirmationPageStatus => {
-  if (status === "processing") return "processing";
-  if (status === "confirmed") return "confirmed";
-  if (status === "failed") return "failed";
+  const normalized = status as BookingStatus | undefined;
+  if (normalized === "processing") return "processing";
+  if (normalized === "confirmed") return "confirmed";
+  if (normalized === "failed") return "failed";
   return "idle";
 };
 
@@ -120,16 +122,6 @@ export const useBookingStatusPolling = (
         options?.onConfirmed?.();
       }
       return;
-    }
-
-    const cachedBooking = bookingStore.getSessionBookingByUuid(uuid);
-    if (cachedBooking) {
-      bookingStore.setBookingByUuid(cachedBooking);
-
-      if (cachedBooking.status !== "processing") {
-        applyPageStatus(cachedBooking.status);
-        return;
-      }
     }
 
     showProcessingOverlay();
