@@ -7,6 +7,7 @@
     price: number;
     packageCode?: string;
     photos?: string[];
+    calculationRateTitle?: string;
     /** Индекс номера для мультибронирования (0 для одного номера) */
     roomIndex?: number;
   }
@@ -105,13 +106,9 @@
           </data>
         </div>
 
-        <div :class="$style.periodBlock">
-          <dl :class="$style.description">
-            <div :class="$style.item">
-              <dd :class="$style.itemTitle">За весь период проживания</dd>
-            </div>
-          </dl>
-        </div>
+        <p v-if="calculationRateTitle" :class="[$style.periodBlock, $style.itemTitle]">
+          {{ calculationRateTitle }}
+        </p>
       </div>
 
       <footer :class="$style.footer">
@@ -293,4 +290,3 @@
     }
   }
 </style>
-

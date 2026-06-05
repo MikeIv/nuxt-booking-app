@@ -383,6 +383,7 @@
               :price="service.price"
               :package-code="service.packageCode"
               :photos="service.photos"
+              :calculation-rate-title="service.calculationRateTitle"
               :room-index="isMultiRoomsMode ? activeRoomTab : 0"
             />
           </section>
