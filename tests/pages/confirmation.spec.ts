@@ -106,6 +106,20 @@ vi.stubGlobal("useNotificationToast", () => ({
 // Стабы для проектных composables, используемых как авто-импорты в confirmation.vue
 vi.stubGlobal("useConfirmationQR", () => ({ qrCanvas: ref(null) }));
 
+const mockIsBookingConfirmed = ref(true);
+const mockIsBookingFailed = ref(false);
+const mockIsAwaitingConfirmation = ref(false);
+
+vi.stubGlobal("useBookingStatusPolling", () => ({
+  pageStatus: ref("confirmed"),
+  isAwaitingConfirmation: mockIsAwaitingConfirmation,
+  isBookingConfirmed: mockIsBookingConfirmed,
+  isBookingFailed: mockIsBookingFailed,
+  showConfirmationContent: computed(
+    () => !mockIsAwaitingConfirmation.value && !mockIsBookingFailed.value,
+  ),
+}));
+
 vi.stubGlobal("useBookingCancel", () => ({
   isCancelBookingPopupOpen: ref(false),
   isCancellingBooking: ref(false),
@@ -212,6 +226,9 @@ describe("pages/confirmation.vue", () => {
     mockNotificationToastAdd.mockReset();
     mockBookingStore.getSessionBookingByUuid.mockReturnValue(null);
     mockBookingStore.getBookingByUuid.mockResolvedValue(undefined);
+    mockIsBookingConfirmed.value = true;
+    mockIsBookingFailed.value = false;
+    mockIsAwaitingConfirmation.value = false;
 
     (globalThis as { fetch?: unknown }).fetch = undefined;
   });
@@ -375,31 +392,30 @@ describe("pages/confirmation.vue", () => {
     });
   });
 
-  describe("Загрузка бронирования по UUID", () => {
-    it("должен загружать бронирование по uuid из query при монтировании", async () => {
-      mockRoute.query = { uuid: "query-uuid-123" };
-      mockBookingStore.getSessionBookingByUuid.mockReturnValue(null);
+  describe("Статус бронирования после оплаты", () => {
+    it("должен показывать сообщение об ошибке при failed", async () => {
+      mockIsBookingConfirmed.value = false;
+      mockIsBookingFailed.value = true;
 
-      createWrapper();
+      const wrapper = createWrapper();
       await nextTick();
 
-      expect(mockBookingStore.getBookingByUuid).toHaveBeenCalledWith(
-        "query-uuid-123",
-      );
+      expect(wrapper.text()).toContain("Не удалось забронировать");
+      expect(wrapper.text()).toContain("попробуйте попытку позже");
+      expect(wrapper.text()).not.toContain("Ваше бронирование подтверждено");
     });
 
-    it("должен использовать кэш если бронирование закэшировано", async () => {
-      mockRoute.query = { uuid: "cached-uuid" };
-      const cachedBooking = createBookingPayload();
-      mockBookingStore.getSessionBookingByUuid.mockReturnValue(cachedBooking);
+    it("не должен показывать контент подтверждения во время processing", async () => {
+      mockIsBookingConfirmed.value = false;
+      mockIsBookingFailed.value = false;
+      mockIsAwaitingConfirmation.value = true;
+      createdBookingRef.value = createBookingPayload({ status: "processing" });
 
-      createWrapper();
+      const wrapper = createWrapper();
       await nextTick();
 
-      expect(mockBookingStore.setBookingByUuid).toHaveBeenCalledWith(
-        cachedBooking,
-      );
-      expect(mockBookingStore.getBookingByUuid).not.toHaveBeenCalled();
+      expect(wrapper.text()).not.toContain("Ваше бронирование подтверждено");
+      expect(wrapper.find("[class*='bookingNumber']").exists()).toBe(false);
     });
   });
 

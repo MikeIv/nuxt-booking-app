@@ -21,8 +21,6 @@
     roomTariffs,
     date,
     selectedServices,
-    loading,
-    isServerRequest,
     createdBooking,
     currentBookingUuid: currentBookingUuidStore,
   } = storeToRefs(bookingStore);
@@ -228,6 +226,29 @@
     confirmChangeServices,
   } = useBookingChangeServices(currentBookingUuid);
 
+  const openChangeRoomPopupIfNeeded = () => {
+    if (
+      bookingStore.changeRoomUuid &&
+      bookingStore.changeRoomUuid === currentBookingUuid.value &&
+      bookingStore.selectedRoomType
+    ) {
+      openChangeRoomPopup();
+    }
+  };
+
+  const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
+    useBookingStatusPolling(currentBookingUuid, {
+      onLoadError: () => {
+        toast.add({
+          severity: "error",
+          summary: "Не удалось загрузить данные бронирования",
+          detail: bookingStore.error ?? "Проверьте ссылку или попробуйте позже.",
+          life: 5000,
+        });
+      },
+      onConfirmed: openChangeRoomPopupIfNeeded,
+    });
+
   // --- Watchers ---
   watch(
     () => createdBooking.value,
@@ -256,45 +277,6 @@
     },
     { immediate: true },
   );
-
-  onMounted(async () => {
-    if (loading.value && isServerRequest.value) {
-      bookingStore.setLoading(false);
-      bookingStore.setServerRequest(false);
-    }
-
-    const queryUuid = route.query.uuid;
-    const effectiveBookingUuid =
-      typeof queryUuid === "string" && queryUuid.trim() !== ""
-        ? queryUuid
-        : currentBookingUuid.value;
-
-    if (effectiveBookingUuid) {
-      try {
-        const cachedBooking = bookingStore.getSessionBookingByUuid(effectiveBookingUuid);
-        if (cachedBooking) {
-          bookingStore.setBookingByUuid(cachedBooking);
-        } else {
-          await bookingStore.getBookingByUuid(effectiveBookingUuid);
-        }
-      } catch {
-        toast.add({
-          severity: "error",
-          summary: "Не удалось загрузить данные бронирования",
-          detail: bookingStore.error ?? "Проверьте ссылку или попробуйте позже.",
-          life: 5000,
-        });
-      }
-    }
-
-    if (
-      bookingStore.changeRoomUuid &&
-      bookingStore.changeRoomUuid === effectiveBookingUuid &&
-      bookingStore.selectedRoomType
-    ) {
-      openChangeRoomPopup();
-    }
-  });
 
   const handleDownload = async () => {
     const url = pdfUrl.value;
@@ -378,8 +360,29 @@
 
 <template>
   <main :class="$style.container">
-    <h1 :class="$style.header" data-breadcrumb="Ваше бронирование">Ваше бронирование подтверждено!</h1>
-    <section :class="$style.contentBlock">
+    <template v-if="isBookingFailed">
+      <h1 :class="$style.header" data-breadcrumb="Ошибка бронирования">
+        Не удалось забронировать
+      </h1>
+      <section :class="$style.contentBlock">
+        <p :class="$style.failedMessage">
+          Не удалось забронировать, попробуйте попытку позже.
+        </p>
+        <Button
+          label="Новое бронирование"
+          class="btn__bs danger"
+          unstyled
+          @click="handleNewBooking"
+        />
+      </section>
+    </template>
+
+    <template v-else-if="showConfirmationContent">
+      <h1 :class="$style.header" data-breadcrumb="Ваше бронирование">
+        <template v-if="isBookingConfirmed">Ваше бронирование подтверждено!</template>
+        <template v-else>Ваше бронирование</template>
+      </h1>
+      <section :class="$style.contentBlock">
       <div :class="$style.contentWrapper">
         <div :class="$style.mainContent">
           <div :class="$style.section">
@@ -527,6 +530,7 @@
       @confirm="confirmChangeServices"
       @toggle-package="togglePackage"
     />
+    </template>
   </main>
 </template>
 
@@ -781,5 +785,15 @@
     width: 100%;
     height: rem(1);
     background-color: var(--a-black);
+  }
+
+  .failedMessage {
+    margin: 0 0 rem(24);
+    font-family: "Inter", sans-serif;
+    font-size: rem(16);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--a-text-dark);
+    text-align: center;
   }
 </style>

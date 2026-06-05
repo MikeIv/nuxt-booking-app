@@ -117,11 +117,14 @@ export interface BookingByUuidRoom {
   total: number;
 }
 
+/** Статус бронирования после оплаты (GET /v1/booking/{uuid}) */
+export type BookingStatus = "processing" | "confirmed" | "failed";
+
 export interface BookingByUuidPayload {
   id: string;
   uuid: string;
   confirmation_number: string;
-  status: string;
+  status: BookingStatus | string;
   allowed?: Array<
     | "edit-dates"
     | "edit-number"

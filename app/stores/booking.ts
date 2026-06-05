@@ -872,15 +872,23 @@ export const useBookingStore = defineStore(
      * Загрузка бронирования по uuid (страница подтверждения после редиректа с оплаты).
      * GET /v1/booking/{uuid}
      */
-    async function getBookingByUuid(uuid: string): Promise<BookingResponse> {
+    async function getBookingByUuid(
+      uuid: string,
+      options?: { silent?: boolean },
+    ): Promise<BookingResponse> {
       const { get } = useApi();
+      const silent = options?.silent ?? false;
 
-      setLoading(true, "Загружаем данные бронирования...");
+      if (!silent) {
+        setLoading(true, "Загружаем данные бронирования...");
+      }
 
       let apiError: Error | null = null;
 
       try {
-        isServerRequest.value = true;
+        if (!silent) {
+          isServerRequest.value = true;
+        }
         const response = await get<BookingByUuidPayload>(
           `/v1/booking/${uuid}`,
           {},
@@ -944,8 +952,10 @@ export const useBookingStore = defineStore(
           "Произошла ошибка при загрузке бронирования";
         throw err;
       } finally {
-        isServerRequest.value = false;
-        setLoading(false);
+        if (!silent) {
+          isServerRequest.value = false;
+          setLoading(false);
+        }
       }
 
       error.value = apiError!.message;
