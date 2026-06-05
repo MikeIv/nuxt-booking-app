@@ -15,6 +15,7 @@
   const bookingStore = useBookingStore();
   const authStore = useAuthStore();
   const toast = useNotificationToast();
+  const { getErrorMessage } = useApiHelpers();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -235,11 +236,24 @@
 
   const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
     useBookingStatusPolling(currentBookingUuid, {
-      onLoadError: () => {
+      onAccessDenied: (error) => {
+        const message = getErrorMessage(error).trim();
+        if (!message) return;
+
+        toast.add({
+          severity: "error",
+          summary: message,
+          life: 5000,
+        });
+      },
+      onLoadError: (error) => {
         toast.add({
           severity: "error",
           summary: "Не удалось загрузить данные бронирования",
-          detail: bookingStore.error ?? "Проверьте ссылку или попробуйте позже.",
+          detail:
+            getErrorMessage(error).trim() ||
+            bookingStore.error ||
+            "Проверьте ссылку или попробуйте позже.",
           life: 5000,
         });
       },

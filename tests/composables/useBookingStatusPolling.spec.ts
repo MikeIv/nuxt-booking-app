@@ -111,6 +111,40 @@ describe("useBookingStatusPolling", () => {
     expect(wrapper.vm.isBookingConfirmed).toBe(true);
   });
 
+  it("должен останавливать polling при 403 и вызывать onAccessDenied", async () => {
+    const onLoadError = vi.fn();
+    const onAccessDenied = vi.fn();
+    const TestHostWithForbidden = defineComponent({
+      setup() {
+        const bookingUuid = ref<string | null>("test-uuid");
+        return useBookingStatusPolling(
+          computed(() => bookingUuid.value),
+          { onLoadError, onAccessDenied },
+        );
+      },
+      template: "<div />",
+    });
+
+    const forbiddenError = {
+      message: "Доступ запрещён",
+      status: 403,
+    };
+    mockGetBookingByUuid.mockRejectedValue(forbiddenError);
+
+    const wrapper = mountComponent(TestHostWithForbidden);
+    await nextTick();
+    await nextTick();
+
+    expect(onAccessDenied).toHaveBeenCalledWith(forbiddenError);
+    expect(onLoadError).not.toHaveBeenCalled();
+    expect(wrapper.vm.isAwaitingConfirmation).toBe(false);
+    expect(wrapper.vm.isBookingFailed).toBe(false);
+    expect(mockSetLoading).toHaveBeenCalledWith(false);
+
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(mockGetBookingByUuid).toHaveBeenCalledTimes(1);
+  });
+
   it("должен продолжать polling после сетевой ошибки, не показывая failed", async () => {
     mockGetBookingByUuid
       .mockRejectedValueOnce(new Error("Network error"))

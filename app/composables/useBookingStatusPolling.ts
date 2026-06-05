@@ -21,10 +21,17 @@ const resolvePageStatus = (
   return "idle";
 };
 
+const getErrorStatus = (error: unknown): number | undefined =>
+  (error as { status?: number }).status;
+
+const isAccessDeniedError = (error: unknown): boolean =>
+  getErrorStatus(error) === 403;
+
 export const useBookingStatusPolling = (
   bookingUuid: ComputedRef<string | null>,
   options?: {
-    onLoadError?: () => void;
+    onLoadError?: (error: unknown) => void;
+    onAccessDenied?: (error: unknown) => void;
     onConfirmed?: () => void;
   },
 ) => {
@@ -59,6 +66,11 @@ export const useBookingStatusPolling = (
   const hideProcessingOverlay = () => {
     bookingStore.setLoading(false);
     bookingStore.setServerRequest(false);
+  };
+
+  const stopPolling = () => {
+    clearPollTimer();
+    hideProcessingOverlay();
   };
 
   const applyPageStatus = (status: string | undefined) => {
@@ -100,8 +112,16 @@ export const useBookingStatusPolling = (
       if (booking.status === "processing") {
         startPolling();
       }
-    } catch {
-      options?.onLoadError?.();
+    } catch (error: unknown) {
+      if (isAccessDeniedError(error)) {
+        pageStatus.value = "idle";
+        stopPolling();
+        options?.onAccessDenied?.(error);
+        return;
+      }
+
+      options?.onLoadError?.(error);
+
       if (bookingUuid.value) {
         pageStatus.value = "processing";
         showProcessingOverlay();
@@ -133,10 +153,12 @@ export const useBookingStatusPolling = (
   });
 
   onUnmounted(() => {
-    clearPollTimer();
     if (isAwaitingConfirmation.value) {
-      hideProcessingOverlay();
+      stopPolling();
+      return;
     }
+
+    clearPollTimer();
   });
 
   return {
