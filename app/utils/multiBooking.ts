@@ -80,3 +80,15 @@ export function getUnavailableRoomIndices(
   }
   return unavailable;
 }
+
+/**
+ * Возвращает массив выбранных номеров мультибронирования, отсортированный по логическому roomIdx.
+ * Ключи в selectedMultiRooms могут быть композитными (card-roomIdx), поэтому для per-room данных
+ * (услуги/packages, гости) всегда используем roomIdx из записей.
+ */
+export function getSortedMultiRoomEntries<T extends { roomIdx: number }>(
+  record: Record<string, T> | null | undefined,
+): T[] {
+  if (!record) return [];
+  return Object.values(record).sort((a, b) => a.roomIdx - b.roomIdx);
+}

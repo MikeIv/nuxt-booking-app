@@ -22,7 +22,10 @@ import type {
   ApiSearchPayload,
   SelectedEntry,
 } from "~/types/booking";
-import { normalizeRoomIndex } from "~/utils/multiBooking";
+import {
+  getSortedMultiRoomEntries,
+  normalizeRoomIndex,
+} from "~/utils/multiBooking";
 
 export interface UserProfileData {
   name: string;
@@ -977,22 +980,37 @@ export const useBookingStore = defineStore(
       try {
         const { post } = useApi();
 
-        const multiRoomsEntries = Object.values(selectedMultiRooms.value);
-        const isMultiRoom = multiRoomsEntries.length > 0;
+        const sortedMulti = getSortedMultiRoomEntries(selectedMultiRooms.value);
+        const isMultiRoom = sortedMulti.length > 0;
 
-        // Для мультибронирования: запрос по одному номеру (по индексу вкладки)
-        const effectiveRoomIndex = isMultiRoom ? (roomIndex ?? 0) : undefined;
+        // Для мультибронирования: roomIndex здесь — логический индекс номера (entry.roomIdx / guests.roomList index).
+        // Ищем запись по совпадению roomIdx (устойчиво к порядку ключей), с fallback на позицию для совместимости.
+        let effectiveRoomIndex: number | undefined = undefined;
+        let targetEntry: (typeof sortedMulti)[number] | undefined = undefined;
+
+        if (isMultiRoom) {
+          effectiveRoomIndex = roomIndex ?? 0;
+          targetEntry = sortedMulti.find(
+            (e) => e.roomIdx === effectiveRoomIndex,
+          );
+          if (
+            !targetEntry &&
+            effectiveRoomIndex != null &&
+            effectiveRoomIndex < sortedMulti.length
+          ) {
+            targetEntry = sortedMulti[effectiveRoomIndex];
+          }
+        }
         let roomTypeCode: string | undefined;
         let ratePlanCode: string | undefined;
 
-        if (isMultiRoom) {
-          const entry = multiRoomsEntries[effectiveRoomIndex!];
+        if (isMultiRoom && targetEntry) {
           roomTypeCode =
-            entry?.room_type_code?.trim() !== ""
-              ? entry?.room_type_code
+            targetEntry.room_type_code?.trim() !== ""
+              ? targetEntry.room_type_code
               : undefined;
-          ratePlanCode = entry?.ratePlanCode;
-        } else {
+          ratePlanCode = targetEntry.ratePlanCode;
+        } else if (!isMultiRoom) {
           const code = selectedRoomType.value;
           roomTypeCode = code && code.trim() !== "" ? code : undefined;
           ratePlanCode = selectedTariff.value?.rate_plan_code;

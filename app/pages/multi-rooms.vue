@@ -142,11 +142,10 @@
       (sum, e) => sum + toStayTotal(e.price, nights.value),
       0,
     );
-    const roomIndices = Object.keys(selectedByRoomIdx.value).map(Number);
-    const servicesTotal = roomIndices.reduce(
-      (sum, idx) =>
+    const servicesTotal = Object.values(selectedByRoomIdx.value).reduce(
+      (sum, entry) =>
         sum +
-        bookingStore.getSelectedServicesForRoom(idx).reduce(
+        bookingStore.getSelectedServicesForRoom(entry.roomIdx).reduce(
           (s, svc) => s + svc.price,
           0,
         ),

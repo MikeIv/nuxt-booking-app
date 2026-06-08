@@ -19,6 +19,7 @@ import BookingPaymentSection from "~/components/booking/PaymentSection.vue";
 import type { SelectedEntry, BookingData } from "~/types/booking";
 import { toPricePerNight, toStayTotal } from "~/utils/price";
 import { buildSelectedEntry } from "~/utils/selectedEntry";
+import { getSortedMultiRoomEntries } from "~/utils/multiBooking";
 
 definePageMeta({
   layout: "steps",
@@ -142,9 +143,7 @@ const initializeRoomGuests = () => {
 // Получаем список номеров для отображения
 const roomEntries = computed(() => {
   if (!isMultiRoomsMode.value) return [];
-  return Object.values(selectedMultiRooms.value).sort(
-    (a, b) => a.roomIdx - b.roomIdx,
-  );
+  return getSortedMultiRoomEntries(selectedMultiRooms.value);
 });
 
 // Получаем состав гостей для конкретного номера
@@ -264,8 +263,10 @@ const onFormSubmit = async () => {
     }
 
     const packagesPerRoom: Record<number, string[]> = {};
-    Object.keys(selectedMultiRooms.value).forEach((key) => {
-      const roomIdx = Number(key);
+    // Используем логические roomIdx из записей (а не ключи объекта selectedMultiRooms, которые могут быть композитными "card-roomIdx")
+    const sortedForPackages = getSortedMultiRoomEntries(selectedMultiRooms.value);
+    sortedForPackages.forEach((entry) => {
+      const roomIdx = entry.roomIdx;
       const codes = bookingStore
         .getSelectedServicesForRoom(roomIdx)
         .map((s) => s.packageCode)
@@ -435,11 +436,10 @@ const bookingTotal = computed(() => {
       (sum, e) => sum + toStayTotal(e.price, nights.value),
       0,
     );
-    const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
-    const servicesTotal = roomIndices.reduce(
-      (sum, idx) =>
+    const servicesTotal = Object.values(selectedMultiRooms.value).reduce(
+      (sum, entry) =>
         sum +
-        bookingStore.getSelectedServicesForRoom(idx).reduce(
+        bookingStore.getSelectedServicesForRoom(entry.roomIdx).reduce(
           (s, svc) => s + svc.price,
           0,
         ),

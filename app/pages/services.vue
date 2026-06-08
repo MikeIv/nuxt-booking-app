@@ -5,6 +5,7 @@
   import type { SelectedEntry } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
   import { buildSelectedEntry } from "~/utils/selectedEntry";
+  import { getSortedMultiRoomEntries } from "~/utils/multiBooking";
 
   definePageMeta({
     layout: "steps",
@@ -78,11 +79,10 @@
         (sum, e) => sum + toStayTotal(e.price, nights.value),
         0,
       );
-      const roomIndices = Object.keys(selectedMultiRooms.value).map(Number);
-      const servicesTotal = roomIndices.reduce(
-        (sum, idx) =>
+      const servicesTotal = Object.values(selectedMultiRooms.value).reduce(
+        (sum, entry) =>
           sum +
-          bookingStore.getSelectedServicesForRoom(idx).reduce(
+          bookingStore.getSelectedServicesForRoom(entry.roomIdx).reduce(
             (s, svc) => s + svc.price,
             0,
           ),
@@ -177,11 +177,13 @@
     return tariff?.price ?? upgradeRoom.value.min_price ?? null;
   });
 
-  // --- Табы номеров при мультибронировании ---
-  const multiRoomTabIndices = computed(() => {
-    const keys = Object.keys(selectedMultiRooms.value);
-    return keys.map((_, i) => i);
-  });
+  // --- Табы номеров при мультибронировании (используем логические roomIdx из SelectedEntry) ---
+  const multiRoomEntriesSorted = computed(() =>
+    getSortedMultiRoomEntries(selectedMultiRooms.value),
+  );
+  const multiRoomTabIndices = computed(() =>
+    multiRoomEntriesSorted.value.map((_, i) => i),
+  );
   const activeRoomTab = ref(0);
   watch(
     () => multiRoomTabIndices.value.length,
@@ -192,11 +194,16 @@
     },
   );
 
-  // При переключении вкладки номера — запрашиваем пакеты для этого номера
+  const currentActiveRoomIdx = computed<number>(() => {
+    return multiRoomEntriesSorted.value[activeRoomTab.value]?.roomIdx ?? 0;
+  });
+
+  // При переключении вкладки номера — запрашиваем пакеты для этого номера (по логическому roomIdx)
   watch(activeRoomTab, async (tabIndex) => {
     if (!isMultiRoomsMode.value) return;
+    const roomIdx = multiRoomEntriesSorted.value[tabIndex]?.roomIdx ?? tabIndex;
     try {
-      await bookingStore.searchPackages(tabIndex);
+      await bookingStore.searchPackages(roomIdx);
     } catch (err: unknown) {
       toast.add({
         severity: "error",
@@ -266,9 +273,12 @@
       }
     }
 
-    // Загружаем услуги: при мультибронировании — только для первого номера
+    // Загружаем услуги: при мультибронировании — для первого выбранного номера (по его логическому roomIdx)
     try {
-      await bookingStore.searchPackages(isMultiRoomsMode.value ? 0 : undefined);
+      const firstRoomIdx = isMultiRoomsMode.value
+        ? (multiRoomEntriesSorted.value[0]?.roomIdx ?? 0)
+        : undefined;
+      await bookingStore.searchPackages(firstRoomIdx);
     } catch (err: unknown) {
       toast.add({
         severity: "error",
@@ -364,7 +374,7 @@
                 :class="[$style.roomTab, activeRoomTab === tabIndex && $style.roomTabActive]"
                 @click="activeRoomTab = tabIndex"
               >
-                Номер {{ tabIndex + 1 }}
+                Номер {{ (multiRoomEntriesSorted[tabIndex]?.roomIdx ?? tabIndex) + 1 }}
               </button>
             </div>
             <h2 v-else :class="$style.servicesListTitle">Дополнительные услуги</h2>
@@ -374,18 +384,19 @@
             <div v-else-if="services.length === 0" :class="$style.noServices">
               Услуги не найдены
             </div>
-            <BookingServiceCard
-              v-for="service in services"
-              v-else
-              :id="service.id"
-              :key="service.packageCode"
-              :title="service.title"
-              :price="service.price"
-              :package-code="service.packageCode"
-              :photos="service.photos"
-              :calculation-rate-title="service.calculationRateTitle"
-              :room-index="isMultiRoomsMode ? activeRoomTab : 0"
-            />
+            <template v-else>
+              <BookingServiceCard
+                v-for="service in services"
+                :id="service.id"
+                :key="service.packageCode"
+                :title="service.title"
+                :price="service.price"
+                :package-code="service.packageCode"
+                :photos="service.photos"
+                :calculation-rate-title="service.calculationRateTitle"
+                :room-index="isMultiRoomsMode ? currentActiveRoomIdx : 0"
+              />
+            </template>
           </section>
         </div>
 

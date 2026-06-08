@@ -16,6 +16,7 @@
     packageCode: "",
     photos: () => [],
     roomIndex: 0,
+    calculationRateTitle: undefined,
   });
   const isPopupOpen = ref(false);
   const bookingStore = useBookingStore();
