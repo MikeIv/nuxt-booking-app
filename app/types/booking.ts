@@ -165,6 +165,7 @@ interface BookingResponse {
 interface BookingHistoryItem {
   id: string | number;
   uuid?: string;
+  number?: string | null;
   confirmation_number: string | null;
   status: string;
   order: {

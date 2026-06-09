@@ -143,9 +143,9 @@
     <template #content>
       <form
         id="register-form"
+        novalidate
         :class="$style.content"
         @submit.prevent="handleRegister"
-        novalidate
       >
         <div :class="$style.inputRow">
           <div :class="$style.inputBlock">

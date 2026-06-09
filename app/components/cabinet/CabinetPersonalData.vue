@@ -1,76 +1,18 @@
 <script setup lang="ts">
   import type { UserProfile } from "~/types/auth";
-  import { countriesRu } from "~/utils/countries";
-  import BookingSelect from "~/components/booking/BookingSelect.vue";
 
-  interface Props {
+  defineProps<{
     formData: UserProfile;
     isLoading: boolean;
     isSaving: boolean;
     hasChanges: boolean;
-  }
+  }>();
 
-  interface Emits {
-    (e: "update:formData", value: UserProfile): void;
-    (e: "check-changes" | "save"): void;
-  }
-
-  const props = defineProps<Props>();
-  const emit = defineEmits<Emits>();
-
-
-  const handleFieldChange = () => {
-    emit("check-changes");
-  };
-
-  // Вычисляемые свойства для каждого поля с геттерами и сеттерами
-  const name = computed({
-    get: () => props.formData.name,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, name: value });
-      handleFieldChange();
-    },
-  });
-
-  const surname = computed({
-    get: () => props.formData.surname,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, surname: value });
-      handleFieldChange();
-    },
-  });
-
-  const middleName = computed({
-    get: () => props.formData.middle_name,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, middle_name: value });
-      handleFieldChange();
-    },
-  });
-
-  const phone = computed({
-    get: () => props.formData.phone,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, phone: value });
-      handleFieldChange();
-    },
-  });
-
-  const email = computed({
-    get: () => props.formData.email,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, email: value });
-      handleFieldChange();
-    },
-  });
-
-  const country = computed({
-    get: () => props.formData.country,
-    set: (value: string) => {
-      emit("update:formData", { ...props.formData, country: value });
-      handleFieldChange();
-    },
-  });
+  defineEmits<{
+    "update:formData": [value: UserProfile];
+    "check-changes": [];
+    save: [];
+  }>();
 </script>
 
 <template>
@@ -79,81 +21,79 @@
 
     <div v-if="isLoading" :class="$style.loadingIndicator">Загрузка данных профиля...</div>
 
-    <form v-else :class="$style.form" @submit.prevent="emit('save')">
+    <div v-else :class="$style.form">
       <div :class="$style.field">
         <label for="name" :class="$style.label">Имя</label>
         <input
           id="name"
-          v-model="name"
+          :value="formData.name"
           :class="$style.input"
           type="text"
           placeholder="Введите имя"
-        />
+          readonly
+        >
       </div>
 
       <div :class="$style.field">
         <label for="surname" :class="$style.label">Фамилия</label>
         <input
           id="surname"
-          v-model="surname"
+          :value="formData.surname"
           :class="$style.input"
           type="text"
           placeholder="Введите фамилию"
-        />
+          readonly
+        >
       </div>
 
       <div :class="$style.field">
         <label for="middle_name" :class="$style.label">Отчество</label>
         <input
           id="middle_name"
-          v-model="middleName"
+          :value="formData.middle_name"
           :class="$style.input"
           type="text"
           placeholder="Введите отчество"
-        />
+          readonly
+        >
       </div>
 
       <div :class="$style.field">
         <label for="phone" :class="$style.label">Телефон</label>
         <input
           id="phone"
-          v-model="phone"
+          :value="formData.phone"
           :class="$style.input"
           type="tel"
           placeholder="Введите телефон"
-        />
+          readonly
+        >
       </div>
 
       <div :class="$style.field">
         <label for="email" :class="$style.label">E-mail</label>
         <input
           id="email"
-          v-model="email"
+          :value="formData.email"
           :class="$style.input"
           type="email"
           placeholder="Введите e-mail"
-        />
+          readonly
+        >
       </div>
 
       <div :class="$style.field">
         <label for="country" :class="$style.label">Гражданство</label>
-        <BookingSelect
-          v-model="country"
-          :options="countriesRu"
+        <input
+          id="country"
+          :value="formData.country"
+          :class="$style.input"
+          type="text"
           placeholder="Выберите страну"
-          :searchable="true"
-          search-placeholder="Поиск страны..."
-        />
+          readonly
+        >
       </div>
-
-      <Button
-        :label="isSaving ? 'Сохранение...' : 'Изменить'"
-        type="submit"
-        unstyled
-        :class="[$style.saveBtn, { [$style.active]: hasChanges && !isSaving }]"
-        :disabled="!hasChanges || isSaving"
-      />
-    </form>
+    </div>
   </section>
 </template>
 
@@ -201,57 +141,6 @@
     display: flex;
     flex-direction: column;
     gap: rem(5);
-
-    // Стили для BookingSelect в мобильной версии - должны соответствовать стилям инпутов
-    :global(.selectRoot) {
-      height: rem(58);
-      padding: 0 rem(27) 0 rem(38);
-      font-size: rem(20);
-      border: rem(0.5) solid var(--a-border-dark);
-      border-radius: var(--a-borderR--card);
-      box-shadow: var(--a-shadow-weekday);
-      transition:
-        border-color 0.3s ease,
-        box-shadow 0.3s ease;
-
-      @media (min-width: #{size.$tablet}) {
-        height: rem(54);
-        padding: 0 rem(16);
-        font-size: rem(16);
-        border: rem(1) solid var(--a-border-light);
-        border-radius: var(--a-borderR--input);
-        box-shadow: none;
-      }
-
-      &:hover {
-        border-color: var(--a-border-dark);
-
-        @media (min-width: #{size.$tablet}) {
-          border-color: var(--a-border-primary);
-        }
-      }
-
-      &:focus,
-      &.isOpen {
-        outline: none;
-        border-color: var(--a-border-primary);
-        box-shadow: var(--a-shadow-weekday),
-          0 0 0 2px rgba(191, 157, 124, 0.1);
-
-        @media (min-width: #{size.$tablet}) {
-          border-color: var(--a-border-primary);
-          box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
-        }
-      }
-    }
-
-    :global(.chevronIcon) {
-      @media (max-width: #{size.$tablet - 1px}) {
-        width: rem(8);
-        height: rem(21);
-        margin-right: rem(27);
-      }
-    }
   }
 
   .label {
@@ -269,9 +158,7 @@
     background-color: var(--a-whiteBg);
     font-family: var(--a-font-body);
     box-shadow: var(--a-shadow-weekday);
-    transition:
-      border-color 0.3s ease,
-      box-shadow 0.3s ease;
+    cursor: default;
 
     @media (min-width: #{size.$tablet}) {
       padding: 0 rem(16);
@@ -281,60 +168,8 @@
       box-shadow: none;
     }
 
-    &:focus {
-      outline: none;
-      border-color: var(--a-border-primary);
-      box-shadow: var(--a-shadow-weekday),
-        0 0 0 2px rgba(191, 157, 124, 0.1);
-
-      @media (min-width: #{size.$tablet}) {
-        box-shadow: 0 0 0 2px rgba(191, 157, 124, 0.1);
-      }
-    }
-
     &::placeholder {
       color: var(--a-text-light);
     }
   }
-
-  .saveBtn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    min-height: rem(44);
-    margin: rem(20) 0 0 0;
-    padding: rem(12) rem(44);
-    font-family: var(--a-font-body);
-    font-size: rem(18);
-    font-weight: 400;
-    line-height: 1;
-    color: var(--a-text-white);
-    background-color: var(--a-blackBg);
-    border-radius: var(--a-borderR--btn);
-    cursor: not-allowed;
-    opacity: 0.6;
-    transition: all 0.3s ease;
-
-    @media (min-width: #{size.$tablet}) {
-      max-width: rem(320);
-      margin: rem(20) 0 0 auto;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  .active {
-    background-color: var(--a-blackBg);
-    opacity: 1;
-    cursor: pointer;
-
-    &:hover {
-      background-color: var(--a-btnAccentBg);
-    }
-  }
 </style>
-

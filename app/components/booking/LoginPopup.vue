@@ -191,9 +191,9 @@
     <template #content>
       <form
         id="login-form"
+        novalidate
         :class="$style.content"
         @submit.prevent="handleLogin"
-        novalidate
       >
         <div :class="$style.inputBlock">
           <label for="email" :class="$style.srOnly">Почта</label>
