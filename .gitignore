@@ -6,6 +6,7 @@
 dist
 # Cursor / agent (локально, не в репозитории)
 .cursor
+.cursorignore
 .cursorrules
 AGENTS.md
 CURSOR_RULES_EXPORT.md
