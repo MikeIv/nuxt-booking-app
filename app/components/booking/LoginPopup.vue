@@ -234,7 +234,11 @@
               :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               @click="showPassword = !showPassword"
             >
-              <PasswordEye :visible="showPassword" />
+              <UIcon
+                :name="showPassword ? 'i-eye-off' : 'i-eye'"
+                :class="$style.eyeIcon"
+                aria-hidden="true"
+              />
             </button>
           </div>
           <small v-if="passwordError" :class="$style.errorText">{{
@@ -360,12 +364,12 @@
     &:hover {
       color: var(--a-accentBg);
     }
+  }
 
-    svg {
-      width: rem(20);
-      height: rem(20);
-      flex-shrink: 0;
-    }
+  .eyeIcon {
+    width: rem(20);
+    height: rem(20);
+    flex-shrink: 0;
   }
 
   .errorText {
