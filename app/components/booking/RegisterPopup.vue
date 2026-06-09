@@ -30,6 +30,7 @@
 
   const agreeTerms = ref(false);
   const showPassword = ref(false);
+  const showPasswordConfirm = ref(false);
   const apiError = ref<string | null>(null);
 
   const loading = computed(() => authStore.loading);
@@ -140,14 +141,22 @@
 <template>
   <UiAuthPopup :visible="visible" header="Регистрация" @close="$emit('close')">
     <template #content>
-      <section :class="$style.content">
+      <form
+        id="register-form"
+        :class="$style.content"
+        @submit.prevent="handleRegister"
+        novalidate
+      >
         <div :class="$style.inputRow">
           <div :class="$style.inputBlock">
+            <label for="lastName" :class="$style.srOnly">Фамилия</label>
             <input
               id="lastName"
               v-model="formData.surname"
               type="text"
               placeholder="Фамилия"
+              autocomplete="family-name"
+              aria-required="true"
               :class="[$style.input, { [$style.inputError]: errors.surname }]"
             >
             <small v-if="errors.surname" :class="$style.errorText">{{
@@ -156,11 +165,14 @@
           </div>
 
           <div :class="$style.inputBlock">
+            <label for="firstName" :class="$style.srOnly">Имя</label>
             <input
               id="firstName"
               v-model="formData.name"
               type="text"
               placeholder="Имя"
+              autocomplete="given-name"
+              aria-required="true"
               :class="[$style.input, { [$style.inputError]: errors.name }]"
             >
             <small v-if="errors.name" :class="$style.errorText">{{
@@ -170,21 +182,26 @@
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="middleName" :class="$style.srOnly">Отчество (необязательно)</label>
           <input
             id="middleName"
             v-model="formData.middle_name"
             type="text"
             placeholder="Отчество (необязательно)"
+            autocomplete="additional-name"
             :class="[$style.input]"
           >
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="phone" :class="$style.srOnly">Телефон</label>
           <input
             id="phone"
             v-model="formData.phone"
             type="tel"
             placeholder="Телефон"
+            autocomplete="tel"
+            aria-required="true"
             :class="[$style.input, { [$style.inputError]: errors.phone }]"
           >
           <small v-if="errors.phone" :class="$style.errorText">{{
@@ -193,11 +210,14 @@
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="email" :class="$style.srOnly">Почта</label>
           <input
             id="email"
             v-model="formData.email"
             type="email"
             placeholder="Почта"
+            autocomplete="email"
+            aria-required="true"
             :class="[$style.input, { [$style.inputError]: errors.email }]"
           >
           <small v-if="errors.email" :class="$style.errorText">{{
@@ -206,22 +226,27 @@
         </div>
 
         <div :class="$style.inputBlock">
+          <label :class="$style.srOnly">Страна</label>
           <BookingSelect
             v-model="formData.country"
             :options="countriesRu"
             :error="errors.country"
             :searchable="true"
+            placeholder="Выберите страну"
             search-placeholder="Поиск страны..."
           />
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="password" :class="$style.srOnly">Пароль</label>
           <div :class="$style.passwordWrapper">
             <input
               id="password"
               v-model="formData.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Пароль"
+              autocomplete="new-password"
+              aria-required="true"
               :class="[
                 $style.passwordInput,
                 { [$style.inputError]: errors.password },
@@ -230,12 +255,10 @@
             <button
               type="button"
               :class="$style.togglePassword"
+              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               @click="showPassword = !showPassword"
             >
-              <Icon
-                :name="showPassword ? 'mdi:eye-off' : 'mdi:eye'"
-                :class="$style.eyeIcon"
-              />
+              <PasswordEye :visible="showPassword" />
             </button>
           </div>
           <small v-if="errors.password" :class="$style.errorText">{{
@@ -244,17 +267,28 @@
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="password_confirmation" :class="$style.srOnly">Повторить пароль</label>
           <div :class="$style.passwordWrapper">
             <input
               id="password_confirmation"
               v-model="formData.password_confirmation"
-              :type="showPassword ? 'text' : 'password'"
+              :type="showPasswordConfirm ? 'text' : 'password'"
               placeholder="Повторить пароль"
+              autocomplete="new-password"
+              aria-required="true"
               :class="[
                 $style.passwordInput,
                 { [$style.inputError]: errors.password_confirmation },
               ]"
             >
+            <button
+              type="button"
+              :class="$style.togglePassword"
+              :aria-label="showPasswordConfirm ? 'Скрыть пароль' : 'Показать пароль'"
+              @click="showPasswordConfirm = !showPasswordConfirm"
+            >
+              <PasswordEye :visible="showPasswordConfirm" />
+            </button>
           </div>
           <small
             v-if="errors.password_confirmation"
@@ -264,12 +298,14 @@
         </div>
 
         <div :class="$style.checkboxBlock">
-          <label id="agreeTerms" :class="$style.checkboxLabel">
+          <label for="agreeTerms" :class="$style.checkboxLabel">
             <input
+              id="agreeTerms"
               v-model="agreeTerms"
               name="agreeTerms"
               type="checkbox"
               :class="$style.checkbox"
+              aria-required="true"
             >
             <span :class="$style.checkboxText">
               Я даю согласие с&nbsp;правилами
@@ -285,12 +321,14 @@
         <div v-if="apiError" :class="$style.apiError">
           {{ apiError }}
         </div>
-      </section>
+      </form>
     </template>
 
     <template #footer>
       <div :class="$style.btnGroup">
         <Button
+          type="submit"
+          form="register-form"
           label="Зарегистрироваться"
           severity="secondary"
           unstyled
@@ -298,7 +336,6 @@
           :class="$style.button"
           :loading="loading"
           :disabled="loading"
-          @click="handleRegister"
         />
       </div>
     </template>
@@ -423,11 +460,12 @@
     &:hover {
       color: var(--a-accentBg);
     }
-  }
 
-  .eyeIcon {
-    width: rem(20);
-    height: rem(20);
+    svg {
+      width: rem(20);
+      height: rem(20);
+      flex-shrink: 0;
+    }
   }
 
   .checkboxBlock {
@@ -474,6 +512,18 @@
     color: var(--a-text-accent);
     font-size: rem(14);
     text-align: center;
+  }
+
+  .srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 
   .btnGroup {

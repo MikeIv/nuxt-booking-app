@@ -189,13 +189,21 @@
     @close="$emit('close')"
   >
     <template #content>
-      <section :class="$style.content">
+      <form
+        id="login-form"
+        :class="$style.content"
+        @submit.prevent="handleLogin"
+        novalidate
+      >
         <div :class="$style.inputBlock">
+          <label for="email" :class="$style.srOnly">Почта</label>
           <input
             id="email"
             v-model="formData.email"
             type="email"
             placeholder="Почта"
+            autocomplete="email"
+            aria-required="true"
             :class="[$style.input, { [$style.inputError]: emailError }]"
           >
           <small v-if="emailError" :class="$style.errorText">{{
@@ -204,6 +212,7 @@
         </div>
 
         <div :class="$style.inputBlock">
+          <label for="password" :class="$style.srOnly">Пароль</label>
           <div
             :class="[
               $style.passwordWrapper,
@@ -215,15 +224,17 @@
               v-model="formData.password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Пароль"
+              autocomplete="current-password"
+              aria-required="true"
               :class="$style.passwordInput"
             >
             <button
               type="button"
               :class="$style.togglePassword"
-              :title="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
+              :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
               @click="showPassword = !showPassword"
             >
-              {{ showPassword ? '🙈' : '👁️' }}
+              <PasswordEye :visible="showPassword" />
             </button>
           </div>
           <small v-if="passwordError" :class="$style.errorText">{{
@@ -234,21 +245,23 @@
         <div v-if="apiError" :class="$style.apiError">
           {{ apiError }}
         </div>
-      </section>
+      </form>
     </template>
 
     <template #footer>
       <div :class="$style.btnGroup">
         <Button
+          type="submit"
+          form="login-form"
           label="Войти"
           unstyled
           class="btn__bs dark"
           :class="$style.button"
           :loading="loading"
           :disabled="loading"
-          @click="handleLogin"
         />
         <Button
+          type="button"
           label="Зарегистрироваться"
           severity="secondary"
           unstyled
@@ -347,11 +360,12 @@
     &:hover {
       color: var(--a-accentBg);
     }
-  }
 
-  .eyeIcon {
-    width: rem(20);
-    height: rem(20);
+    svg {
+      width: rem(20);
+      height: rem(20);
+      flex-shrink: 0;
+    }
   }
 
   .errorText {
@@ -402,24 +416,16 @@
     }
   }
 
-  .buttonPrimary {
-    background-color: var(--a-accentBg);
-    color: var(--a-white);
-
-    &:hover:not(:disabled) {
-      background-color: var(--a-btnAccentBg);
-    }
-  }
-
-  .buttonSecondary {
-    background-color: transparent;
-    border-color: var(--a-border-dark);
-    color: var(--a-text-dark);
-
-    &:hover:not(:disabled) {
-      background-color: var(--a-lightBg);
-      border-color: var(--a-text-dark);
-    }
+  .srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 
   // Стили для автозаполнения браузера

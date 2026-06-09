@@ -52,9 +52,11 @@
   .auth-popup {
     &.p-dialog {
       position: relative;
+      display: flex;
+      flex-direction: column;
       width: 100%;
       max-width: rem(600);
-      max-height: 100%;
+      max-height: calc(100vh - 40px);
       padding: rem(40) rem(30);
       background: var(--a-whiteBg);
       border-radius: rem(20);
@@ -62,8 +64,9 @@
     }
 
     .p-dialog-content {
-      height: 100%;
-      overflow-y: visible;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
     }
 
     .p-dialog-header-actions {
