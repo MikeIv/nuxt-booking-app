@@ -121,20 +121,21 @@ export interface BookingByUuidRoom {
 /** Статус бронирования после оплаты (GET /v1/booking/{uuid}) */
 export type BookingStatus = "processing" | "confirmed" | "failed";
 
+/** Доступные действия с бронированием (поле allowed в booking.show) */
+export type BookingAllowedAction =
+  | "edit-dates"
+  | "edit-number"
+  | "edit-packages"
+  | "edit-contacts"
+  | "cancel";
+
 export interface BookingByUuidPayload {
   id: string;
   uuid: string;
   number: string;
   confirmation_number?: string;
   status: BookingStatus | string;
-  allowed?: Array<
-    | "edit-dates"
-    | "edit-number"
-    | "edit-packages"
-    | "edit-contacts"
-    | "cancel"
-    | null
-  >;
+  allowed?: Array<BookingAllowedAction | null>;
   order: BookingByUuidOrder;
   /** Может прийти массивом или JSON-строкой */
   rooms: BookingByUuidRoom[] | string;
@@ -149,9 +150,7 @@ interface BookingResponse {
   number?: string;
   confirmation_number?: string;
   status?: string;
-  allowed?: Array<
-    "edit-dates" | "edit-number" | "edit-packages" | "edit-contacts" | "cancel"
-  >;
+  allowed?: BookingAllowedAction[];
   hotel?: HotelInfo;
   order?: OrderInfo & Partial<BookingByUuidOrder>;
   rooms?: unknown[];
@@ -168,6 +167,7 @@ interface BookingHistoryItem {
   number?: string | null;
   confirmation_number: string | null;
   status: string;
+  allowed?: BookingAllowedAction[];
   order: {
     name: string;
     surname: string;

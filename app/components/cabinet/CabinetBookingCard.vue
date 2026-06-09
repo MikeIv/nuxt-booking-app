@@ -35,8 +35,9 @@
   };
 
   const handleViewDetails = () => {
-    if (props.booking.id) {
-      emit("view-details", props.booking.id);
+    const bookingUuid = props.booking.uuid ?? props.booking.id;
+    if (bookingUuid) {
+      emit("view-details", bookingUuid);
     }
   };
 </script>
@@ -70,7 +71,7 @@
         label="Подробнее"
         class="btn__bs dark"
         :class="$style.detailsBtn"
-        :disabled="!booking.id"
+        :disabled="!(booking.uuid ?? booking.id)"
         @click="handleViewDetails"
       />
     </footer>

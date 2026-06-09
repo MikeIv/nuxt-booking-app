@@ -26,6 +26,11 @@ import {
   getSortedMultiRoomEntries,
   normalizeRoomIndex,
 } from "~/utils/multiBooking";
+import {
+  mapBookingShowToHistoryItem,
+  parseBookingRooms,
+} from "~/utils/mapBookingShowToHistoryItem";
+import { toBookingAllowedActionsArray } from "~/utils/bookingAllowedActions";
 
 export interface UserProfileData {
   name: string;
@@ -140,7 +145,10 @@ export const useBookingStore = defineStore(
         [uuid]: booking,
       };
       currentBookingUuid.value = uuid;
-      createdBooking.value = booking;
+      createdBooking.value = {
+        ...booking,
+        allowed: toBookingAllowedActionsArray(booking.allowed),
+      };
     }
 
     function getSessionBookingByUuid(uuid: string): BookingResponse | null {
@@ -832,8 +840,17 @@ export const useBookingStore = defineStore(
       throw apiError!;
     }
 
+    /**
+     * Детали брони из ЛК. GET /v1/booking/{uuid} (booking.show).
+     * bookingId — uuid заказа из истории (поле id в BookingResource).
+     */
     async function getBookingDetails(bookingId: string | number) {
       const { get } = useApi();
+      const bookingUuid = String(bookingId).trim();
+
+      if (!bookingUuid) {
+        throw new Error("Не указан идентификатор бронирования");
+      }
 
       setLoading(true, "Загружаем детали брони...");
 
@@ -841,8 +858,8 @@ export const useBookingStore = defineStore(
 
       try {
         isServerRequest.value = true;
-        const response = await get<BookingHistoryItem>(
-          `/v1/users/bookings/${bookingId}`,
+        const response = await get<BookingByUuidPayload>(
+          `/v1/booking/${bookingUuid}`,
           {},
           {
             signal: AbortSignal.timeout(10000),
@@ -850,7 +867,7 @@ export const useBookingStore = defineStore(
         );
 
         if (response.success && response.payload) {
-          const bookingDetails = response.payload;
+          const bookingDetails = mapBookingShowToHistoryItem(response.payload);
           setCurrentBookingDetails(bookingDetails);
           return bookingDetails;
         }
@@ -900,32 +917,8 @@ export const useBookingStore = defineStore(
 
         if (response.success && response.payload) {
           const raw = response.payload;
-          let rooms: BookingByUuidPayload["rooms"] = raw.rooms;
-          const allowed = Array.isArray(raw.allowed)
-            ? raw.allowed.filter(
-                (
-                  item,
-                ): item is Exclude<
-                  NonNullable<BookingByUuidPayload["allowed"]>[number],
-                  null
-                > =>
-                  item === "edit-dates" ||
-                  item === "edit-number" ||
-                  item === "edit-packages" ||
-                  item === "edit-contacts" ||
-                  item === "cancel",
-              )
-            : [];
-          if (typeof rooms === "string") {
-            try {
-              rooms = JSON.parse(rooms) as BookingByUuidPayload["rooms"];
-            } catch {
-              rooms = [];
-            }
-          }
-          if (!Array.isArray(rooms)) {
-            rooms = [];
-          }
+          const rooms = parseBookingRooms(raw.rooms);
+          const allowed = toBookingAllowedActionsArray(raw.allowed);
 
           const normalized: BookingResponse = {
             id: raw.id,

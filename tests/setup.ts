@@ -6,6 +6,7 @@ import { beforeEach, vi } from "vitest";
 import { storeToRefs as piniaStoreToRefs } from "pinia";
 import * as Vue from "vue";
 import type { Ref } from "vue";
+import { useBookingAllowedActions } from "~/composables/useBookingAllowedActions";
 import { mockRouterPush, mockRoute, mockToastAdd } from "./mocks/nuxt";
 import { setupComponentMocks } from "./mocks/components";
 
@@ -54,6 +55,8 @@ vi.stubGlobal("useApi", () => ({
 vi.stubGlobal("useApiHelpers", () => ({
   getErrorMessage: (e: unknown) => (e instanceof Error ? e.message : String(e)),
 }));
+
+vi.stubGlobal("useBookingAllowedActions", useBookingAllowedActions);
 
 // storeToRefs из Pinia должен быть доступен глобально.
 // В тестах мы часто мокируем store как простой объект с ref-полями — для него достаточно identity.
@@ -167,6 +170,7 @@ vi.stubGlobal("useDateLocale", () => ({
 vi.stubGlobal("ref", Vue.ref);
 vi.stubGlobal("shallowRef", Vue.shallowRef);
 vi.stubGlobal("computed", Vue.computed);
+vi.stubGlobal("toValue", Vue.toValue);
 vi.stubGlobal("reactive", Vue.reactive);
 vi.stubGlobal("readonly", Vue.readonly);
 vi.stubGlobal("watch", Vue.watch);

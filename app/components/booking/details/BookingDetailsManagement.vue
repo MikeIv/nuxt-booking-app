@@ -1,15 +1,17 @@
 <script setup lang="ts">
-const emit = defineEmits<{
-  "change-dates": [];
-  "change-room": [];
-  "change-services": [];
-  "change-contacts": [];
-}>();
+  defineProps<{
+    canEditDates: boolean;
+    canEditRoom: boolean;
+    canEditPackages: boolean;
+    canEditContacts: boolean;
+  }>();
 
-const handleChangeDates = () => emit("change-dates");
-const handleChangeRoom = () => emit("change-room");
-const handleChangeServices = () => emit("change-services");
-const handleChangeContacts = () => emit("change-contacts");
+  const emit = defineEmits<{
+    "change-dates": [];
+    "change-room": [];
+    "change-services": [];
+    "change-contacts": [];
+  }>();
 </script>
 
 <template>
@@ -20,30 +22,34 @@ const handleChangeContacts = () => emit("change-contacts");
     </p>
     <div :class="$style.managementButtons">
       <Button
+        v-if="canEditDates"
         class="btn__bs dark"
         unstyled
-        @click="handleChangeDates"
+        @click="emit('change-dates')"
       >
         Изменить даты
       </Button>
       <Button
+        v-if="canEditRoom"
         class="btn__bs dark"
         unstyled
-        @click="handleChangeRoom"
+        @click="emit('change-room')"
       >
         Изменить номер
       </Button>
       <Button
+        v-if="canEditPackages"
         class="btn__bs dark"
         unstyled
-        @click="handleChangeServices"
+        @click="emit('change-services')"
       >
         Изменить услуги
       </Button>
       <Button
+        v-if="canEditContacts"
         class="btn__bs dark"
         unstyled
-        @click="handleChangeContacts"
+        @click="emit('change-contacts')"
       >
         Изменить контакты
       </Button>
@@ -116,4 +122,3 @@ const handleChangeContacts = () => emit("change-contacts");
     }
   }
 </style>
-

@@ -377,6 +377,33 @@ describe("pages/confirmation.vue", () => {
       expect(cancelBtn).toBeUndefined();
     });
 
+    it("кнопки управления видны только для разрешённых действий из allowed", async () => {
+      createdBookingRef.value = createBookingPayload({
+        allowed: ["edit-dates", "edit-contacts"],
+      });
+
+      const wrapper = createWrapper();
+      await nextTick();
+      const buttonLabels = wrapper.findAll("button").map((btn) => btn.text());
+
+      expect(buttonLabels).toContain("Изменить даты");
+      expect(buttonLabels).toContain("Изменить контакты");
+      expect(buttonLabels).not.toContain("Изменить номер");
+      expect(buttonLabels).not.toContain("Изменить услуги");
+    });
+
+    it("блок управления скрыт, если allowed не содержит edit-*", async () => {
+      createdBookingRef.value = createBookingPayload({ allowed: ["cancel"] });
+
+      const wrapper = createWrapper();
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain("Управление бронированием");
+      expect(
+        wrapper.findAll("button").find((btn) => btn.text() === "Изменить даты"),
+      ).toBeUndefined();
+    });
+
     it("кнопка 'Новое бронирование' всегда отображается", async () => {
       createdBookingRef.value = null;
 

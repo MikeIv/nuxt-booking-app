@@ -21,6 +21,14 @@ export function getBookingStatusLabel(
   return BOOKING_STATUS_LABELS[status.toLowerCase()] ?? status;
 }
 
+/** Номер брони для экрана подтверждения и деталей (только поле number). */
+export function getBookingNumber(
+  booking: { number?: string | null } | null | undefined,
+): string | null {
+  const number = booking?.number?.trim();
+  return number || null;
+}
+
 export function getBookingDisplayNumber(booking: {
   number?: string | null;
   confirmation_number?: string | null;

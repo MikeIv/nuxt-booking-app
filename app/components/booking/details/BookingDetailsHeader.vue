@@ -1,11 +1,11 @@
 <script setup lang="ts">
 interface Props {
-  bookingNumber?: string | number | null;
+  bookingNumber?: string | null;
   pdfUrl?: string;
   hasPdf?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   bookingNumber: null,
   pdfUrl: undefined,
   hasPdf: false,
@@ -15,6 +15,11 @@ const emit = defineEmits<{
   download: [];
   print: [];
 }>();
+
+const pdfUrlComputed = computed(() => props.pdfUrl?.trim() || null);
+const showQrCode = computed(() => props.hasPdf && !!pdfUrlComputed.value);
+
+const { qrCanvas } = useConfirmationQR(pdfUrlComputed, showQrCode);
 
 const handleDownload = () => {
   emit("download");
@@ -51,12 +56,12 @@ const handlePrint = () => {
           </Button>
         </nav>
       </div>
-      <figure :class="$style.qrCode" aria-label="QR-код бронирования">
-        <!-- TODO: Заменить заглушку на реальный QR-код с данными бронирования -->
-        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="120" height="120" fill="white"/>
-          <rect x="10" y="10" width="100" height="100" fill="black"/>
-        </svg>
+      <figure
+        v-if="showQrCode"
+        :class="$style.qrCode"
+        aria-label="QR-код бронирования"
+      >
+        <canvas ref="qrCanvas" :class="$style.qrCanvas" />
       </figure>
     </div>
   </section>
@@ -159,22 +164,21 @@ const handlePrint = () => {
     @media (min-width: #{size.$desktopMin}) {
       justify-content: flex-end;
     }
+  }
 
-    svg {
-      border: rem(1) solid var(--a-black);
-      width: rem(100);
-      height: rem(100);
+  .qrCanvas {
+    border: rem(1) solid var(--a-black);
+    width: rem(100);
+    height: rem(100);
 
-      @media (min-width: #{size.$tablet}) {
-        width: rem(120);
-        height: rem(120);
-      }
+    @media (min-width: #{size.$tablet}) {
+      width: rem(120);
+      height: rem(120);
+    }
 
-      @media (min-width: #{size.$desktopMin}) {
-        width: rem(140);
-        height: rem(140);
-      }
+    @media (min-width: #{size.$desktopMin}) {
+      width: rem(140);
+      height: rem(140);
     }
   }
 </style>
-

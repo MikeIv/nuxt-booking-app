@@ -1,13 +1,13 @@
 <script setup lang="ts">
-const emit = defineEmits<{
-  cancel: [];
-  "new-booking": [];
-  "back-to-cabinet": [];
-}>();
+  defineProps<{
+    canCancelBooking: boolean;
+  }>();
 
-const handleCancel = () => emit("cancel");
-const handleNewBooking = () => emit("new-booking");
-const handleBackToCabinet = () => emit("back-to-cabinet");
+  const emit = defineEmits<{
+    cancel: [];
+    "new-booking": [];
+    "back-to-cabinet": [];
+  }>();
 </script>
 
 <template>
@@ -15,16 +15,17 @@ const handleBackToCabinet = () => emit("back-to-cabinet");
     <section :class="$style.section">
       <div :class="$style.finalButtons" role="group" aria-label="Основные действия">
         <Button
+          v-if="canCancelBooking"
           class="btn__bs danger"
           unstyled
-          @click="handleCancel"
+          @click="emit('cancel')"
         >
           Отменить бронирование
         </Button>
         <Button
           class="btn__bs danger"
           unstyled
-          @click="handleNewBooking"
+          @click="emit('new-booking')"
         >
           Новое бронирование
         </Button>
@@ -36,7 +37,7 @@ const handleBackToCabinet = () => emit("back-to-cabinet");
         class="btn__bs dark"
         :class="$style.backButton"
         unstyled
-        @click="handleBackToCabinet"
+        @click="emit('back-to-cabinet')"
       >
         Вернуться в кабинет
       </Button>
@@ -107,4 +108,3 @@ const handleBackToCabinet = () => emit("back-to-cabinet");
     }
   }
 </style>
-

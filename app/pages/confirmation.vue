@@ -5,6 +5,7 @@
   import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
   import { buildSelectedEntry } from "~/utils/selectedEntry";
+  import { getBookingNumber } from "~/utils/bookingStatus";
 
   definePageMeta({
     layout: "steps",
@@ -51,11 +52,7 @@
 
   const isBookingCreated = computed(() => !!createdBooking.value);
 
-  const bookingNumber = computed(() => {
-    const number = createdBooking.value?.number;
-    if (typeof number === "string" && number.trim() !== "") return number.trim();
-    return null;
-  });
+  const bookingNumber = computed(() => getBookingNumber(createdBooking.value));
 
   const confirmationEmail = computed(() => {
     const order = createdBooking.value?.order as Record<string, unknown> | undefined;
@@ -78,36 +75,14 @@
 
   const pdfUrl = computed(() => createdBooking.value?.order?.pdf || null);
 
-  type BookingAllowedAction =
-    | "edit-dates"
-    | "edit-number"
-    | "edit-packages"
-    | "edit-contacts"
-    | "cancel";
-
-  const allowedActions = computed<Set<BookingAllowedAction>>(() => {
-    const allowed = createdBooking.value?.allowed;
-    if (!Array.isArray(allowed)) return new Set<BookingAllowedAction>();
-    return new Set(
-      allowed.filter(
-        (action): action is BookingAllowedAction =>
-          action === "edit-dates" ||
-          action === "edit-number" ||
-          action === "edit-packages" ||
-          action === "edit-contacts" ||
-          action === "cancel",
-      ),
-    );
-  });
-
-  const canEditDates = computed(() => allowedActions.value.has("edit-dates"));
-  const canEditRoom = computed(() => allowedActions.value.has("edit-number"));
-  const canEditPackages = computed(() => allowedActions.value.has("edit-packages"));
-  const canEditContacts = computed(() => allowedActions.value.has("edit-contacts"));
-  const canCancelBooking = computed(() => allowedActions.value.has("cancel"));
-  const hasManagementActions = computed(
-    () => canEditDates.value || canEditRoom.value || canEditPackages.value || canEditContacts.value,
-  );
+  const {
+    canEditDates,
+    canEditRoom,
+    canEditPackages,
+    canEditContacts,
+    canCancelBooking,
+    hasManagementActions,
+  } = useBookingAllowedActions(() => createdBooking.value?.allowed);
 
   const currentBookingUuid = computed<string | null>(() => {
     if (currentBookingUuidStore.value?.trim()) return currentBookingUuidStore.value;
@@ -443,21 +418,23 @@
               </p>
             </div>
 
-            <div :class="$style.divider" />
+            <template v-if="hasManagementActions">
+              <div :class="$style.divider" />
 
-            <BookingConfirmationManagement
-              :has-management-actions="hasManagementActions"
-              :can-edit-dates="canEditDates"
-              :can-edit-room="canEditRoom"
-              :can-edit-packages="canEditPackages"
-              :can-edit-contacts="canEditContacts"
-              @change-dates="openChangeDatesPopup"
-              @change-room="handleChangeRoom"
-              @change-services="openChangeServicesPopup"
-              @change-contacts="openChangeContactsPopup"
-            />
+              <BookingConfirmationManagement
+                :has-management-actions="hasManagementActions"
+                :can-edit-dates="canEditDates"
+                :can-edit-room="canEditRoom"
+                :can-edit-packages="canEditPackages"
+                :can-edit-contacts="canEditContacts"
+                @change-dates="openChangeDatesPopup"
+                @change-room="handleChangeRoom"
+                @change-services="openChangeServicesPopup"
+                @change-contacts="openChangeContactsPopup"
+              />
 
-            <div v-if="hasManagementActions" :class="$style.divider" />
+              <div :class="$style.divider" />
+            </template>
 
             <div :class="$style.section">
               <div :class="$style.finalButtons">
