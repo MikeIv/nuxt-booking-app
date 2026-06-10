@@ -2,25 +2,34 @@
   const route = useRoute();
   const router = useRouter();
 
-  const breadcrumbs = ref<
-    Array<{ name: string; path: string; isCurrent: boolean }>
-  >([]);
+  type BreadcrumbItem = { name: string; path: string; isCurrent: boolean };
+
+  const breadcrumbs = ref<BreadcrumbItem[]>([]);
+
+  const ROUTE_TITLES: Record<string, string> = {
+    "/rooms": "Выбор номера",
+    "/rooms/tariff": "Выбор тарифа",
+    "/multi-rooms": "Выбор номеров и тарифов",
+    "/personal": "Личные данные",
+    "/services": "Выбор услуг",
+    "/confirmation": "Ваше бронирование",
+    "/cancellation": "Отмена бронирования",
+    "/booking-details": "Детали бронирования",
+    "/cabinet": "Личный кабинет",
+  };
 
   const getDefaultTitle = (path: string): string => {
-    const pathSegments = path.split("/").filter((segment) => segment);
+    const mappedTitle = ROUTE_TITLES[path];
+    if (mappedTitle) return mappedTitle;
 
-    if (path === "/rooms") {
+    if (path.includes("/rooms") && !path.includes("/tariff")) {
       return "Выбор номера";
-    } else if (path === "/rooms/tariff") {
-      return "Выбор тарифа";
-    } else if (path === "/multi-rooms") {
-      return "Выбор номеров и тарифов";
-    } else if (path.includes("/rooms") && !path.includes("/tariff")) {
-      return "Выбор номера";
-    } else if (path.includes("/tariff")) {
+    }
+    if (path.includes("/tariff")) {
       return "Выбор тарифа";
     }
 
+    const pathSegments = path.split("/").filter((segment) => segment);
     const lastSegment = pathSegments[pathSegments.length - 1];
     if (lastSegment) {
       return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
@@ -29,64 +38,79 @@
     return "Страница";
   };
 
+  const getPageHeadingTitle = (): string | null => {
+    if (typeof window === "undefined") return null;
+
+    const heading = document.querySelector("main h1[data-breadcrumb], main h1");
+    if (!heading) return null;
+
+    return (
+      heading.getAttribute("data-breadcrumb")?.trim() ||
+      heading.textContent?.trim() ||
+      null
+    );
+  };
+
+  const areCrumbsEqual = (a: BreadcrumbItem[], b: BreadcrumbItem[]): boolean =>
+    a.length === b.length &&
+    a.every(
+      (crumb, index) =>
+        crumb.name === b[index]?.name &&
+        crumb.path === b[index]?.path &&
+        crumb.isCurrent === b[index]?.isCurrent,
+    );
+
   const generateBreadcrumbs = () => {
     const paths = route.path.split("/").filter((path) => path);
-    const crumbs: Array<{ name: string; path: string; isCurrent: boolean }> =
-      [];
-
-    crumbs.push({
-      name: "Главная / Бронирование",
-      path: "/",
-      isCurrent: false,
-    });
+    const crumbs: BreadcrumbItem[] = [
+      {
+        name: "Главная / Бронирование",
+        path: "/",
+        isCurrent: false,
+      },
+    ];
 
     let currentPath = "";
 
     for (let i = 0; i < paths.length; i++) {
-      const path = paths[i];
-      currentPath += `/${path}`;
-
+      currentPath += `/${paths[i]}`;
       const isLast = i === paths.length - 1;
 
-      let name: string;
-
-      if (isLast) {
-        if (typeof window !== "undefined") {
-          const h1 = document.querySelector("h1");
-          // Сначала проверяем data-breadcrumb атрибут, затем textContent
-          name = h1?.getAttribute("data-breadcrumb") || h1?.textContent?.trim() || getDefaultTitle(currentPath);
-        } else {
-          name = getDefaultTitle(currentPath);
-        }
-      } else {
-        name = getDefaultTitle(currentPath);
-      }
-
       crumbs.push({
-        name,
+        name: isLast
+          ? getPageHeadingTitle() || getDefaultTitle(currentPath)
+          : getDefaultTitle(currentPath),
         path: currentPath,
         isCurrent: isLast,
       });
     }
 
+    if (areCrumbsEqual(breadcrumbs.value, crumbs)) return;
+
     breadcrumbs.value = crumbs;
   };
 
-  watch(
-    () => route.path,
-    () => {
-      nextTick(() => {
-        generateBreadcrumbs();
-      });
-    },
-    { immediate: true },
-  );
+  const mainTarget = ref<HTMLElement | null>(null);
 
-  onMounted(() => {
-    nextTick(() => {
-      generateBreadcrumbs();
-    });
-  });
+  const scheduleBreadcrumbUpdate = () => {
+    mainTarget.value = document.querySelector("main");
+    nextTick(generateBreadcrumbs);
+  };
+
+  const debouncedBreadcrumbUpdate = useDebounceFn(generateBreadcrumbs, 50);
+
+  watch(() => route.path, scheduleBreadcrumbUpdate, { immediate: true });
+
+  useMutationObserver(
+    mainTarget,
+    debouncedBreadcrumbUpdate,
+    {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-breadcrumb"],
+    },
+  );
 
   const navigateTo = (path: string) => {
     if (path !== route.path) {
