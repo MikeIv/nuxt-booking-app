@@ -104,6 +104,11 @@ vi.stubGlobal("useNotificationToast", () => ({
   add: mockNotificationToastAdd,
 }));
 
+vi.stubGlobal("useBookingAccessDenied", () => ({
+  handleBookingAccessDenied: vi.fn().mockResolvedValue(undefined),
+  handleBookingAccessDeniedIfNeeded: vi.fn().mockResolvedValue(false),
+}));
+
 // Стабы для проектных composables, используемых как авто-импорты в confirmation.vue
 vi.stubGlobal("useConfirmationQR", () => ({ qrCanvas: ref(null) }));
 

@@ -17,6 +17,7 @@
   const authStore = useAuthStore();
   const toast = useNotificationToast();
   const { getErrorMessage } = useApiHelpers();
+  const { handleBookingAccessDenied } = useBookingAccessDenied();
   const {
     selectedRoomType,
     selectedTariff: selectedTariffStore,
@@ -211,16 +212,7 @@
 
   const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
     useBookingStatusPolling(currentBookingUuid, {
-      onAccessDenied: (error) => {
-        const message = getErrorMessage(error).trim();
-        if (!message) return;
-
-        toast.add({
-          severity: "error",
-          summary: message,
-          life: 5000,
-        });
-      },
+      onAccessDenied: handleBookingAccessDenied,
       onLoadError: (error) => {
         toast.add({
           severity: "error",

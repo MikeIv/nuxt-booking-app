@@ -1,3 +1,4 @@
+import { isBookingAccessDeniedError } from "~/composables/useApiHelpers";
 import { useBookingStore } from "~/stores/booking";
 import type { BookingStatus } from "~/types/booking";
 import type { ComputedRef } from "vue";
@@ -20,12 +21,6 @@ const resolvePageStatus = (
   if (normalized === "failed") return "failed";
   return "idle";
 };
-
-const getErrorStatus = (error: unknown): number | undefined =>
-  (error as { status?: number }).status;
-
-const isAccessDeniedError = (error: unknown): boolean =>
-  getErrorStatus(error) === 403;
 
 export const useBookingStatusPolling = (
   bookingUuid: ComputedRef<string | null>,
@@ -113,7 +108,7 @@ export const useBookingStatusPolling = (
         startPolling();
       }
     } catch (error: unknown) {
-      if (isAccessDeniedError(error)) {
+      if (isBookingAccessDeniedError(error)) {
         pageStatus.value = "idle";
         stopPolling();
         options?.onAccessDenied?.(error);

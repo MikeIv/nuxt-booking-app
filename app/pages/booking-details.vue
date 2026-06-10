@@ -12,6 +12,7 @@ const route = useRoute();
 const bookingStore = useBookingStore();
 const authStore = useAuthStore();
 const toast = useNotificationToast();
+const { handleBookingAccessDeniedIfNeeded } = useBookingAccessDenied();
 
 const { currentBookingDetails } = storeToRefs(bookingStore);
 const bookingDetails = currentBookingDetails;
@@ -143,6 +144,10 @@ onMounted(async () => {
   } catch (err: unknown) {
     if (import.meta.dev) {
       console.error("❌ Ошибка загрузки деталей бронирования:", err);
+    }
+
+    if (await handleBookingAccessDeniedIfNeeded(err)) {
+      return;
     }
 
     const errorMessage =

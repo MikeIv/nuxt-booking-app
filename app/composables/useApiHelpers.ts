@@ -29,6 +29,14 @@ export const getErrorMessage = (error: unknown): string => {
   return "Произошла неизвестная ошибка";
 };
 
+export const BOOKING_ACCESS_DENIED_MESSAGE = "Доступ к бронированию запрещено";
+
+export const getErrorStatus = (error: unknown): number | undefined =>
+  (error as { status?: number }).status;
+
+export const isBookingAccessDeniedError = (error: unknown): boolean =>
+  getErrorStatus(error) === 403;
+
 export const useApiHelpers = () => {
   return {
     isApiError,
