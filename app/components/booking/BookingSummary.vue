@@ -20,10 +20,16 @@
      * Используется на шагах оформления; на финальной странице скрываем.
      */
     showContinue?: boolean;
+    /** Услуги из ответа API (confirmation); при наличии заменяют данные стора */
+    servicesByRoomOverride?: Record<number, SelectedService[]>;
+    /** Разрешить удаление услуг из сводки (на confirmation — только просмотр) */
+    editableServices?: boolean;
   }
 
   const props = withDefaults(defineProps<Props>(), {
     showContinue: true,
+    editableServices: true,
+    servicesByRoomOverride: undefined,
   });
   const emit = defineEmits<{
     (e: "continue"): void;
@@ -70,21 +76,27 @@
   };
 
   const bookingStore = useBookingStore();
-  const { guests, selectedServicesByRoom } = storeToRefs(bookingStore);
+  const { guests } = storeToRefs(bookingStore);
+
+  const resolveServicesForRoom = (roomIdx: number): SelectedService[] => {
+    if (props.servicesByRoomOverride !== undefined) {
+      return props.servicesByRoomOverride[roomIdx] ?? [];
+    }
+    return bookingStore.getSelectedServicesForRoom(roomIdx);
+  };
 
   /** Услуги по номерам для мультибронирования; для одного номера — только roomIdx 0 */
   const servicesByRoom = computed(() => {
     const byRoom: Record<number, SelectedService[]> = {};
-    const roomList = selectedServicesByRoom.value;
     roomEntries.value.forEach((entry) => {
-      byRoom[entry.roomIdx] = roomList[String(entry.roomIdx)] ?? [];
+      byRoom[entry.roomIdx] = resolveServicesForRoom(entry.roomIdx);
     });
     return byRoom;
   });
 
   const roomTotalWithServices = (entry: SelectedEntry) => {
     const roomPrice = toStayTotal(entry.price, nights.value);
-    const services = bookingStore.getSelectedServicesForRoom(entry.roomIdx);
+    const services = resolveServicesForRoom(entry.roomIdx);
     const servicesSum = services.reduce((sum, s) => sum + s.price, 0);
     return roomPrice + servicesSum;
   };
@@ -319,6 +331,7 @@
                           {{ service.price.toLocaleString("ru-RU") }} ₽
                         </span>
                         <Button
+                          v-if="editableServices"
                           type="button"
                           unstyled
                           :class="$style.removeServiceButton"

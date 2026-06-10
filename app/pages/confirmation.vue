@@ -1,9 +1,11 @@
 <script setup lang="ts">
-  import { useBookingStore } from "~/stores/booking";
+  import { useBookingStore, type SelectedService } from "~/stores/booking";
   import { useAuthStore } from "~/stores/auth";
   import { storeToRefs } from "pinia";
   import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
   import { toPricePerNight, toStayTotal } from "~/utils/price";
+  import { pickNumber } from "~/utils/pick";
+  import { mapBookingRoomsServicesToByRoom } from "~/utils/mapBookingRoomServices";
   import { buildSelectedEntry } from "~/utils/selectedEntry";
   import { getBookingNumber } from "~/utils/bookingStatus";
 
@@ -94,11 +96,40 @@
     return null;
   });
 
+  const confirmationServicesByRoom = computed<
+    Record<number, SelectedService[]> | undefined
+  >(() => {
+    const rooms = createdBooking.value?.rooms;
+    if (!Array.isArray(rooms) || rooms.length === 0) return undefined;
+
+    const bookingRooms = rooms as BookingByUuidRoom[];
+    const fromApi = mapBookingRoomsServicesToByRoom(bookingRooms);
+
+    if (Object.keys(fromApi).length > 0) {
+      return Object.fromEntries(
+        bookingRooms.map((_, index) => [index, fromApi[index] ?? []]),
+      );
+    }
+
+    const fromStore = Object.fromEntries(
+      bookingRooms
+        .map((_, index) => [index, bookingStore.getSelectedServicesForRoom(index)] as const)
+        .filter(([, services]) => services.length > 0),
+    );
+    return Object.keys(fromStore).length > 0 ? fromStore : undefined;
+  });
+
   const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
     if (createdBooking.value?.rooms && Array.isArray(createdBooking.value.rooms)) {
       const entries: Record<string, SelectedEntry> = {};
       (createdBooking.value.rooms as BookingByUuidRoom[]).forEach((room, index) => {
-        const pricePerNight = nights.value > 0 ? room.total / nights.value : room.total;
+        const tariffTotal = pickNumber(room.tariff?.price);
+        const pricePerNight =
+          tariffTotal != null
+            ? toPricePerNight(tariffTotal, nights.value)
+            : nights.value > 0
+              ? room.total / nights.value
+              : room.total;
         entries[index.toString()] = {
           roomIdx: index,
           roomCardIdx: index,
@@ -455,6 +486,8 @@
             :date="bookingDate"
             :nights="nights"
             :booking-total="bookingTotal"
+            :services-by-room-override="confirmationServicesByRoom"
+            :editable-services="false"
             :show-continue="false"
           />
         </div>
