@@ -1,42 +1,15 @@
 <script setup lang="ts">
+  import {
+    BREADCRUMB_HOME_LABEL,
+    getBreadcrumbRouteTitle,
+  } from "~/utils/breadcrumbs";
+
   const route = useRoute();
   const router = useRouter();
 
   type BreadcrumbItem = { name: string; path: string; isCurrent: boolean };
 
   const breadcrumbs = ref<BreadcrumbItem[]>([]);
-
-  const ROUTE_TITLES: Record<string, string> = {
-    "/rooms": "Выбор номера",
-    "/rooms/tariff": "Выбор тарифа",
-    "/multi-rooms": "Выбор номеров и тарифов",
-    "/personal": "Личные данные",
-    "/services": "Выбор услуг",
-    "/confirmation": "Ваше бронирование",
-    "/cancellation": "Отмена бронирования",
-    "/booking-details": "Детали бронирования",
-    "/cabinet": "Личный кабинет",
-  };
-
-  const getDefaultTitle = (path: string): string => {
-    const mappedTitle = ROUTE_TITLES[path];
-    if (mappedTitle) return mappedTitle;
-
-    if (path.includes("/rooms") && !path.includes("/tariff")) {
-      return "Выбор номера";
-    }
-    if (path.includes("/tariff")) {
-      return "Выбор тарифа";
-    }
-
-    const pathSegments = path.split("/").filter((segment) => segment);
-    const lastSegment = pathSegments[pathSegments.length - 1];
-    if (lastSegment) {
-      return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
-    }
-
-    return "Страница";
-  };
 
   const getPageHeadingTitle = (): string | null => {
     if (typeof window === "undefined") return null;
@@ -64,7 +37,7 @@
     const paths = route.path.split("/").filter((path) => path);
     const crumbs: BreadcrumbItem[] = [
       {
-        name: "Главная / Бронирование",
+        name: BREADCRUMB_HOME_LABEL,
         path: "/",
         isCurrent: false,
       },
@@ -78,8 +51,8 @@
 
       crumbs.push({
         name: isLast
-          ? getPageHeadingTitle() || getDefaultTitle(currentPath)
-          : getDefaultTitle(currentPath),
+          ? getPageHeadingTitle() || getBreadcrumbRouteTitle(currentPath)
+          : getBreadcrumbRouteTitle(currentPath),
         path: currentPath,
         isCurrent: isLast,
       });
