@@ -32,13 +32,9 @@ const isSuccess = ref(false);
 const showPassword = ref(false);
 const showPasswordConfirm = ref(false);
 
-const recoveryEmail = computed(() =>
-  getRouteQueryString(route.query, "email"),
-);
+const recoveryEmail = computed(() => getRouteQueryString(route.query, "email"));
 
-const recoveryToken = computed(() =>
-  getRouteQueryString(route.query, "token"),
-);
+const recoveryToken = computed(() => getRouteQueryString(route.query, "token"));
 
 const hasValidQuery = computed(
   () => recoveryEmail.value !== null && recoveryToken.value !== null,
