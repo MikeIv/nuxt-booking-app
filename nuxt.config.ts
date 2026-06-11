@@ -157,7 +157,7 @@ export default defineNuxtConfig({
     //   },
     // },
     prerender: {
-      routes: ["/"],
+      routes: ["/", "/recovery"],
     },
   },
 

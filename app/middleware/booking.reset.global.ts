@@ -10,7 +10,12 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const bookingStore = useBookingStore();
 
   // Сброс флагов загрузки на страницах вне флоу бронирования
-  const nonBookingPages = ["/cabinet", "/confirmation", "/cancellation"];
+  const nonBookingPages = [
+    "/cabinet",
+    "/confirmation",
+    "/cancellation",
+    "/recovery",
+  ];
   if (nonBookingPages.includes(to.path)) {
     bookingStore.setLoading(false);
     bookingStore.setServerRequest(false);
