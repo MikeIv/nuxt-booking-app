@@ -1,4 +1,12 @@
 import type { NitroFetchRequest, NitroFetchOptions } from "nitropack";
+import {
+  buildAuthHeaders,
+  fetchRefreshedAccessToken,
+  getFetchErrorStatus,
+  isAuthErrorStatus,
+  normalizeApiBaseUrl,
+  shouldLogoutOnRefreshError,
+} from "~/utils/authToken";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -20,10 +28,7 @@ let refreshPromise: Promise<string> | null = null;
 export const useApi = () => {
   const config = useRuntimeConfig();
 
-  // Нормализуем baseURL: убираем /v1 из конца, если он там есть
-  let baseURL = config.public.apiBase;
-  // Убираем завершающий слэш и /v1 если есть
-  baseURL = baseURL.replace(/\/v1\/?$/, "").replace(/\/$/, "");
+  const baseURL = normalizeApiBaseUrl(config.public.apiBase);
 
   if (import.meta.dev) {
     console.log("🔧 useApi initialized with baseURL:", baseURL);
@@ -45,44 +50,30 @@ export const useApi = () => {
         }
 
         const authStore = useAuthStore();
-        const response = await $fetch<ApiResponse<{ token: string }>>(
-          "/v1/auth/refresh",
-          {
-            method: "POST",
-            baseURL,
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          },
-        );
+        newToken = await fetchRefreshedAccessToken(baseURL, authStore.token);
+        authStore.setToken(newToken);
 
-        if (response.success && response.payload?.token) {
-          newToken = response.payload.token;
-          authStore.setToken(newToken);
-
-          if (import.meta.dev) {
-            console.log("✅ Токен успешно обновлен");
-          }
+        if (import.meta.dev) {
+          console.log("✅ Токен успешно обновлен");
         }
       } catch (error: unknown) {
-        // Обрабатываем только сетевые/HTTP-ошибки от $fetch
-        const status = (error as { status?: number }).status;
+        const status = getFetchErrorStatus(error);
 
         if (import.meta.dev) {
           console.error("❌ Ошибка обновления токена:", error);
-          if (status === 401) {
+          if (shouldLogoutOnRefreshError(error)) {
             console.error(
               "⚠️ Refresh token истек или недействителен. Требуется повторная авторизация.",
             );
           }
         }
 
-        useAuthStore().logout();
+        if (shouldLogoutOnRefreshError(error)) {
+          useAuthStore().logout();
+        }
 
         const refreshError = new Error(
-          status === 401
+          isAuthErrorStatus(status)
             ? "Refresh token expired or invalid"
             : "Failed to refresh token",
         ) as Error & { status?: number; isRefreshError?: boolean };
@@ -145,11 +136,10 @@ export const useApi = () => {
         ...defaultOptions,
         ...options,
         baseURL,
-        headers: {
-          ...defaultOptions.headers,
-          ...options.headers,
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: buildAuthHeaders(
+          token,
+          options.headers as Record<string, string> | undefined,
+        ),
       };
 
       if (import.meta.dev) {

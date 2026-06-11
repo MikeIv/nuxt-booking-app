@@ -13,6 +13,10 @@ export interface RegisterResponse {
   accessToken: string;
 }
 
+export interface RefreshTokenResponse {
+  accessToken: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   user?: {
