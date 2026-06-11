@@ -1,23 +1,130 @@
 <script setup lang="ts">
-  import type { RegisterData } from "~/types/auth";
-  import { countriesRu } from "~/utils/countries";
+import type { RegisterData } from "~/types/auth";
+import { usePhoneMask } from "~/composables/usePhoneMask";
+import { countriesRu } from "~/utils/countries";
 
-  const props = defineProps<{
-    visible: boolean;
-  }>();
+const props = defineProps<{
+  visible: boolean;
+}>();
 
-  const emit = defineEmits<{
-    close: [];
-    "switch-to-login": [];
-    "registration-success": [];
-  }>();
+const emit = defineEmits<{
+  close: [];
+  "switch-to-login": [];
+  "registration-success": [];
+}>();
 
-  const authStore = useAuthStore();
+const authStore = useAuthStore();
 
-  const { validateRegisterForm, useValidationErrors } = useFormValidation();
-  const { errors, setErrors, clearErrors } = useValidationErrors();
+const { validateRegisterForm, useValidationErrors } = useFormValidation();
+const { errors, setErrors, clearErrors } = useValidationErrors();
 
-  const formData = ref<RegisterData>({
+const formData = ref<RegisterData>({
+  name: "",
+  surname: "",
+  middle_name: null,
+  phone: "",
+  email: "",
+  country: "",
+  password: "",
+  password_confirmation: "",
+});
+
+const agreeTerms = ref(false);
+const showPassword = ref(false);
+const showPasswordConfirm = ref(false);
+const apiError = ref<string | null>(null);
+
+const loading = computed(() => authStore.loading);
+
+const {
+  handlePhoneInput,
+  handlePhoneKeydown,
+  handlePhonePaste,
+  handlePhoneFocus,
+  handlePhoneBlur,
+  getDisplayValue,
+} = usePhoneMask();
+
+const updatePhone = (value: string) => {
+  formData.value.phone = value;
+};
+
+const validateForm = (): boolean => {
+  const validationErrors = validateRegisterForm(
+    formData.value,
+    agreeTerms.value,
+  );
+  setErrors(validationErrors);
+
+  apiError.value = null;
+  const isValid = Object.keys(validationErrors).length === 0;
+
+  if (import.meta.dev) {
+    console.log(`✅ Валидация ${isValid ? "пройдена" : "не пройдена"}`);
+  }
+  return isValid;
+};
+
+const handleRegister = async () => {
+  if (!validateForm()) {
+    return;
+  }
+
+  apiError.value = null;
+  authStore.setLoading(true);
+  authStore.setError(null);
+
+  try {
+    if (import.meta.dev) {
+      console.log("📡 Отправка запроса на регистрацию...");
+    }
+
+    const { post } = useApi();
+    const response = await post("/v1/auth/register", formData.value);
+
+    if (import.meta.dev) {
+      console.log("📨 Ответ сервера:", response);
+    }
+
+    if (response.success && response.payload) {
+      authStore.setToken(response.payload.accessToken);
+
+      const userData = {
+        id: "",
+        email: formData.value.email,
+        name: formData.value.name,
+        surname: formData.value.surname,
+        phone: formData.value.phone,
+        country: formData.value.country,
+      };
+
+      authStore.setUser(userData);
+      authStore.setError(null);
+
+      emit("registration-success");
+      emit("close");
+    } else {
+      if (import.meta.dev) {
+        console.log("❌ Ошибка в ответе:", response.message);
+      }
+      apiError.value = response.message || "Ошибка регистрации";
+      authStore.setError(apiError.value);
+    }
+  } catch (err: unknown) {
+    if (import.meta.dev) {
+      console.error("💥 Ошибка при регистрации:", err);
+    }
+    const errorMessage =
+      err.data?.message || err.message || "Произошла ошибка при регистрации";
+    apiError.value = errorMessage;
+    authStore.setError(errorMessage);
+  } finally {
+    authStore.setLoading(false);
+  }
+};
+
+const resetForm = () => {
+  formData.value = {
     name: "",
     surname: "",
     middle_name: null,
@@ -26,116 +133,23 @@
     country: "",
     password: "",
     password_confirmation: "",
-  });
-
-  const agreeTerms = ref(false);
-  const showPassword = ref(false);
-  const showPasswordConfirm = ref(false);
-  const apiError = ref<string | null>(null);
-
-  const loading = computed(() => authStore.loading);
-
-  const validateForm = (): boolean => {
-    const validationErrors = validateRegisterForm(
-      formData.value,
-      agreeTerms.value,
-    );
-    setErrors(validationErrors);
-
-    apiError.value = null;
-    const isValid = Object.keys(validationErrors).length === 0;
-
-    if (import.meta.dev) {
-      console.log(`✅ Валидация ${isValid ? "пройдена" : "не пройдена"}`);
-    }
-    return isValid;
   };
+  agreeTerms.value = false;
+  clearErrors();
+  apiError.value = null;
+  authStore.setError(null);
+};
 
-  const handleRegister = async () => {
-    if (!validateForm()) {
-      return;
+watch(
+  () => props.visible,
+  (visible) => {
+    if (visible) {
+      resetForm();
     }
+  },
+);
 
-    apiError.value = null;
-    authStore.setLoading(true);
-    authStore.setError(null);
-
-    try {
-      if (import.meta.dev) {
-        console.log("📡 Отправка запроса на регистрацию...");
-      }
-
-      const { post } = useApi();
-      const response = await post("/v1/auth/register", formData.value);
-
-      if (import.meta.dev) {
-        console.log("📨 Ответ сервера:", response);
-      }
-
-      if (response.success && response.payload) {
-        authStore.setToken(response.payload.accessToken);
-
-        const userData = {
-          id: "",
-          email: formData.value.email,
-          name: formData.value.name,
-          surname: formData.value.surname,
-          phone: formData.value.phone,
-          country: formData.value.country,
-        };
-
-        authStore.setUser(userData);
-        authStore.setError(null);
-
-        emit("registration-success");
-        emit("close");
-      } else {
-        if (import.meta.dev) {
-          console.log("❌ Ошибка в ответе:", response.message);
-        }
-        apiError.value = response.message || "Ошибка регистрации";
-        authStore.setError(apiError.value);
-      }
-    } catch (err: unknown) {
-      if (import.meta.dev) {
-        console.error("💥 Ошибка при регистрации:", err);
-      }
-      const errorMessage =
-        err.data?.message || err.message || "Произошла ошибка при регистрации";
-      apiError.value = errorMessage;
-      authStore.setError(errorMessage);
-    } finally {
-      authStore.setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    formData.value = {
-      name: "",
-      surname: "",
-      middle_name: null,
-      phone: "",
-      email: "",
-      country: "",
-      password: "",
-      password_confirmation: "",
-    };
-    agreeTerms.value = false;
-    clearErrors();
-    apiError.value = null;
-    authStore.setError(null);
-  };
-
-  watch(
-    () => props.visible,
-    (visible) => {
-      if (visible) {
-        resetForm();
-      }
-    },
-  );
-
-  defineExpose({ resetForm });
+defineExpose({ resetForm });
 </script>
 
 <template>
@@ -158,7 +172,7 @@
               autocomplete="family-name"
               aria-required="true"
               :class="[$style.input, { [$style.inputError]: errors.surname }]"
-            >
+            />
             <small v-if="errors.surname" :class="$style.errorText">{{
               errors.surname
             }}</small>
@@ -174,7 +188,7 @@
               autocomplete="given-name"
               aria-required="true"
               :class="[$style.input, { [$style.inputError]: errors.name }]"
-            >
+            />
             <small v-if="errors.name" :class="$style.errorText">{{
               errors.name
             }}</small>
@@ -182,7 +196,9 @@
         </div>
 
         <div :class="$style.inputBlock">
-          <label for="middleName" :class="$style.srOnly">Отчество (необязательно)</label>
+          <label for="middleName" :class="$style.srOnly"
+            >Отчество (необязательно)</label
+          >
           <input
             id="middleName"
             v-model="formData.middle_name"
@@ -190,20 +206,26 @@
             placeholder="Отчество (необязательно)"
             autocomplete="additional-name"
             :class="[$style.input]"
-          >
+          />
         </div>
 
         <div :class="$style.inputBlock">
           <label for="phone" :class="$style.srOnly">Телефон</label>
           <input
             id="phone"
-            v-model="formData.phone"
+            :value="getDisplayValue(formData.phone)"
             type="tel"
+            inputmode="numeric"
             placeholder="Телефон"
             autocomplete="tel"
             aria-required="true"
             :class="[$style.input, { [$style.inputError]: errors.phone }]"
-          >
+            @beforeinput="handlePhoneInput($event, updatePhone)"
+            @keydown="handlePhoneKeydown($event, updatePhone)"
+            @paste="handlePhonePaste($event, updatePhone)"
+            @focus="handlePhoneFocus($event, formData.phone, updatePhone)"
+            @blur="handlePhoneBlur($event, formData.phone, updatePhone)"
+          />
           <small v-if="errors.phone" :class="$style.errorText">{{
             errors.phone
           }}</small>
@@ -219,7 +241,7 @@
             autocomplete="email"
             aria-required="true"
             :class="[$style.input, { [$style.inputError]: errors.email }]"
-          >
+          />
           <small v-if="errors.email" :class="$style.errorText">{{
             errors.email
           }}</small>
@@ -251,7 +273,7 @@
                 $style.passwordInput,
                 { [$style.inputError]: errors.password },
               ]"
-            >
+            />
             <button
               type="button"
               :class="$style.togglePassword"
@@ -271,7 +293,9 @@
         </div>
 
         <div :class="$style.inputBlock">
-          <label for="password_confirmation" :class="$style.srOnly">Повторить пароль</label>
+          <label for="password_confirmation" :class="$style.srOnly"
+            >Повторить пароль</label
+          >
           <div :class="$style.passwordWrapper">
             <input
               id="password_confirmation"
@@ -284,11 +308,13 @@
                 $style.passwordInput,
                 { [$style.inputError]: errors.password_confirmation },
               ]"
-            >
+            />
             <button
               type="button"
               :class="$style.togglePassword"
-              :aria-label="showPasswordConfirm ? 'Скрыть пароль' : 'Показать пароль'"
+              :aria-label="
+                showPasswordConfirm ? 'Скрыть пароль' : 'Показать пароль'
+              "
               @click="showPasswordConfirm = !showPasswordConfirm"
             >
               <UIcon
@@ -314,7 +340,7 @@
               type="checkbox"
               :class="$style.checkbox"
               aria-required="true"
-            >
+            />
             <span :class="$style.checkboxText">
               Я даю согласие с&nbsp;правилами
               онлайн-бронирования,&nbsp;обработкой персональных данных
@@ -351,222 +377,222 @@
 </template>
 
 <style module lang="scss">
-  .content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    border-bottom: rem(1) solid var(--a-border-dark);
+.content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-bottom: rem(1) solid var(--a-border-dark);
+  gap: rem(16);
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: rem(12);
+}
+
+.inputBlock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.input,
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: rem(58);
+  background-color: var(--a-whiteBg);
+  border: rem(1) solid var(--a-border-dark);
+  border-radius: var(--a-borderR--input);
+  transition: border-color 0.3s ease;
+
+  &:focus-within {
+    border-color: var(--a-accentBg);
+    outline: none;
+  }
+
+  &.inputError {
+    border-color: var(--a-border-accent);
+  }
+}
+
+.input {
+  padding: 0 rem(16);
+  font-size: rem(16);
+  color: var(--a-text-dark);
+
+  &::placeholder {
+    color: var(--a-text-light);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+/* Стилизация селекта стран под вид инпута в рамках RegisterPopup */
+.inputBlock {
+  :global {
+    .p-select {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: rem(58);
+      padding: 0 rem(16);
+      font-size: rem(16);
+      color: var(--a-text-dark);
+      background-color: var(--a-whiteBg);
+      border: rem(1) solid var(--a-border-dark);
+      border-radius: var(--a-borderR--input);
+      transition: border-color 0.3s ease;
+    }
+
+    .p-select.p-focus {
+      border-color: var(--a-accentBg);
+    }
+
+    .p-select-label.p-placeholder {
+      color: var(--a-text-light);
+    }
+  }
+}
+
+.passwordWrapper {
+  padding: 0;
+}
+
+.passwordInput {
+  flex: 1;
+  padding: 0 rem(16);
+  border: none;
+  background: transparent;
+  font-size: rem(16);
+  color: var(--a-text-dark);
+
+  &::placeholder {
+    color: var(--a-text-light);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.togglePassword {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: rem(50);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--a-text-dark);
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--a-accentBg);
+  }
+}
+
+.eyeIcon {
+  width: rem(20);
+  height: rem(20);
+  flex-shrink: 0;
+}
+
+.checkboxBlock {
+  margin: rem(16) 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: rem(8);
+  cursor: pointer;
+}
+
+.checkbox {
+  margin-top: rem(4);
+  width: rem(40);
+  height: rem(30);
+  accent-color: var(--a-accentBg);
+  background-color: var(--a-whiteBg);
+}
+
+.checkboxText {
+  font-family: "Inter", sans-serif;
+  font-size: rem(16);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--a-text-dark);
+}
+
+.errorText {
+  display: block;
+  margin-top: rem(4);
+  color: var(--a-text-accent);
+  font-size: rem(12);
+  line-height: 1.2;
+}
+
+.apiError {
+  margin-top: rem(8);
+  padding: rem(8) rem(12);
+  background-color: var(--a-mainBg);
+  border: 1px solid var(--a-border-accent);
+  border-radius: var(--a-borderR--input);
+  color: var(--a-text-accent);
+  font-size: rem(14);
+  text-align: center;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.btnGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: rem(24);
+  gap: rem(12);
+}
+
+.button {
+  flex: 1;
+  height: rem(48);
+  padding: 0 rem(16);
+  border: rem(1) solid transparent;
+  border-radius: var(--a-borderR--input);
+  font-size: rem(16);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 768px) {
+  .inputRow {
+    grid-template-columns: 1fr;
     gap: rem(16);
   }
-
-  .inputRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: rem(12);
-  }
-
-  .inputBlock {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .input,
-  .passwordWrapper {
-    position: relative;
-    display: flex;
-    width: 100%;
-    height: rem(58);
-    background-color: var(--a-whiteBg);
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: var(--a-borderR--input);
-    transition: border-color 0.3s ease;
-
-    &:focus-within {
-      border-color: var(--a-accentBg);
-      outline: none;
-    }
-
-    &.inputError {
-      border-color: var(--a-border-accent);
-    }
-  }
-
-  .input {
-    padding: 0 rem(16);
-    font-size: rem(16);
-    color: var(--a-text-dark);
-
-    &::placeholder {
-      color: var(--a-text-light);
-    }
-
-    &:focus {
-      outline: none;
-    }
-  }
-
-  /* Стилизация селекта стран под вид инпута в рамках RegisterPopup */
-  .inputBlock {
-    :global {
-      .p-select {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        height: rem(58);
-        padding: 0 rem(16);
-        font-size: rem(16);
-        color: var(--a-text-dark);
-        background-color: var(--a-whiteBg);
-        border: rem(1) solid var(--a-border-dark);
-        border-radius: var(--a-borderR--input);
-        transition: border-color 0.3s ease;
-      }
-
-      .p-select.p-focus {
-        border-color: var(--a-accentBg);
-      }
-
-      .p-select-label.p-placeholder {
-        color: var(--a-text-light);
-      }
-    }
-  }
-
-  .passwordWrapper {
-    padding: 0;
-  }
-
-  .passwordInput {
-    flex: 1;
-    padding: 0 rem(16);
-    border: none;
-    background: transparent;
-    font-size: rem(16);
-    color: var(--a-text-dark);
-
-    &::placeholder {
-      color: var(--a-text-light);
-    }
-
-    &:focus {
-      outline: none;
-    }
-  }
-
-  .togglePassword {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: rem(50);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--a-text-dark);
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: var(--a-accentBg);
-    }
-  }
-
-  .eyeIcon {
-    width: rem(20);
-    height: rem(20);
-    flex-shrink: 0;
-  }
-
-  .checkboxBlock {
-    margin: rem(16) 0;
-  }
-
-  .checkboxLabel {
-    display: flex;
-    align-items: flex-start;
-    gap: rem(8);
-    cursor: pointer;
-  }
-
-  .checkbox {
-    margin-top: rem(4);
-    width: rem(40);
-    height: rem(30);
-    accent-color: var(--a-accentBg);
-    background-color: var(--a-whiteBg);
-  }
-
-  .checkboxText {
-    font-family: "Inter", sans-serif;
-    font-size: rem(16);
-    font-weight: 400;
-    line-height: 1.2;
-    color: var(--a-text-dark);
-  }
-
-  .errorText {
-    display: block;
-    margin-top: rem(4);
-    color: var(--a-text-accent);
-    font-size: rem(12);
-    line-height: 1.2;
-  }
-
-  .apiError {
-    margin-top: rem(8);
-    padding: rem(8) rem(12);
-    background-color: var(--a-mainBg);
-    border: 1px solid var(--a-border-accent);
-    border-radius: var(--a-borderR--input);
-    color: var(--a-text-accent);
-    font-size: rem(14);
-    text-align: center;
-  }
-
-  .srOnly {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-
-  .btnGroup {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-top: rem(24);
-    gap: rem(12);
-  }
-
-  .button {
-    flex: 1;
-    height: rem(48);
-    padding: 0 rem(16);
-    border: rem(1) solid transparent;
-    border-radius: var(--a-borderR--input);
-    font-size: rem(16);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .inputRow {
-      grid-template-columns: 1fr;
-      gap: rem(16);
-    }
-  }
+}
 </style>
