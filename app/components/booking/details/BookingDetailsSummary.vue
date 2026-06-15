@@ -63,7 +63,7 @@ const formattedTotalPrice = computed(() => formatPrice(props.totalPrice));
 <template>
   <section :class="$style.section">
     <h3 :class="$style.sectionTitle">Ваше бронирование</h3>
-    
+
     <div :class="$style.bookingSummaryInner">
       <div :class="$style.datesBlock">
         <div :class="$style.dateRow">
@@ -80,7 +80,9 @@ const formattedTotalPrice = computed(() => formatPrice(props.totalPrice));
           <span :class="$style.weekday">
             {{ formatCount(nights, "night") }}
           </span>
-          <span :class="[$style.detailDay, $style.dayRight]">{{ checkOutWeekday }}</span>
+          <span :class="[$style.detailDay, $style.dayRight]">{{
+            checkOutWeekday
+          }}</span>
         </div>
       </div>
 
@@ -109,170 +111,171 @@ const formattedTotalPrice = computed(() => formatPrice(props.totalPrice));
 </template>
 
 <style module lang="scss">
-  @use "~/assets/styles/variables/resolutions" as size;
+@use "~/assets/styles/variables/resolutions" as size;
 
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: rem(16);
-    padding: rem(24) 0;
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: rem(16);
+  width: 100%;
+  max-width: #{size.$tabletMax};
+  padding: rem(24) 0;
 
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(20);
-      padding: rem(28) 0;
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      gap: rem(24);
-      padding: rem(32) 0;
-    }
+  @media (min-width: #{size.$tablet}) {
+    gap: rem(20);
+    padding: rem(28) 0;
   }
 
-  .sectionTitle {
-    font-family: "Lora", serif;
-    font-size: rem(24);
-    font-weight: 500;
-    color: var(--a-text-dark);
-    margin: 0;
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(26);
-    }
+  @media (min-width: #{size.$desktopMin}) {
+    gap: rem(24);
+    padding: rem(32) 0;
   }
+}
 
-  .bookingSummaryInner {
-    display: flex;
-    flex-direction: column;
-    gap: rem(16);
+.sectionTitle {
+  font-family: "Lora", serif;
+  font-size: rem(24);
+  font-weight: 500;
+  color: var(--a-text-dark);
+  margin: 0;
+
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(26);
   }
+}
 
-  .datesBlock {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-    padding: rem(20) rem(16);
-    background: var(--a-lightPrimaryBg);
-    border-radius: var(--a-borderR--card);
+.bookingSummaryInner {
+  display: flex;
+  flex-direction: column;
+  gap: rem(16);
+}
 
-    @media (min-width: #{size.$tablet}) {
-      padding: rem(30) rem(20);
-    }
+.datesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: rem(12);
+  padding: rem(20) rem(16);
+  background: var(--a-lightPrimaryBg);
+  border-radius: var(--a-borderR--card);
+
+  @media (min-width: #{size.$tablet}) {
+    padding: rem(30) rem(20);
   }
+}
 
-  .dateRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: rem(8);
-  }
+.dateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rem(8);
+}
 
-  .weekdayRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: rem(8);
-  }
+.weekdayRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rem(8);
+}
 
-  .bookingDetailLabel {
-    font-family: "Lora", serif;
-    font-size: rem(16);
-    font-weight: 600;
-    color: var(--a-text-dark);
+.bookingDetailLabel {
+  font-family: "Lora", serif;
+  font-size: rem(16);
+  font-weight: 600;
+  color: var(--a-text-dark);
 
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(18);
-    }
-  }
-
-  .detailIcon {
-    width: rem(48);
-    height: rem(6);
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      width: rem(62);
-      height: rem(8);
-    }
-  }
-
-  .detailDay {
-    width: calc(100% / 3);
-    font-family: "Lora", serif;
-    font-size: rem(14);
-    font-weight: 400;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(16);
-    }
-  }
-
-  .dayRight {
-    text-align: right;
-  }
-
-  .weekday {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: rem(2) rem(12);
-    font-family: "Lora", serif;
-    font-size: rem(12);
-    color: var(--a-text-dark);
-    border: rem(1) solid var(--a-border-dark);
-    border-radius: var(--a-borderR--card);
-    white-space: nowrap;
-
-    @media (min-width: #{size.$tablet}) {
-      padding: rem(2) rem(18);
-      font-size: rem(14);
-    }
-  }
-
-  .roomsList {
-    display: flex;
-    flex-direction: column;
-    gap: rem(10);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .roomsListItem {
-    margin: 0;
-    padding: 0;
-  }
-
-  .summaryDivider {
-    width: 100%;
-    height: rem(1);
-    margin: rem(8) 0;
-    padding: 0;
-    border: none;
-    background-color: var(--a-black);
-  }
-
-  .grandTotal {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: rem(12);
-    font-family: "Lora", serif;
+  @media (min-width: #{size.$tablet}) {
     font-size: rem(18);
-    font-weight: 600;
-    color: var(--a-text-dark);
+  }
+}
+
+.detailIcon {
+  width: rem(48);
+  height: rem(6);
+  color: var(--a-text-dark);
+
+  @media (min-width: #{size.$tablet}) {
+    width: rem(62);
+    height: rem(8);
+  }
+}
+
+.detailDay {
+  width: calc(100% / 3);
+  font-family: "Lora", serif;
+  font-size: rem(14);
+  font-weight: 400;
+  color: var(--a-text-dark);
+
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(16);
+  }
+}
+
+.dayRight {
+  text-align: right;
+}
+
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: rem(2) rem(12);
+  font-family: "Lora", serif;
+  font-size: rem(12);
+  color: var(--a-text-dark);
+  border: rem(1) solid var(--a-border-dark);
+  border-radius: var(--a-borderR--card);
+  white-space: nowrap;
+
+  @media (min-width: #{size.$tablet}) {
+    padding: rem(2) rem(18);
+    font-size: rem(14);
+  }
+}
+
+.roomsList {
+  display: flex;
+  flex-direction: column;
+  gap: rem(10);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.roomsListItem {
+  margin: 0;
+  padding: 0;
+}
+
+.summaryDivider {
+  width: 100%;
+  height: rem(1);
+  margin: rem(8) 0;
+  padding: 0;
+  border: none;
+  background-color: var(--a-black);
+}
+
+.grandTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: rem(12);
+  font-family: "Lora", serif;
+  font-size: rem(18);
+  font-weight: 600;
+  color: var(--a-text-dark);
+
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(20);
+  }
+
+  strong {
+    font-size: rem(20);
 
     @media (min-width: #{size.$tablet}) {
-      font-size: rem(20);
-    }
-
-    strong {
-      font-size: rem(20);
-
-      @media (min-width: #{size.$tablet}) {
-        font-size: rem(24);
-      }
+      font-size: rem(24);
     }
   }
+}
 </style>
-

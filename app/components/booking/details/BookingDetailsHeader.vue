@@ -38,7 +38,10 @@ const handlePrint = () => {
         <p v-if="bookingNumber" :class="$style.bookingNumber">
           № {{ bookingNumber }}
         </p>
-        <nav :class="$style.actionButtons" aria-label="Действия с бронированием">
+        <nav
+          :class="$style.actionButtons"
+          aria-label="Действия с бронированием"
+        >
           <Button
             v-if="hasPdf"
             class="btn__bs danger"
@@ -47,11 +50,7 @@ const handlePrint = () => {
           >
             Скачать подтверждение
           </Button>
-          <Button
-            class="btn__bs dark"
-            unstyled
-            @click="handlePrint"
-          >
+          <Button class="btn__bs dark" unstyled @click="handlePrint">
             Распечатать
           </Button>
         </nav>
@@ -68,117 +67,108 @@ const handlePrint = () => {
 </template>
 
 <style module lang="scss">
-  @use "~/assets/styles/variables/resolutions" as size;
+@use "~/assets/styles/variables/resolutions" as size;
 
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: rem(16);
-    padding: rem(24) 0;
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: rem(16);
+  width: 100%;
+  max-width: #{size.$desktopMin};
+  padding: rem(24) 0;
 
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(20);
-      padding: rem(28) 0;
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      gap: rem(24);
-      padding: rem(32) 0;
-    }
-  }
-
-  .sectionTitle {
-    font-family: "Lora", serif;
-    font-size: rem(24);
-    font-weight: 500;
-    color: var(--a-text-dark);
-    margin: 0;
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(26);
-    }
-  }
-
-  .bookingInfo {
-    display: flex;
-    flex-direction: column;
+  @media (min-width: #{size.$tablet}) {
     gap: rem(20);
-
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(24);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: rem(32);
-    }
+    padding: rem(28) 0;
   }
 
-  .bookingLeft {
-    display: flex;
-    flex-direction: column;
-    gap: rem(20);
+  @media (min-width: #{size.$desktopMin}) {
+    gap: rem(24);
+    padding: rem(32) 0;
+  }
+}
 
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(24);
-    }
+.sectionTitle {
+  font-family: "Lora", serif;
+  font-size: rem(24);
+  font-weight: 500;
+  color: var(--a-text-dark);
+  margin: 0;
 
-    @media (min-width: #{size.$desktopMin}) {
-      flex: 1;
-    }
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(26);
+  }
+}
+
+.bookingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: rem(20);
+
+  @media (min-width: #{size.$tablet}) {
+    gap: rem(24);
   }
 
-  .bookingNumber {
-    font-family: "Lora", serif;
-    font-size: rem(20);
-    font-weight: 500;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(22);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
-    }
-  }
-
-  .actionButtons {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      gap: rem(16);
-    }
-  }
-
-  .qrCode {
-    display: flex;
+  @media (min-width: #{size.$desktopMin}) {
+    flex-direction: row;
     align-items: flex-start;
-    justify-content: center;
+    gap: rem(32);
+  }
+}
 
-    @media (min-width: #{size.$desktopMin}) {
-      justify-content: flex-end;
-    }
+.bookingLeft {
+  display: flex;
+  flex-direction: column;
+  gap: rem(20);
+
+  @media (min-width: #{size.$tablet}) {
+    gap: rem(24);
+  }
+}
+
+.bookingNumber {
+  font-family: "Lora", serif;
+  font-size: rem(20);
+  font-weight: 500;
+  color: var(--a-text-dark);
+
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(22);
   }
 
-  .qrCanvas {
-    border: rem(1) solid var(--a-black);
-    width: rem(100);
-    height: rem(100);
-
-    @media (min-width: #{size.$tablet}) {
-      width: rem(120);
-      height: rem(120);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      width: rem(140);
-      height: rem(140);
-    }
+  @media (min-width: #{size.$desktopMin}) {
+    font-size: rem(24);
   }
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: rem(12);
+
+  @media (min-width: #{size.$tablet}) {
+    flex-direction: row;
+    gap: rem(16);
+  }
+}
+
+.qrCode {
+  flex-shrink: 0;
+}
+
+.qrCanvas {
+  border: rem(1) solid var(--a-black);
+  width: rem(100);
+  height: rem(100);
+
+  @media (min-width: #{size.$tablet}) {
+    width: rem(120);
+    height: rem(120);
+  }
+
+  @media (min-width: #{size.$desktopMin}) {
+    width: rem(140);
+    height: rem(140);
+  }
+}
 </style>
