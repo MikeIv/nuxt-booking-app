@@ -57,18 +57,41 @@ export function parseBookingRoomService(
   };
 }
 
+/** Доп. услуги номера из booking.show: приоритет у packages, fallback — services */
+function getBookingRoomExtraServicesRaw(room: BookingByUuidRoom): unknown[] {
+  const packages = room.packages;
+  if (Array.isArray(packages) && packages.length > 0) {
+    return packages;
+  }
+
+  const services = room.services;
+  return Array.isArray(services) ? services : [];
+}
+
+function parseBookingRoomExtraServices(
+  room: BookingByUuidRoom,
+  idOffset = 0,
+): SelectedService[] {
+  return getBookingRoomExtraServicesRaw(room)
+    .map((service, serviceIndex) =>
+      parseBookingRoomService(service, idOffset + serviceIndex),
+    )
+    .filter((service): service is SelectedService => service !== null);
+}
+
+export function mapBookingRoomServicesToTitles(
+  room: BookingByUuidRoom,
+): string[] {
+  return parseBookingRoomExtraServices(room).map((service) => service.title);
+}
+
 export function mapBookingRoomsServicesToByRoom(
   rooms: BookingByUuidRoom[],
 ): Record<number, SelectedService[]> {
   const result: Record<number, SelectedService[]> = {};
 
   rooms.forEach((room, roomIndex) => {
-    const rawServices = Array.isArray(room.services) ? room.services : [];
-    const parsed = rawServices
-      .map((service, serviceIndex) =>
-        parseBookingRoomService(service, roomIndex * 100 + serviceIndex),
-      )
-      .filter((service): service is SelectedService => service !== null);
+    const parsed = parseBookingRoomExtraServices(room, roomIndex * 100);
 
     if (parsed.length > 0) {
       result[roomIndex] = parsed;

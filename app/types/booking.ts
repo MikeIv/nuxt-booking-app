@@ -114,6 +114,9 @@ export interface BookingByUuidRoom {
   adults?: number;
   children?: number;
   total_guests?: number;
+  /** Доп. услуги в ответе booking.show (актуальное поле API) */
+  packages?: unknown[];
+  /** Устаревшее поле; оставлено для обратной совместимости */
   services?: unknown[];
   total: number;
 }

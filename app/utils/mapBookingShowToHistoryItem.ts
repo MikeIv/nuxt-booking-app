@@ -4,6 +4,7 @@ import type {
   BookingHistoryItem,
 } from "~/types/booking";
 import { toBookingAllowedActionsArray } from "~/utils/bookingAllowedActions";
+import { mapBookingRoomServicesToTitles } from "~/utils/mapBookingRoomServices";
 
 export function parseBookingRooms(
   rooms: BookingByUuidPayload["rooms"],
@@ -43,9 +44,7 @@ function mapRoom(
       children: room.children ?? 0,
       total: room.total_guests ?? guestsList.length,
     },
-    services: Array.isArray(room.services)
-      ? room.services.map((service) => String(service))
-      : [],
+    services: mapBookingRoomServicesToTitles(room),
     total: room.total,
   };
 }

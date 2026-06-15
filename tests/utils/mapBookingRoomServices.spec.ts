@@ -55,4 +55,29 @@ describe("mapBookingRoomServices", () => {
     expect(result[1]?.[0]?.price).toBe(18000);
     expect(result[2]).toBeUndefined();
   });
+
+  it("mapBookingRoomsServicesToByRoom читает packages из booking.show", () => {
+    const rooms: BookingByUuidRoom[] = [
+      {
+        title: "Grand Deluxe King Room",
+        tariff: { title: "Предоплатный тариф без завтрака", price: 76000 },
+        total: 85000,
+        packages: [
+          {
+            code: "BFSTA",
+            title: "Breakfast",
+            price: 9000,
+            calculation_rate_title: null,
+          },
+        ],
+      },
+    ];
+
+    const result = mapBookingRoomsServicesToByRoom(rooms);
+
+    expect(result[0]).toHaveLength(1);
+    expect(result[0]?.[0]?.title).toBe("Breakfast");
+    expect(result[0]?.[0]?.price).toBe(9000);
+    expect(result[0]?.[0]?.packageCode).toBe("BFSTA");
+  });
 });
