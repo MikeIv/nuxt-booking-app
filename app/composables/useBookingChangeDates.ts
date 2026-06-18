@@ -3,8 +3,7 @@ import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
 import { pickNumber, pickString } from "~/utils/pick";
 import {
-  type BookingChangeGuest,
-  mapBookingChangeGuests,
+  buildBookingRoomRefs,
   pickChildrenAges,
   pickRoomPackageCodes,
   pickRoomRatePlanCode,
@@ -14,17 +13,6 @@ type ChangeBookingDatesResponse = {
   success: boolean;
   message?: string;
   payload?: unknown;
-};
-
-type BookingChangeRoom = {
-  booking_id: number | null;
-  room_type_code: string;
-  rate_plan_code: string;
-  packages: string[];
-  adults: number;
-  children: number;
-  children_ages: number[];
-  guests: BookingChangeGuest[];
 };
 
 export const useBookingChangeDates = (
@@ -87,10 +75,6 @@ export const useBookingChangeDates = (
     );
   });
 
-  const bookingOrderNationality = computed(
-    () => pickString(createdBooking.value?.order?.nationality) ?? "",
-  );
-
   function syncGuestsFromCreatedBooking(): void {
     const rooms = createdBookingRooms.value;
     if (rooms.length === 0) return;
@@ -102,46 +86,6 @@ export const useBookingChangeDates = (
         children: pickNumber(room.children) ?? 0,
         childrenAges: pickChildrenAges(room),
       })),
-    });
-  }
-
-  function buildBookingChangeRooms(
-    roomTypeCode: string,
-    ratePlanCode: string,
-  ): BookingChangeRoom[] {
-    const orderNationality = bookingOrderNationality.value;
-    const rooms = createdBookingRooms.value;
-    if (rooms.length === 0) {
-      return [
-        {
-          booking_id: null,
-          room_type_code: roomTypeCode,
-          rate_plan_code: ratePlanCode,
-          packages: [],
-          adults: 1,
-          children: 0,
-          children_ages: [],
-          guests: [],
-        },
-      ];
-    }
-
-    return rooms.map((room) => {
-      const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
-
-      return {
-        booking_id: pickNumber(room.id),
-        room_type_code:
-          pickString(room.room_type_code) ??
-          pickString(room.roomTypeCode) ??
-          roomTypeCode,
-        rate_plan_code: pickRoomRatePlanCode(room, ratePlanCode),
-        packages: pickRoomPackageCodes(room),
-        adults: pickNumber(room.adults) ?? 1,
-        children: pickNumber(room.children) ?? 0,
-        children_ages: pickChildrenAges(room),
-        guests: mapBookingChangeGuests(guestsRaw, orderNationality),
-      };
     });
   }
 
@@ -252,7 +196,7 @@ export const useBookingChangeDates = (
       const body = {
         start_at: bookingStore.formatDate(startDate),
         end_at: bookingStore.formatDate(endDate),
-        rooms: buildBookingChangeRooms(roomTypeCode, ratePlanCode),
+        rooms: buildBookingRoomRefs(createdBookingRooms.value),
       };
 
       const response = (await put<unknown>(`/v1/booking/${uuid}`, body, {

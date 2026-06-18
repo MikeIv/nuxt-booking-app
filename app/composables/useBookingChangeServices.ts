@@ -4,8 +4,7 @@ import type { ComputedRef } from "vue";
 import type { PackageResource } from "~/types/room";
 import { pickNumber, pickString } from "~/utils/pick";
 import {
-  mapBookingChangeGuests,
-  pickBookingStayDates,
+  mapBookingUpdateRooms,
   pickChildrenAges,
   pickRoomPackageCodes,
   pickRoomRatePlanCode,
@@ -159,13 +158,6 @@ export const useBookingChangeServices = (
     changeServicesSuccess.value = null;
 
     try {
-      const order = createdBooking.value?.order;
-      const stayDates = pickBookingStayDates(order);
-      if (!stayDates) {
-        throw new Error("Не удалось определить даты текущего бронирования.");
-      }
-      const { startAt, endAt } = stayDates;
-
       const roomsRaw = Array.isArray(createdBooking.value?.rooms)
         ? createdBooking.value.rooms
         : [];
@@ -175,33 +167,13 @@ export const useBookingChangeServices = (
         );
       }
 
-      const orderNationality =
-        pickString(createdBooking.value?.order?.nationality) ?? "";
-
-      const rooms = roomsRaw.map((roomRaw, roomIndex) => {
-        const room = roomRaw as Record<string, unknown>;
-
-        const existingPackages = pickRoomPackageCodes(room);
-        const packages =
-          roomIndex === 0 ? [...selectedPackageCodes.value] : existingPackages;
-
-        const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
-
-        return {
-          booking_id: pickNumber(room.id),
-          room_type_code: pickString(room.room_type_code) ?? "",
-          rate_plan_code: pickRoomRatePlanCode(room),
-          adults: pickNumber(room.adults) ?? 1,
-          children: pickNumber(room.children) ?? 0,
-          children_ages: pickChildrenAges(room),
-          packages,
-          guests: mapBookingChangeGuests(guestsRaw, orderNationality),
-        };
-      });
+      const rooms = mapBookingUpdateRooms(roomsRaw, () => ({
+        packages: [...selectedPackageCodes.value],
+      }));
 
       const response = (await put<unknown>(
         `/v1/booking/${uuid}`,
-        { start_at: startAt, end_at: endAt, rooms },
+        { rooms },
         { signal: AbortSignal.timeout(15000) },
       )) as ChangeServicesResponse;
 

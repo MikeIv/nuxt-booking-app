@@ -310,17 +310,11 @@ describe("useBookingChangeDates", () => {
 
       expect(mockPut).toHaveBeenCalledWith(
         "/v1/booking/booking-uuid",
-        expect.objectContaining({
+        {
           start_at: "2026-04-15",
           end_at: "2026-04-17",
-          rooms: expect.arrayContaining([
-            expect.objectContaining({
-              booking_id: 1,
-              room_type_code: "STANDARD",
-              rate_plan_code: "BBREAKFAST",
-            }),
-          ]),
-        }),
+          rooms: [{ booking_id: 1 }],
+        },
         expect.any(Object),
       );
       expect(mockGetBookingByUuid).toHaveBeenCalledWith("booking-uuid");
@@ -375,40 +369,7 @@ describe("useBookingChangeDates", () => {
       expect(isChangingDates.value).toBe(false);
     });
 
-    it("должен передавать rate_plan_code, а не rate_type_code, в PUT", async () => {
-      createdBookingRef.value = {
-        rooms: [
-          {
-            id: 1,
-            room_type_code: "STANDARD",
-            rate_plan_code: "BBREAKFAST",
-            rate_type_code: "WRONG-CODE",
-            packages: [],
-            adults: 1,
-            children: 0,
-            guests: [],
-          },
-        ],
-      };
-
-      const { newDates, confirmChangeDates } = makeComposable();
-      newDates.value = [newStart, newEnd];
-      await confirmChangeDates();
-
-      expect(mockPut).toHaveBeenCalledWith(
-        "/v1/booking/booking-uuid",
-        expect.objectContaining({
-          rooms: [
-            expect.objectContaining({
-              rate_plan_code: "BBREAKFAST",
-            }),
-          ],
-        }),
-        expect.any(Object),
-      );
-    });
-
-    it("должен передавать nationality гостя в PUT", async () => {
+    it("не должен передавать guests и неизменённые поля комнаты в PUT", async () => {
       createdBookingRef.value = {
         order: { nationality: "Россия" },
         rooms: [
@@ -416,6 +377,7 @@ describe("useBookingChangeDates", () => {
             id: 1,
             room_type_code: "STANDARD",
             rate_plan_code: "BBREAKFAST",
+            rate_type_code: "WRONG-CODE",
             packages: [],
             adults: 1,
             children: 0,
@@ -426,6 +388,7 @@ describe("useBookingChangeDates", () => {
                 name: "test",
                 phone: "+79990000000",
                 email: "test@test.com",
+                nationality: "Австрия",
               },
             ],
           },
@@ -438,17 +401,11 @@ describe("useBookingChangeDates", () => {
 
       expect(mockPut).toHaveBeenCalledWith(
         "/v1/booking/booking-uuid",
-        expect.objectContaining({
-          rooms: [
-            expect.objectContaining({
-              guests: [
-                expect.objectContaining({
-                  nationality: "Россия",
-                }),
-              ],
-            }),
-          ],
-        }),
+        {
+          start_at: "2026-04-15",
+          end_at: "2026-04-17",
+          rooms: [{ booking_id: 1 }],
+        },
         expect.any(Object),
       );
     });
