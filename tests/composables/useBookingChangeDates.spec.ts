@@ -408,6 +408,51 @@ describe("useBookingChangeDates", () => {
       );
     });
 
+    it("должен передавать nationality гостя в PUT", async () => {
+      createdBookingRef.value = {
+        order: { nationality: "Россия" },
+        rooms: [
+          {
+            id: 1,
+            room_type_code: "STANDARD",
+            rate_plan_code: "BBREAKFAST",
+            packages: [],
+            adults: 1,
+            children: 0,
+            guests: [
+              {
+                id: 339,
+                surname: "test",
+                name: "test",
+                phone: "+79990000000",
+                email: "test@test.com",
+              },
+            ],
+          },
+        ],
+      };
+
+      const { newDates, confirmChangeDates } = makeComposable();
+      newDates.value = [newStart, newEnd];
+      await confirmChangeDates();
+
+      expect(mockPut).toHaveBeenCalledWith(
+        "/v1/booking/booking-uuid",
+        expect.objectContaining({
+          rooms: [
+            expect.objectContaining({
+              guests: [
+                expect.objectContaining({
+                  nationality: "Россия",
+                }),
+              ],
+            }),
+          ],
+        }),
+        expect.any(Object),
+      );
+    });
+
     it("должен передавать форматированные даты в теле PUT", async () => {
       createdBookingRef.value = {
         rooms: [

@@ -16,6 +16,7 @@ type BookingChangeGuest = {
   middle_name: string | null;
   phone: string;
   email: string;
+  nationality: string;
 };
 
 type BookingChangeRoom = {
@@ -64,7 +65,10 @@ function pickChildrenAges(room: Record<string, unknown>): number[] {
     .filter((age): age is number => age !== null);
 }
 
-function mapBookingChangeGuest(guestRaw: unknown): BookingChangeGuest {
+function mapBookingChangeGuest(
+  guestRaw: unknown,
+  orderNationality: string,
+): BookingChangeGuest {
   const guest = guestRaw as Record<string, unknown>;
   return {
     id: pickNumber(guest.id),
@@ -73,6 +77,7 @@ function mapBookingChangeGuest(guestRaw: unknown): BookingChangeGuest {
     middle_name: pickString(guest.middle_name),
     phone: pickString(guest.phone) ?? "",
     email: pickString(guest.email) ?? "",
+    nationality: pickString(guest.nationality) ?? orderNationality,
   };
 }
 
@@ -136,6 +141,10 @@ export const useBookingChangeDates = (
     );
   });
 
+  const bookingOrderNationality = computed(
+    () => pickString(createdBooking.value?.order?.nationality) ?? "",
+  );
+
   function syncGuestsFromCreatedBooking(): void {
     const rooms = createdBookingRooms.value;
     if (rooms.length === 0) return;
@@ -154,6 +163,7 @@ export const useBookingChangeDates = (
     roomTypeCode: string,
     ratePlanCode: string,
   ): BookingChangeRoom[] {
+    const orderNationality = bookingOrderNationality.value;
     const rooms = createdBookingRooms.value;
     if (rooms.length === 0) {
       return [
@@ -184,7 +194,9 @@ export const useBookingChangeDates = (
         adults: pickNumber(room.adults) ?? 1,
         children: pickNumber(room.children) ?? 0,
         children_ages: pickChildrenAges(room),
-        guests: guestsRaw.map(mapBookingChangeGuest),
+        guests: guestsRaw.map((guestRaw) =>
+          mapBookingChangeGuest(guestRaw, orderNationality),
+        ),
       };
     });
   }
