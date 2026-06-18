@@ -27,7 +27,7 @@ const mockSearch = vi.fn();
 const mockSearchPackages = vi.fn();
 const mockGetBookingByUuid = vi.fn();
 const mockFormatDate = vi.fn((d: Date) => d.toISOString().split("T")[0]);
-const mockGetSelectedServicesForRoom = vi.fn().mockReturnValue([]);
+const mockSetGuests = vi.fn();
 
 vi.mock("~/stores/booking", () => ({
   useBookingStore: () => ({
@@ -39,7 +39,13 @@ vi.mock("~/stores/booking", () => ({
     searchPackages: mockSearchPackages,
     getBookingByUuid: mockGetBookingByUuid,
     formatDate: mockFormatDate,
-    getSelectedServicesForRoom: mockGetSelectedServicesForRoom,
+    setGuests: mockSetGuests,
+    setSelectedTariff: (value: typeof selectedTariffRef.value) => {
+      selectedTariffRef.value = value;
+    },
+    setDate: (value: [Date, Date] | null) => {
+      dateRef.value = value;
+    },
   }),
 }));
 
@@ -79,7 +85,6 @@ describe("useBookingChangeDates", () => {
     mockSearch.mockResolvedValue(availableSearchResult);
     mockSearchPackages.mockResolvedValue([]);
     mockGetBookingByUuid.mockResolvedValue(undefined);
-    mockGetSelectedServicesForRoom.mockReturnValue([]);
     mockPut.mockResolvedValue({ success: true });
   });
 
@@ -258,8 +263,20 @@ describe("useBookingChangeDates", () => {
     });
 
     it("должен устанавливать ошибку если пакеты недоступны на новые даты", async () => {
-      mockGetSelectedServicesForRoom.mockReturnValue([{ packageCode: "SPA" }]);
-      mockSearchPackages.mockResolvedValue([]); // пустой список — SPA недоступен
+      createdBookingRef.value = {
+        rooms: [
+          {
+            id: 1,
+            room_type_code: "STANDARD",
+            rate_plan_code: "BBREAKFAST",
+            packages: ["SPA"],
+            adults: 1,
+            children: 0,
+            guests: [],
+          },
+        ],
+      };
+      mockSearchPackages.mockResolvedValue([]);
 
       const { newDates, changeDatesError, confirmChangeDates } =
         makeComposable();
@@ -272,19 +289,37 @@ describe("useBookingChangeDates", () => {
     });
 
     it("должен успешно изменять даты, вызывать PUT и загружать бронирование", async () => {
+      createdBookingRef.value = {
+        rooms: [
+          {
+            id: 1,
+            room_type_code: "STANDARD",
+            rate_plan_code: "BBREAKFAST",
+            packages: [],
+            adults: 1,
+            children: 0,
+            guests: [],
+          },
+        ],
+      };
+
       const { newDates, changeDatesSuccess, confirmChangeDates } =
         makeComposable();
       newDates.value = [newStart, newEnd];
       await confirmChangeDates();
 
       expect(mockPut).toHaveBeenCalledWith(
-        "/v1/users/profile",
+        "/v1/booking/booking-uuid",
         expect.objectContaining({
-          booking_change: expect.objectContaining({
-            uuid: "booking-uuid",
-            room_type_code: "STANDARD",
-            rate_plan_code: "BBREAKFAST",
-          }),
+          start_at: "2026-04-15",
+          end_at: "2026-04-17",
+          rooms: expect.arrayContaining([
+            expect.objectContaining({
+              booking_id: 1,
+              room_type_code: "STANDARD",
+              rate_plan_code: "BBREAKFAST",
+            }),
+          ]),
         }),
         expect.any(Object),
       );
@@ -340,7 +375,53 @@ describe("useBookingChangeDates", () => {
       expect(isChangingDates.value).toBe(false);
     });
 
-    it("должен передавать форматированные даты в booking_change", async () => {
+    it("должен передавать rate_plan_code, а не rate_type_code, в PUT", async () => {
+      createdBookingRef.value = {
+        rooms: [
+          {
+            id: 1,
+            room_type_code: "STANDARD",
+            rate_plan_code: "BBREAKFAST",
+            rate_type_code: "WRONG-CODE",
+            packages: [],
+            adults: 1,
+            children: 0,
+            guests: [],
+          },
+        ],
+      };
+
+      const { newDates, confirmChangeDates } = makeComposable();
+      newDates.value = [newStart, newEnd];
+      await confirmChangeDates();
+
+      expect(mockPut).toHaveBeenCalledWith(
+        "/v1/booking/booking-uuid",
+        expect.objectContaining({
+          rooms: [
+            expect.objectContaining({
+              rate_plan_code: "BBREAKFAST",
+            }),
+          ],
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it("должен передавать форматированные даты в теле PUT", async () => {
+      createdBookingRef.value = {
+        rooms: [
+          {
+            id: 1,
+            room_type_code: "STANDARD",
+            rate_plan_code: "BBREAKFAST",
+            packages: [],
+            adults: 1,
+            children: 0,
+            guests: [],
+          },
+        ],
+      };
       mockFormatDate
         .mockReturnValueOnce("2026-04-15")
         .mockReturnValueOnce("2026-04-17");
@@ -350,12 +431,10 @@ describe("useBookingChangeDates", () => {
       await confirmChangeDates();
 
       expect(mockPut).toHaveBeenCalledWith(
-        "/v1/users/profile",
+        "/v1/booking/booking-uuid",
         expect.objectContaining({
-          booking_change: expect.objectContaining({
-            start_at: "2026-04-15",
-            end_at: "2026-04-17",
-          }),
+          start_at: "2026-04-15",
+          end_at: "2026-04-17",
         }),
         expect.any(Object),
       );
