@@ -1,6 +1,13 @@
 import { useBookingStore } from "~/stores/booking";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
+import { pickNumber, pickString } from "~/utils/pick";
+import {
+  mapBookingChangeGuests,
+  pickBookingStayDates,
+  pickChildrenAges,
+  pickRoomPackageCodes,
+} from "~/utils/bookingChangeRequest";
 
 type ChangeBookingRoomResponse = {
   success: boolean;
@@ -59,79 +66,32 @@ export const useBookingChangeRoom = (
     changeRoomSuccess.value = null;
 
     try {
-      const startAt =
-        typeof createdBooking.value?.order?.start_at === "string"
-          ? createdBooking.value.order.start_at.slice(0, 10)
-          : "";
-      const endAt =
-        typeof createdBooking.value?.order?.end_at === "string"
-          ? createdBooking.value.order.end_at.slice(0, 10)
-          : "";
-      if (!startAt || !endAt) {
+      const stayDates = pickBookingStayDates(createdBooking.value?.order);
+      if (!stayDates) {
         throw new Error("Не удалось определить даты текущего бронирования.");
       }
+      const { startAt, endAt } = stayDates;
 
-      type GuestItem = {
-        id: number | null;
-        surname: string;
-        name: string;
-        middle_name: string | null;
-        phone: string;
-        email: string;
-      };
-      type RoomItem = {
-        booking_id: number | null;
-        room_type_code: string;
-        rate_plan_code: string;
-        packages: string[];
-        adults: number;
-        children: number;
-        children_ages: number[];
-        guests: GuestItem[];
-      };
-
+      const orderNationality =
+        pickString(createdBooking.value?.order?.nationality) ?? "";
       const roomsRaw = createdBooking.value?.rooms;
       const existingRooms = Array.isArray(roomsRaw) ? roomsRaw : [];
 
-      const rooms: RoomItem[] =
+      const rooms =
         existingRooms.length > 0
           ? existingRooms.map((roomRaw) => {
               const room = roomRaw as Record<string, unknown>;
-
               const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
-              const guests: GuestItem[] = guestsRaw.map((g) => {
-                const guest = g as Record<string, unknown>;
-                return {
-                  id: pickNumber(guest.id),
-                  surname: pickString(guest.surname) ?? "",
-                  name: pickString(guest.name) ?? "",
-                  middle_name: pickString(guest.middle_name),
-                  phone: pickString(guest.phone) ?? "",
-                  email: pickString(guest.email) ?? "",
-                };
-              });
-
-              const childrenAges = (
-                Array.isArray(room.children_ages) ? room.children_ages : []
-              )
-                .map((age) => pickNumber(age))
-                .filter((age): age is number => age !== null);
-
-              const roomPackages = (
-                Array.isArray(room.packages) ? room.packages : []
-              )
-                .map((pkg) => pickString(pkg))
-                .filter((pkg): pkg is string => pkg !== null);
 
               return {
                 booking_id: pickNumber(room.id),
                 room_type_code: roomTypeCode,
                 rate_plan_code: ratePlanCode,
-                packages: roomPackages,
+                packages: pickRoomPackageCodes(room),
                 adults: pickNumber(room.adults) ?? 1,
                 children: pickNumber(room.children) ?? 0,
-                children_ages: childrenAges,
-                guests,
+                children_ages: pickChildrenAges(room),
+                guests: mapBookingChangeGuests(guestsRaw, orderNationality),
               };
             })
           : [

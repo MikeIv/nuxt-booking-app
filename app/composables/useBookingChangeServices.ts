@@ -2,6 +2,14 @@ import { useBookingStore } from "~/stores/booking";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
 import type { PackageResource } from "~/types/room";
+import { pickNumber, pickString } from "~/utils/pick";
+import {
+  mapBookingChangeGuests,
+  pickBookingStayDates,
+  pickChildrenAges,
+  pickRoomPackageCodes,
+  pickRoomRatePlanCode,
+} from "~/utils/bookingChangeRequest";
 
 type ChangeServicesResponse = {
   success: boolean;
@@ -36,10 +44,7 @@ export const useBookingChangeServices = (
     const first = rooms[0] as Record<string, unknown>;
     return {
       roomTypeCode: pickString(first.room_type_code) ?? null,
-      ratePlanCode:
-        pickString(first.rate_plan_code) ??
-        pickString(first.rate_type_code) ??
-        null,
+      ratePlanCode: pickRoomRatePlanCode(first) || null,
     };
   });
 
@@ -79,12 +84,7 @@ export const useBookingChangeServices = (
           return {
             adults: Math.max(pickNumber(r.adults) ?? 1, 1),
             children: pickNumber(r.children) ?? 0,
-            childrenAges: (Array.isArray(r.children_ages)
-              ? r.children_ages
-              : []
-            )
-              .map((age) => pickNumber(age))
-              .filter((age): age is number => age !== null),
+            childrenAges: pickChildrenAges(r),
           };
         }),
       });
@@ -108,13 +108,9 @@ export const useBookingChangeServices = (
     const firstRoomRaw = Array.isArray(createdBooking.value?.rooms)
       ? (createdBooking.value.rooms[0] as Record<string, unknown>)
       : null;
-    const currentPackages =
-      firstRoomRaw && Array.isArray(firstRoomRaw.packages)
-        ? (firstRoomRaw.packages as unknown[])
-            .map((p) => pickString(p))
-            .filter((p): p is string => p !== null)
-        : [];
-    selectedPackageCodes.value = [...currentPackages];
+    selectedPackageCodes.value = firstRoomRaw
+      ? pickRoomPackageCodes(firstRoomRaw)
+      : [];
 
     prepareStoreForSearch(roomTypeCode, ratePlanCode);
 
@@ -164,14 +160,11 @@ export const useBookingChangeServices = (
 
     try {
       const order = createdBooking.value?.order;
-      const startAtRaw =
-        typeof order?.start_at === "string" ? order.start_at : "";
-      const endAtRaw = typeof order?.end_at === "string" ? order.end_at : "";
-      const startAt = startAtRaw.slice(0, 10);
-      const endAt = endAtRaw.slice(0, 10);
-      if (!startAt || !endAt) {
+      const stayDates = pickBookingStayDates(order);
+      if (!stayDates) {
         throw new Error("Не удалось определить даты текущего бронирования.");
       }
+      const { startAt, endAt } = stayDates;
 
       const roomsRaw = Array.isArray(createdBooking.value?.rooms)
         ? createdBooking.value.rooms
@@ -182,50 +175,27 @@ export const useBookingChangeServices = (
         );
       }
 
+      const orderNationality =
+        pickString(createdBooking.value?.order?.nationality) ?? "";
+
       const rooms = roomsRaw.map((roomRaw, roomIndex) => {
         const room = roomRaw as Record<string, unknown>;
 
-        const childrenAges = (
-          Array.isArray(room.children_ages) ? room.children_ages : []
-        )
-          .map((age) => pickNumber(age))
-          .filter((age): age is number => age !== null);
-
-        const existingPackages = (
-          Array.isArray(room.packages) ? room.packages : []
-        )
-          .map((pkg) => pickString(pkg))
-          .filter((pkg): pkg is string => pkg !== null);
-
-        // Для первой комнаты подставляем выбранные пакеты, остальные — без изменений
+        const existingPackages = pickRoomPackageCodes(room);
         const packages =
           roomIndex === 0 ? [...selectedPackageCodes.value] : existingPackages;
 
         const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
-        const guests = guestsRaw.map((guestRaw) => {
-          const guest = guestRaw as Record<string, unknown>;
-          return {
-            id: pickNumber(guest.id),
-            surname: pickString(guest.surname) ?? "",
-            name: pickString(guest.name) ?? "",
-            middle_name: pickString(guest.middle_name),
-            phone: pickString(guest.phone) ?? "",
-            email: pickString(guest.email) ?? "",
-          };
-        });
 
         return {
           booking_id: pickNumber(room.id),
           room_type_code: pickString(room.room_type_code) ?? "",
-          rate_plan_code:
-            pickString(room.rate_plan_code) ??
-            pickString(room.rate_type_code) ??
-            "",
+          rate_plan_code: pickRoomRatePlanCode(room),
           adults: pickNumber(room.adults) ?? 1,
           children: pickNumber(room.children) ?? 0,
-          children_ages: childrenAges,
+          children_ages: pickChildrenAges(room),
           packages,
-          guests,
+          guests: mapBookingChangeGuests(guestsRaw, orderNationality),
         };
       });
 

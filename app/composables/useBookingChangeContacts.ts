@@ -2,7 +2,15 @@ import { useBookingStore } from "~/stores/booking";
 import { useAuthStore } from "~/stores/auth";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
+import { pickNumber, pickString } from "~/utils/pick";
 import type { ContactFormData } from "~/types/booking";
+import {
+  mapBookingChangeGuest,
+  pickBookingStayDates,
+  pickChildrenAges,
+  pickRoomPackageCodes,
+  pickRoomRatePlanCode,
+} from "~/utils/bookingChangeRequest";
 
 type ChangeBookingResponse = {
   success: boolean;
@@ -93,14 +101,12 @@ export const useBookingChangeContacts = (
       };
 
       const order = createdBooking.value?.order;
-      const startAtRaw =
-        typeof order?.start_at === "string" ? order.start_at : "";
-      const endAtRaw = typeof order?.end_at === "string" ? order.end_at : "";
-      const startAt = startAtRaw.slice(0, 10);
-      const endAt = endAtRaw.slice(0, 10);
-      if (!startAt || !endAt) {
+      const stayDates = pickBookingStayDates(order);
+      if (!stayDates) {
         throw new Error("Не удалось определить даты текущего бронирования.");
       }
+      const { startAt, endAt } = stayDates;
+
       const roomsRaw = Array.isArray(createdBooking.value?.rooms)
         ? createdBooking.value.rooms
         : [];
@@ -109,63 +115,43 @@ export const useBookingChangeContacts = (
           "Не удалось определить состав бронирования. Обновите страницу.",
         );
       }
+      const orderNationality =
+        pickString(order?.nationality) ?? f.country.trim();
+
       const rooms = roomsRaw.map((roomRaw, roomIndex) => {
         const room = roomRaw as Record<string, unknown>;
-        const roomPackages = (Array.isArray(room.packages) ? room.packages : [])
-          .map((pkg) => pickString(pkg))
-          .filter((pkg): pkg is string => pkg !== null);
-        const childrenAges = (
-          Array.isArray(room.children_ages) ? room.children_ages : []
-        )
-          .map((age) => pickNumber(age))
-          .filter((age): age is number => age !== null);
+        const childrenAges = pickChildrenAges(room);
         const guestsRaw = Array.isArray(room.guests) ? room.guests : [];
         const guests =
           guestsRaw.length > 0
             ? guestsRaw.map((guestRaw, guestIndex) => {
-                const guest = guestRaw as Record<string, unknown>;
-                const shouldUpdateGuest = roomIndex === 0 && guestIndex === 0;
+                const guest = mapBookingChangeGuest(guestRaw, orderNationality);
+                if (roomIndex !== 0 || guestIndex !== 0) return guest;
+
                 return {
-                  id: pickNumber(guest.id),
-                  surname: shouldUpdateGuest
-                    ? contacts.surname
-                    : (pickString(guest.surname) ?? ""),
-                  name: shouldUpdateGuest
-                    ? contacts.name
-                    : (pickString(guest.name) ?? ""),
-                  middle_name: shouldUpdateGuest
-                    ? contacts.middle_name || null
-                    : pickString(guest.middle_name),
-                  phone: shouldUpdateGuest
-                    ? contacts.phone
-                    : (pickString(guest.phone) ?? ""),
-                  email: shouldUpdateGuest
-                    ? contacts.email
-                    : (pickString(guest.email) ?? ""),
+                  ...guest,
+                  ...contacts,
+                  middle_name: contacts.middle_name || null,
+                  nationality: orderNationality,
                 };
               })
             : [
                 {
-                  id: null,
-                  surname: contacts.surname,
-                  name: contacts.name,
+                  ...mapBookingChangeGuest({}, orderNationality),
+                  ...contacts,
                   middle_name: contacts.middle_name || null,
-                  phone: contacts.phone,
-                  email: contacts.email,
+                  nationality: orderNationality,
                 },
               ];
 
         return {
           booking_id: pickNumber(room.id),
           room_type_code: pickString(room.room_type_code) ?? "",
-          rate_plan_code:
-            pickString(room.rate_plan_code) ??
-            pickString(room.rate_type_code) ??
-            "",
+          rate_plan_code: pickRoomRatePlanCode(room),
           adults: pickNumber(room.adults) ?? 1,
           children: pickNumber(room.children) ?? 0,
           children_ages: childrenAges,
-          packages: roomPackages,
+          packages: pickRoomPackageCodes(room),
           guests,
         };
       });
