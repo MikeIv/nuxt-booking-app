@@ -24,6 +24,8 @@
     get: () => props.modelValue,
     set: (value: [Date, Date] | null) => emit("update:modelValue", value),
   });
+
+  const isDateChangeSuccessful = computed(() => Boolean(props.changeDatesSuccess));
 </script>
 
 <template>
@@ -37,53 +39,69 @@
       <div
         :class="[
           $style.changeDatesPopupContent,
-          isCalendarOpen ? $style.changeDatesPopupContentExpanded : undefined,
+          isDateChangeSuccessful ? $style.changeDatesPopupContentSuccess : undefined,
+          !isDateChangeSuccessful && isCalendarOpen
+            ? $style.changeDatesPopupContentExpanded
+            : undefined,
         ]"
       >
-        <p :class="$style.changeDatesPopupText">
-          <span :class="$style.changeDatesPopupTextLine">
-            Выберите новые <strong>даты заезда и выезда</strong>.
-          </span>
-          <span :class="$style.changeDatesPopupTextLine">
-            Мы проверим доступность выбранного номера и услуг.
-          </span>
-        </p>
+        <template v-if="isDateChangeSuccessful">
+          <h2 :class="$style.changeDatesPopupTitle">
+            {{ changeDatesSuccess }}
+          </h2>
+          <div :class="$style.changeDatesPopupActions">
+            <Button
+              label="Выход"
+              class="btn__bs dark"
+              unstyled
+              @click="emit('close')"
+            />
+          </div>
+        </template>
 
-        <div :class="$style.changeDatesPicker">
-          <CoreDatePicker
-            v-model="localDates"
-            :teleport="false"
-            @open="emit('update:isCalendarOpen', true)"
-            @closed="emit('update:isCalendarOpen', false)"
-          />
-        </div>
+        <template v-else>
+          <p :class="$style.changeDatesPopupText">
+            <span :class="$style.changeDatesPopupTextLine">
+              Выберите новые <strong>даты заезда и выезда</strong>.
+            </span>
+            <span :class="$style.changeDatesPopupTextLine">
+              Мы проверим доступность выбранного номера и услуг.
+            </span>
+          </p>
 
-        <div :class="$style.changeDatesPopupActions">
-          <Button
-            label="Изменить"
-            class="btn__bs dark"
-            unstyled
-            :disabled="!canSubmitDateChange"
-            @click="emit('confirm')"
-          />
-          <Button
-            label="Отмена"
-            class="btn__bs danger"
-            unstyled
-            :disabled="isChangingDates"
-            @click="emit('close')"
-          />
-        </div>
+          <div :class="$style.changeDatesPicker">
+            <CoreDatePicker
+              v-model="localDates"
+              :teleport="false"
+              @open="emit('update:isCalendarOpen', true)"
+              @closed="emit('update:isCalendarOpen', false)"
+            />
+          </div>
 
-        <p v-if="isChangingDates" :class="$style.changeDatesPopupStatus">
-          Проверяем доступность и меняем даты…
-        </p>
-        <p v-else-if="changeDatesSuccess" :class="$style.changeDatesPopupSuccess">
-          {{ changeDatesSuccess }}
-        </p>
-        <p v-else-if="changeDatesError" :class="$style.changeDatesPopupError">
-          {{ changeDatesError }}
-        </p>
+          <div :class="$style.changeDatesPopupActions">
+            <Button
+              label="Изменить"
+              class="btn__bs dark"
+              unstyled
+              :disabled="!canSubmitDateChange"
+              @click="emit('confirm')"
+            />
+            <Button
+              label="Отмена"
+              class="btn__bs danger"
+              unstyled
+              :disabled="isChangingDates"
+              @click="emit('close')"
+            />
+          </div>
+
+          <p v-if="isChangingDates" :class="$style.changeDatesPopupStatus">
+            Проверяем доступность и меняем даты…
+          </p>
+          <p v-else-if="changeDatesError" :class="$style.changeDatesPopupError">
+            {{ changeDatesError }}
+          </p>
+        </template>
       </div>
     </template>
   </Popup>
@@ -97,6 +115,21 @@
     flex-direction: column;
     gap: rem(16);
     padding: 0 rem(24);
+  }
+
+  .changeDatesPopupContentSuccess {
+    gap: rem(24);
+  }
+
+  .changeDatesPopupTitle {
+    margin: 0;
+    font-family: var(--a-font-heading);
+    font-size: rem(24);
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--a-text-dark);
+    text-align: center;
+    word-break: break-word;
   }
 
   .changeDatesPopupText {
@@ -175,13 +208,4 @@
     text-align: center;
   }
 
-  .changeDatesPopupSuccess {
-    margin: 0;
-    font-family: var(--a-font-body);
-    font-size: rem(14);
-    line-height: 1.4;
-    color: var(--success);
-    text-align: center;
-    word-break: break-word;
-  }
 </style>
