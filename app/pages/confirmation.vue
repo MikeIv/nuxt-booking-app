@@ -1,128 +1,149 @@
 <script setup lang="ts">
-  import { useBookingStore, type SelectedService } from "~/stores/booking";
-  import { useAuthStore } from "~/stores/auth";
-  import { storeToRefs } from "pinia";
-  import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
-  import { toPricePerNight, toStayTotal } from "~/utils/price";
-  import { pickNumber } from "~/utils/pick";
-  import { mapBookingRoomsServicesToByRoom } from "~/utils/mapBookingRoomServices";
-  import { buildSelectedEntry } from "~/utils/selectedEntry";
-  import { getBookingNumber } from "~/utils/bookingStatus";
+import { useBookingStore, type SelectedService } from "~/stores/booking";
+import { useAuthStore } from "~/stores/auth";
+import { storeToRefs } from "pinia";
+import type { SelectedEntry, BookingByUuidRoom } from "~/types/booking";
+import { toPricePerNight, toStayTotal } from "~/utils/price";
+import { pickNumber } from "~/utils/pick";
+import { mapBookingRoomsServicesToByRoom } from "~/utils/mapBookingRoomServices";
+import { buildSelectedEntry } from "~/utils/selectedEntry";
+import { getBookingNumber } from "~/utils/bookingStatus";
 
-  definePageMeta({
-    layout: "steps",
-  });
+definePageMeta({
+  layout: "steps",
+});
 
-  const router = useRouter();
-  const route = useRoute();
-  const bookingStore = useBookingStore();
-  const authStore = useAuthStore();
-  const toast = useNotificationToast();
-  const { getErrorMessage } = useApiHelpers();
-  const { handleBookingAccessDenied } = useBookingAccessDenied();
-  const {
-    selectedRoomType,
-    selectedTariff: selectedTariffStore,
-    roomTariffs,
-    date,
-    selectedServices,
-    createdBooking,
-    currentBookingUuid: currentBookingUuidStore,
-  } = storeToRefs(bookingStore);
+const router = useRouter();
+const route = useRoute();
+const bookingStore = useBookingStore();
+const authStore = useAuthStore();
+const toast = useNotificationToast();
+const { getErrorMessage } = useApiHelpers();
+const { handleBookingAccessDenied } = useBookingAccessDenied();
+const {
+  selectedRoomType,
+  selectedTariff: selectedTariffStore,
+  roomTariffs,
+  date,
+  selectedServices,
+  createdBooking,
+  currentBookingUuid: currentBookingUuidStore,
+} = storeToRefs(bookingStore);
 
-  const bookingDate = computed<[Date, Date] | null>(() => {
-    if (createdBooking.value?.order?.start_at && createdBooking.value?.order?.end_at) {
-      return [
-        new Date(createdBooking.value.order.start_at),
-        new Date(createdBooking.value.order.end_at),
-      ];
-    }
-    return date.value;
-  });
+const bookingDate = computed<[Date, Date] | null>(() => {
+  if (
+    createdBooking.value?.order?.start_at &&
+    createdBooking.value?.order?.end_at
+  ) {
+    return [
+      new Date(createdBooking.value.order.start_at),
+      new Date(createdBooking.value.order.end_at),
+    ];
+  }
+  return date.value;
+});
 
-  const nights = useNights(bookingDate);
+const nights = useNights(bookingDate);
 
-  const selectedRoom = computed(() => {
-    if (!roomTariffs.value?.length || !selectedRoomType.value) return null;
-    return roomTariffs.value.find((room) => room.room_type_code === selectedRoomType.value) || null;
-  });
+const selectedRoom = computed(() => {
+  if (!roomTariffs.value?.length || !selectedRoomType.value) return null;
+  return (
+    roomTariffs.value.find(
+      (room) => room.room_type_code === selectedRoomType.value,
+    ) || null
+  );
+});
 
-  const selectedTariff = computed(() => {
-    if (selectedTariffStore.value) return selectedTariffStore.value;
-    if (!selectedRoom.value?.tariffs?.length) return null;
-    return selectedRoom.value.tariffs[0] || null;
-  });
+const selectedTariff = computed(() => {
+  if (selectedTariffStore.value) return selectedTariffStore.value;
+  if (!selectedRoom.value?.tariffs?.length) return null;
+  return selectedRoom.value.tariffs[0] || null;
+});
 
-  const isBookingCreated = computed(() => !!createdBooking.value);
+const isBookingCreated = computed(() => !!createdBooking.value);
 
-  const bookingNumber = computed(() => getBookingNumber(createdBooking.value));
+const bookingNumber = computed(() => getBookingNumber(createdBooking.value));
 
-  const confirmationEmail = computed(() => {
-    const order = createdBooking.value?.order as Record<string, unknown> | undefined;
-    const orderEmail = order?.email;
-    if (typeof orderEmail === "string" && orderEmail.trim() !== "") return orderEmail.trim();
+const confirmationEmail = computed(() => {
+  const order = createdBooking.value?.order as
+    | Record<string, unknown>
+    | undefined;
+  const orderEmail = order?.email;
+  if (typeof orderEmail === "string" && orderEmail.trim() !== "")
+    return orderEmail.trim();
 
-    const firstRoom = Array.isArray(createdBooking.value?.rooms)
-      ? (createdBooking.value.rooms[0] as Record<string, unknown> | undefined)
-      : undefined;
-    const guests = Array.isArray(firstRoom?.guests)
-      ? (firstRoom.guests as Array<Record<string, unknown>>)
-      : [];
-    const mainGuest = guests.find((guest) => guest.is_main === true) ?? guests[0] ?? null;
-    const guestEmail = typeof mainGuest?.email === "string" ? mainGuest.email.trim() : "";
-    if (guestEmail) return guestEmail;
+  const firstRoom = Array.isArray(createdBooking.value?.rooms)
+    ? (createdBooking.value.rooms[0] as Record<string, unknown> | undefined)
+    : undefined;
+  const guests = Array.isArray(firstRoom?.guests)
+    ? (firstRoom.guests as Array<Record<string, unknown>>)
+    : [];
+  const mainGuest =
+    guests.find((guest) => guest.is_main === true) ?? guests[0] ?? null;
+  const guestEmail =
+    typeof mainGuest?.email === "string" ? mainGuest.email.trim() : "";
+  if (guestEmail) return guestEmail;
 
-    const userEmail = authStore.user?.email;
-    return typeof userEmail === "string" ? userEmail.trim() : "";
-  });
+  const userEmail = authStore.user?.email;
+  return typeof userEmail === "string" ? userEmail.trim() : "";
+});
 
-  const pdfUrl = computed(() => createdBooking.value?.order?.pdf || null);
+const pdfUrl = computed(() => createdBooking.value?.order?.pdf || null);
 
-  const {
-    canEditDates,
-    canEditRoom,
-    canEditPackages,
-    canEditContacts,
-    canCancelBooking,
-    hasManagementActions,
-  } = useBookingAllowedActions(() => createdBooking.value?.allowed);
+const {
+  canEditDates,
+  canEditRoom,
+  canEditPackages,
+  canEditContacts,
+  canCancelBooking,
+  hasManagementActions,
+} = useBookingAllowedActions(() => createdBooking.value?.allowed);
 
-  const currentBookingUuid = computed<string | null>(() => {
-    if (currentBookingUuidStore.value?.trim()) return currentBookingUuidStore.value;
-    const fromStore = createdBooking.value?.uuid;
-    if (fromStore && String(fromStore).trim() !== "") return String(fromStore);
-    const fromQuery = route.query.uuid;
-    if (typeof fromQuery === "string" && fromQuery.trim() !== "") return fromQuery;
-    return null;
-  });
+const currentBookingUuid = computed<string | null>(() => {
+  if (currentBookingUuidStore.value?.trim())
+    return currentBookingUuidStore.value;
+  const fromStore = createdBooking.value?.uuid;
+  if (fromStore && String(fromStore).trim() !== "") return String(fromStore);
+  const fromQuery = route.query.uuid;
+  if (typeof fromQuery === "string" && fromQuery.trim() !== "")
+    return fromQuery;
+  return null;
+});
 
-  const confirmationServicesByRoom = computed<
-    Record<number, SelectedService[]> | undefined
-  >(() => {
-    const rooms = createdBooking.value?.rooms;
-    if (!Array.isArray(rooms) || rooms.length === 0) return undefined;
+const confirmationServicesByRoom = computed<
+  Record<number, SelectedService[]> | undefined
+>(() => {
+  const rooms = createdBooking.value?.rooms;
+  if (!Array.isArray(rooms) || rooms.length === 0) return undefined;
 
-    const bookingRooms = rooms as BookingByUuidRoom[];
-    const fromApi = mapBookingRoomsServicesToByRoom(bookingRooms);
+  const bookingRooms = rooms as BookingByUuidRoom[];
+  const fromApi = mapBookingRoomsServicesToByRoom(bookingRooms);
 
-    if (Object.keys(fromApi).length > 0) {
-      return Object.fromEntries(
-        bookingRooms.map((_, index) => [index, fromApi[index] ?? []]),
-      );
-    }
-
-    const fromStore = Object.fromEntries(
-      bookingRooms
-        .map((_, index) => [index, bookingStore.getSelectedServicesForRoom(index)] as const)
-        .filter(([, services]) => services.length > 0),
+  if (Object.keys(fromApi).length > 0) {
+    return Object.fromEntries(
+      bookingRooms.map((_, index) => [index, fromApi[index] ?? []]),
     );
-    return Object.keys(fromStore).length > 0 ? fromStore : undefined;
-  });
+  }
 
-  const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
-    if (createdBooking.value?.rooms && Array.isArray(createdBooking.value.rooms)) {
-      const entries: Record<string, SelectedEntry> = {};
-      (createdBooking.value.rooms as BookingByUuidRoom[]).forEach((room, index) => {
+  const fromStore = Object.fromEntries(
+    bookingRooms
+      .map(
+        (_, index) =>
+          [index, bookingStore.getSelectedServicesForRoom(index)] as const,
+      )
+      .filter(([, services]) => services.length > 0),
+  );
+  return Object.keys(fromStore).length > 0 ? fromStore : undefined;
+});
+
+const selectedByRoomIdx = computed<Record<string, SelectedEntry>>(() => {
+  if (
+    createdBooking.value?.rooms &&
+    Array.isArray(createdBooking.value.rooms)
+  ) {
+    const entries: Record<string, SelectedEntry> = {};
+    (createdBooking.value.rooms as BookingByUuidRoom[]).forEach(
+      (room, index) => {
         const tariffTotal = pickNumber(room.tariff?.price);
         const pricePerNight =
           tariffTotal != null
@@ -140,258 +161,267 @@
           title: room.tariff.title || "",
           square: room.square,
         };
-      });
-      return entries;
-    }
-
-    if (!selectedRoom.value || !selectedTariff.value) return {};
-
-    return {
-      "0": buildSelectedEntry({
-        room: selectedRoom.value,
-        ratePlanCode: selectedTariff.value.rate_plan_code,
-        tariffTitle: selectedTariff.value.title || "",
-        pricePerNight: toPricePerNight(selectedTariff.value.price, nights.value),
-      }),
-    };
-  });
-
-  const bookingTotal = computed(() => {
-    if (createdBooking.value && "total_price" in createdBooking.value) {
-      return (createdBooking.value.total_price as number) || 0;
-    }
-    const tariffPrice = selectedTariff.value?.price;
-    if (!tariffPrice || nights.value === 0) return 0;
-    const servicesTotal = selectedServices.value.reduce(
-      (sum, service) => sum + (service.price || 0),
-      0,
-    );
-    return (
-      toStayTotal(toPricePerNight(tariffPrice, nights.value), nights.value) +
-      servicesTotal
-    );
-  });
-
-  // --- Composables ---
-  const {
-    isCancelBookingPopupOpen,
-    isCancellingBooking,
-    cancelBookingError,
-    openCancelBookingPopup,
-    closeCancelBookingPopup,
-    confirmCancelBooking,
-  } = useBookingCancel(currentBookingUuid, bookingNumber, confirmationEmail);
-
-  const {
-    isChangeContactsPopupOpen,
-    isChangingContacts,
-    changeContactsError,
-    changeContactsSuccess,
-    contactForm,
-    canSubmitContactChange,
-    openChangeContactsPopup,
-    closeChangeContactsPopup,
-    confirmChangeContacts,
-  } = useBookingChangeContacts(currentBookingUuid);
-
-  const {
-    isChangeDatesPopupOpen,
-    isChangingDates,
-    changeDatesError,
-    changeDatesSuccess,
-    newDates,
-    isChangeDatesCalendarOpen,
-    canSubmitDateChange,
-    openChangeDatesPopup,
-    closeChangeDatesPopup,
-    confirmChangeDates,
-  } = useBookingChangeDates(currentBookingUuid, bookingDate);
-
-  const {
-    isChangeRoomPopupOpen,
-    isChangingRoom,
-    changeRoomError,
-    changeRoomSuccess,
-    openChangeRoomPopup,
-    closeChangeRoomPopup,
-    confirmChangeRoom,
-  } = useBookingChangeRoom(currentBookingUuid);
-
-  const {
-    isChangeServicesPopupOpen,
-    isChangingServices,
-    changeServicesError,
-    changeServicesSuccess,
-    startChangeServicesFlow,
-    openChangeServicesPopup,
-    closeChangeServicesPopup,
-    confirmChangeServices,
-  } = useBookingChangeServices(currentBookingUuid);
-
-  const openChangeRoomPopupIfNeeded = () => {
-    if (
-      bookingStore.changeRoomUuid &&
-      bookingStore.changeRoomUuid === currentBookingUuid.value &&
-      bookingStore.selectedRoomType
-    ) {
-      openChangeRoomPopup();
-    }
-  };
-
-  const openChangeServicesPopupIfNeeded = () => {
-    if (
-      bookingStore.changeServicesUuid &&
-      bookingStore.changeServicesUuid === currentBookingUuid.value
-    ) {
-      openChangeServicesPopup();
-    }
-  };
-
-  const openManagementPopupsIfNeeded = () => {
-    openChangeRoomPopupIfNeeded();
-    openChangeServicesPopupIfNeeded();
-  };
-
-  const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
-    useBookingStatusPolling(currentBookingUuid, {
-      onAccessDenied: handleBookingAccessDenied,
-      onLoadError: (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Не удалось загрузить данные бронирования",
-          detail:
-            getErrorMessage(error).trim() ||
-            bookingStore.error ||
-            "Проверьте ссылку или попробуйте позже.",
-          life: 5000,
-        });
       },
-      onConfirmed: openManagementPopupsIfNeeded,
-    });
+    );
+    return entries;
+  }
 
-  const { qrCanvas } = useConfirmationQR(pdfUrl, showConfirmationContent);
+  if (!selectedRoom.value || !selectedTariff.value) return {};
 
-  // --- Watchers ---
-  watch(
-    () => createdBooking.value,
-    (booking) => {
-      if (booking?.rooms && Array.isArray(booking.rooms)) {
-        const rooms = booking.rooms as Array<{ adults?: number; children?: number }>;
-        bookingStore.setGuests({
-          rooms: rooms.length,
-          roomList: rooms.map((room) => ({
-            adults: room.adults || 0,
-            children: room.children || 0,
-            childrenAges: [] as number[],
-          })),
-        });
-      }
-    },
-    { immediate: true },
+  return {
+    "0": buildSelectedEntry({
+      room: selectedRoom.value,
+      ratePlanCode: selectedTariff.value.rate_plan_code,
+      tariffTitle: selectedTariff.value.title || "",
+      pricePerNight: toPricePerNight(selectedTariff.value.price, nights.value),
+    }),
+  };
+});
+
+const bookingTotal = computed(() => {
+  if (createdBooking.value && "total_price" in createdBooking.value) {
+    return (createdBooking.value.total_price as number) || 0;
+  }
+  const tariffPrice = selectedTariff.value?.price;
+  if (!tariffPrice || nights.value === 0) return 0;
+  const servicesTotal = selectedServices.value.reduce(
+    (sum, service) => sum + (service.price || 0),
+    0,
   );
-
-  watch(
-    () => isBookingCreated.value,
-    (isCreated) => {
-      if (isCreated && !authStore.isAuthenticated && typeof window !== "undefined") {
-        sessionStorage.setItem("hasUnauthenticatedBooking", "true");
-      }
-    },
-    { immediate: true },
+  return (
+    toStayTotal(toPricePerNight(tariffPrice, nights.value), nights.value) +
+    servicesTotal
   );
+});
 
-  const handleDownload = async () => {
-    const url = pdfUrl.value;
-    if (!url) {
-      toast.add({
-        severity: "warn",
-        summary: "PDF недоступен",
-        detail: "Ссылка на подтверждение бронирования отсутствует.",
-        life: 4000,
-      });
-      return;
-    }
+// --- Composables ---
+const {
+  isCancelBookingPopupOpen,
+  isCancellingBooking,
+  cancelBookingError,
+  openCancelBookingPopup,
+  closeCancelBookingPopup,
+  confirmCancelBooking,
+} = useBookingCancel(currentBookingUuid, bookingNumber, confirmationEmail);
 
-    try {
-      const headers: HeadersInit = authStore.token
-        ? { Authorization: `Bearer ${authStore.token}` }
-        : {};
-      const response = await fetch(url, { headers });
-      if (!response.ok) throw new Error(`Ошибка загрузки PDF: ${response.statusText}`);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `booking-confirmation-${bookingNumber.value || "document"}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch {
-      window.open(url, "_blank");
-    }
-  };
+const {
+  isChangeContactsPopupOpen,
+  isChangingContacts,
+  changeContactsError,
+  changeContactsSuccess,
+  contactForm,
+  canSubmitContactChange,
+  openChangeContactsPopup,
+  closeChangeContactsPopup,
+  confirmChangeContacts,
+} = useBookingChangeContacts(currentBookingUuid);
 
-  const handlePrint = () => {
-    const url = pdfUrl.value;
-    if (!url) {
-      toast.add({
-        severity: "warn",
-        summary: "PDF недоступен",
-        detail: "Ссылка на подтверждение бронирования отсутствует.",
-        life: 4000,
-      });
-      return;
-    }
+const {
+  isChangeDatesPopupOpen,
+  isChangingDates,
+  changeDatesError,
+  changeDatesSuccess,
+  newDates,
+  isChangeDatesCalendarOpen,
+  canSubmitDateChange,
+  openChangeDatesPopup,
+  closeChangeDatesPopup,
+  confirmChangeDates,
+} = useBookingChangeDates(currentBookingUuid, bookingDate);
 
-    if (typeof window === "undefined") return;
+const {
+  isChangeRoomPopupOpen,
+  isChangingRoom,
+  changeRoomError,
+  changeRoomSuccess,
+  openChangeRoomPopup,
+  closeChangeRoomPopup,
+  confirmChangeRoom,
+} = useBookingChangeRoom(currentBookingUuid);
 
-    try {
-      const printWindow = window.open(url, "_blank");
-      if (!printWindow) {
-        toast.add({
-          severity: "warn",
-          summary: "Окно печати",
-          detail: "Не удалось открыть окно печати. Проверьте настройки браузера.",
-          life: 4000,
-        });
-        return;
-      }
-      if (typeof printWindow.print === "function") printWindow.print();
-    } catch {
-      window.open(url, "_blank");
-    }
-  };
+const {
+  isChangeServicesPopupOpen,
+  isChangingServices,
+  changeServicesError,
+  changeServicesSuccess,
+  startChangeServicesFlow,
+  openChangeServicesPopup,
+  closeChangeServicesPopup,
+  confirmChangeServices,
+} = useBookingChangeServices(currentBookingUuid);
 
-  const handleChangeRoom = () => {
-    if (bookingDate.value) {
-      bookingStore.setDate([...bookingDate.value] as [Date, Date]);
-    }
-    bookingStore.setSearchResults(null);
-    bookingStore.setSelectedRoomType(null);
-    bookingStore.setSelectedTariff(null);
-    bookingStore.setChangeRoomUuid(currentBookingUuid.value);
-    router.push("/rooms");
-  };
+const openChangeRoomPopupIfNeeded = () => {
+  if (
+    bookingStore.changeRoomUuid &&
+    bookingStore.changeRoomUuid === currentBookingUuid.value &&
+    bookingStore.selectedRoomType
+  ) {
+    openChangeRoomPopup();
+  }
+};
 
-  const handleChangeServices = () => {
-    const flowError = startChangeServicesFlow();
-    if (flowError) {
+const openChangeServicesPopupIfNeeded = () => {
+  if (
+    bookingStore.changeServicesUuid &&
+    bookingStore.changeServicesUuid === currentBookingUuid.value
+  ) {
+    openChangeServicesPopup();
+  }
+};
+
+const openManagementPopupsIfNeeded = () => {
+  openChangeRoomPopupIfNeeded();
+  openChangeServicesPopupIfNeeded();
+};
+
+const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
+  useBookingStatusPolling(currentBookingUuid, {
+    onAccessDenied: handleBookingAccessDenied,
+    onLoadError: (error) => {
       toast.add({
         severity: "error",
-        summary: "Не удалось изменить услуги",
-        detail: flowError,
+        summary: "Не удалось загрузить данные бронирования",
+        detail:
+          getErrorMessage(error).trim() ||
+          bookingStore.error ||
+          "Проверьте ссылку или попробуйте позже.",
         life: 5000,
+      });
+    },
+    onConfirmed: openManagementPopupsIfNeeded,
+  });
+
+const { qrCanvas } = useConfirmationQR(pdfUrl, showConfirmationContent);
+
+// --- Watchers ---
+watch(
+  () => createdBooking.value,
+  (booking) => {
+    if (booking?.rooms && Array.isArray(booking.rooms)) {
+      const rooms = booking.rooms as Array<{
+        adults?: number;
+        children?: number;
+      }>;
+      bookingStore.setGuests({
+        rooms: rooms.length,
+        roomList: rooms.map((room) => ({
+          adults: room.adults || 0,
+          children: room.children || 0,
+          childrenAges: [] as number[],
+        })),
+      });
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => isBookingCreated.value,
+  (isCreated) => {
+    if (
+      isCreated &&
+      !authStore.isAuthenticated &&
+      typeof window !== "undefined"
+    ) {
+      sessionStorage.setItem("hasUnauthenticatedBooking", "true");
+    }
+  },
+  { immediate: true },
+);
+
+const handleDownload = async () => {
+  const url = pdfUrl.value;
+  if (!url) {
+    toast.add({
+      severity: "warn",
+      summary: "PDF недоступен",
+      detail: "Ссылка на подтверждение бронирования отсутствует.",
+      life: 4000,
+    });
+    return;
+  }
+
+  try {
+    const headers: HeadersInit = authStore.token
+      ? { Authorization: `Bearer ${authStore.token}` }
+      : {};
+    const response = await fetch(url, { headers });
+    if (!response.ok)
+      throw new Error(`Ошибка загрузки PDF: ${response.statusText}`);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `booking-confirmation-${bookingNumber.value || "document"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(url, "_blank");
+  }
+};
+
+const handlePrint = () => {
+  const url = pdfUrl.value;
+  if (!url) {
+    toast.add({
+      severity: "warn",
+      summary: "PDF недоступен",
+      detail: "Ссылка на подтверждение бронирования отсутствует.",
+      life: 4000,
+    });
+    return;
+  }
+
+  if (typeof window === "undefined") return;
+
+  try {
+    const printWindow = window.open(url, "_blank");
+    if (!printWindow) {
+      toast.add({
+        severity: "warn",
+        summary: "Окно печати",
+        detail: "Не удалось открыть окно печати. Проверьте настройки браузера.",
+        life: 4000,
       });
       return;
     }
-    router.push("/services");
-  };
+    if (typeof printWindow.print === "function") printWindow.print();
+  } catch {
+    window.open(url, "_blank");
+  }
+};
 
-  const handleNewBooking = () => {
-    bookingStore.forceReset();
-    router.push("/");
-  };
+const handleChangeRoom = () => {
+  if (bookingDate.value) {
+    bookingStore.setDate([...bookingDate.value] as [Date, Date]);
+  }
+  bookingStore.setSearchResults(null);
+  bookingStore.setSelectedRoomType(null);
+  bookingStore.setSelectedTariff(null);
+  bookingStore.setChangeRoomUuid(currentBookingUuid.value);
+  router.push("/rooms");
+};
+
+const handleChangeServices = () => {
+  const flowError = startChangeServicesFlow();
+  if (flowError) {
+    toast.add({
+      severity: "error",
+      summary: "Не удалось изменить услуги",
+      detail: flowError,
+      life: 5000,
+    });
+    return;
+  }
+  router.push("/services");
+};
+
+const handleNewBooking = () => {
+  bookingStore.forceReset();
+  router.push("/");
+};
 </script>
 
 <template>
@@ -415,17 +445,22 @@
 
     <template v-else-if="showConfirmationContent">
       <h1 :class="$style.header" data-breadcrumb="Ваше бронирование">
-        <template v-if="isBookingConfirmed">Ваше бронирование подтверждено!</template>
+        <template v-if="isBookingConfirmed"
+          >Ваше бронирование подтверждено!</template
+        >
         <template v-else>Ваше бронирование</template>
       </h1>
       <section :class="$style.contentBlock">
-      <div :class="$style.contentWrapper">
-        <div :class="$style.mainContent">
-          <div :class="$style.section">
+        <div :class="$style.contentWrapper">
+          <div :class="$style.mainContent">
+            <div :class="$style.section">
               <h2 :class="$style.sectionTitle">Номер Вашего бронирования:</h2>
               <div :class="$style.bookingInfo">
                 <div :class="$style.bookingLeft">
-                  <div v-if="isBookingCreated && bookingNumber" :class="$style.bookingNumber">
+                  <div
+                    v-if="isBookingCreated && bookingNumber"
+                    :class="$style.bookingNumber"
+                  >
                     № {{ bookingNumber }}
                   </div>
                   <div v-else :class="$style.bookingMessage">
@@ -459,7 +494,7 @@
               <p :class="$style.confirmationText">
                 Подтверждение о бронировании отправлено на указанную Вами
                 электронную почту:
-                <br v-if="confirmationEmail">
+                <br v-if="confirmationEmail" />
                 <span v-if="confirmationEmail">
                   <strong>{{ confirmationEmail }}</strong>
                 </span>
@@ -504,332 +539,332 @@
                 />
               </div>
             </div>
+          </div>
+          <div :class="$style.summaryWrapper">
+            <BookingSummary
+              :selected-entries="selectedByRoomIdx"
+              :date="bookingDate"
+              :nights="nights"
+              :booking-total="bookingTotal"
+              :services-by-room-override="confirmationServicesByRoom"
+              :editable-services="false"
+              :show-continue="false"
+            />
+          </div>
         </div>
-        <div :class="$style.summaryWrapper">
-          <BookingSummary
-            :selected-entries="selectedByRoomIdx"
-            :date="bookingDate"
-            :nights="nights"
-            :booking-total="bookingTotal"
-            :services-by-room-override="confirmationServicesByRoom"
-            :editable-services="false"
-            :show-continue="false"
-          />
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <BookingConfirmationCancelPopup
-      :is-open="isCancelBookingPopupOpen"
-      :is-cancelling-booking="isCancellingBooking"
-      :cancel-booking-error="cancelBookingError"
-      @close="closeCancelBookingPopup"
-      @confirm="confirmCancelBooking"
-    />
+      <BookingConfirmationCancelPopup
+        :is-open="isCancelBookingPopupOpen"
+        :is-cancelling-booking="isCancellingBooking"
+        :cancel-booking-error="cancelBookingError"
+        @close="closeCancelBookingPopup"
+        @confirm="confirmCancelBooking"
+      />
 
-    <BookingConfirmationChangeDatesPopup
-      v-model="newDates"
-      :is-open="isChangeDatesPopupOpen"
-      :is-calendar-open="isChangeDatesCalendarOpen"
-      :can-submit-date-change="canSubmitDateChange"
-      :is-changing-dates="isChangingDates"
-      :change-dates-success="changeDatesSuccess"
-      :change-dates-error="changeDatesError"
-      @close="closeChangeDatesPopup"
-      @confirm="confirmChangeDates"
-      @update:is-calendar-open="isChangeDatesCalendarOpen = $event"
-    />
-    <BookingConfirmationChangeContactsPopup
-      :is-open="isChangeContactsPopupOpen"
-      :form="contactForm"
-      :can-submit-contact-change="canSubmitContactChange"
-      :is-changing-contacts="isChangingContacts"
-      :change-contacts-success="changeContactsSuccess"
-      :change-contacts-error="changeContactsError"
-      @close="closeChangeContactsPopup"
-      @confirm="confirmChangeContacts"
-      @update:form="contactForm = $event"
-    />
-    <BookingConfirmationChangeRoomPopup
-      :is-open="isChangeRoomPopupOpen"
-      :is-changing-room="isChangingRoom"
-      :change-room-success="changeRoomSuccess"
-      :change-room-error="changeRoomError"
-      @close="closeChangeRoomPopup"
-      @confirm="confirmChangeRoom"
-    />
-    <BookingConfirmationChangeServicesPopup
-      :is-open="isChangeServicesPopupOpen"
-      :is-changing-services="isChangingServices"
-      :change-services-success="changeServicesSuccess"
-      :change-services-error="changeServicesError"
-      @close="closeChangeServicesPopup"
-      @confirm="confirmChangeServices"
-    />
+      <BookingConfirmationChangeDatesPopup
+        v-model="newDates"
+        :is-open="isChangeDatesPopupOpen"
+        :is-calendar-open="isChangeDatesCalendarOpen"
+        :can-submit-date-change="canSubmitDateChange"
+        :is-changing-dates="isChangingDates"
+        :change-dates-success="changeDatesSuccess"
+        :change-dates-error="changeDatesError"
+        @close="closeChangeDatesPopup"
+        @confirm="confirmChangeDates"
+        @update:is-calendar-open="isChangeDatesCalendarOpen = $event"
+      />
+      <BookingConfirmationChangeContactsPopup
+        :is-open="isChangeContactsPopupOpen"
+        :form="contactForm"
+        :can-submit-contact-change="canSubmitContactChange"
+        :is-changing-contacts="isChangingContacts"
+        :change-contacts-success="changeContactsSuccess"
+        :change-contacts-error="changeContactsError"
+        @close="closeChangeContactsPopup"
+        @confirm="confirmChangeContacts"
+        @update:form="contactForm = $event"
+      />
+      <BookingConfirmationChangeRoomPopup
+        :is-open="isChangeRoomPopupOpen"
+        :is-changing-room="isChangingRoom"
+        :change-room-success="changeRoomSuccess"
+        :change-room-error="changeRoomError"
+        @close="closeChangeRoomPopup"
+        @confirm="confirmChangeRoom"
+      />
+      <BookingConfirmationChangeServicesPopup
+        :is-open="isChangeServicesPopupOpen"
+        :is-changing-services="isChangingServices"
+        :change-services-success="changeServicesSuccess"
+        :change-services-error="changeServicesError"
+        @close="closeChangeServicesPopup"
+        @confirm="confirmChangeServices"
+      />
     </template>
   </main>
 </template>
 
 <style module lang="scss">
-  @use "~/assets/styles/variables/resolutions" as size;
+@use "~/assets/styles/variables/resolutions" as size;
 
-  .container {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: rem(40);
+.container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: rem(40);
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: rem(24) rem(16);
+  font-family: "Lora", serif;
+  font-size: rem(24);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--a-black);
+
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(30);
+    margin: rem(32) 0;
   }
 
-  .header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    margin: rem(24) rem(16);
-    font-family: "Lora", serif;
-    font-size: rem(24);
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--a-black);
+  @media (min-width: #{size.$desktopMin}) {
+    font-size: rem(34);
+    margin: rem(40) 0;
+  }
+}
 
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(30);
-      margin: rem(32) 0;
-    }
+.contentBlock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: rem(16) rem(16);
 
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(34);
-      margin: rem(40) 0;
-    }
+  @media (min-width: #{size.$tablet}) {
+    padding: rem(16) rem(24);
   }
 
-  .contentBlock {
-    display: flex;
+  @media (min-width: #{size.$desktopMin}) {
+    padding: rem(20) rem(32);
+  }
+
+  @media (min-width: #{size.$desktopMedium}) {
+    max-width: #{size.$desktop};
+    margin: 0 auto;
+  }
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: rem(32);
+  @media (min-width: #{size.$desktopMin}) {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: rem(40);
+    align-items: stretch;
+  }
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.summaryWrapper {
+  display: flex;
+  width: 100%;
+  @media (min-width: #{size.$desktopMin}) {
     flex-direction: column;
     width: 100%;
-    padding: rem(16) rem(16);
-
-    @media (min-width: #{size.$tablet}) {
-      padding: rem(16) rem(24);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      padding: rem(20) rem(32);
-    }
-
-    @media (min-width: #{size.$desktopMedium}) {
-      max-width: #{size.$desktop};
-      margin: 0 auto;
-    }
   }
+}
 
-  .contentWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: rem(32);
-    @media (min-width: #{size.$desktopMin}) {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: rem(40);
-      align-items: stretch;
-    }
-  }
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: rem(16);
+  padding: rem(24) 0;
 
-  .mainContent {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .summaryWrapper {
-    display: flex;
-    width: 100%;
-    @media (min-width: #{size.$desktopMin}) {
-      flex-direction: column;
-      width: 100%;
-    }
-  }
-
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: rem(16);
-    padding: rem(24) 0;
-
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(20);
-      padding: rem(28) 0;
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      gap: rem(24);
-      padding: rem(32) 0;
-    }
-
-    &:first-child {
-      padding-top: 0;
-    }
-
-    &:last-child {
-      padding-bottom: 0;
-    }
-  }
-
-  .sectionTitle {
-    font-family: "Lora", serif;
-    font-size: rem(18);
-    font-weight: 500;
-    color: var(--a-text-dark);
-    margin: 0;
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(20);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(22);
-    }
-  }
-
-  .bookingInfo {
-    display: flex;
-    flex-direction: column;
+  @media (min-width: #{size.$tablet}) {
     gap: rem(20);
-
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(24);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: rem(32);
-    }
+    padding: rem(28) 0;
   }
 
-  .bookingLeft {
-    display: flex;
-    flex-direction: column;
-    gap: rem(20);
-
-    @media (min-width: #{size.$tablet}) {
-      gap: rem(24);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      flex: 1;
-    }
+  @media (min-width: #{size.$desktopMin}) {
+    gap: rem(24);
+    padding: rem(32) 0;
   }
 
-  .bookingNumber {
-    font-family: "Lora", serif;
+  &:first-child {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-family: "Lora", serif;
+  font-size: rem(18);
+  font-weight: 500;
+  color: var(--a-text-dark);
+  margin: 0;
+
+  @media (min-width: #{size.$tablet}) {
     font-size: rem(20);
-    font-weight: 500;
-    color: var(--a-text-dark);
-
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(22);
-    }
-
-    @media (min-width: #{size.$desktopMin}) {
-      font-size: rem(24);
-    }
   }
 
-  .bookingMessage {
-    font-family: "Inter", sans-serif;
-    font-size: rem(18);
-    font-weight: 400;
-    color: var(--a-text-dark);
-    padding: rem(16) 0;
+  @media (min-width: #{size.$desktopMin}) {
+    font-size: rem(22);
+  }
+}
+
+.bookingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: rem(20);
+
+  @media (min-width: #{size.$tablet}) {
+    gap: rem(24);
   }
 
-  .qrCode {
-    display: flex;
+  @media (min-width: #{size.$desktopMin}) {
+    flex-direction: row;
+    justify-content: space-between;
     align-items: flex-start;
-    justify-content: center;
-    order: 2;
+    gap: rem(32);
+  }
+}
 
-    @media (min-width: #{size.$desktopMin}) {
-      order: 0;
-      justify-content: flex-end;
-    }
+.bookingLeft {
+  display: flex;
+  flex-direction: column;
+  gap: rem(20);
+
+  @media (min-width: #{size.$tablet}) {
+    gap: rem(24);
   }
 
-  .qrCanvas {
-    border: rem(1) solid var(--a-black);
-    width: rem(100);
-    height: rem(100);
+  @media (min-width: #{size.$desktopMin}) {
+    flex: 1;
+  }
+}
 
-    @media (min-width: #{size.$tablet}) {
-      width: rem(120);
-      height: rem(120);
-    }
+.bookingNumber {
+  font-family: "Lora", serif;
+  font-size: rem(20);
+  font-weight: 500;
+  color: var(--a-text-dark);
 
-    @media (min-width: #{size.$desktopMin}) {
-      width: rem(140);
-      height: rem(140);
-    }
+  @media (min-width: #{size.$tablet}) {
+    font-size: rem(22);
   }
 
-  .actionButtons {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-    order: 1;
+  @media (min-width: #{size.$desktopMin}) {
+    font-size: rem(24);
+  }
+}
 
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      gap: rem(16);
-    }
+.bookingMessage {
+  font-family: "Inter", sans-serif;
+  font-size: rem(18);
+  font-weight: 400;
+  color: var(--a-text-dark);
+  padding: rem(16) 0;
+}
 
-    @media (min-width: #{size.$desktopMin}) {
-      order: 0;
-    }
+.qrCode {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  order: 2;
+
+  @media (min-width: #{size.$desktopMin}) {
+    order: 0;
+    justify-content: flex-end;
+  }
+}
+
+.qrCanvas {
+  border: rem(1) solid var(--a-black);
+  width: rem(100);
+  height: rem(100);
+
+  @media (min-width: #{size.$tablet}) {
+    width: rem(120);
+    height: rem(120);
   }
 
-  .confirmationText {
-    font-family: "Inter", sans-serif;
-    font-size: rem(14);
-    font-weight: 400;
-    color: var(--a-text-dark);
-    line-height: 1.5;
-    margin: 0;
+  @media (min-width: #{size.$desktopMin}) {
+    width: rem(140);
+    height: rem(140);
+  }
+}
 
-    @media (min-width: #{size.$tablet}) {
-      font-size: rem(16);
-    }
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: rem(12);
+  order: 1;
+
+  @media (min-width: #{size.$tablet}) {
+    flex-direction: row;
+    gap: rem(16);
   }
 
-  .finalButtons {
-    display: flex;
-    flex-direction: column;
-    gap: rem(12);
-
-    @media (min-width: #{size.$tablet}) {
-      flex-direction: row;
-      justify-content: space-between;
-      gap: rem(16);
-    }
+  @media (min-width: #{size.$desktopMin}) {
+    order: 0;
   }
+}
 
-  .cancelButtonWrapper {
-    display: flex;
-    flex-direction: column;
-  }
+.confirmationText {
+  font-family: "Inter", sans-serif;
+  font-size: rem(14);
+  font-weight: 400;
+  color: var(--a-text-dark);
+  line-height: 1.5;
+  margin: 0;
 
-  .divider {
-    width: 100%;
-    height: rem(1);
-    background-color: var(--a-black);
-  }
-
-  .failedMessage {
-    margin: 0 0 rem(24);
-    font-family: "Inter", sans-serif;
+  @media (min-width: #{size.$tablet}) {
     font-size: rem(16);
-    font-weight: 400;
-    line-height: 1.5;
-    color: var(--a-text-dark);
-    text-align: center;
   }
+}
+
+.finalButtons {
+  display: flex;
+  flex-direction: column;
+  gap: rem(12);
+
+  @media (min-width: #{size.$tablet}) {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: rem(16);
+  }
+}
+
+.cancelButtonWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.divider {
+  width: 100%;
+  height: rem(1);
+  background-color: var(--a-black);
+}
+
+.failedMessage {
+  margin: 0 0 rem(24);
+  font-family: "Inter", sans-serif;
+  font-size: rem(16);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--a-text-dark);
+  text-align: center;
+}
 </style>
