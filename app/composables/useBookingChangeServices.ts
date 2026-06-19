@@ -1,20 +1,52 @@
 import { useBookingStore } from "~/stores/booking";
 import { storeToRefs } from "pinia";
 import type { ComputedRef } from "vue";
-import type { PackageResource } from "~/types/room";
+import type { BookingByUuidRoom } from "~/types/booking";
+import type { Room } from "~/types/room";
 import { pickNumber, pickString } from "~/utils/pick";
 import {
   mapBookingUpdateRooms,
   pickChildrenAges,
-  pickRoomPackageCodes,
   pickRoomRatePlanCode,
 } from "~/utils/bookingChangeRequest";
+import { mapBookingRoomsServicesToByRoom } from "~/utils/mapBookingRoomServices";
 
 type ChangeServicesResponse = {
   success: boolean;
   message?: string;
   payload?: unknown;
 };
+
+function buildRoomFromBookingRecord(
+  roomRaw: Record<string, unknown>,
+  roomTypeCode: string,
+  ratePlanCode: string,
+): Room {
+  const tariffRaw = roomRaw.tariff as Record<string, unknown> | undefined;
+  const tariffTitle = pickString(tariffRaw?.title) ?? "";
+  const tariffPrice =
+    pickNumber(tariffRaw?.price) ?? pickNumber(roomRaw.total) ?? 0;
+
+  return {
+    room_type_code: roomTypeCode,
+    title: pickString(roomRaw.title) ?? "Номер",
+    description: null,
+    max_occupancy: Math.max(pickNumber(roomRaw.adults) ?? 1, 1),
+    square: pickNumber(roomRaw.square) ?? 0,
+    rooms: 1,
+    amenities: [],
+    min_price: tariffPrice,
+    photos: [],
+    tariffs: [
+      {
+        rate_plan_code: ratePlanCode,
+        title: tariffTitle,
+        price: tariffPrice,
+        packages: [],
+      },
+    ],
+  };
+}
 
 export const useBookingChangeServices = (
   currentBookingUuid: ComputedRef<string | null>,
@@ -24,37 +56,49 @@ export const useBookingChangeServices = (
   const { getErrorMessage } = useApiHelpers();
   const { createdBooking } = storeToRefs(bookingStore);
 
+  const {
+    setChangeServicesUuid,
+    setSelectedServicesByRoom,
+    setRoomTariffs,
+    setSelectedMultiRooms,
+    getSelectedServicesForRoom,
+  } = bookingStore;
+
   const isChangeServicesPopupOpen = ref(false);
-  const isLoadingPackages = ref(false);
   const isChangingServices = ref(false);
   const changeServicesError = ref<string | null>(null);
   const changeServicesSuccess = ref<string | null>(null);
-  const availablePackages = ref<PackageResource[]>([]);
-  const selectedPackageCodes = ref<string[]>([]);
 
-  /** Коды room_type/rate_plan из первой комнаты текущего бронирования */
-  const bookingRoomCodes = computed<{
-    roomTypeCode: string | null;
-    ratePlanCode: string | null;
-  }>(() => {
+  function syncSelectedServicesFromBooking(): void {
     const rooms = createdBooking.value?.rooms;
-    if (!Array.isArray(rooms) || rooms.length === 0)
-      return { roomTypeCode: null, ratePlanCode: null };
-    const first = rooms[0] as Record<string, unknown>;
-    return {
-      roomTypeCode: pickString(first.room_type_code) ?? null,
-      ratePlanCode: pickRoomRatePlanCode(first) || null,
-    };
-  });
+    if (!Array.isArray(rooms) || rooms.length === 0) {
+      setSelectedServicesByRoom({});
+      return;
+    }
 
-  /**
-   * Инициализация состояния стора для корректной работы searchPackages:
-   * выставляем даты, тип номера, тариф и гостей из данных бронирования.
-   */
-  function prepareStoreForSearch(
-    roomTypeCode: string,
-    ratePlanCode: string,
-  ): void {
+    setSelectedServicesByRoom(
+      Object.fromEntries(
+        Object.entries(
+          mapBookingRoomsServicesToByRoom(rooms as BookingByUuidRoom[]),
+        ),
+      ),
+    );
+  }
+
+  function prepareStoreForServicesChange(): string | null {
+    const roomsRaw = createdBooking.value?.rooms;
+    if (!Array.isArray(roomsRaw) || roomsRaw.length === 0) {
+      return "Не удалось определить состав бронирования. Обновите страницу.";
+    }
+
+    const firstRoom = roomsRaw[0] as Record<string, unknown>;
+    const roomTypeCode = pickString(firstRoom.room_type_code) ?? null;
+    const ratePlanCode = pickRoomRatePlanCode(firstRoom) || null;
+
+    if (!roomTypeCode || !ratePlanCode) {
+      return "Не удалось определить номер для загрузки услуг.";
+    }
+
     const order = createdBooking.value?.order;
     const startAtRaw =
       typeof order?.start_at === "string" ? order.start_at : "";
@@ -64,85 +108,70 @@ export const useBookingChangeServices = (
       bookingStore.setDate([new Date(startAtRaw), new Date(endAtRaw)]);
     }
 
+    // Изолировать поток смены услуг от мультибронирования (новое бронирование)
+    setSelectedMultiRooms({});
+
     bookingStore.setSelectedRoomType(roomTypeCode);
     bookingStore.setSelectedTariff({
       rate_plan_code: ratePlanCode,
-      title: "",
-      price: 0,
+      title:
+        pickString(
+          (firstRoom.tariff as Record<string, unknown> | undefined)?.title,
+        ) ?? "",
+      price:
+        pickNumber(
+          (firstRoom.tariff as Record<string, unknown> | undefined)?.price,
+        ) ??
+        pickNumber(firstRoom.total) ??
+        0,
       packages: [],
     });
 
-    const roomsRaw = Array.isArray(createdBooking.value?.rooms)
-      ? createdBooking.value.rooms
-      : [];
-    if (roomsRaw.length > 0) {
-      bookingStore.setGuests({
-        rooms: roomsRaw.length,
-        roomList: roomsRaw.map((roomRaw) => {
-          const r = roomRaw as Record<string, unknown>;
-          return {
-            adults: Math.max(pickNumber(r.adults) ?? 1, 1),
-            children: pickNumber(r.children) ?? 0,
-            childrenAges: pickChildrenAges(r),
-          };
-        }),
-      });
-    }
+    bookingStore.setGuests({
+      rooms: roomsRaw.length,
+      roomList: roomsRaw.map((roomRaw) => {
+        const room = roomRaw as Record<string, unknown>;
+        return {
+          adults: Math.max(pickNumber(room.adults) ?? 1, 1),
+          children: pickNumber(room.children) ?? 0,
+          childrenAges: pickChildrenAges(room),
+        };
+      }),
+    });
+
+    setRoomTariffs([
+      buildRoomFromBookingRecord(firstRoom, roomTypeCode, ratePlanCode),
+    ]);
+    syncSelectedServicesFromBooking();
+
+    return null;
   }
 
-  const openChangeServicesPopup = async () => {
+  const startChangeServicesFlow = (): string | null => {
+    const uuid = currentBookingUuid.value;
+    if (!uuid) {
+      return "UUID бронирования не найден. Обновите страницу или проверьте ссылку.";
+    }
+
+    const prepareError = prepareStoreForServicesChange();
+    if (prepareError) return prepareError;
+
+    setChangeServicesUuid(uuid);
+    return null;
+  };
+
+  const openChangeServicesPopup = () => {
     changeServicesError.value = null;
     changeServicesSuccess.value = null;
-    availablePackages.value = [];
     isChangeServicesPopupOpen.value = true;
-
-    const { roomTypeCode, ratePlanCode } = bookingRoomCodes.value;
-    if (!roomTypeCode || !ratePlanCode) {
-      changeServicesError.value =
-        "Не удалось определить номер для загрузки услуг.";
-      return;
-    }
-
-    // Инициализируем пакеты из текущего бронирования (первая комната)
-    const firstRoomRaw = Array.isArray(createdBooking.value?.rooms)
-      ? (createdBooking.value.rooms[0] as Record<string, unknown>)
-      : null;
-    selectedPackageCodes.value = firstRoomRaw
-      ? pickRoomPackageCodes(firstRoomRaw)
-      : [];
-
-    prepareStoreForSearch(roomTypeCode, ratePlanCode);
-
-    isLoadingPackages.value = true;
-    try {
-      const packages = await bookingStore.searchPackages(0);
-      availablePackages.value = packages ?? [];
-    } catch {
-      changeServicesError.value =
-        "Не удалось загрузить список доступных услуг.";
-      availablePackages.value = [];
-    } finally {
-      isLoadingPackages.value = false;
-    }
   };
 
   const closeChangeServicesPopup = () => {
     changeServicesError.value = null;
     changeServicesSuccess.value = null;
     isChangeServicesPopupOpen.value = false;
-    availablePackages.value = [];
-    selectedPackageCodes.value = [];
-  };
-
-  const togglePackage = (code: string) => {
-    const idx = selectedPackageCodes.value.indexOf(code);
-    if (idx === -1) {
-      selectedPackageCodes.value = [...selectedPackageCodes.value, code];
-    } else {
-      selectedPackageCodes.value = selectedPackageCodes.value.filter(
-        (c) => c !== code,
-      );
-    }
+    setChangeServicesUuid(null);
+    syncSelectedServicesFromBooking();
   };
 
   const confirmChangeServices = async () => {
@@ -167,8 +196,15 @@ export const useBookingChangeServices = (
         );
       }
 
+      const selectedPackageCodes = getSelectedServicesForRoom(0)
+        .map((service) => service.packageCode)
+        .filter(
+          (code): code is string =>
+            typeof code === "string" && code.trim() !== "",
+        );
+
       const rooms = mapBookingUpdateRooms(roomsRaw, () => ({
-        packages: [...selectedPackageCodes.value],
+        packages: [...selectedPackageCodes],
       }));
 
       const response = (await put<unknown>(
@@ -182,6 +218,8 @@ export const useBookingChangeServices = (
       }
 
       await bookingStore.getBookingByUuid(uuid);
+      setChangeServicesUuid(null);
+      syncSelectedServicesFromBooking();
       changeServicesSuccess.value = "Услуги успешно обновлены.";
     } catch (error: unknown) {
       changeServicesError.value = getErrorMessage(error);
@@ -192,15 +230,12 @@ export const useBookingChangeServices = (
 
   return {
     isChangeServicesPopupOpen,
-    isLoadingPackages,
     isChangingServices,
     changeServicesError,
     changeServicesSuccess,
-    availablePackages,
-    selectedPackageCodes,
+    startChangeServicesFlow,
     openChangeServicesPopup,
     closeChangeServicesPopup,
-    togglePackage,
     confirmChangeServices,
   };
 };

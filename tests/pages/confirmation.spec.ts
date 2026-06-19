@@ -179,15 +179,12 @@ vi.stubGlobal("useBookingChangeRoom", () => ({
 
 vi.stubGlobal("useBookingChangeServices", () => ({
   isChangeServicesPopupOpen: ref(false),
-  isLoadingPackages: ref(false),
   isChangingServices: ref(false),
   changeServicesError: ref<string | null>(null),
   changeServicesSuccess: ref<string | null>(null),
-  availablePackages: ref([]),
-  selectedPackageCodes: ref<string[]>([]),
+  startChangeServicesFlow: vi.fn(),
   openChangeServicesPopup: vi.fn(),
   closeChangeServicesPopup: vi.fn(),
-  togglePackage: vi.fn(),
   confirmChangeServices: vi.fn(),
 }));
 

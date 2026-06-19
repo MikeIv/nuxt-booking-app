@@ -219,15 +219,12 @@
 
   const {
     isChangeServicesPopupOpen,
-    isLoadingPackages,
     isChangingServices,
     changeServicesError,
     changeServicesSuccess,
-    availablePackages,
-    selectedPackageCodes,
+    startChangeServicesFlow,
     openChangeServicesPopup,
     closeChangeServicesPopup,
-    togglePackage,
     confirmChangeServices,
   } = useBookingChangeServices(currentBookingUuid);
 
@@ -239,6 +236,20 @@
     ) {
       openChangeRoomPopup();
     }
+  };
+
+  const openChangeServicesPopupIfNeeded = () => {
+    if (
+      bookingStore.changeServicesUuid &&
+      bookingStore.changeServicesUuid === currentBookingUuid.value
+    ) {
+      openChangeServicesPopup();
+    }
+  };
+
+  const openManagementPopupsIfNeeded = () => {
+    openChangeRoomPopupIfNeeded();
+    openChangeServicesPopupIfNeeded();
   };
 
   const { isBookingConfirmed, isBookingFailed, showConfirmationContent } =
@@ -255,7 +266,7 @@
           life: 5000,
         });
       },
-      onConfirmed: openChangeRoomPopupIfNeeded,
+      onConfirmed: openManagementPopupsIfNeeded,
     });
 
   const { qrCanvas } = useConfirmationQR(pdfUrl, showConfirmationContent);
@@ -363,6 +374,20 @@
     router.push("/rooms");
   };
 
+  const handleChangeServices = () => {
+    const flowError = startChangeServicesFlow();
+    if (flowError) {
+      toast.add({
+        severity: "error",
+        summary: "Не удалось изменить услуги",
+        detail: flowError,
+        life: 5000,
+      });
+      return;
+    }
+    router.push("/services");
+  };
+
   const handleNewBooking = () => {
     bookingStore.forceReset();
     router.push("/");
@@ -452,7 +477,7 @@
                 :can-edit-contacts="canEditContacts"
                 @change-dates="openChangeDatesPopup"
                 @change-room="handleChangeRoom"
-                @change-services="openChangeServicesPopup"
+                @change-services="handleChangeServices"
                 @change-contacts="openChangeContactsPopup"
               />
 
@@ -535,15 +560,11 @@
     />
     <BookingConfirmationChangeServicesPopup
       :is-open="isChangeServicesPopupOpen"
-      :is-loading-packages="isLoadingPackages"
       :is-changing-services="isChangingServices"
-      :available-packages="availablePackages"
-      :selected-package-codes="selectedPackageCodes"
       :change-services-success="changeServicesSuccess"
       :change-services-error="changeServicesError"
       @close="closeChangeServicesPopup"
       @confirm="confirmChangeServices"
-      @toggle-package="togglePackage"
     />
     </template>
   </main>

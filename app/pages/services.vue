@@ -228,13 +228,21 @@
   /** Показывать блок «Повысить комфорт» только пока выбран базовый номер (не улучшенный) */
   const showUpgradeBlock = computed(
     () =>
+      !bookingStore.changeServicesUuid &&
       !isMultiRoomsMode.value &&
       (upgradeRoomLoading.value || !!upgradeRoom.value) &&
       selectedRoom.value?.room_type_code !== upgradeRoom.value?.room_type_code,
   );
 
-  const handleContinue = () => {
-    router.push("/personal");
+  const handleContinue = async () => {
+    if (bookingStore.changeServicesUuid) {
+      await router.push(
+        `/confirmation?uuid=${bookingStore.changeServicesUuid}`,
+      );
+      return;
+    }
+
+    await router.push("/personal");
   };
 
   // --- Инициализация ---
@@ -289,7 +297,11 @@
     }
 
     // Загружаем upgrade-номер (только для одного номера)
-    if (!isMultiRoomsMode.value && selectedRoom.value) {
+    if (
+      !isMultiRoomsMode.value &&
+      selectedRoom.value &&
+      !bookingStore.changeServicesUuid
+    ) {
       await fetchUpgradeRoom();
     }
   });

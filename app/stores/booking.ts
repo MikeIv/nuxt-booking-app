@@ -79,6 +79,7 @@ export const useBookingStore = defineStore(
     const packages = ref<PackageResource[]>([]);
     const selectedMultiRooms = ref<Record<string, SelectedEntry>>({});
     const changeRoomUuid = ref<string | null>(null);
+    const changeServicesUuid = ref<string | null>(null);
     /** Индексы номеров без доступности в последнем multi-поиске (для подсветки в GuestsSelector) */
     const multiBookingUnavailableRooms = ref<number[]>([]);
 
@@ -126,6 +127,16 @@ export const useBookingStore = defineStore(
 
     function getSelectedServicesForRoom(roomIndex: number): SelectedService[] {
       return selectedServicesByRoom.value[String(roomIndex)] ?? [];
+    }
+
+    function setSelectedServicesByRoom(
+      value: Record<string, SelectedService[]>,
+    ) {
+      selectedServicesByRoom.value = { ...value };
+    }
+
+    function setRoomTariffs(value: Room[]) {
+      roomTariffs.value = value;
     }
 
     function setCurrentBookingDetails(booking: BookingHistoryItem | null) {
@@ -186,6 +197,10 @@ export const useBookingStore = defineStore(
 
     function setChangeRoomUuid(value: string | null) {
       changeRoomUuid.value = value;
+    }
+
+    function setChangeServicesUuid(value: string | null) {
+      changeServicesUuid.value = value;
     }
 
     const totalGuests = computed(() => {
@@ -1066,6 +1081,7 @@ export const useBookingStore = defineStore(
       currentBookingDetails.value = null;
       selectedMultiRooms.value = {};
       changeRoomUuid.value = null;
+      changeServicesUuid.value = null;
       multiBookingUnavailableRooms.value = [];
       setLoading(false);
       isServerRequest.value = false;
@@ -1102,6 +1118,8 @@ export const useBookingStore = defineStore(
       removeService,
       isServiceSelected,
       getSelectedServicesForRoom,
+      setSelectedServicesByRoom,
+      setRoomTariffs,
       createdBooking,
       bookingsByUuid,
       currentBookingUuid,
@@ -1114,12 +1132,14 @@ export const useBookingStore = defineStore(
       selectedMultiRooms,
       setSelectedMultiRooms,
       changeRoomUuid,
+      changeServicesUuid,
       setServerRequest,
       setGuests,
       setSearchResults,
       setSelectedTariff,
       setDate,
       setChangeRoomUuid,
+      setChangeServicesUuid,
       multiBookingUnavailableRooms,
       setMultiBookingUnavailableRooms,
       clearMultiBookingUnavailableRooms,
