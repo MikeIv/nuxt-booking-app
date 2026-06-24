@@ -4,6 +4,7 @@
     type GuestData,
     type FormField,
   } from "~/composables/usePersonalForm";
+  import { additionalGuestFieldsRules, guestFieldsRules } from "~/composables/useFormValidation";
   import UiInput from "~/components/ui/Input.vue";
   import UiOptionSelect from "~/components/ui/OptionSelect.vue";
   import { countriesRu } from "~/utils/countries";
@@ -15,6 +16,7 @@
     errors?: Partial<GuestData>;
     guestTitle?: string;
     showRemove?: boolean;
+    optionalContactFields?: boolean;
   }
 
   interface Emits {
@@ -26,6 +28,7 @@
     errors: () => ({}),
     guestTitle: "Основной гость",
     showRemove: false,
+    optionalContactFields: false,
   });
 
   const emit = defineEmits<Emits>();
@@ -37,8 +40,16 @@
     ...props.errors,
   }));
 
+  const guestValidationRules = computed(() =>
+    props.optionalContactFields ? additionalGuestFieldsRules : guestFieldsRules,
+  );
+
   const validateEmail = (guest: GuestData) => {
-    emailBlurError.value = validateGuestField(guest, "email");
+    emailBlurError.value = validateGuestField(
+      guest,
+      "email",
+      guestValidationRules.value,
+    );
   };
 
   const {

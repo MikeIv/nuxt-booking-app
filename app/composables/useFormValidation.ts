@@ -5,21 +5,47 @@ const REQUIRED_FIELD_MESSAGE = "Обязательное поле";
 
 const requiredTextField = { required: true, maxLength: 255 } as const;
 
+const PHONE_PATTERN = /^[+]?[0-9\s\-()]{10,}$/;
+const PHONE_PATTERN_MESSAGE = "Введите корректный телефон";
+
+const isRequiredValueEmpty = (value: unknown): boolean =>
+  value == null || (typeof value === "string" && !value.trim());
+
 const phoneFieldRule = {
   required: true,
   maxLength: 32,
-  pattern: /^[+]?[0-9\s\-()]{10,}$/,
-  patternMessage: "Введите корректный телефон",
+  pattern: PHONE_PATTERN,
+  patternMessage: PHONE_PATTERN_MESSAGE,
 } as const;
+
+const optionalPhoneFieldRule = {
+  required: false,
+  maxLength: 32,
+  custom: (value: unknown) => {
+    if (isRequiredValueEmpty(value)) return null;
+    if (typeof value !== "string" || !PHONE_PATTERN.test(value)) {
+      return PHONE_PATTERN_MESSAGE;
+    }
+    return null;
+  },
+} as const;
+
+const validateEmailValue = (value: unknown): string | null => {
+  if (typeof value !== "string" || !value.trim()) return null;
+  if (!isValidEmail(value)) return EMAIL_INVALID_MESSAGE;
+  return null;
+};
 
 const emailFieldRule = {
   required: true,
   maxLength: 255,
-  custom: (value: unknown) => {
-    if (typeof value !== "string" || !value.trim()) return null;
-    if (!isValidEmail(value)) return EMAIL_INVALID_MESSAGE;
-    return null;
-  },
+  custom: validateEmailValue,
+} as const;
+
+const optionalEmailFieldRule = {
+  required: false,
+  maxLength: 255,
+  custom: validateEmailValue,
 } as const;
 
 const countryFieldRule = { required: true, maxLength: 255 } as const;
@@ -56,8 +82,12 @@ export const guestFieldsRules: ValidationRules = {
   country: countryFieldRule,
 };
 
-const isRequiredValueEmpty = (value: unknown): boolean =>
-  value == null || (typeof value === "string" && !value.trim());
+/** Доп. гость в одном номере: телефон и почта необязательны, формат проверяется при заполнении */
+export const additionalGuestFieldsRules: ValidationRules = {
+  ...guestFieldsRules,
+  phone: optionalPhoneFieldRule,
+  email: optionalEmailFieldRule,
+};
 
 const FIELD_LABELS: Record<string, string> = {
   surname: "Фамилия",
@@ -123,7 +153,8 @@ const collectValidationErrors = <FormData extends Record<string, unknown>>(
 
 export const validateGuestFields = (
   data: GuestValidationData,
-): ValidationErrors => collectValidationErrors(guestFieldsRules, data);
+  rules: ValidationRules = guestFieldsRules,
+): ValidationErrors => collectValidationErrors(rules, data);
 
 export const useFormValidation = () => {
   const registerFormRules: ValidationRules<RegisterData> = {

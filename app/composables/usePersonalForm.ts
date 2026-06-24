@@ -1,11 +1,13 @@
 import type { BookingData } from "~/types/booking";
 import { countriesRu } from "~/utils/countries";
 import {
+  additionalGuestFieldsRules,
   guestFieldsRules,
   validateField,
   validateGuestFields,
   type GuestValidationData,
   type ValidationErrors,
+  type ValidationRules,
 } from "~/composables/useFormValidation";
 
 const HH_MM_TIME_REGEX = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
@@ -90,14 +92,20 @@ const mapValidationErrorsToGuest = (
 export const validateGuestField = (
   guest: GuestData,
   field: keyof GuestData,
+  rules: ValidationRules = guestFieldsRules,
 ): string | null => {
   const validationKey = GUEST_FIELD_TO_VALIDATION_KEY[field];
   const data = toGuestValidationData(guest);
-  return validateField(validationKey, data[validationKey], guestFieldsRules);
+  return validateField(validationKey, data[validationKey], rules);
 };
 
-const validateGuest = (guest: GuestData): Partial<GuestData> =>
-  mapValidationErrorsToGuest(validateGuestFields(toGuestValidationData(guest)));
+const validateGuest = (
+  guest: GuestData,
+  rules: ValidationRules = guestFieldsRules,
+): Partial<GuestData> =>
+  mapValidationErrorsToGuest(
+    validateGuestFields(toGuestValidationData(guest), rules),
+  );
 
 type AdditionalFieldKey = "checkInTime" | "checkOutTime" | "comment";
 
@@ -248,7 +256,7 @@ export const usePersonalForm = () => {
       }
 
       formData.additionalGuests.forEach((guest, index) => {
-        const guestErrors = validateGuest(guest);
+        const guestErrors = validateGuest(guest, additionalGuestFieldsRules);
         if (Object.keys(guestErrors).length > 0) {
           if (!errors.additionalGuests[index]) {
             errors.additionalGuests[index] = {};

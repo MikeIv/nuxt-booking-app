@@ -97,6 +97,7 @@ const updateCheckbox = (key: string, value: boolean) => {
       :errors="errors.additionalGuests[index]"
       :guest-title="`Гость ${index + 2}`"
       :show-remove="true"
+      optional-contact-fields
       @update:guest="updateAdditionalGuest(index, $event)"
       @remove="removeAdditionalGuest(index)"
     />
