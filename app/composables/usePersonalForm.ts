@@ -407,8 +407,7 @@ export const usePersonalForm = () => {
       const isFirstRoom = index === 0;
       const roomGuestData = formData.roomGuests[entry.roomIdx];
 
-      // Если есть данные для этого номера, используем их, иначе используем основного гостя
-      const mainGuest = roomGuestData?.mainGuest || formData.mainGuest;
+      const mainGuest = roomGuestData?.mainGuest ?? initialGuestData();
       const additionalGuests = roomGuestData?.additionalGuests || [];
 
       // Базовый массив гостей: основной гость номера

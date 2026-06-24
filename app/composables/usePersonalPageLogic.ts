@@ -3,29 +3,28 @@ import type {
   GuestData,
   RoomGuestData,
 } from "~/composables/usePersonalForm";
+import type { SelectedEntry } from "~/types/booking";
 import { useAuthStore } from "~/stores/auth";
 import { useUserProfile } from "~/composables/useUserProfile";
+import { getSortedMultiRoomEntries } from "~/utils/multiBooking";
+
+type UserProfileSource =
+  | {
+      name?: string;
+      surname?: string;
+      middle_name?: string;
+      phone?: string;
+      email?: string;
+      country?: string;
+    }
+  | null
+  | undefined;
 
 export const usePersonalPageLogic = () => {
   const authStore = useAuthStore();
   const { formData: userProfileData, fetchUserProfile } = useUserProfile();
 
-  /**
-   * Преобразует данные пользователя из профиля в формат GuestData
-   */
-  const userToGuestData = (
-    user:
-      | {
-          name?: string;
-          surname?: string;
-          middle_name?: string;
-          phone?: string;
-          email?: string;
-          country?: string;
-        }
-      | null
-      | undefined,
-  ): GuestData => {
+  const userToGuestData = (user: UserProfileSource): GuestData => {
     if (!user) {
       return {
         firstName: "",
@@ -46,38 +45,63 @@ export const usePersonalPageLogic = () => {
     };
   };
 
-  /**
-   * Проверяет, заполнена ли форма основного гостя
-   */
-  const isMainGuestFormFilled = (guest: GuestData): boolean => {
-    return !!(guest.firstName || guest.lastName || guest.phone || guest.email);
+  const isMainGuestFormFilled = (guest: GuestData): boolean =>
+    Boolean(guest.firstName || guest.lastName || guest.phone || guest.email);
+
+  const applyGuestDataToForm = (
+    formData: PersonalFormData,
+    isMultiRoomsMode: boolean,
+    selectedMultiRooms: Record<string, SelectedEntry>,
+    createRoomGuestData: () => RoomGuestData,
+    guestData: GuestData,
+  ) => {
+    if (isMultiRoomsMode) {
+      const firstEntry = getSortedMultiRoomEntries(selectedMultiRooms)[0];
+      if (!firstEntry) return;
+
+      const { roomIdx } = firstEntry;
+      if (!formData.roomGuests[roomIdx]) {
+        formData.roomGuests[roomIdx] = createRoomGuestData();
+      }
+
+      const roomMainGuest = formData.roomGuests[roomIdx].mainGuest;
+      if (!isMainGuestFormFilled(roomMainGuest)) {
+        formData.roomGuests[roomIdx].mainGuest = { ...guestData };
+      }
+      return;
+    }
+
+    if (!isMainGuestFormFilled(formData.mainGuest)) {
+      formData.mainGuest = { ...guestData };
+    }
   };
 
   /**
-   * Заполняет форму данными пользователя, если он авторизован
+   * Заполняет форму данными пользователя, если он авторизован.
+   * В мультибронировании — только основной гость первого номера.
    */
   const fillFormWithUserData = async (
     formData: PersonalFormData,
     isMultiRoomsMode: Ref<boolean>,
-    selectedMultiRooms: Ref<
-      Record<
-        number,
-        {
-          roomIdx: number;
-          roomCardIdx: number;
-          roomTitle: string;
-          room_type_code: string;
-          ratePlanCode: string;
-          price: number | null | undefined;
-          title: string;
-        }
-      >
-    >,
+    selectedMultiRooms: Ref<Record<string, SelectedEntry>>,
     createRoomGuestData: () => RoomGuestData,
   ) => {
     if (!authStore.isAuthenticated || !authStore.user) {
       return;
     }
+
+    const applyFromUser = (user: UserProfileSource) => {
+      const guestData = userToGuestData(user);
+      if (!isMainGuestFormFilled(guestData)) return;
+
+      applyGuestDataToForm(
+        formData,
+        isMultiRoomsMode.value,
+        selectedMultiRooms.value,
+        createRoomGuestData,
+        guestData,
+      );
+    };
 
     try {
       await fetchUserProfile();
@@ -88,71 +112,9 @@ export const usePersonalPageLogic = () => {
           ? userProfileData.value
           : authStore.user;
 
-      // Проверяем, что userData существует перед преобразованием
-      if (!userData) {
-        return;
-      }
-
-      const guestData = userToGuestData(userData);
-
-      if (
-        guestData.firstName ||
-        guestData.lastName ||
-        guestData.phone ||
-        guestData.email
-      ) {
-        if (isMultiRoomsMode.value) {
-          // В режиме мультибронирования заполняем данные для всех номеров
-          // Используем Object.values() чтобы получить правильные roomIdx из объектов
-          Object.values(selectedMultiRooms.value).forEach((entry) => {
-            const roomIdx = entry.roomIdx;
-            if (!formData.roomGuests[roomIdx]) {
-              formData.roomGuests[roomIdx] = createRoomGuestData();
-            }
-            // Заполняем только если форма пустая
-            const roomMainGuest = formData.roomGuests[roomIdx].mainGuest;
-            if (!isMainGuestFormFilled(roomMainGuest)) {
-              formData.roomGuests[roomIdx].mainGuest = guestData;
-            }
-          });
-        } else {
-          // В режиме одного номера заполняем основную форму
-          if (!isMainGuestFormFilled(formData.mainGuest)) {
-            formData.mainGuest = guestData;
-          }
-        }
-      }
+      applyFromUser(userData);
     } catch {
-      if (authStore.user) {
-        // Проверяем, что authStore.user существует и имеет необходимые свойства
-        const guestData = userToGuestData(authStore.user);
-        if (
-          guestData.firstName ||
-          guestData.lastName ||
-          guestData.phone ||
-          guestData.email
-        ) {
-          if (isMultiRoomsMode.value) {
-            // В режиме мультибронирования заполняем данные для всех номеров
-            // Используем Object.values() чтобы получить правильные roomIdx из объектов
-            Object.values(selectedMultiRooms.value).forEach((entry) => {
-              const roomIdx = entry.roomIdx;
-              if (!formData.roomGuests[roomIdx]) {
-                formData.roomGuests[roomIdx] = createRoomGuestData();
-              }
-              const roomMainGuest = formData.roomGuests[roomIdx].mainGuest;
-              if (!isMainGuestFormFilled(roomMainGuest)) {
-                formData.roomGuests[roomIdx].mainGuest = guestData;
-              }
-            });
-          } else {
-            // В режиме одного номера заполняем основную форму
-            if (!isMainGuestFormFilled(formData.mainGuest)) {
-              formData.mainGuest = guestData;
-            }
-          }
-        }
-      }
+      applyFromUser(authStore.user);
     }
   };
 

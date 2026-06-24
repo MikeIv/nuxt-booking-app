@@ -26,14 +26,10 @@ const updateField = (key: string, value: string) => {
 
 const selectFieldKeys = new Set(["checkInTime", "checkOutTime"]);
 const commentFieldKey = "comment";
-const timeOptions = [
-  { label: "00:00", value: "00:00" },
-  { label: "04:00", value: "04:00" },
-  { label: "08:00", value: "08:00" },
-  { label: "12:00", value: "12:00" },
-  { label: "16:00", value: "16:00" },
-  { label: "20:00", value: "20:00" },
-];
+const timeOptions = Array.from({ length: 24 }, (_, hour) => {
+  const value = `${String(hour).padStart(2, "0")}:00`;
+  return { label: value, value };
+});
 
 const selectFields = computed(() =>
   props.fields.filter((field) => selectFieldKeys.has(field.key)),
