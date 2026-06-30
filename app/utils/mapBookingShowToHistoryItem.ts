@@ -2,6 +2,7 @@ import type {
   BookingByUuidPayload,
   BookingByUuidRoom,
   BookingHistoryItem,
+  BookingResponse,
 } from "~/types/booking";
 import { toBookingAllowedActionsArray } from "~/utils/bookingAllowedActions";
 import { mapBookingRoomServicesToTitles } from "~/utils/mapBookingRoomServices";
@@ -19,6 +20,31 @@ export function parseBookingRooms(
   }
 
   return Array.isArray(rooms) ? rooms : [];
+}
+
+/** Нормализация ответа GET /v1/booking/{uuid} для createdBooking и смены услуг */
+export function normalizeBookingByUuidPayload(
+  raw: BookingByUuidPayload,
+): BookingResponse {
+  return {
+    id: raw.id,
+    uuid: raw.uuid,
+    number:
+      raw.number != null && String(raw.number).trim() !== ""
+        ? String(raw.number).trim()
+        : undefined,
+    confirmation_number: raw.confirmation_number,
+    status: raw.status,
+    allowed: toBookingAllowedActionsArray(raw.allowed),
+    hotel: raw.hotel,
+    order: {
+      ...raw.order,
+      nights: Number(raw.order.nights) || 0,
+    } as BookingResponse["order"],
+    rooms: parseBookingRooms(raw.rooms),
+    total_price: raw.total_price,
+    payment: raw.payment,
+  };
 }
 
 function mapRoom(

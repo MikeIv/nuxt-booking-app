@@ -1,3 +1,5 @@
+import type { SelectedEntry } from "~/types/booking";
+import { toPricePerNight } from "~/utils/price";
 import { pickBoolean, pickNumber, pickString } from "~/utils/pick";
 
 export type BookingChangeGuest = {
@@ -153,5 +155,73 @@ export function mapBookingUpdateRooms(
     if (roomIndex !== 0) return base;
 
     return { ...base, ...patchFirstRoom(room) };
+  });
+}
+
+export function resolveBookingNights(
+  order:
+    | { start_at?: string; end_at?: string; nights?: number | string }
+    | null
+    | undefined,
+): number {
+  const nightsFromOrder = pickNumber(order?.nights);
+  if (nightsFromOrder != null && nightsFromOrder > 0) return nightsFromOrder;
+
+  const dates = pickBookingStayDates(order ?? undefined);
+  if (!dates) return 0;
+
+  const start = new Date(dates.startAt);
+  const end = new Date(dates.endAt);
+  const diff = end.getTime() - start.getTime();
+  if (diff <= 0) return 0;
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+/** Записи selectedMultiRooms для страницы услуг при смене услуг существующей брони */
+export function buildSelectedMultiRoomsFromBookingRooms(
+  roomsRaw: unknown[],
+  nights: number,
+): Record<string, SelectedEntry> {
+  const entries: Record<string, SelectedEntry> = {};
+
+  roomsRaw.forEach((roomRaw, index) => {
+    const room = roomRaw as Record<string, unknown>;
+    const tariffRaw = room.tariff as Record<string, unknown> | undefined;
+    const tariffTotal = pickNumber(tariffRaw?.price);
+    const total = pickNumber(room.total);
+    const pricePerNight =
+      tariffTotal != null
+        ? toPricePerNight(tariffTotal, nights)
+        : nights > 0 && total != null
+          ? total / nights
+          : (total ?? 0);
+
+    entries[String(index)] = {
+      roomIdx: index,
+      roomCardIdx: index,
+      roomTitle: pickString(room.title) ?? "",
+      room_type_code: pickString(room.room_type_code) ?? "",
+      ratePlanCode: pickRoomRatePlanCode(room),
+      price: pricePerNight,
+      title: pickString(tariffRaw?.title) ?? "",
+      square: pickNumber(room.square) ?? undefined,
+    };
+  });
+
+  return entries;
+}
+
+/** PUT booking.update: packages для каждого номера (смена услуг) */
+export function mapBookingUpdateRoomsPackages(
+  roomsRaw: unknown[],
+  getPackageCodes: (roomIndex: number) => string[],
+): Array<BookingUpdateRoomRef & { packages: string[] }> {
+  return roomsRaw.map((roomRaw, roomIndex) => {
+    const room = roomRaw as Record<string, unknown>;
+    return {
+      booking_id: pickNumber(room.id),
+      packages: getPackageCodes(roomIndex),
+    };
   });
 }

@@ -2,12 +2,15 @@ import { describe, it, expect } from "vitest";
 import {
   buildBookingRoomRefs,
   buildContactUpdateGuest,
+  buildSelectedMultiRoomsFromBookingRooms,
   mapBookingChangeGuest,
   mapBookingUpdateRooms,
+  mapBookingUpdateRoomsPackages,
   pickBookingStayDates,
   pickPackageCode,
   pickRoomPackageCodes,
   pickRoomRatePlanCode,
+  resolveBookingNights,
   resolveGuestNationality,
 } from "~/utils/bookingChangeRequest";
 
@@ -124,6 +127,70 @@ describe("bookingChangeRequest", () => {
           packages: ["SPA"],
         })),
       ).toEqual([{ booking_id: 1, packages: ["SPA"] }, { booking_id: 2 }]);
+    });
+  });
+
+  describe("mapBookingUpdateRoomsPackages", () => {
+    it("должен добавлять packages для каждой комнаты", () => {
+      expect(
+        mapBookingUpdateRoomsPackages([{ id: 1 }, { id: 2 }], (index) =>
+          index === 0 ? ["SPA"] : ["PARKING"],
+        ),
+      ).toEqual([
+        { booking_id: 1, packages: ["SPA"] },
+        { booking_id: 2, packages: ["PARKING"] },
+      ]);
+    });
+  });
+
+  describe("buildSelectedMultiRoomsFromBookingRooms", () => {
+    it("должен собирать selectedMultiRooms по каждому номеру", () => {
+      expect(
+        buildSelectedMultiRoomsFromBookingRooms(
+          [
+            {
+              id: 1,
+              title: "Номер 1",
+              room_type_code: "DLT",
+              rate_plan_code: "H-BBB",
+              tariff: { title: "BB", price: 20000 },
+              total: 20000,
+            },
+            {
+              id: 2,
+              title: "Номер 2",
+              room_type_code: "SSK",
+              rate_plan_code: "H-BBB",
+              tariff: { title: "BB", price: 15000 },
+              total: 15000,
+            },
+          ],
+          2,
+        ),
+      ).toEqual({
+        "0": expect.objectContaining({
+          roomIdx: 0,
+          room_type_code: "DLT",
+          ratePlanCode: "H-BBB",
+        }),
+        "1": expect.objectContaining({
+          roomIdx: 1,
+          room_type_code: "SSK",
+          ratePlanCode: "H-BBB",
+        }),
+      });
+    });
+  });
+
+  describe("resolveBookingNights", () => {
+    it("должен использовать nights из order, если они заданы", () => {
+      expect(
+        resolveBookingNights({
+          start_at: "2026-06-27",
+          end_at: "2026-06-28",
+          nights: 3,
+        }),
+      ).toBe(3);
     });
   });
 

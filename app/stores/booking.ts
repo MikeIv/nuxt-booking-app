@@ -28,7 +28,7 @@ import {
 } from "~/utils/multiBooking";
 import {
   mapBookingShowToHistoryItem,
-  parseBookingRooms,
+  normalizeBookingByUuidPayload,
 } from "~/utils/mapBookingShowToHistoryItem";
 import { toBookingAllowedActionsArray } from "~/utils/bookingAllowedActions";
 
@@ -882,7 +882,9 @@ export const useBookingStore = defineStore(
         );
 
         if (response.success && response.payload) {
+          const normalized = normalizeBookingByUuidPayload(response.payload);
           const bookingDetails = mapBookingShowToHistoryItem(response.payload);
+          setBookingByUuid(normalized);
           setCurrentBookingDetails(bookingDetails);
           return bookingDetails;
         }
@@ -931,29 +933,7 @@ export const useBookingStore = defineStore(
         );
 
         if (response.success && response.payload) {
-          const raw = response.payload;
-          const rooms = parseBookingRooms(raw.rooms);
-          const allowed = toBookingAllowedActionsArray(raw.allowed);
-
-          const normalized: BookingResponse = {
-            id: raw.id,
-            uuid: raw.uuid,
-            number:
-              raw.number != null && String(raw.number).trim() !== ""
-                ? String(raw.number).trim()
-                : undefined,
-            confirmation_number: raw.confirmation_number,
-            status: raw.status,
-            allowed,
-            hotel: raw.hotel,
-            order: {
-              ...raw.order,
-              nights: Number(raw.order.nights) || 0,
-            } as BookingResponse["order"],
-            rooms,
-            total_price: raw.total_price,
-            payment: raw.payment,
-          };
+          const normalized = normalizeBookingByUuidPayload(response.payload);
           setBookingByUuid(normalized);
           return normalized;
         }

@@ -20,6 +20,29 @@ const isLoadingDetails = ref(false);
 
 const bookingNumber = computed(() => getBookingNumber(bookingDetails.value));
 
+const currentBookingUuid = computed<string | null>(() => {
+  const fromDetails = bookingDetails.value?.uuid;
+  if (fromDetails && String(fromDetails).trim() !== "") {
+    return String(fromDetails);
+  }
+  const fromQuery = route.query.id;
+  if (typeof fromQuery === "string" && fromQuery.trim() !== "") {
+    return fromQuery;
+  }
+  return null;
+});
+
+const { startChangeServicesFlow } = useBookingChangeServices(currentBookingUuid);
+
+const showChangeServicesError = (detail: string) => {
+  toast.add({
+    severity: "error",
+    summary: "Не удалось изменить услуги",
+    detail,
+    life: 5000,
+  });
+};
+
 const {
   canEditDates,
   canEditRoom,
@@ -98,11 +121,36 @@ const handleChangeRoom = () => {
   // TODO: Реализовать изменение номера
 };
 
-const handleChangeServices = () => {
-  if (import.meta.dev) {
-    console.log("Изменить услуги");
+const handleChangeServices = async () => {
+  const uuid = currentBookingUuid.value;
+  if (!uuid) {
+    showChangeServicesError("UUID бронирования не найден. Обновите страницу.");
+    return;
   }
-  // TODO: Реализовать изменение услуг
+
+  if (bookingStore.createdBooking?.uuid !== uuid) {
+    try {
+      await bookingStore.getBookingByUuid(uuid);
+    } catch (err: unknown) {
+      if (await handleBookingAccessDeniedIfNeeded(err)) {
+        return;
+      }
+
+      showChangeServicesError(
+        (err as { message?: string })?.message ||
+          "Не удалось загрузить данные бронирования",
+      );
+      return;
+    }
+  }
+
+  const flowError = startChangeServicesFlow();
+  if (flowError) {
+    showChangeServicesError(flowError);
+    return;
+  }
+
+  await router.push("/services");
 };
 
 const handleChangeContacts = () => {
