@@ -367,6 +367,7 @@ export const useBookingStore = defineStore(
             : (group?.amenities ?? []),
         bed: room.bed ?? null,
         view: room.view ?? null,
+        balcony: room.balcony ?? null,
         family: room.family ?? null,
         min_price: normalizeMinPrice(room.min_price ?? group?.min_price),
         price_for_register:
@@ -428,6 +429,7 @@ export const useBookingStore = defineStore(
             : (primaryVariant?.amenities ?? []),
         bed: primaryVariant?.bed ?? null,
         view: primaryVariant?.view ?? null,
+        balcony: primaryVariant?.balcony ?? null,
         family: primaryVariant?.family ?? null,
         min_price: normalizeMinPrice(
           group.min_price ?? primaryVariant?.min_price,

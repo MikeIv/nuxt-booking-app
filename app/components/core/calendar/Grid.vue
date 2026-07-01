@@ -31,8 +31,8 @@
   <div :class="$style.calendarGrid" role="grid" :aria-label="`Календарь ${currentMonthYearLabel}`">
     <div :class="$style.weekDays" role="row">
       <div
-        v-for="day in weekDays"
-        :key="day"
+        v-for="(day, index) in weekDays"
+        :key="`weekday-${index}`"
         :class="$style.weekDay"
         role="columnheader"
         :aria-label="day"
@@ -113,4 +113,3 @@
     }
   }
 </style>
-

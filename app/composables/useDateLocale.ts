@@ -2,17 +2,17 @@
  * Composable для работы с локализованными названиями месяцев и дней недели
  * Использует vue-i18n для поддержки смены языка
  */
+const monthNamesCache = new Map<string, string[]>();
+const weekDaysCache = new Map<string, string[]>();
+const MONDAY_2024 = new Date(2024, 0, 1);
+
 export const useDateLocale = () => {
   const { locale } = useI18n();
 
-  // Локаль для форматирования дат (ru-RU, en-US)
+  // Локаль для форматирования дат (ru-RU, en-GB — день/месяц/год, неделя с понедельника)
   const dateLocale = computed(() => {
-    return locale.value === "ru" ? "ru-RU" : "en-US";
+    return locale.value === "ru" ? "ru-RU" : "en-GB";
   });
-
-  // Кэш для названий месяцев и дней недели по локали (статический, не реактивный)
-  const monthNamesCache = new Map<string, string[]>();
-  const weekDaysCache = new Map<string, string[]>();
 
   // Названия месяцев (полные) с кэшированием
   const monthNames = computed(() => {
@@ -45,38 +45,37 @@ export const useDateLocale = () => {
     }
 
     const days: string[] = [];
-    // 1 января 2024 - понедельник (getDay() = 1, но нам нужно 0 для понедельника)
-    // Создаем дату понедельника
-    const monday = new Date(2024, 0, 1); // 1 января 2024 - понедельник
     for (let i = 0; i < 7; i++) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
+      const date = new Date(MONDAY_2024);
+      date.setDate(MONDAY_2024.getDate() + i);
       const dayName = date.toLocaleDateString(localeKey, {
         weekday: "short",
       });
-      days.push(dayName);
+      days.push(dayName.replace(/\.$/, ""));
     }
 
     weekDaysCache.set(localeKey, days);
     return days;
   });
 
-  // Форматирование даты с учетом локали
+  // Форматирование даты: всегда ДД.ММ.ГГГГ (как в ru-RU), независимо от языка UI
   const formatDate = (
     date: Date | null,
     options?: Intl.DateTimeFormatOptions,
   ): string => {
     if (!date) return "--.--.----";
 
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
+    if (options) {
+      return date
+        .toLocaleDateString(dateLocale.value, options)
+        .replace(/\//g, ".");
+    }
 
-    return date
-      .toLocaleDateString(dateLocale.value, options || defaultOptions)
-      .replace(/\//g, ".");
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = String(date.getFullYear());
+
+    return `${day}.${month}.${year}`;
   };
 
   return {

@@ -340,6 +340,7 @@ export interface ApiRoomType {
   amenities?: RoomAmenity[];
   bed?: RoomBed | null;
   view?: RoomView | null;
+  balcony?: BalconyResource | null;
   family?: RoomFamily | null;
   min_price?: number | string | null;
   price_for_register?: number;

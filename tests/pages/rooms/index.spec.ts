@@ -363,6 +363,57 @@ describe("pages/rooms/index.vue", () => {
       const cards = wrapper.findAll('[data-testid="booking-card"]');
       expect(cards.length).toBe(2);
     });
+
+    it("должен фильтровать номера по типу балкона из API", async () => {
+      const rooms: Room[] = [
+        createMockRoom({
+          room_type_code: "ROOM-1",
+          title: "Deluxe King Room",
+          amenities: [{ title: "Бесплатный Wi-Fi" }],
+          room_type_codes: [
+            createMockRoom({
+              room_type_code: "DLK",
+              title: "Deluxe King Room",
+              balcony: { id: 1, title: "Balcony 30m" },
+            }),
+          ],
+        }),
+        createMockRoom({
+          room_type_code: "ROOM-2",
+          title: "Standard Room",
+          room_type_codes: [
+            createMockRoom({
+              room_type_code: "STD",
+              title: "Standard Room",
+              balcony: { id: 2, title: "Balcony 15m" },
+            }),
+          ],
+        }),
+      ];
+
+      mockBookingStore.loading.value = false;
+      mockBookingStore.searchResults.value = {
+        rooms,
+        packages: [],
+        available: true,
+        groupedByBed: false,
+        filters: {
+          beds: [],
+          views: [],
+          balconies: [{ id: 1, title: "Balcony 30m" }],
+        },
+      };
+
+      const wrapper = mountComponent(RoomsPage);
+      await nextTick();
+
+      wrapper.vm.selectedBalcony = 1;
+      await nextTick();
+
+      const cards = wrapper.findAll('[data-testid="booking-card"]');
+      expect(cards.length).toBe(1);
+      expect(cards[0].text()).toBe("Deluxe King Room");
+    });
   });
 
   describe("Комбинированная фильтрация", () => {

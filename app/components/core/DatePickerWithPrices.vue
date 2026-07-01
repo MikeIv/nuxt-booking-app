@@ -57,7 +57,7 @@
   const loadPricesForVisibleMonths = async () => {
     const [prevMonth, prevYear] = getPrevMonth(currentMonth.value, currentYear.value);
     const [nextMonth, nextYear] = getNextMonth(currentMonth.value, currentYear.value);
-    
+
     await Promise.all([
       fetchCalendarPrices(currentMonth.value, currentYear.value),
       fetchCalendarPrices(prevMonth, prevYear),
@@ -98,10 +98,10 @@
     return monthNames.value[currentMonth.value - 1] || '';
   });
 
-  // Мемоизированная функция получения названия месяца
-  const getMonthName = useMemoize((monthIndex: number): string => {
-    return monthNames.value[monthIndex] || '';
-  });
+  // Названия месяцев зависят от локали — без memoize, чтобы обновлялись при смене языка
+  const getMonthName = (monthIndex: number): string => {
+    return monthNames.value[monthIndex] || "";
+  };
 
   // Генерируем уникальный ID компонента один раз при инициализации
   const datepickerId = `datepicker-${Math.random().toString(36).substring(2, 9)}`;
@@ -218,7 +218,7 @@
       selectedStartDate.value = clickedDate;
       selectedEndDate.value = null;
       value.value = null;
-    } 
+    }
     // Если есть только начальная дата
     else if (selectedStartDate.value && !selectedEndDate.value) {
       if (clickedDate < selectedStartDate.value) {
@@ -229,7 +229,7 @@
         // Завершение диапазона
         selectedEndDate.value = clickedDate;
       }
-      
+
       // Обновляем значение через emit
       if (selectedStartDate.value && selectedEndDate.value) {
         value.value = [selectedStartDate.value, selectedEndDate.value];
@@ -242,13 +242,13 @@
     const todayDate = new Date();
     const currentMonthNum = todayDate.getMonth() + 1;
     const currentYearNum = todayDate.getFullYear();
-    
+
     return !(currentMonth.value === currentMonthNum && currentYear.value === currentYearNum);
   });
 
   const prevMonth = () => {
     if (!canGoToPrevMonth.value) return;
-    
+
     if (currentMonth.value === 1) {
       currentMonth.value = 12;
       currentYear.value--;
