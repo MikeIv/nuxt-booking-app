@@ -122,7 +122,7 @@
           ]"
           @click="handleAddService"
         >
-          <span>Добавить услугу</span>
+          <span>{{ isSelected ? "Убрать услугу" : "Добавить услугу" }}</span>
         </Button>
       </footer>
     </div>
