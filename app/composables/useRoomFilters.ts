@@ -84,33 +84,118 @@ function usesServerBalconyFilters(filters: SearchFilters | undefined): boolean {
   return Boolean(filters?.balconies?.length);
 }
 
-function hasSelectedView(room: Room, viewId: number): boolean {
-  return roomOrVariantMatches(room, (item) => item.view?.id === viewId);
+function usesServerViewFilters(filters: SearchFilters | undefined): boolean {
+  return Boolean(filters?.views?.length);
 }
 
-function roomMatchesFilters(
+function getMatchingViewVariants(room: Room, viewId: number): Room[] | null {
+  const variants = room.room_type_codes;
+  if (!variants || variants.length === 0) {
+    return room.view?.id === viewId ? [room] : null;
+  }
+
+  const matchingVariants = variants.filter(
+    (variant) => variant.view?.id === viewId,
+  );
+  return matchingVariants.length > 0 ? matchingVariants : null;
+}
+
+function hasSelectedView(room: Room, viewId: number): boolean {
+  return getMatchingViewVariants(room, viewId) !== null;
+}
+
+function normalizeVariantMinPrice(variants: Room[]): number | null {
+  const prices = variants
+    .map((variant) => variant.min_price)
+    .filter((price): price is number => price !== null && price !== undefined);
+
+  if (prices.length === 0) {
+    return null;
+  }
+
+  return Math.min(...prices);
+}
+
+/** Оставляет только варианты с нужным view (API: view только у beds/SearchResource). */
+function narrowRoomByView(room: Room, viewId: number): Room | null {
+  const matchingVariants = getMatchingViewVariants(room, viewId);
+  if (!matchingVariants) {
+    return null;
+  }
+
+  const variants = room.room_type_codes;
+  if (
+    !variants ||
+    variants.length === 0 ||
+    matchingVariants.length === variants.length
+  ) {
+    return room;
+  }
+
+  const primaryVariant = matchingVariants[0];
+  return {
+    ...room,
+    room_type_code: primaryVariant?.room_type_code ?? room.room_type_code,
+    view: primaryVariant?.view ?? null,
+    bed: primaryVariant?.bed ?? null,
+    balcony: primaryVariant?.balcony ?? null,
+    min_price: normalizeVariantMinPrice(matchingVariants) ?? room.min_price,
+    room_type_codes: matchingVariants,
+  };
+}
+
+function applyBalconyFilter(
   room: Room,
-  activeView: number,
   activeBalcony: number,
   serverBalconyFilters: boolean,
 ): boolean {
-  if (activeView && !hasSelectedView(room, activeView)) {
-    return false;
+  if (!activeBalcony) {
+    return true;
   }
 
-  if (activeBalcony) {
-    if (serverBalconyFilters) {
-      if (!hasSelectedBalcony(room, activeBalcony)) {
-        return false;
-      }
-    } else {
-      const hasBalcony = hasBalconyAmenity(room) || hasAnyBalconyResource(room);
-      if (activeBalcony === 1 && !hasBalcony) return false;
-      if (activeBalcony === 2 && hasBalcony) return false;
-    }
+  if (serverBalconyFilters) {
+    return hasSelectedBalcony(room, activeBalcony);
   }
 
+  const hasBalcony = hasBalconyAmenity(room) || hasAnyBalconyResource(room);
+  if (activeBalcony === 1 && !hasBalcony) return false;
+  if (activeBalcony === 2 && hasBalcony) return false;
   return true;
+}
+
+function applyViewFilter(
+  room: Room,
+  activeView: number,
+  serverViewFilters: boolean,
+): Room | null {
+  if (!activeView) {
+    return room;
+  }
+
+  if (serverViewFilters) {
+    return narrowRoomByView(room, activeView);
+  }
+
+  return hasSelectedView(room, activeView) ? room : null;
+}
+
+function applyRoomFilters(
+  room: Room,
+  activeView: number,
+  activeBalcony: number,
+  serverViewFilters: boolean,
+  serverBalconyFilters: boolean,
+): Room | null {
+  const roomByView = applyViewFilter(room, activeView, serverViewFilters);
+  if (!roomByView) {
+    return null;
+  }
+
+  if (!applyBalconyFilter(roomByView, activeBalcony, serverBalconyFilters)) {
+    return null;
+  }
+
+  return roomByView;
 }
 
 export interface FilteredRoomCard {
@@ -133,21 +218,37 @@ export function useRoomFilters(filters: Ref<SearchFilters | undefined>) {
   const getActiveFilters = () => ({
     activeView: selectedView.value,
     activeBalcony: selectedBalcony.value,
+    serverViewFilters: usesServerViewFilters(filters.value),
     serverBalconyFilters: usesServerBalconyFilters(filters.value),
   });
 
   const filterRoomList = (rooms: Room[] | null | undefined): Room[] => {
     if (!rooms?.length) return [];
 
-    const { activeView, activeBalcony, serverBalconyFilters } =
-      getActiveFilters();
+    const {
+      activeView,
+      activeBalcony,
+      serverViewFilters,
+      serverBalconyFilters,
+    } = getActiveFilters();
     if (!activeView && !activeBalcony) {
       return rooms;
     }
 
-    return rooms.filter((room) =>
-      roomMatchesFilters(room, activeView, activeBalcony, serverBalconyFilters),
-    );
+    const result: Room[] = [];
+    for (const room of rooms) {
+      const filteredRoom = applyRoomFilters(
+        room,
+        activeView,
+        activeBalcony,
+        serverViewFilters,
+        serverBalconyFilters,
+      );
+      if (filteredRoom) {
+        result.push(filteredRoom);
+      }
+    }
+    return result;
   };
 
   const filterRoomListWithIndex = (
@@ -155,24 +256,27 @@ export function useRoomFilters(filters: Ref<SearchFilters | undefined>) {
   ): FilteredRoomCard[] => {
     if (!rooms?.length) return [];
 
-    const { activeView, activeBalcony, serverBalconyFilters } =
-      getActiveFilters();
+    const {
+      activeView,
+      activeBalcony,
+      serverViewFilters,
+      serverBalconyFilters,
+    } = getActiveFilters();
     if (!activeView && !activeBalcony) {
       return rooms.map((room, cardIdx) => ({ room, cardIdx }));
     }
 
     const result: FilteredRoomCard[] = [];
     for (let cardIdx = 0; cardIdx < rooms.length; cardIdx++) {
-      const room = rooms[cardIdx];
-      if (
-        roomMatchesFilters(
-          room,
-          activeView,
-          activeBalcony,
-          serverBalconyFilters,
-        )
-      ) {
-        result.push({ room, cardIdx });
+      const filteredRoom = applyRoomFilters(
+        rooms[cardIdx],
+        activeView,
+        activeBalcony,
+        serverViewFilters,
+        serverBalconyFilters,
+      );
+      if (filteredRoom) {
+        result.push({ room: filteredRoom, cardIdx });
       }
     }
     return result;

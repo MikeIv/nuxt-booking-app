@@ -8,6 +8,7 @@ import {
   resetMockBookingStore,
 } from "../../mocks/stores";
 import type { Room } from "~/types/room";
+import { useRoomFilters } from "~/composables/useRoomFilters";
 
 // Мокируем store
 const mockBookingStore = createMockBookingStore();
@@ -205,6 +206,97 @@ describe("pages/rooms/index.vue", () => {
 
       const cards = wrapper.findAll('[data-testid="booking-card"]');
       expect(cards.length).toBe(1);
+    });
+
+    it("не должен учитывать агрегированный view родителя при фильтрации вариантов", async () => {
+      const rooms: Room[] = [
+        createMockRoom({
+          room_type_code: "ROOM-1",
+          title: "Deluxe King Room",
+          view: createMockView(5, "Река"),
+          room_type_codes: [
+            createMockRoom({
+              room_type_code: "DLK",
+              title: "Deluxe King Room",
+              view: null,
+            }),
+          ],
+        }),
+        createMockRoom({
+          room_type_code: "ROOM-2",
+          title: "River Suite",
+          room_type_codes: [
+            createMockRoom({
+              room_type_code: "RSV",
+              title: "River Suite",
+              view: createMockView(5, "Река"),
+            }),
+          ],
+        }),
+      ];
+
+      mockBookingStore.loading.value = false;
+      mockBookingStore.searchResults.value = {
+        rooms,
+        packages: [],
+        available: true,
+        groupedByBed: false,
+        filters: {
+          beds: [],
+          views: [{ id: 5, title: "Река" }],
+          balconies: [],
+        },
+      };
+
+      const wrapper = mountComponent(RoomsPage);
+      await nextTick();
+
+      wrapper.vm.selectedView = 5;
+      await nextTick();
+
+      const cards = wrapper.findAll('[data-testid="booking-card"]');
+      expect(cards.length).toBe(1);
+      expect(cards[0].text()).toBe("River Suite");
+    });
+
+    it("должен оставлять только варианты beds с выбранным видом из API", () => {
+      const rooms: Room[] = [
+        createMockRoom({
+          room_type_code: "DELUXE",
+          title: "Deluxe Room",
+          view: null,
+          room_type_codes: [
+            createMockRoom({
+              room_type_code: "DLK",
+              title: "Deluxe King Room",
+              view: null,
+            }),
+            createMockRoom({
+              room_type_code: "DKR",
+              title: "Deluxe King Room River View",
+              view: createMockView(1, "Moskva-River View"),
+            }),
+          ],
+        }),
+      ];
+
+      const filters = ref({
+        beds: [],
+        views: [
+          { id: 0, title: "Вид из окна" },
+          { id: 1, title: "Moskva-River View" },
+        ],
+        balconies: [],
+      });
+      const { filterRoomList, selectedView } = useRoomFilters(filters);
+
+      selectedView.value = 1;
+      const filtered = filterRoomList(rooms);
+
+      expect(filtered.length).toBe(1);
+      expect(
+        filtered[0]?.room_type_codes?.map((variant) => variant.room_type_code),
+      ).toEqual(["DKR"]);
     });
 
     it("должен показывать все номера когда вид не выбран (id: 0)", async () => {

@@ -349,6 +349,7 @@ export interface ApiRoomType {
 }
 
 export interface ApiGroupedRoom {
+  family_id?: string | number;
   title: string;
   description: string | null;
   max_occupancy: number;
