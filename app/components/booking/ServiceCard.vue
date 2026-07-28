@@ -93,7 +93,7 @@
             <dt :class="$style.itemTerm">
               <UIcon name="i-persons" :class="$style.icon" aria-hidden="true" />
             </dt>
-            <dd :class="$style.itemTitle">За всех гостей однократно</dd>
+            <dd :class="$style.itemTitle">За машиноместо</dd>
           </div>
         </dl>
 
