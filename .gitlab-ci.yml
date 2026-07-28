@@ -11,8 +11,9 @@ build frontend:
   variables:
     VITE_BASE_API_URL: $API_BASE_URL
   script:
-    - npm install
-    - npm run build
+    - corepack enable
+    - yarn install --frozen-lockfile
+    - yarn build
   artifacts:
     paths:
       - .output

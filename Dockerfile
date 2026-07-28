@@ -12,8 +12,8 @@ WORKDIR /app
 
 ADD . /app
 RUN env
-RUN npm install
-RUN npm run build
+RUN corepack enable && yarn install --frozen-lockfile
+RUN yarn build
 
 FROM nginx:stable-alpine
 
