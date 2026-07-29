@@ -127,6 +127,8 @@ const services = computed(() =>
     description: pkg.description,
     photos: pkg.photos,
     calculationRateTitle: pkg.calculation_rate_title,
+    calculationRateUnit: pkg.calculation_rate_unit ?? undefined,
+    calculationRateIcon: pkg.calculation_rate_icon ?? undefined,
   })),
 );
 
@@ -417,6 +419,8 @@ onMounted(async () => {
                 :package-code="service.packageCode"
                 :photos="service.photos"
                 :calculation-rate-title="service.calculationRateTitle"
+                :calculation-rate-unit="service.calculationRateUnit"
+                :calculation-rate-icon="service.calculationRateIcon"
                 :room-index="isMultiRoomsMode ? currentActiveRoomIdx : 0"
               />
             </template>

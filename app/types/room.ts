@@ -9,6 +9,8 @@ export interface PackageResource {
   photos: string[];
   price: string;
   calculation_rate_title: string;
+  calculation_rate_unit?: string | null;
+  calculation_rate_icon?: string | null;
 }
 
 export interface TariffPackage {

@@ -8,6 +8,8 @@
     packageCode?: string;
     photos?: string[];
     calculationRateTitle?: string;
+    calculationRateUnit?: string;
+    calculationRateIcon?: string;
     /** Индекс номера для мультибронирования (0 для одного номера) */
     roomIndex?: number;
   }
@@ -17,6 +19,8 @@
     photos: () => [],
     roomIndex: 0,
     calculationRateTitle: undefined,
+    calculationRateUnit: undefined,
+    calculationRateIcon: undefined,
   });
   const isPopupOpen = ref(false);
   const bookingStore = useBookingStore();
@@ -88,12 +92,16 @@
           />
         </div>
 
-        <dl :class="$style.description">
+        <dl v-if="calculationRateUnit" :class="$style.description">
           <div :class="$style.item">
             <dt :class="$style.itemTerm">
-              <UIcon name="i-persons" :class="$style.icon" aria-hidden="true" />
+              <UIcon
+                :name="calculationRateIcon === 'vehicle' ? 'i-vehicle' : 'i-persons'"
+                :class="$style.icon"
+                aria-hidden="true"
+              />
             </dt>
-            <dd :class="$style.itemTitle">За машиноместо</dd>
+            <dd :class="$style.itemTitle">{{ calculationRateUnit }}</dd>
           </div>
         </dl>
 
@@ -131,6 +139,8 @@
       :title="title"
       :price="price"
       :images="serviceImages"
+      :calculation-rate-unit="calculationRateUnit"
+      :calculation-rate-icon="calculationRateIcon"
       :is-open="isPopupOpen"
       @close="closePopup"
     />
