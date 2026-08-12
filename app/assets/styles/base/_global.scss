@@ -5,7 +5,7 @@
 html,
 body {
   font-size: size.$base-font-size;
-  background-color: var(--a-white) !important;
+  background-color: var(--a-whiteBg);
 }
 
 *,
@@ -15,8 +15,8 @@ body {
 }
 
 a {
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
 }
 
 ul {
@@ -28,8 +28,8 @@ ul {
 }
 
 .rounded-md {
-  border-radius: var(--a-borderR--input);
   border: none;
+  border-radius: var(--a-borderR--input);
 }
 
 .ring {
@@ -38,19 +38,20 @@ ul {
 }
 
 /* основная кнопка */
+/* stylelint-disable-next-line selector-class-pattern -- legacy global CTA class */
 .btn__bs {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   min-height: rem(44);
   padding: rem(12) rem(44);
+  border-radius: var(--a-borderR--btn);
   font-family: var(--a-font-body);
   font-size: rem(18);
   font-weight: 400;
   line-height: 1;
   background-color: var(--a-primaryBg);
-  border-radius: var(--a-borderR--btn);
-  box-sizing: border-box;
   cursor: pointer;
 
   &:hover {
@@ -66,9 +67,9 @@ ul {
   }
 
   &.ghost {
+    border: rem(1) solid var(--a-border-primary);
     color: var(--a-text-primary);
     background-color: var(--a-whiteBg);
-    border: rem(1) solid var(--a-border-primary);
 
     &:hover {
       color: var(--a-text-white);
@@ -93,10 +94,10 @@ ul {
 .p-popover-content {
   width: 100%;
   max-width: rem(360);
-  background: var(--a-whiteBg);
-  color: var(--a-text-dark);
-  box-shadow: rem(2) rem(2) rem(30) rem(-10) var(--a-shadow-color-strong);
   border-radius: var(--a-borderR--card);
+  color: var(--a-text-dark);
+  background: var(--a-whiteBg);
+  box-shadow: rem(2) rem(2) rem(30) rem(-10) var(--a-shadow-color-strong);
 
   @media (min-width: #{with.$mobile}) {
     max-width: rem(400);
@@ -105,23 +106,24 @@ ul {
   @media (min-width: #{with.$tabletMin}) {
     max-width: rem(500);
   }
+
   @media (min-width: #{with.$desktopMin}) {
     max-width: rem(600);
   }
 }
 
-/*Select dropdown menu */
+/* Select dropdown menu */
 .p-select-list-container {
   align-items: center;
   width: 100%;
   min-height: rem(54);
   padding: rem(12) rem(24);
-  font-family: Inter, sans-serif;
-  font-size: rem(16);
-  color: var(--a-black);
-  background: var(--a-text-white);
   border: rem(1) solid var(--a-border-primary);
   border-radius: var(--a-borderR--input);
+  font-family: var(--a-font-ui);
+  font-size: rem(16);
+  color: var(--a-text-dark);
+  background: var(--a-whiteBg);
 }
 
 .p-select-option {
@@ -141,13 +143,13 @@ ul {
   }
 
   &::-webkit-scrollbar-track {
-    background: transparent;
     border-radius: rem(1.5);
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--a-text-light);
     border-radius: rem(1.5);
+    background: var(--a-text-light);
 
     &:hover {
       background: var(--a-text-dark);
@@ -162,8 +164,8 @@ ul {
 .section-shadow {
   padding: rem(22) rem(10);
   border-radius: var(--a-borderR--card);
-  box-shadow: var(--a-shadow-summary);
   background: var(--a-whiteBg);
+  box-shadow: var(--a-shadow-summary);
 
   @media (min-width: #{with.$tablet}) {
     padding: rem(22) rem(14);
