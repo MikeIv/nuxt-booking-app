@@ -18,7 +18,6 @@ export default {
   rules: {
     /** Порядок CSS-свойств — `stylelint-properties-order.mjs` */
     'order/properties-order': propertiesOrderRule,
-    indentation: null,
     'custom-property-pattern': null,
     'rule-empty-line-before': [
       'always',

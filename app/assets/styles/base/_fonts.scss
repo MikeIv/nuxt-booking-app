@@ -1,392 +1,392 @@
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 700;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-Bold.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-Bold.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 500;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-Medium.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-Medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 800;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-ExtraBold.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-ExtraBold.woff") format("woff");
-  font-weight: 800;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 800;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-ExtraBoldItalic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-ExtraBoldItalic.woff") format("woff");
-  font-weight: 800;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 400;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-Regular.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-Regular.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 400;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-Italic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-Italic.woff") format("woff");
-  font-weight: 400;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 600;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-SemiBold.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-SemiBold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 700;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-BoldItalic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-BoldItalic.woff") format("woff");
-  font-weight: 700;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 900;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-BlackItalic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-BlackItalic.woff") format("woff");
-  font-weight: 900;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 500;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-MediumItalic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-MediumItalic.woff") format("woff");
-  font-weight: 500;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 900;
+  font-style: normal;
   src:
     url("/fonts/PlayfairDisplay-Black.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-Black.woff") format("woff");
-  font-weight: 900;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Playfair Display";
+  font-weight: 600;
+  font-style: italic;
   src:
     url("/fonts/PlayfairDisplay-SemiBoldItalic.woff2") format("woff2"),
     url("/fonts/PlayfairDisplay-SemiBoldItalic.woff") format("woff");
-  font-weight: 600;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Futura PT";
+  font-weight: 300;
+  font-style: normal;
   src:
     url("/fonts/FuturaPT-Light.woff2") format("woff2"),
     url("/fonts/FuturaPT-Light.woff") format("woff");
-  font-weight: 300;
-  font-style: normal;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 400;
+  font-style: normal;
   src:
     url("/fonts/Lora-Regular.woff2") format("woff2"),
     url("/fonts/Lora-Regular.woff") format("woff");
-  font-weight: 400;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 400;
+  font-style: italic;
   src:
     url("/fonts/Lora-Italic.woff2") format("woff2"),
     url("/fonts/Lora-Italic.woff") format("woff");
-  font-weight: 400;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 500;
+  font-style: normal;
   src:
     url("/fonts/Lora-Medium.woff2") format("woff2"),
     url("/fonts/Lora-Medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 500;
+  font-style: italic;
   src:
     url("/fonts/Lora-MediumItalic.woff2") format("woff2"),
     url("/fonts/Lora-MediumItalic.woff") format("woff");
-  font-weight: 500;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 600;
+  font-style: normal;
   src:
     url("/fonts/Lora-SemiBold.woff2") format("woff2"),
     url("/fonts/Lora-SemiBold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 600;
+  font-style: italic;
   src:
     url("/fonts/Lora-SemiBoldItalic.woff2") format("woff2"),
     url("/fonts/Lora-SemiBoldItalic.woff") format("woff");
-  font-weight: 600;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 700;
+  font-style: normal;
   src:
     url("/fonts/Lora-Bold.woff2") format("woff2"),
     url("/fonts/Lora-Bold.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Lora";
+  font-family: Lora;
+  font-weight: 700;
+  font-style: italic;
   src:
     url("/fonts/Lora-BoldItalic.woff2") format("woff2"),
     url("/fonts/Lora-BoldItalic.woff") format("woff");
-  font-weight: 700;
-  font-style: italic;
   font-display: swap;
 }
 
 :root {
-  font-family: "Playfair Display", serif;
+  font-family: var(--a-font-body, "Lora", serif);
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: bold;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Bold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Bold.woff") format("woff");
-  font-weight: bold;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 900;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Black.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Black.woff") format("woff");
-  font-weight: 900;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 900;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-BlackItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-BlackItalic.woff") format("woff");
-  font-weight: 900;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: normal;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Regular.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Regular.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 300;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Light.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Light.woff") format("woff");
-  font-weight: 300;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 500;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-MediumItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-MediumItalic.woff") format("woff");
-  font-weight: 500;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 600;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-SemiBold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-SemiBold.woff") format("woff");
-  font-weight: 600;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 300;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-LightItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-LightItalic.woff") format("woff");
-  font-weight: 300;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: normal;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-Italic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Italic.woff") format("woff");
-  font-weight: normal;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: bold;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-ExtraBoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraBoldItalic.woff") format("woff");
-  font-weight: bold;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: bold;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-BoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-BoldItalic.woff") format("woff");
-  font-weight: bold;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 200;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-ExtraLight.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraLight.woff") format("woff");
-  font-weight: 200;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 200;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-ExtraLightItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraLightItalic.woff") format("woff");
-  font-weight: 200;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: bold;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-ExtraBold.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ExtraBold.woff") format("woff");
-  font-weight: bold;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 500;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Medium.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Medium.woff") format("woff");
-  font-weight: 500;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 600;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-SemiBoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-SemiBoldItalic.woff") format("woff");
-  font-weight: 600;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 100;
+  font-style: italic;
   src:
     url("/fonts/Inter/Inter18pt-ThinItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-ThinItalic.woff") format("woff");
-  font-weight: 100;
-  font-style: italic;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: Inter;
+  font-weight: 100;
+  font-style: normal;
   src:
     url("/fonts/Inter/Inter18pt-Thin.woff2") format("woff2"),
     url("/fonts/Inter/Inter18pt-Thin.woff") format("woff");
-  font-weight: 100;
-  font-style: normal;
   font-display: swap;
 }

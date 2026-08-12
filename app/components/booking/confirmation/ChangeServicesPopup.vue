@@ -40,7 +40,7 @@ const isServicesChangeSuccessful = computed(() =>
           </h2>
           <div :class="$style.actions">
             <Button
-              label="Выход"
+              label="Продолжить"
               class="btn__bs dark"
               unstyled
               @click="emit('close')"

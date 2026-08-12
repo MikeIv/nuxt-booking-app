@@ -1,125 +1,133 @@
 :root {
-  --primary: #bf9d7c;
-  --secondary: #686062;
-  --success: #7dbf8a;
-  --info: #a02525;
-  --ui-bgAccent: #a02525;
-  --ui-bgDark: var(--a-black);
-
-  --ui-color-primary-50: #f9f6f3;
-  --ui-color-primary-100: #f2ece2;
-  --ui-color-primary-200: #e3d6c5;
-  --ui-color-primary-300: #d1bba0;
-  --ui-color-primary-400: #bf9d7c;
-  --ui-color-primary-500: #b0835f;
-  --ui-color-primary-600: #a37153;
-  --ui-color-primary-700: #885c46;
-  --ui-color-primary-800: #6e4c3e;
-  --ui-color-primary-900: #5a4034;
-  --ui-color-primary-950: #30201a;
-  --ui-color-secondary-50: #f3f3f3;
-  --ui-color-secondary-100: #e2dfdf;
-  --ui-color-secondary-200: #c6c2c2;
-  --ui-color-secondary-300: #a69e9e;
-  --ui-color-secondary-400: #8c8384;
-  --ui-color-secondary-500: #7e7476;
-  --ui-color-secondary-600: #686062;
-  --ui-color-secondary-700: #575153;
-  --ui-color-secondary-800: #4c4749;
-  --ui-color-secondary-900: #434042;
-  --ui-color-secondary-950: #252324;
-  --ui-color-success-50: #f0f9f1;
-  --ui-color-success-100: #dcefdd;
-  --ui-color-success-200: #bbdfbf;
-  --ui-color-success-300: #7dbf8a;
-  --ui-color-success-400: #5ea970;
-  --ui-color-success-500: #3c8d51;
-  --ui-color-success-600: #2b703f;
-  --ui-color-success-700: #225a33;
-  --ui-color-success-800: #1d482b;
-  --ui-color-success-900: #193b24;
-  --ui-color-success-950: #0d2114;
-  --ui-color-accent-a10: #f6e5e2;
-  --ui-color-accent-a15: #f4dbd7;
-  --ui-color-accent-a20: #e7b8b0;
-  --ui-color-accent-a30: #d8958a;
-  --ui-color-accent-a35: #c77266;
-  --ui-color-accent-a45: #b54e45;
-  --ui-color-accent-a50: #a02525;
-  --ui-color-accent-a60: #842220;
-  --ui-color-accent-a65: #691f1b;
-  --ui-placeholder: #0d2114;
-  --ui-icon: #a9a9a9;
-
-  /* Base */
+  /* —— Примитивы палитры —— */
+  --primary: #a58d77;
+  --secondary: #9d8f83;
+  --success: #98e885;
+  --info: #a15b3f;
   --a-white: #fff;
   --a-black: #000;
-  --a-base: #bf9d7c;
+  --a-ink: #36281d;
+  --a-ink-a05: rgb(54 40 29 / 5%);
+  --a-ink-a08: rgb(54 40 29 / 8%);
+  --a-ink-a10: rgb(54 40 29 / 10%);
+  --a-ink-a15: rgb(54 40 29 / 15%);
+  --a-ink-a20: rgb(54 40 29 / 20%);
+  --a-ink-a30: rgb(54 40 29 / 30%);
+  --a-ink-a40: rgb(54 40 29 / 40%);
+  --a-ink-a50: rgb(54 40 29 / 50%);
+  --a-ink-a60: rgb(54 40 29 / 60%);
+  --a-surface-0: var(--a-white);
+  --a-surface-1: #faf7f5;
+  --a-surface-2: #f0edea;
+  --a-surface-3: #e5e1dc;
+  --a-panel-950: #01080d;
+  --a-panel-900: #0c0c0c;
+  --a-panel-800: #131313;
+  --a-panel-700: #1b1a17;
+  --a-panel-600: #1f1f1f;
+  --a-text-error-strong: #9b4f45;
 
-  /* Typography */
+  /* —— Nuxt UI ladders (база = brand) —— */
+  --ui-color-primary-50: #faf8f6;
+  --ui-color-primary-100: #f3efe9;
+  --ui-color-primary-200: #e6ddd3;
+  --ui-color-primary-300: #d4c4b3;
+  --ui-color-primary-400: var(--primary);
+  --ui-color-primary-500: #947c67;
+  --ui-color-primary-600: #816c5a;
+  --ui-color-primary-700: #6b5a4b;
+  --ui-color-primary-800: #584b40;
+  --ui-color-primary-900: #493e36;
+  --ui-color-primary-950: #2a231e;
+  --ui-color-secondary-50: #f7f5f3;
+  --ui-color-secondary-100: #ece8e4;
+  --ui-color-secondary-200: #d9d2cb;
+  --ui-color-secondary-300: #c4b9af;
+  --ui-color-secondary-400: #b1aaa3;
+  --ui-color-secondary-500: #a89c91;
+  --ui-color-secondary-600: var(--secondary);
+  --ui-color-secondary-700: #7f7f7f;
+  --ui-color-secondary-800: #6a625c;
+  --ui-color-secondary-900: #574f4a;
+  --ui-color-secondary-950: #2f2b28;
+  --ui-color-success-50: #f3fcf0;
+  --ui-color-success-100: #e3f8dc;
+  --ui-color-success-200: #c5f1b8;
+  --ui-color-success-300: var(--success);
+  --ui-color-success-400: #6fd65a;
+  --ui-color-success-500: #4aba3c;
+  --ui-color-success-600: #36962c;
+  --ui-color-success-700: #2d7626;
+  --ui-color-success-800: #285d23;
+  --ui-color-success-900: #224d1f;
+  --ui-color-success-950: #0e2a0d;
+  --ui-color-accent-a10: #f6efe9;
+  --ui-color-accent-a15: #f0e4db;
+  --ui-color-accent-a20: #e4cbbd;
+  --ui-color-accent-a30: #d0a790;
+  --ui-color-accent-a35: #c0896d;
+  --ui-color-accent-a45: #b16f52;
+  --ui-color-accent-a50: var(--info);
+  --ui-color-accent-a60: var(--a-text-error-strong);
+  --ui-color-accent-a65: #7a3e36;
+
+  /* —— Семантика (имена прежние, значения через примитивы) —— */
+  --ui-bgAccent: var(--info);
+  --ui-bgDark: var(--a-panel-900);
+  --ui-placeholder: var(--a-ink);
+  --ui-icon: var(--a-ink-a40);
   --ui-text: var(--a-white);
-  --a-text-white: #fff;
-  --a-text-primary: #bf9d7c;
-  --a-text-light: #a9a9a9;
-  --a-text-dark: #000;
-  --a-text-accent: #a02525;
-  --a-text-error: #a02525;
-
-  /* Background */
-  --a-whiteBg: #fff;
-  --a-blackBg: #000;
-  --a-mainBg: #e5e5e5;
-  --a-primaryBg: #bf9d7c;
-  --a-lightBg: #a9a9a9;
-  --a-lightPrimaryBg: #f3ece6;
-  --a-accentBg: #c2a283;
-  --a-accentLightBg: #dfcebd;
-  --a-accentDarkBg: #996d42;
-  --a-btnAccentBg: #a02525;
-
-  /* Banner backgrounds */
-  --a-banner-alert-bg: #f3ece6;
-  --a-banner-info-bg: #f0f9f1;
-  --a-banner-warning-bg: #fff4e6;
-
-  /* Border */
-  --a-border: #e5e5e5;
-  --a-border-white: #e5e5e5;
-  --a-border-primary: #bf9d7c;
-  --a-border-primary-accent: #996d42;
-  --a-border-dark: #000;
-  --a-border-light: #a9a9a9;
-  --a-border-accent: #a02525;
-
-  /* input */
-  --ui-input-menu-background: #fff;
-  --ui-input-menu-border-color: #bf9d7c;
-
-  /* Тени (для переносимости темы) */
-  --a-shadow-color: rgba(0, 0, 0, 0.1);
-  --a-shadow-color-strong: rgba(0, 0, 0, 0.2);
+  --a-base: var(--primary);
+  --a-primary: var(--primary);
+  --a-muted: var(--secondary);
+  --a-muted-soft: var(--ui-color-secondary-400);
+  --a-muted-strong: var(--ui-color-secondary-700);
+  --a-text-white: var(--a-white);
+  --a-text-primary: var(--primary);
+  --a-text-light: var(--a-ink-a40);
+  --a-text-dark: var(--a-ink);
+  --a-text-accent: var(--info);
+  --a-text-error: var(--info);
+  --a-whiteBg: var(--a-surface-1);
+  --a-blackBg: var(--a-panel-900);
+  --a-mainBg: var(--a-surface-2);
+  --a-primaryBg: var(--primary);
+  --a-lightBg: var(--a-muted-soft);
+  --a-lightPrimaryBg: var(--a-surface-3);
+  --a-accentBg: #bfa790;
+  --a-accentLightBg: var(--ui-color-primary-200);
+  --a-accentDarkBg: var(--ui-color-primary-600);
+  --a-btnAccentBg: var(--info);
+  --a-banner-alert-bg: var(--a-surface-3);
+  --a-banner-info-bg: var(--ui-color-success-50);
+  --a-banner-warning-bg: var(--ui-color-accent-a10);
+  --a-border: var(--a-ink-a20);
+  --a-border-white: var(--a-surface-3);
+  --a-border-primary: var(--primary);
+  --a-border-primary-accent: var(--ui-color-primary-600);
+  --a-border-dark: var(--a-ink);
+  --a-border-light: var(--a-ink-a15);
+  --a-border-accent: var(--info);
+  --ui-input-menu-background: var(--a-surface-1);
+  --ui-input-menu-border-color: var(--primary);
+  --a-shadow-color: var(--a-ink-a10);
+  --a-shadow-color-strong: var(--a-ink-a20);
   --a-shadow-card: 0 0 10px var(--a-shadow-color);
   --a-shadow-summary: 4px 4px 30px -10px var(--a-shadow-color);
   --a-shadow-summary-inner: 0 0 10px var(--a-shadow-color);
   --a-shadow-weekday: 4px 4px 102.5px -10px var(--a-shadow-color);
-
-  /* Алиасы для совместимости с компонентами (границы, нейтральный фон) */
-  --a-gray-50: #f9f6f3;
-  --a-gray-200: #e5e5e5;
-  --a-gray-300: #d1d1d1;
-  --a-primary: var(--primary);
-
-  /* Шрифты (для темизации при клонировании проекта) */
+  --a-gray-50: var(--a-surface-1);
+  --a-gray-200: var(--a-surface-3);
+  --a-gray-300: var(--ui-color-primary-300);
   --a-font-heading: "Lora", serif;
-  --a-font-body: "Inter", sans-serif;
-
-  /* Toast */
-  --p-toast-warn-background: #f6ebe9;
-  --p-toast-warn-border-color: #c77266;
-  --p-toast-warn-color: #a02525;
-  --p-toast-warn-shadow: #a02525;
-  --p-progressspinner-color-one: #bf9d7c;
-  --p-progressspinner-color-two: #bf9d7c;
-  --p-progressspinner-color-three: #bf9d7c;
-  --p-progressspinner-color-four: #bf9d7c;
+  --a-font-body: "Lora", serif;
+  --a-font-ui: "Inter", sans-serif;
+  --p-toast-warn-background: var(--ui-color-accent-a10);
+  --p-toast-warn-border-color: var(--ui-color-accent-a35);
+  --p-toast-warn-color: var(--info);
+  --p-toast-warn-shadow: var(--info);
+  --p-progressspinner-color-one: var(--primary);
+  --p-progressspinner-color-two: var(--primary);
+  --p-progressspinner-color-three: var(--primary);
+  --p-progressspinner-color-four: var(--primary);
 }

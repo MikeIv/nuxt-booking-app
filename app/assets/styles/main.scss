@@ -1,6 +1,8 @@
 @use "base/global";
 @use "base/fonts";
 @use "variables/colors";
+@use "variables/typography";
+@use "variables/motion";
 @use "variables/rounding";
 @use "variables/primevue";
 @use "tailwindcss" as *;
@@ -18,5 +20,6 @@
 }
 
 body {
-  font-family: var(--system-font);
+  font-family: var(--a-font-body), var(--system-font);
+  color: var(--a-text-dark);
 }
